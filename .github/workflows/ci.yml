@@ -1,0 +1,33 @@
+# CI — 푸시·PR마다 전체 검증 관문 실행
+# (로컬 게이트와 동일: typecheck 3종 · audit:design · 웹 빌드 · 엑스포 번들 컴파일)
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: oven-sh/setup-bun@v2
+
+      - name: 의존성 설치
+        run: bun install --frozen-lockfile
+
+      - name: 타입 검사 (패키지·웹·엑스포)
+        run: bun run typecheck
+
+      - name: 디자인 일관성 감사 (audit:design)
+        run: bun run audit:design
+
+      - name: 웹 빌드 (Next.js)
+        working-directory: apps/web
+        run: bun run build
+
+      - name: 네이티브 번들 컴파일 (Expo export — Android/Hermes)
+        working-directory: apps/expo
+        run: bun x expo export --platform android

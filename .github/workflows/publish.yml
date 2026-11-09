@@ -1,0 +1,39 @@
+# npm 게시 — @unikit-bridge/ui
+# 트리거: GitHub Release 게시, 또는 Actions 탭에서 수동 실행(workflow_dispatch)
+# 인증: 저장소 시크릿 NPM_TOKEN (Classic Automation 토큰 — 2FA 계정도 OTP 없이 게시)
+# 새 버전 절차: packages/unikit/package.json의 version을 올리고 커밋 → Release 태그(vX.Y.Z)로 게시
+name: npm publish
+
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: oven-sh/setup-bun@v2
+
+      - name: 의존성 설치
+        run: bun install --frozen-lockfile
+
+      - name: 게시 전 검증 (typecheck·audit:design)
+        run: |
+          bun run typecheck
+          bun run audit:design
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          registry-url: https://registry.npmjs.org/
+
+      - name: npm publish (@unikit-bridge/ui)
+        working-directory: packages/unikit
+        run: npm publish
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
