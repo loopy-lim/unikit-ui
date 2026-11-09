@@ -1,0 +1,17 @@
+{
+  "name": "unikit",
+  "private": true,
+  "version": "0.1.0",
+  "packageManager": "bun@1.4.4",
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "typecheck": "bun run --filter '*' typecheck",
+    "generate:design": "bun run --filter '@unikit/core' generate:design",
+    "audit:design": "bun run --filter '@unikit/core' audit:design",
+    "expo": "cd apps/expo && bun x expo",
+    "web": "cd apps/web && bun x next"
+  }
+}

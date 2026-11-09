@@ -1,0 +1,10 @@
+# UniKit bun 설정
+# R-2(bun 판, 2026-11-07): bun 기본 isolated linker는 루트 node_modules를 비워 둔다.
+# Expo/Metro·babel(babel.config.js의 babel-preset-expo 등)은 앱 디렉터리에서
+# 상향 해석으로 의존성을 찾는데, apps/expo/node_modules에는 직접 의존성만 링크되어
+# `expo export`가 "Cannot find module 'babel-preset-expo'"로 실패(실측).
+# pnpm 시절 nodeLinker:hoisted 폴백과 동일 역할을 하는 hoisted linker로 전환해
+# 루트 node_modules에 전체 트리를 둔다. 부수 효과로 peer 해시 분할(RN 2인스턴스)
+# 도 원천 차단. 단, @unikit/core devDeps의 앱 버전 정렬(react 19.3.0 등)은 유지.
+[install]
+linker = "hoisted"

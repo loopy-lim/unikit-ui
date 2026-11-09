@@ -1,0 +1,19 @@
+# dependencies
+node_modules/
+
+# expo
+.expo/
+dist/
+*.tsbuildinfo
+
+# next
+.next/
+out/
+
+# misc
+.DS_Store
+*.local
+.env*
+
+# claude code 세션 산출물(잠금 파일 등) — F-6
+.claude/
