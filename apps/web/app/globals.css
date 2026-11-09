@@ -1,13 +1,54 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import "tailwindcss";
+
+/*
+ * UniKit — 표준 Tailwind v4 전역 CSS(엔진 교체: NativeWind/RNW → DOM 브리지).
+ *
+ * - @custom-variant dark: .dark 클래스 기반(shadcn 표준). UnikitThemeProvider의
+ *   웹 브리지가 document.documentElement에 .dark를 토글한다.
+ * - @custom-variant web: 네이티브 전용 클래스(web:*)를 웹에서 항상 활성화.
+ *   (uniwind의 web: 변형과 같은 클래스 문자열을 양쪽에서 그대로 쓴다)
+ * - @theme inline: 아래 마커의 시맨틱 토큰(--background 등)을 Tailwind
+ *   유틸리티(bg-background 등)로 연결. @source로 패키지 소스를 스캔에 추가.
+ */
+@custom-variant dark (&:where(.dark, .dark *));
+@custom-variant web (&:where(:root, :root *));
+
+@source '../../../packages/unikit/src';
+
+/* ⛔ UNIKIT-THEME-MAP:BEGIN — bun run generate:design이 생성. 수동 수정 금지. */
+@theme inline {
+  --color-background: hsl(var(--background));
+  --color-foreground: hsl(var(--foreground));
+  --color-card: hsl(var(--card));
+  --color-card-foreground: hsl(var(--card-foreground));
+  --color-popover: hsl(var(--popover));
+  --color-popover-foreground: hsl(var(--popover-foreground));
+  --color-primary: hsl(var(--primary));
+  --color-primary-foreground: hsl(var(--primary-foreground));
+  --color-secondary: hsl(var(--secondary));
+  --color-secondary-foreground: hsl(var(--secondary-foreground));
+  --color-muted: hsl(var(--muted));
+  --color-muted-foreground: hsl(var(--muted-foreground));
+  --color-accent: hsl(var(--accent));
+  --color-accent-foreground: hsl(var(--accent-foreground));
+  --color-destructive: hsl(var(--destructive));
+  --color-destructive-foreground: hsl(var(--destructive-foreground));
+  --color-border: hsl(var(--border));
+  --color-input: hsl(var(--input));
+  --color-ring: hsl(var(--ring));
+
+  /* --radius(0.5rem) 파생(02-design §2.2). xl은 Tailwind 기본값(0.75rem) 유지. */
+  --radius-lg: var(--radius);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-sm: calc(var(--radius) - 4px);
+}
+/* UNIKIT-THEME-MAP:END */
 
 /*
  * UniKit 디자인 토큰(T-5) — 값의 단일 출처는 packages/unikit/src/theme/tokens.ts다.
- * 아래 마커 사이 @layer 블록은 `bun run generate:design`(packages/unikit)이 생성하므로
+ * 아래 마커 사이 블록은 `bun run generate:design`(packages/unikit)이 생성하므로
  * 이 영역은 수동 수정 금지다(일관성은 `bun run audit:design`이 검사).
- * 런타임 스킴 전환은 UnikitThemeProvider의 vars() 주입(웹·네이티브 동일 메커니즘)이 담당하며,
- * .dark 블록은 shadcn 표준 구조 호환용 경로다(02-design §2.3).
+ * 런타임 스킴 전환은 UnikitThemeProvider(웹 브리지 — .dark 토글)가 담당한다.
  */
 /* ⛔ UNIKIT-TOKENS:BEGIN — bun run generate:design이 생성. 수동 수정 금지. */
 @layer base {

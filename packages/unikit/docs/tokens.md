@@ -56,6 +56,8 @@
 
 | 사본 | 생성 위치 | 비고 |
 |---|---|---|
-| 웹 전역 CSS | `apps/web/app/globals.css` :root/.dark 블록 | shadcn 표준 구조 호환(.dark) — 기본 테마만 |
+| 웹 전역 CSS | `apps/web/app/globals.css` :root/.dark 블록 | 표준 Tailwind v4 — 기본 테마만 |
+| 네이티브 전역 CSS | `apps/expo/global.css` @variant light/dark 블록 | uniwind(Tailwind v4) — 기본 테마만 |
+| 토큰→유틸리티 매핑 | 두 앱 전역 CSS `@theme inline` 블록 | 토큰 키에서 자동 생성 — 두 플랫폼 동일 바이트 |
 | 레지스트리 theme 항목 4종 | `registry.json` cssVars light/dark | 기본 + 프리셋 3 — 소비자 `shadcn add` 전달 |
 | 이 카탈로그 | `packages/unikit/docs/tokens.md` | 값 드리프트는 audit (f)가 차단 |

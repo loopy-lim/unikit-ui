@@ -233,12 +233,13 @@
         "utils"
       ],
       "dependencies": [
+        "@unikit-bridge/ui",
         "class-variance-authority",
         "clsx",
         "tailwind-merge",
-        "nativewind",
-        "react-native",
-        "react-native-web"
+        "tailwindcss",
+        "uniwind",
+        "react-native"
       ],
       "files": [
         {
@@ -257,12 +258,13 @@
         "utils"
       ],
       "dependencies": [
+        "@unikit-bridge/ui",
         "class-variance-authority",
         "clsx",
         "tailwind-merge",
-        "nativewind",
-        "react-native",
-        "react-native-web"
+        "tailwindcss",
+        "uniwind",
+        "react-native"
       ],
       "files": [
         {
@@ -281,12 +283,13 @@
         "utils"
       ],
       "dependencies": [
+        "@unikit-bridge/ui",
         "class-variance-authority",
         "clsx",
         "tailwind-merge",
-        "nativewind",
-        "react-native",
-        "react-native-web"
+        "tailwindcss",
+        "uniwind",
+        "react-native"
       ],
       "files": [
         {
@@ -305,12 +308,13 @@
         "utils"
       ],
       "dependencies": [
+        "@unikit-bridge/ui",
         "class-variance-authority",
         "clsx",
         "tailwind-merge",
-        "nativewind",
-        "react-native",
-        "react-native-web"
+        "tailwindcss",
+        "uniwind",
+        "react-native"
       ],
       "files": [
         {
@@ -329,12 +333,13 @@
         "utils"
       ],
       "dependencies": [
+        "@unikit-bridge/ui",
         "class-variance-authority",
         "clsx",
         "tailwind-merge",
-        "nativewind",
-        "react-native",
-        "react-native-web"
+        "tailwindcss",
+        "uniwind",
+        "react-native"
       ],
       "files": [
         {

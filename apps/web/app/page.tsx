@@ -2,14 +2,18 @@
 // Next.js 쇼케이스 페이지(T-8) — docs/sdd/02-design.md v3 §1.2(구성 트리)·§5(카피) 원문 준수.
 // Expo 쇼케이스(T-7, apps/expo/app/index.tsx)와 같은 섹션 순서·문구·클래스·간격을 렌더링한다(AC-2).
 //
-// - "use client" 필수(NativeWind RSC 미지원 — 02-design §1.5, 01-research §2.2).
-// - 컴포넌트 import는 오직 @unikit/core(AC-1). 플랫폼 분기 없음.
-// - 테마: page 최상위에서 UnikitThemeProvider로 감싸 vars() 토큰을 주입한다.
-//   (웹에서도 .dark 클래스 토글이 아니라 인라인 CSS 변수 주입으로 전환 — 02-design §2.3)
+// - "use client" 유지(테마 상태·이벤트 사용 — DOM 브리지 렌더링).
+// - 컴포넌트 import는 오직 @unikit-bridge/ui(AC-1). 플랫폼 분기 없음.
+// - 테마: page 최상위에서 UnikitThemeProvider로 감싼다 — 웹 브리지가
+//   문서 루트의 .dark 클래스를 토글한다(표준 Tailwind dark 변형).
 // - SafeAreaView는 Expo 전용 포장(02-design §1.2) — 웹은 min-h-screen 배경 래퍼로 대응.
-// - 모든 Text에 명시 색·크기·font-sans(§0.5 — RNW는 부모 상속이 막힘).
+// - 모든 Text에 명시 색·크기·font-sans(§0.5 — DOM 브리지도 부모 상속에 기대지 않는다).
 import { useRef, type ReactNode } from "react";
-import { Text, View, type TextInputInstance } from "react-native";
+import {
+  Text,
+  View,
+  type BridgeTextInputRef,
+} from "@unikit-bridge/ui/primitives";
 
 import {
   UnikitThemeProvider,
@@ -24,7 +28,7 @@ import {
   CardTitle,
   Input,
   Label,
-} from "@unikit/core";
+} from "@unikit-bridge/ui";
 
 /** 페이지 진입 — Provider 랩 + 쇼케이스 본문 */
 export default function Home() {
@@ -196,9 +200,9 @@ function CardSection() {
 
 /** Section: Input · Label — 라벨↔입력창 연결 3쌍(§3.4: nativeID↔accessibilityLabelledBy + onPress→ref.focus) */
 function InputSection() {
-  const nameInputRef = useRef<TextInputInstance>(null);
-  const emailInputRef = useRef<TextInputInstance>(null);
-  const disabledInputRef = useRef<TextInputInstance>(null);
+  const nameInputRef = useRef<BridgeTextInputRef>(null);
+  const emailInputRef = useRef<BridgeTextInputRef>(null);
+  const disabledInputRef = useRef<BridgeTextInputRef>(null);
 
   return (
     <Section

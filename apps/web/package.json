@@ -9,22 +9,19 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@unikit/core": "workspace:*",
-    "nativewind": "~4.2.7",
+    "@unikit-bridge/ui": "workspace:*",
     "next": "16.4.5",
     "react": "19.3.0",
     "react-dom": "19.3.0",
-    "react-native": "~0.88.1",
-    "react-native-web": "~0.21.4",
     "shadcn": "^4.23.0"
   },
   "devDependencies": {
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
-    "autoprefixer": "^10.6.2",
     "postcss": "^8.5.32",
-    "tailwindcss": "^3.4.19",
-    "typescript": "^5"
+    "typescript": "^5",
+    "tailwindcss": "^4.3.5",
+    "@tailwindcss/postcss": "^4.3.5"
   }
 }

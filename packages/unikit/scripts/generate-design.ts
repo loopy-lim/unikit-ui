@@ -1,15 +1,18 @@
 /**
- * generate:design — 디자인 토큰 사본 일괄 생성 (T-13, AC-9 / 3차 T-17, AC-13 확장).
+ * generate:design — 디자인 토큰 사본 일괄 생성 (T-13, AC-9 / 3차 T-17, AC-13 /
+ * 엔진 교체 확장 — uniwind 네이티브 CSS 사본·@theme inline 매핑 포함).
  *
  * 값의 출처는 src/theme/의 값 정의 파일들(VALUE_SOURCES — 기본 tokens.ts + 프리셋 presets.ts)이며
  * 이 스크립트가 사본들을 재생성한다:
- *   ① apps/web/app/globals.css 의 :root/.dark 변수 블록(마커 사이 — 기본 테마만)
- *   ② registry.json 의 theme 항목 4종(cssVars light/dark — 기본 + 프리셋 3)
- *   ③ docs/tokens.md 토큰 카탈로그(기본 값 표 + 프리셋 목록 + 사용 규칙)
+ *   ① 두 앱 전역 CSS의 @theme inline 매핑 블록(토큰 키 → Tailwind 유틸리티 연결)
+ *   ② apps/web/app/globals.css 의 :root/.dark 변수 블록(기본 테마만)
+ *   ③ apps/expo/global.css 의 @variant light/dark 블록(uniwind — 기본 테마만)
+ *   ④ registry.json 의 theme 항목 4종(cssVars light/dark — 기본 + 프리셋 3)
+ *   ⑤ docs/tokens.md 토큰 카탈로그(기본 값 표 + 프리셋 목록 + 사용 규칙)
  *
- * 무손실 전환(첫 실행): globals.css에 마커가 없으면 기존 @layer 블록과 생성물을
- * byte 대조해 일치할 때만 마커 삽입으로 전환한다(불일치 시 중단 — 값·서식 파손 방지).
- * 이후 실행은 멱등: 같은 입력 → 같은 출력(diff 0).
+ * 마커는 앱 세팅 시 각 CSS에 심어둔다 — 없으면 복구를 시도하지 않고 즉시 중단한다
+ * (값·서식 파손 방지). 실행은 멱등: 같은 입력 → 같은 출력이며 내용 변화가 없으면
+ * 쓰기를 생략한다(diff 0 · mtime 불변).
  *
  * 실행: packages/unikit에서 `bun run generate:design`
  */
@@ -22,11 +25,14 @@ import { themePresets, type ThemePreset } from "../src/theme/presets";
 const PKG = path.resolve(import.meta.dir, "..");
 const REPO = path.resolve(PKG, "..", "..");
 const GLOBALS_CSS = path.join(REPO, "apps", "web", "app", "globals.css");
+const EXPO_GLOBALS_CSS = path.join(REPO, "apps", "expo", "global.css");
 const REGISTRY_JSON = path.join(PKG, "registry.json");
 const TOKENS_DOC = path.join(PKG, "docs", "tokens.md");
 
 export const BEGIN = "/* ⛔ UNIKIT-TOKENS:BEGIN — bun run generate:design이 생성. 수동 수정 금지. */";
 export const END = "/* UNIKIT-TOKENS:END */";
+export const MAP_BEGIN = "/* ⛔ UNIKIT-THEME-MAP:BEGIN — bun run generate:design이 생성. 수동 수정 금지. */";
+export const MAP_END = "/* UNIKIT-THEME-MAP:END */";
 
 /**
  * 토큰 값을 정의하는 소스 파일 목록(패키지 기준 경로) — 감사 (b) 원색 검사의 제외 목록과 공유.
@@ -37,6 +43,7 @@ export const VALUE_SOURCES = ["src/theme/tokens.ts", "src/theme/presets.ts"] as 
 /** registry theme 항목 정의 — 이름↔값 소스 매핑의 단일 정의점(audit가 import해 공유) */
 export interface ThemeItemDef {
   name: string;
+  title: string;
   label: string;
   neutral: string;
   primaryStep: string;
@@ -49,6 +56,7 @@ export interface ThemeItemDef {
 export const THEME_ITEMS: ThemeItemDef[] = [
   {
     name: "theme",
+    title: "UniKit 디자인 토큰 (라이트/다크)",
     label: "Zinc (기본)",
     neutral: "zinc",
     primaryStep: "zinc-900",
@@ -57,26 +65,25 @@ export const THEME_ITEMS: ThemeItemDef[] = [
     description:
       "tokens.ts 단일 출처에서 생성된 디자인 토큰 20종(색 19 + radius). add 한 번으로 소비자 CSS에 :root/.dark 변수가 주입됩니다. 재생성은 `bun run generate:design`.",
   },
-  ...presetEntry("blue"),
-  ...presetEntry("emerald"),
-  ...presetEntry("amber"),
+  presetEntry("blue"),
+  presetEntry("emerald"),
+  presetEntry("amber"),
 ];
 
-function presetEntry(key: keyof typeof themePresets): ThemeItemDef[] {
+function presetEntry(key: keyof typeof themePresets): ThemeItemDef {
   const p: ThemePreset = themePresets[key];
-  return [
-    {
-      name: `theme-${key}`,
-      label: p.label,
-      neutral: p.neutral,
-      primaryStep: p.primaryStep,
-      light: { ...p.light },
-      dark: { ...p.dark },
-      description:
-        `UniKit 프리셋 테마(${p.label} / 중립 ${p.neutral}). Tailwind 공식 팔레트에서 계산해 WCAG 대비(라이트 기준 ≥4.5:1)를 검증한 값입니다. ` +
-        "같은 방식으로 add하면 기존 토큰 값을 그 자리에서 교체합니다.",
-    },
-  ];
+  return {
+    name: `theme-${key}`,
+    title: `UniKit 프리셋 테마 — ${p.label} (${p.neutral} 중립)`,
+    label: p.label,
+    neutral: p.neutral,
+    primaryStep: p.primaryStep,
+    light: { ...p.light },
+    dark: { ...p.dark },
+    description:
+      `UniKit 프리셋 테마(${p.label} / 중립 ${p.neutral}). Tailwind 공식 팔레트에서 계산해 WCAG 대비(라이트 기준 ≥4.5:1)를 검증한 값입니다. ` +
+      "같은 방식으로 add하면 기존 토큰 값을 그 자리에서 교체합니다.",
+  };
 }
 
 /**
@@ -150,15 +157,43 @@ export function buildGlobalsBlock(): string {
   return `@layer base {\n${varBlock(":root", lightTokens)}\n\n${varBlock(".dark", darkTokens)}\n}`;
 }
 
+/** expo global.css 생성 영역 전체 — uniwind @variant light/dark(값은 웹과 동일 소스) */
+export function buildExpoGlobalsBlock(): string {
+  const variant = (name: "light" | "dark", tokens: Record<string, string>) => {
+    const lines = Object.entries(tokens).map(([k, v]) => `      ${k}: ${v};`);
+    return `    @variant ${name} {\n${lines.join("\n")}\n    }`;
+  };
+  return `@layer theme {\n  :root {\n${variant("light", lightTokens)}\n\n${variant("dark", darkTokens)}\n  }\n}`;
+}
+
+/**
+ * @theme inline 매핑 블록 — 시맨틱 토큰(--background 등)을 Tailwind 유틸리티
+ * (bg-background 등)로 연결한다. 색 토큰 키는 tokens.ts 순서 그대로고
+ * --radius는 스케일 파생 3종(lg/md/sm)로 대체된다. 두 앱 전역 CSS에
+ * 동일 바이트로 들어가므로 한쪽만 드리프트할 여지가 사라진다.
+ */
+export function buildThemeMapBlock(): string {
+  const colorLines = Object.keys(lightTokens)
+    .filter((k) => k !== "--radius")
+    .map((k) => `  --color-${k.slice(2)}: hsl(var(${k}));`);
+  return [
+    "@theme inline {",
+    ...colorLines,
+    "",
+    "  /* --radius(0.5rem) 파생(02-design §2.2). xl은 Tailwind 기본값(0.75rem) 유지. */",
+    "  --radius-lg: var(--radius);",
+    "  --radius-md: calc(var(--radius) - 2px);",
+    "  --radius-sm: calc(var(--radius) - 4px);",
+    "}",
+  ].join("\n");
+}
+
 /** registry.json theme 항목(THEME_ITEMS 항목 1개에서 생성 — 기본·프리셋 공용 형식) */
 export function buildThemeItem(def: ThemeItemDef) {
   return {
     name: def.name,
     type: "registry:theme" as const,
-    title:
-      def.name === "theme"
-        ? "UniKit 디자인 토큰 (라이트/다크)"
-        : `UniKit 프리셋 테마 — ${def.label} (${def.neutral} 중립)`,
+    title: def.title,
     description: def.description,
     cssVars: {
       light: { ...def.light },
@@ -215,59 +250,66 @@ ${presetRows}
 
 | 사본 | 생성 위치 | 비고 |
 |---|---|---|
-| 웹 전역 CSS | \`apps/web/app/globals.css\` :root/.dark 블록 | shadcn 표준 구조 호환(.dark) — 기본 테마만 |
+| 웹 전역 CSS | \`apps/web/app/globals.css\` :root/.dark 블록 | 표준 Tailwind v4 — 기본 테마만 |
+| 네이티브 전역 CSS | \`apps/expo/global.css\` @variant light/dark 블록 | uniwind(Tailwind v4) — 기본 테마만 |
+| 토큰→유틸리티 매핑 | 두 앱 전역 CSS \`@theme inline\` 블록 | 토큰 키에서 자동 생성 — 두 플랫폼 동일 바이트 |
 | 레지스트리 theme 항목 4종 | \`registry.json\` cssVars light/dark | 기본 + 프리셋 3 — 소비자 \`shadcn add\` 전달 |
 | 이 카탈로그 | \`packages/unikit/docs/tokens.md\` | 값 드리프트는 audit (f)가 차단 |
 `;
 }
 
-/** globals.css 처리: 마커 있으면 치환, 없으면 무손실 검증 후 마커 삽입 */
-function updateGlobalsCss(): string {
-  const src = readFileSync(GLOBALS_CSS, "utf8");
-  const generated = buildGlobalsBlock();
-  const wrapped = `${BEGIN}\n${generated}\n${END}`;
+/**
+ * 마커 사이 영역을 생성물로 치환한다(공용 절차). 마커는 앱 세팅 시 심어둔 것 —
+ * 없으면 복구를 시도하지 않고 즉시 중단한다. 내용이 같으면 쓰기를 생략한다.
+ * 반환값은 로그용 설명.
+ */
+function replaceMarkerBlock(
+  filePath: string,
+  markerBegin: string,
+  markerEnd: string,
+  generated: string,
+  label: string,
+): string {
+  const src = readFileSync(filePath, "utf8");
+  const start = src.indexOf(markerBegin);
+  if (start === -1)
+    throw new Error(`${label}: BEGIN 마커가 없습니다. 앱 세팅 시 마커 영역이 심어져 있어야 합니다.`);
+  const end = src.indexOf(markerEnd);
+  if (end === -1) throw new Error(`${label}: END 마커가 없습니다.`);
+  const wrapped = `${markerBegin}\n${generated}\n${markerEnd}`;
+  const next = src.slice(0, start) + wrapped + src.slice(end + markerEnd.length);
+  if (next === src) return `${label} 동일(쓰기 생략)`;
+  writeFileSync(filePath, next);
+  return `${label} 치환`;
+}
 
-  if (src.includes(BEGIN)) {
-    const start = src.indexOf(BEGIN);
-    const end = src.indexOf(END);
-    if (end === -1) throw new Error("globals.css: BEGIN 마커는 있는데 END 마커가 없습니다.");
-    const next = src.slice(0, start) + wrapped + src.slice(end + END.length);
-    if (next !== src) writeFileSync(GLOBALS_CSS, next);
-    return "마커 영역 치환(기존 마커 있음)";
-  }
+/** 웹 globals.css 처리: @theme inline 매핑 + :root/.dark 값 블록(마커 2쌍) */
+function updateWebGlobalsCss(): string[] {
+  return [
+    replaceMarkerBlock(GLOBALS_CSS, MAP_BEGIN, MAP_END, buildThemeMapBlock(), "globals.css @theme inline"),
+    replaceMarkerBlock(GLOBALS_CSS, BEGIN, END, buildGlobalsBlock(), "globals.css :root/.dark"),
+  ];
+}
 
-  // 첫 실행 — 기존 @layer base 블록을 괄호 세기로 정확히 추출해 byte 대조
-  const open = src.indexOf("@layer base {");
-  if (open === -1) throw new Error("globals.css: '@layer base {' 블록을 찾을 수 없습니다.");
-  let depth = 0;
-  let close = -1;
-  for (let i = open + "@layer base ".length; i < src.length; i++) {
-    if (src[i] === "{") depth++;
-    else if (src[i] === "}") {
-      depth--;
-      if (depth === 0) {
-        close = i;
-        break;
-      }
-    }
-  }
-  if (close === -1) throw new Error("globals.css: @layer 블록의 닫는 괄호를 찾을 수 없습니다.");
-  const existing = src.slice(open, close + 1);
-  if (existing !== generated) {
-    throw new Error(
-      `globals.css 무손실 검증 실패 — 기존 @layer 블록이 tokens.ts 생성물과 byte 단위로 다릅니다.\n` +
-        `기존(${existing.length}B) vs 생성(${generated.length}B)\n수동 수정이 있었는지 tokens.ts와 globals.css를 먼저 맞추세요.`,
-    );
-  }
-  writeFileSync(GLOBALS_CSS, src.slice(0, open) + wrapped + src.slice(close + 1));
-  return "무손실 검증 통과 → 마커 삽입(첫 실행)";
+/** expo global.css 처리: @theme inline 매핑 + @variant light/dark 값 블록(마커 2쌍) */
+function updateExpoGlobalCss(): string[] {
+  return [
+    replaceMarkerBlock(EXPO_GLOBALS_CSS, MAP_BEGIN, MAP_END, buildThemeMapBlock(), "expo global.css @theme inline"),
+    replaceMarkerBlock(EXPO_GLOBALS_CSS, BEGIN, END, buildExpoGlobalsBlock(), "expo global.css @variant light/dark"),
+  ];
 }
 
 /** registry.json 처리: theme 항목 4종 주입(utils 다음 위치 고정), 나머지는 파싱 순서 보존 */
 function updateRegistryJson(): string {
   const THEME_NAMES = new Set(THEME_ITEMS.map((t) => t.name));
-  const reg = JSON.parse(readFileSync(REGISTRY_JSON, "utf8")) as { items: { name: string }[] };
-  const before = JSON.stringify(reg);
+  type Registry = { items: { name: string }[] };
+  const strip = (o: Registry) => ({
+    ...o,
+    items: o.items.filter((i) => !THEME_NAMES.has(i.name)),
+  });
+  const raw = readFileSync(REGISTRY_JSON, "utf8");
+  const reg = JSON.parse(raw) as Registry;
+  const beforeStripped = JSON.stringify(strip(reg));
   // 기존 theme 항목(이름이 THEME_ITEMS와 같은 것 전부)을 빼고, 그 자리(utils 다음)에 4종을 연속 배치
   const hadThemes = reg.items.some((i) => THEME_NAMES.has(i.name));
   const rest = reg.items.filter((i) => !THEME_NAMES.has(i.name));
@@ -275,30 +317,40 @@ function updateRegistryJson(): string {
   const injected = !hadThemes;
 
   const next = JSON.stringify(reg, null, 2) + "\n";
-  // 기존 항목 불변 확인(무손실 — 파싱 수준): theme 항목 전부 제외 후 직렬화 동일(F-35 — 제외 목록 = THEME_ITEMS 전체)
-  const regAfter = JSON.parse(next);
-  const strip = (o: { items: { name: string }[] }) => ({
-    ...o,
-    items: o.items.filter((i) => !THEME_NAMES.has(i.name)),
-  });
-  if (JSON.stringify(strip(regAfter)) !== JSON.stringify(strip(JSON.parse(before)))) {
+  // 기존 항목 불변 확인(무손실 — 파싱 수준): theme 항목 전부 제외 후 직렬화 동일(F-35 — 제외 목록 = THEME_ITEMS 전체).
+  // reg는 next의 직렬화 원본이므로 재파싱 없이 메모리 객체로 대조한다.
+  if (JSON.stringify(strip(reg)) !== beforeStripped) {
     throw new Error("registry.json 무손실 검증 실패 — theme 항목 외의 항목이 변경됐습니다.");
   }
-  writeFileSync(REGISTRY_JSON, next);
-  return injected
-    ? `theme 항목 ${THEME_ITEMS.length}종 주입(utils 다음 연속)`
-    : `theme 항목 ${THEME_ITEMS.length}종 치환`;
+  if (next !== raw) writeFileSync(REGISTRY_JSON, next);
+  const state = next === raw
+    ? "동일(쓰기 생략)"
+    : injected
+      ? `theme 항목 ${THEME_ITEMS.length}종 주입(utils 다음 연속)`
+      : `theme 항목 ${THEME_ITEMS.length}종 치환`;
+  return `registry.json ${state}`;
 }
 
 function updateTokensDoc(): string {
   mkdirSync(path.dirname(TOKENS_DOC), { recursive: true });
   const doc = buildTokensDoc();
-  writeFileSync(TOKENS_DOC, doc);
-  return "docs/tokens.md 생성";
+  let prev: string | undefined;
+  try {
+    prev = readFileSync(TOKENS_DOC, "utf8");
+  } catch {
+    prev = undefined; // 첫 생성 — 파일 없음
+  }
+  if (prev !== doc) writeFileSync(TOKENS_DOC, doc);
+  return prev === doc ? "docs/tokens.md 동일(쓰기 생략)" : "docs/tokens.md 생성";
 }
 
 function main() {
-  const results = [updateGlobalsCss(), updateRegistryJson(), updateTokensDoc()];
+  const results = [
+    ...updateWebGlobalsCss(),
+    ...updateExpoGlobalCss(),
+    updateRegistryJson(),
+    updateTokensDoc(),
+  ];
   console.log("generate:design 완료:");
   for (const r of results) console.log(`  - ${r}`);
 }

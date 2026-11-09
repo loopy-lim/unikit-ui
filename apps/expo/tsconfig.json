@@ -1,10 +1,17 @@
 {
   "extends": ["expo/tsconfig.base", "../../tsconfig.base.json"],
+  "compilerOptions": {
+    "paths": {
+      "@unikit-bridge/ui/primitives": [
+        "../../packages/unikit/src/bridge/native.tsx"
+      ]
+    }
+  },
   "include": [
     "**/*.ts",
     "**/*.tsx",
     ".expo/types/**/*.ts",
     "expo-env.d.ts",
-    "nativewind-env.d.ts"
+    "uniwind-env.d.ts"
   ]
 }

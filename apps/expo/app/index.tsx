@@ -1,7 +1,7 @@
 // UniKit Expo 쇼케이스(T-7) — 화면 구성·카피·클래스는 docs/sdd/02-design.md v3
 // §1.2(화면 구성 트리)·§5(한국어 카피)를 그대로 따른다(문구 수정 금지).
 //
-// - 컴포넌트 import는 오직 @unikit/core(AC-1 단일 import 원칙). react-native ·
+// - 컴포넌트 import는 오직 @unikit-bridge/ui(AC-1 단일 import 원칙). react-native ·
 //   react-native-safe-area-context는 02-design §1.2이 지시한 Expo 전용 포장
 //   (SafeAreaView)을 위한 인프라 import다.
 // - 최상단 포장: _layout이 SafeAreaProvider를 제공하지 않으므로 화면 안에서
@@ -27,7 +27,7 @@ import {
   Input,
   Label,
   useUnikitTheme,
-} from "@unikit/core";
+} from "@unikit-bridge/ui";
 
 // 정적 내보내기 시에도 SafeAreaProvider가 children을 즉시 렌더하도록 하는 초기값.
 // 웹에서 safe-area 인셋은 보통 0이고, 측정 후 실제 값으로 교정된다.

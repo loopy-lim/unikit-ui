@@ -1,27 +1,27 @@
 /**
- * UniKit 테마 Provider — colorScheme 상태를 보유하고 현재 스킴의 토큰을 주입한다.
+ * UniKit 테마 Provider — colorScheme 상태를 보유하고 브리지를 통해
+ * 각 플랫폼의 스타일링 엔진에 반영한다.
  *
- * 메커니즘(웹·네이티브 동일): 래핑 `View`의 style에 NativeWind `vars()`로
- * 토큰 객체(CSS 변수 → HSL 채널 문자열 전체, 예: `--background: "0 0% 100%"`)를 주입한다.
- * 웹(react-native-web)에서는 인라인 CSS 변수로 하위 요소에 상속되고, 네이티브에서는
- * react-native-css-interop 런타임이 변수를 분해한다 — `.dark` 클래스 토글은 필요 없다.
+ * 메커니즘(엔진 교체: NativeWind → 브리지 구조):
+ * - 토큰 값은 이제 JS 주입(vars())이 아니라 소비자 앱의 global.css에 상주한다
+ *   (기본값 = generate:design이 tokens.ts에서 생성).
+ * - 이 Provider는 스킴 상태만 보유하고, 변경 시 bridge.applyColorScheme을 호출한다:
+ *   · native → uniwind Uniwind.setTheme(다크 변형·CSS 변수가 활성 테마로 전환)
+ *   · web    → 문서 루트 .dark 클래스 토글(표준 Tailwind dark 변형)
  *
  * 동작 규격(02-design §1.4): 즉시 전환, 영속화 없음, 기본값 라이트.
  */
 import {
   createContext,
   useContext,
+  useEffect,
   useMemo,
   useState,
   type ReactNode,
 } from "react";
-import { View } from "react-native";
-import { vars } from "nativewind";
-import {
-  getThemeTokens,
-  type UnikitColorScheme,
-  type UnikitThemeTokens,
-} from "./tokens";
+import { applyColorScheme } from "@unikit-bridge/ui/primitives";
+
+import type { UnikitColorScheme } from "./tokens";
 
 export type UnikitThemeContextValue = {
   /** 현재 색 스킴 */
@@ -57,16 +57,15 @@ export function UnikitThemeProvider({
     [colorScheme],
   );
 
-  const themeVars = useMemo<UnikitThemeTokens>(
-    () => getThemeTokens(colorScheme),
-    [colorScheme],
-  );
+  // 스킴 → 엔진 바인딩(마운트 시 기본값도 반영 — 네이티브에서 adaptive system
+  // 테마 대신 설계 기본값 라이트로 고정된다, 02-design §1.4).
+  useEffect(() => {
+    applyColorScheme(colorScheme);
+  }, [colorScheme]);
 
   return (
     <UnikitThemeContext.Provider value={value}>
-      <View style={vars(themeVars)} className="flex-1">
-        {children}
-      </View>
+      {children}
     </UnikitThemeContext.Provider>
   );
 }

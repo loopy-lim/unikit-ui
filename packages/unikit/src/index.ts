@@ -1,4 +1,4 @@
-// @unikit/core 공개 API (T-6 완성)
+// @unikit-bridge/ui 공개 API (T-6 완성)
 export { cn } from "./lib/utils";
 
 export {

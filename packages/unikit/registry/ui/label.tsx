@@ -7,8 +7,8 @@
 //    → 웹 DOM에서 id ↔ aria-labelledby로 연결된다.
 // 2. (권장) Label의 onPress에서 입력창 ref의 focus()를 호출하면 클릭→포커스가 이어진다.
 //    (Input은 forwardRef로 focus() 노출)
-import { forwardRef, type ComponentProps } from "react";
-import { Text, type TextInstance } from "react-native";
+import { forwardRef } from "react";
+import { Text, type BridgeTextRef, type TextProps } from "@unikit-bridge/ui/primitives";
 import { cva } from "class-variance-authority";
 
 import { cn } from "@/lib/utils";
@@ -17,9 +17,9 @@ const labelVariants = cva(
   "font-sans text-sm font-medium leading-none text-foreground",
 );
 
-export type LabelProps = ComponentProps<typeof Text>;
+export type LabelProps = TextProps;
 
-const Label = forwardRef<TextInstance, LabelProps>(
+const Label = forwardRef<BridgeTextRef, LabelProps>(
   ({ className, ...props }, ref) => (
     <Text
       ref={ref}

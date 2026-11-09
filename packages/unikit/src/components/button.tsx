@@ -1,8 +1,13 @@
 // Button — docs/sdd/02-design.md v2 §3.1 그대로.
 // 이중 지정 원칙(§0.5): 배경·테두리는 Pressable, 전경색·밑줄은 내부 Text에 명시.
-// (RNW 0.21.4는 Text에 인라인 color/font 기본값을 강제해 부모 상속이 막힘)
-import { forwardRef, type ComponentProps, type ReactNode } from "react";
-import { Pressable, Text, type PressableInstance } from "react-native";
+// (DOM 브리지에서도 span은 부모 상속이 막히므로 전경색 명시가 양쪽에 필요)
+import { forwardRef, type ReactNode } from "react";
+import {
+  Pressable,
+  Text,
+  type BridgePressableRef,
+  type PressableProps,
+} from "@unikit-bridge/ui/primitives";
 import { cva, type VariantProps } from "class-variance-authority";
 
 import { cn } from "../lib/utils";
@@ -36,7 +41,7 @@ const buttonVariants = cva(
   },
 );
 
-// 내부 Text — 변형별 전경색. active:*는 NativeWind의 Pressable 눌림 상태 하위 전파로 동작.
+// 내부 Text — 변형별 전경색. active:* 눌림 전파 — 네이티브는 uniwind(Pressable 상태), 웹은 <button>의 :active.
 const buttonTextVariants = cva(
   "font-sans text-sm font-medium web:whitespace-nowrap",
   {
@@ -66,12 +71,12 @@ const HIT_SLOP = {
 
 // Pressable의 함수형 children((state) => ReactNode)은 내부 Text 래핑 구조(§3.1)와
 // 양립하지 않으므로 children은 ReactNode로 한정한다(v0.1은 문자열 children 사용).
-export type ButtonProps = ComponentProps<typeof Pressable> &
+export type ButtonProps = PressableProps &
   VariantProps<typeof buttonVariants> & {
     children?: ReactNode;
   };
 
-const Button = forwardRef<PressableInstance, ButtonProps>(
+const Button = forwardRef<BridgePressableRef, ButtonProps>(
   (
     { className, variant, size, disabled, hitSlop, children, ...props },
     ref,

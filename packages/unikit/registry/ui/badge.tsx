@@ -1,7 +1,14 @@
 // Badge — docs/sdd/02-design.md v2 §3.5 그대로.
 // 이중 지정 원칙(§0.5): 배경·테두리는 View, 전경색은 내부 Text에 명시(Button과 동일 패턴).
-import { forwardRef, type ComponentProps } from "react";
-import { Text, View, type TextInstance, type ViewInstance } from "react-native";
+import { forwardRef } from "react";
+import {
+  Text,
+  View,
+  type BridgeTextRef,
+  type BridgeViewRef,
+  type TextProps,
+  type ViewProps,
+} from "@unikit-bridge/ui/primitives";
 import { cva, type VariantProps } from "class-variance-authority";
 
 import { cn } from "@/lib/utils";
@@ -39,10 +46,10 @@ const badgeTextVariants = cva("font-sans text-xs font-semibold", {
   },
 });
 
-export type BadgeProps = ComponentProps<typeof View> &
+export type BadgeProps = ViewProps &
   VariantProps<typeof badgeVariants>;
 
-const Badge = forwardRef<ViewInstance, BadgeProps>(
+const Badge = forwardRef<BridgeViewRef, BadgeProps>(
   ({ className, variant, children, ...props }, ref) => (
     <View
       ref={ref}
