@@ -1,0 +1,348 @@
+{
+  "$schema": "https://ui.shadcn.com/schema/registry.json",
+  "name": "unikit",
+  "homepage": "http://localhost:3000/r/registry.json",
+  "items": [
+    {
+      "name": "utils",
+      "type": "registry:lib",
+      "title": "cn utility",
+      "description": "clsx + tailwind-merge를 합성한 shadcn/ui 표준 cn 유틸리티. UniKit 컴포넌트 전체의 유일한 로컬 의존성.",
+      "files": [
+        {
+          "path": "registry/lib/utils.ts",
+          "type": "registry:lib",
+          "target": "lib/utils.ts"
+        }
+      ]
+    },
+    {
+      "name": "theme",
+      "type": "registry:theme",
+      "title": "UniKit 디자인 토큰 (라이트/다크)",
+      "description": "tokens.ts 단일 출처에서 생성된 디자인 토큰 20종(색 19 + radius). add 한 번으로 소비자 CSS에 :root/.dark 변수가 주입됩니다. 재생성은 `bun run generate:design`.",
+      "cssVars": {
+        "light": {
+          "--background": "0 0% 100%",
+          "--foreground": "240 10% 3.9%",
+          "--card": "0 0% 100%",
+          "--card-foreground": "240 10% 3.9%",
+          "--popover": "0 0% 100%",
+          "--popover-foreground": "240 10% 3.9%",
+          "--primary": "240 5.9% 10%",
+          "--primary-foreground": "0 0% 98%",
+          "--secondary": "240 4.8% 95.9%",
+          "--secondary-foreground": "240 5.9% 10%",
+          "--muted": "240 4.8% 95.9%",
+          "--muted-foreground": "240 3.8% 46.1%",
+          "--accent": "240 4.8% 95.9%",
+          "--accent-foreground": "240 5.9% 10%",
+          "--destructive": "0 72.2% 50.6%",
+          "--destructive-foreground": "0 0% 98%",
+          "--border": "240 5.9% 90%",
+          "--input": "240 5.9% 90%",
+          "--ring": "240 5.9% 10%",
+          "--radius": "0.5rem"
+        },
+        "dark": {
+          "--background": "240 10% 3.9%",
+          "--foreground": "0 0% 98%",
+          "--card": "240 10% 3.9%",
+          "--card-foreground": "0 0% 98%",
+          "--popover": "240 10% 3.9%",
+          "--popover-foreground": "0 0% 98%",
+          "--primary": "0 0% 98%",
+          "--primary-foreground": "240 5.9% 10%",
+          "--secondary": "240 3.7% 15.9%",
+          "--secondary-foreground": "0 0% 98%",
+          "--muted": "240 3.7% 15.9%",
+          "--muted-foreground": "240 5% 64.9%",
+          "--accent": "240 3.7% 15.9%",
+          "--accent-foreground": "0 0% 98%",
+          "--destructive": "0 62.8% 30.6%",
+          "--destructive-foreground": "0 0% 98%",
+          "--border": "240 3.7% 15.9%",
+          "--input": "240 3.7% 15.9%",
+          "--ring": "240 4.9% 83.9%",
+          "--radius": "0.5rem"
+        }
+      }
+    },
+    {
+      "name": "theme-blue",
+      "type": "registry:theme",
+      "title": "UniKit 프리셋 테마 — Blue (slate 중립)",
+      "description": "UniKit 프리셋 테마(Blue / 중립 slate). Tailwind 공식 팔레트에서 계산해 WCAG 대비(라이트 기준 ≥4.5:1)를 검증한 값입니다. 같은 방식으로 add하면 기존 토큰 값을 그 자리에서 교체합니다.",
+      "cssVars": {
+        "light": {
+          "--background": "0 0% 100%",
+          "--foreground": "228.6 84% 4.9%",
+          "--card": "0 0% 100%",
+          "--card-foreground": "228.6 84% 4.9%",
+          "--popover": "0 0% 100%",
+          "--popover-foreground": "228.6 84% 4.9%",
+          "--primary": "221.2 83.2% 53.3%",
+          "--primary-foreground": "0 0% 100%",
+          "--secondary": "210 40% 96.1%",
+          "--secondary-foreground": "222.2 47.4% 11.2%",
+          "--muted": "210 40% 96.1%",
+          "--muted-foreground": "215.4 16.3% 46.9%",
+          "--accent": "210 40% 96.1%",
+          "--accent-foreground": "222.2 47.4% 11.2%",
+          "--destructive": "0 72.2% 50.6%",
+          "--destructive-foreground": "0 0% 98%",
+          "--border": "214.3 31.8% 91.4%",
+          "--input": "214.3 31.8% 91.4%",
+          "--ring": "221.2 83.2% 53.3%",
+          "--radius": "0.5rem"
+        },
+        "dark": {
+          "--background": "228.6 84% 4.9%",
+          "--foreground": "210 40% 98%",
+          "--card": "228.6 84% 4.9%",
+          "--card-foreground": "210 40% 98%",
+          "--popover": "228.6 84% 4.9%",
+          "--popover-foreground": "210 40% 98%",
+          "--primary": "217.2 91.2% 59.8%",
+          "--primary-foreground": "228.6 84% 4.9%",
+          "--secondary": "217.2 32.6% 17.5%",
+          "--secondary-foreground": "210 40% 98%",
+          "--muted": "217.2 32.6% 17.5%",
+          "--muted-foreground": "215 20.2% 65.1%",
+          "--accent": "217.2 32.6% 17.5%",
+          "--accent-foreground": "210 40% 98%",
+          "--destructive": "0 62.8% 30.6%",
+          "--destructive-foreground": "0 0% 98%",
+          "--border": "217.2 32.6% 17.5%",
+          "--input": "217.2 32.6% 17.5%",
+          "--ring": "217.2 91.2% 59.8%",
+          "--radius": "0.5rem"
+        }
+      }
+    },
+    {
+      "name": "theme-emerald",
+      "type": "registry:theme",
+      "title": "UniKit 프리셋 테마 — Emerald (zinc 중립)",
+      "description": "UniKit 프리셋 테마(Emerald / 중립 zinc). Tailwind 공식 팔레트에서 계산해 WCAG 대비(라이트 기준 ≥4.5:1)를 검증한 값입니다. 같은 방식으로 add하면 기존 토큰 값을 그 자리에서 교체합니다.",
+      "cssVars": {
+        "light": {
+          "--background": "0 0% 100%",
+          "--foreground": "240 10% 3.9%",
+          "--card": "0 0% 100%",
+          "--card-foreground": "240 10% 3.9%",
+          "--popover": "0 0% 100%",
+          "--popover-foreground": "240 10% 3.9%",
+          "--primary": "162.9 93.5% 24.3%",
+          "--primary-foreground": "0 0% 100%",
+          "--secondary": "240 4.8% 95.9%",
+          "--secondary-foreground": "240 5.9% 10%",
+          "--muted": "240 4.8% 95.9%",
+          "--muted-foreground": "240 3.8% 46.1%",
+          "--accent": "240 4.8% 95.9%",
+          "--accent-foreground": "240 5.9% 10%",
+          "--destructive": "0 72.2% 50.6%",
+          "--destructive-foreground": "0 0% 98%",
+          "--border": "240 5.9% 90%",
+          "--input": "240 5.9% 90%",
+          "--ring": "162.9 93.5% 24.3%",
+          "--radius": "0.5rem"
+        },
+        "dark": {
+          "--background": "240 10% 3.9%",
+          "--foreground": "0 0% 98%",
+          "--card": "240 10% 3.9%",
+          "--card-foreground": "0 0% 98%",
+          "--popover": "240 10% 3.9%",
+          "--popover-foreground": "0 0% 98%",
+          "--primary": "160.1 84.1% 39.4%",
+          "--primary-foreground": "240 10% 3.9%",
+          "--secondary": "240 3.7% 15.9%",
+          "--secondary-foreground": "0 0% 98%",
+          "--muted": "240 3.7% 15.9%",
+          "--muted-foreground": "240 5% 64.9%",
+          "--accent": "240 3.7% 15.9%",
+          "--accent-foreground": "0 0% 98%",
+          "--destructive": "0 62.8% 30.6%",
+          "--destructive-foreground": "0 0% 98%",
+          "--border": "240 3.7% 15.9%",
+          "--input": "240 3.7% 15.9%",
+          "--ring": "160.1 84.1% 39.4%",
+          "--radius": "0.5rem"
+        }
+      }
+    },
+    {
+      "name": "theme-amber",
+      "type": "registry:theme",
+      "title": "UniKit 프리셋 테마 — Amber (stone 중립)",
+      "description": "UniKit 프리셋 테마(Amber / 중립 stone). Tailwind 공식 팔레트에서 계산해 WCAG 대비(라이트 기준 ≥4.5:1)를 검증한 값입니다. 같은 방식으로 add하면 기존 토큰 값을 그 자리에서 교체합니다.",
+      "cssVars": {
+        "light": {
+          "--background": "0 0% 100%",
+          "--foreground": "20 14.3% 4.1%",
+          "--card": "0 0% 100%",
+          "--card-foreground": "20 14.3% 4.1%",
+          "--popover": "0 0% 100%",
+          "--popover-foreground": "20 14.3% 4.1%",
+          "--primary": "26 90.5% 37.1%",
+          "--primary-foreground": "0 0% 100%",
+          "--secondary": "60 4.8% 95.9%",
+          "--secondary-foreground": "24 9.8% 10%",
+          "--muted": "60 4.8% 95.9%",
+          "--muted-foreground": "25 5.3% 44.7%",
+          "--accent": "60 4.8% 95.9%",
+          "--accent-foreground": "24 9.8% 10%",
+          "--destructive": "0 72.2% 50.6%",
+          "--destructive-foreground": "0 0% 98%",
+          "--border": "20 5.9% 90%",
+          "--input": "20 5.9% 90%",
+          "--ring": "26 90.5% 37.1%",
+          "--radius": "0.5rem"
+        },
+        "dark": {
+          "--background": "20 14.3% 4.1%",
+          "--foreground": "60 9.1% 97.8%",
+          "--card": "20 14.3% 4.1%",
+          "--card-foreground": "60 9.1% 97.8%",
+          "--popover": "20 14.3% 4.1%",
+          "--popover-foreground": "60 9.1% 97.8%",
+          "--primary": "37.7 92.1% 50.2%",
+          "--primary-foreground": "20 14.3% 4.1%",
+          "--secondary": "12 6.5% 15.1%",
+          "--secondary-foreground": "60 9.1% 97.8%",
+          "--muted": "12 6.5% 15.1%",
+          "--muted-foreground": "24 5.4% 63.9%",
+          "--accent": "12 6.5% 15.1%",
+          "--accent-foreground": "60 9.1% 97.8%",
+          "--destructive": "0 62.8% 30.6%",
+          "--destructive-foreground": "0 0% 98%",
+          "--border": "12 6.5% 15.1%",
+          "--input": "12 6.5% 15.1%",
+          "--ring": "37.7 92.1% 50.2%",
+          "--radius": "0.5rem"
+        }
+      }
+    },
+    {
+      "name": "button",
+      "type": "registry:ui",
+      "title": "Button",
+      "description": "RN Pressable 기반 유니버설 버튼 — 변형 6종(default/secondary/destructive/outline/ghost/link) × 사이즈 4종(sm/default/lg/icon), 44px 터치 타깃 보정 포함.",
+      "registryDependencies": [
+        "utils"
+      ],
+      "dependencies": [
+        "class-variance-authority",
+        "clsx",
+        "tailwind-merge",
+        "nativewind",
+        "react-native",
+        "react-native-web"
+      ],
+      "files": [
+        {
+          "path": "registry/ui/button.tsx",
+          "type": "registry:ui",
+          "target": "components/unikit/button.tsx"
+        }
+      ]
+    },
+    {
+      "name": "card",
+      "type": "registry:ui",
+      "title": "Card",
+      "description": "RN View/Text 기반 유니버설 카드 — Card/Header/Title/Description/Content/Footer 하위 컴포넌트 6종 export.",
+      "registryDependencies": [
+        "utils"
+      ],
+      "dependencies": [
+        "class-variance-authority",
+        "clsx",
+        "tailwind-merge",
+        "nativewind",
+        "react-native",
+        "react-native-web"
+      ],
+      "files": [
+        {
+          "path": "registry/ui/card.tsx",
+          "type": "registry:ui",
+          "target": "components/unikit/card.tsx"
+        }
+      ]
+    },
+    {
+      "name": "input",
+      "type": "registry:ui",
+      "title": "Input",
+      "description": "RN TextInput 기반 유니버설 입력창 — forwardRef로 focus()/blur() 노출, 웹 관용 disabled prop 치환 지원.",
+      "registryDependencies": [
+        "utils"
+      ],
+      "dependencies": [
+        "class-variance-authority",
+        "clsx",
+        "tailwind-merge",
+        "nativewind",
+        "react-native",
+        "react-native-web"
+      ],
+      "files": [
+        {
+          "path": "registry/ui/input.tsx",
+          "type": "registry:ui",
+          "target": "components/unikit/input.tsx"
+        }
+      ]
+    },
+    {
+      "name": "label",
+      "type": "registry:ui",
+      "title": "Label",
+      "description": "RN Text 기반 유니버설 라벨 — nativeID ↔ accessibilityLabelledBy 연결 패턴 안내 포함.",
+      "registryDependencies": [
+        "utils"
+      ],
+      "dependencies": [
+        "class-variance-authority",
+        "clsx",
+        "tailwind-merge",
+        "nativewind",
+        "react-native",
+        "react-native-web"
+      ],
+      "files": [
+        {
+          "path": "registry/ui/label.tsx",
+          "type": "registry:ui",
+          "target": "components/unikit/label.tsx"
+        }
+      ]
+    },
+    {
+      "name": "badge",
+      "type": "registry:ui",
+      "title": "Badge",
+      "description": "RN View/Text 기반 유니버설 배지 — 변형 4종(default/secondary/destructive/outline), 이중 지정 원칙(배경 View·전경 Text) 적용.",
+      "registryDependencies": [
+        "utils"
+      ],
+      "dependencies": [
+        "class-variance-authority",
+        "clsx",
+        "tailwind-merge",
+        "nativewind",
+        "react-native",
+        "react-native-web"
+      ],
+      "files": [
+        {
+          "path": "registry/ui/badge.tsx",
+          "type": "registry:ui",
+          "target": "components/unikit/badge.tsx"
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,63 @@
+{
+  "name": "@unikit/core",
+  "version": "0.1.0",
+  "description": "Universal UI kit for React Native + NativeWind — one component set, identical rendering on native and web (react-native-web)",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/loopy-lim/UniKit.git",
+    "directory": "packages/unikit"
+  },
+  "homepage": "https://github.com/loopy-lim/UniKit#readme",
+  "bugs": "https://github.com/loopy-lim/UniKit/issues",
+  "keywords": [
+    "react-native",
+    "expo",
+    "nativewind",
+    "react-native-web",
+    "tailwind",
+    "design-system",
+    "ui-components",
+    "universal",
+    "cross-platform"
+  ],
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "main": "./src/index.ts",
+  "types": "./src/index.ts",
+  "files": [
+    "src",
+    "docs",
+    "README.md",
+    "LICENSE"
+  ],
+  "publishConfig": {
+    "access": "public"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "prepublishOnly": "tsc --noEmit",
+    "generate:design": "bun scripts/generate-design.ts",
+    "audit:design": "bun scripts/audit-design.ts",
+    "check:consumer": "bun scripts/check-consumer-theme.ts"
+  },
+  "peerDependencies": {
+    "react": "^18.0.0 || ^19.0.0",
+    "react-native": "*",
+    "nativewind": "^4.0.0",
+    "class-variance-authority": "^0.7.0",
+    "clsx": "^2.1.0",
+    "tailwind-merge": "^3.0.0"
+  },
+  "devDependencies": {
+    "typescript": "~5.9.0",
+    "@types/react": "~19.3.0",
+    "react": "19.3.0",
+    "react-native": "0.88.1",
+    "nativewind": "~4.2.7",
+    "class-variance-authority": "~0.7.1",
+    "clsx": "~2.1.1",
+    "tailwind-merge": "~3.7.0"
+  }
+}
