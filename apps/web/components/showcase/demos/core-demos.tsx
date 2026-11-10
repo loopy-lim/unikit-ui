@@ -63,6 +63,7 @@ import {
   TableRow,
 } from "@unikit-bridge/ui";
 import { Text, View, type BridgeTextInputRef } from "@unikit-bridge/ui/primitives";
+import { ArrowUp, Inbox, MoreHorizontal, Star } from "lucide-react";
 
 import type { ShowcaseDemo } from "./types";
 
@@ -73,7 +74,7 @@ export const buttonDemo: ShowcaseDemo = {
         <Button>계속하기</Button>
         <Button variant="outline">취소</Button>
         <Button size="icon" variant="outline" accessibilityLabel="공유">
-          ↑
+          <ArrowUp className="size-4" />
         </Button>
       </View>
     );
@@ -109,7 +110,7 @@ export const buttonDemo: ShowcaseDemo = {
             <Button size="default">기본</Button>
             <Button size="lg">크게</Button>
             <Button size="icon" accessibilityLabel="더보기">
-              ⋯
+              <MoreHorizontal className="size-4" />
             </Button>
           </View>
         );
@@ -373,7 +374,9 @@ export const emptyDemo: ShowcaseDemo = {
     return (
       <Empty>
         <EmptyHeader>
-          <EmptyMedia variant="icon">◻</EmptyMedia>
+          <EmptyMedia variant="icon">
+            <Inbox className="size-6 text-muted-foreground" />
+          </EmptyMedia>
           <EmptyTitle>항목이 없어요</EmptyTitle>
           <EmptyDescription>첫 항목을 추가해 보세요.</EmptyDescription>
         </EmptyHeader>
@@ -493,7 +496,7 @@ export const itemDemo: ShowcaseDemo = {
     return (
       <Item variant="outline">
         <ItemMedia variant="icon">
-          <Text className="font-sans text-base text-muted-foreground">★</Text>
+          <Star className="size-4 text-muted-foreground" />
         </ItemMedia>
         <ItemContent>
           <ItemTitle>즐겨찾기</ItemTitle>

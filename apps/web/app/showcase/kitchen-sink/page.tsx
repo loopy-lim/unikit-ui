@@ -10,6 +10,7 @@
 // - 모든 Text에 명시 색·크기·font-sans.
 import Link from "next/link";
 import { useRef, type ReactNode } from "react";
+import { Inbox, Plus, Star } from "lucide-react";
 import {
   Text,
   View,
@@ -219,12 +220,14 @@ function ButtonSection() {
           <Button variant="ghost">고스트</Button>
           <Button variant="link">링크</Button>
         </View>
-        {/* [크기 4종] 모두 variant="default" — icon 버튼은 텍스트 "+"(아이콘 라이브러리 금지) */}
+        {/* [크기 4종] 모두 variant="default" */}
         <View className="flex flex-row flex-wrap items-center gap-3">
           <Button size="sm">작게</Button>
           <Button size="default">보통</Button>
           <Button size="lg">크게</Button>
-          <Button size="icon">+</Button>
+          <Button size="icon" accessibilityLabel="추가">
+            <Plus className="size-4" />
+          </Button>
         </View>
         {/* [상태] 비활성(default · disabled) */}
         <View className="flex flex-row flex-wrap gap-3">
@@ -541,7 +544,9 @@ function FeedbackSection() {
         {/* Empty — 빈 상태 안내 */}
         <Empty>
           <EmptyHeader>
-            <EmptyMedia variant="icon">◻</EmptyMedia>
+            <EmptyMedia variant="icon">
+              <Inbox className="size-7 text-muted-foreground" />
+            </EmptyMedia>
             <EmptyTitle>아직 항목이 없어요</EmptyTitle>
             <EmptyDescription>
               첫 번째 항목을 추가해 보세요.
@@ -653,7 +658,7 @@ function DataLayoutSection() {
         {/* Item — 아이콘 미디어 + 본문 + 행동 */}
         <Item variant="outline">
           <ItemMedia variant="icon">
-            <Text className="font-sans text-base text-muted-foreground">★</Text>
+            <Star className="size-4 text-muted-foreground" />
           </ItemMedia>
           <ItemContent>
             <ItemTitle>즐겨찾는 프로젝트</ItemTitle>

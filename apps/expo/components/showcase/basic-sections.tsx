@@ -4,7 +4,7 @@
 // 포장만 벗겼다(문구·구성 유지).
 import { useRef, type ReactNode } from "react";
 import { Text, View, type TextInputInstance } from "react-native";
-import { Inbox, Plus } from "lucide-react-native";
+import { Inbox, Plus, Star } from "lucide-react-native";
 import {
   Accordion,
   AccordionContent,
@@ -298,7 +298,7 @@ function ToggleDemo() {
     <Stack>
       <View className="flex flex-row flex-wrap items-center gap-3">
         <Toggle defaultPressed accessibilityLabel="즐겨찾기">
-          ★ 즐겨찾기
+          즐겨찾기
         </Toggle>
         <ToggleGroup type="single" defaultValue="list">
           <ToggleGroupItem value="list">목록</ToggleGroupItem>
@@ -529,7 +529,7 @@ function ItemDemo() {
   return (
     <Item variant="outline">
       <ItemMedia variant="icon">
-        <Text className="font-sans text-base text-muted-foreground">★</Text>
+        <Star size={18} className="text-muted-foreground" />
       </ItemMedia>
       <ItemContent>
         <ItemTitle>즐겨찾는 프로젝트</ItemTitle>

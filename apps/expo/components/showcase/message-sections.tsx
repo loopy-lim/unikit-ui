@@ -3,6 +3,7 @@
 // 카탈로그 재구성: 컴포넌트별 CatalogEntry로 분리.
 import { useState } from "react";
 import { Text, View } from "react-native";
+import { ArrowDown } from "lucide-react-native";
 import {
   Attachment,
   AttachmentAction,
@@ -148,7 +149,7 @@ function MarkerDemo() {
       </Marker>
       <Marker variant="border">
         <MarkerIcon>
-          <Text className="font-sans text-xs text-muted-foreground">↓</Text>
+          <ArrowDown size={12} className="text-muted-foreground" />
         </MarkerIcon>
         <MarkerContent>여기까지 읽었어요</MarkerContent>
       </Marker>
