@@ -11,23 +11,30 @@
  */
 import { forwardRef, type Ref } from "react";
 import {
+  Image as RNImage,
   Pressable as RNPressable,
   Text as RNText,
   TextInput as RNTextInput,
   View as RNView,
+  type ImageInstance,
+  type ImageStyle,
   type PressableInstance,
   type TextInstance,
+  type TextStyle,
   type TextInputInstance,
   type ViewInstance,
+  type ViewStyle,
 } from "react-native";
 import { Uniwind } from "uniwind";
 
 import type {
   ApplyColorScheme,
+  BridgeImageRef,
   BridgePressableRef,
   BridgeTextRef,
   BridgeTextInputRef,
   BridgeViewRef,
+  ImageProps,
   PressableProps,
   TextProps,
   TextInputProps,
@@ -41,12 +48,30 @@ export type * from "./types";
 // View — RN View 재노출(타입만 브리지 계약으로 좁힌다)
 // ---------------------------------------------------------------------------
 const View = forwardRef<BridgeViewRef, ViewProps>(
-  ({ className, children, nativeID, testID, ...rest }, ref) => (
+  (
+    {
+      className,
+      style,
+      children,
+      nativeID,
+      testID,
+      accessibilityRole,
+      accessibilityLabel,
+      "aria-hidden": ariaHidden,
+      ...rest
+    },
+    ref,
+  ) => (
     <RNView
       ref={ref as Ref<ViewInstance>}
       nativeID={nativeID}
       testID={testID}
+      accessibilityRole={accessibilityRole}
+      accessibilityLabel={accessibilityLabel}
+      aria-hidden={ariaHidden}
+      accessibilityElementsHidden={ariaHidden}
       className={className}
+      style={style as ViewStyle}
       {...rest}
     >
       {children}
@@ -59,13 +84,29 @@ View.displayName = "View";
 // Text — RN Text 재노출
 // ---------------------------------------------------------------------------
 const Text = forwardRef<BridgeTextRef, TextProps>(
-  ({ className, children, nativeID, testID, onPress, ...rest }, ref) => (
+  (
+    {
+      className,
+      style,
+      children,
+      nativeID,
+      testID,
+      onPress,
+      accessibilityRole,
+      accessibilityLabel,
+      ...rest
+    },
+    ref,
+  ) => (
     <RNText
       ref={ref as Ref<TextInstance>}
       nativeID={nativeID}
       testID={testID}
       onPress={onPress}
+      accessibilityRole={accessibilityRole}
+      accessibilityLabel={accessibilityLabel}
       className={className}
+      style={style as TextStyle}
       {...rest}
     >
       {children}
@@ -78,15 +119,47 @@ Text.displayName = "Text";
 // Pressable — RN Pressable 재노출. onPress는 RN 시그니처(이벤트 인자)를
 // 무인자로 좁혀 브리지 계약과 맞춘다(컴포넌트·데모는 무인자 콜백만 쓴다).
 // ---------------------------------------------------------------------------
+// aria-* 상태 프로퍼티는 RN 0.77+ 네이티브 관용 별칭으로 그대로 전달한다.
+// react-native-web(Expo web 등)은 accessibilityState를 0.21부터 폐기하고
+// aria-* 직접 전달만 DOM 속성으로 렌더하므로, 양쪽 모두 aria-* 경로가 정답.
+// 네이티브 실기기에서도 동일 값을 accessibilityState로 명시 전달해 구버전
+// 스크린리더 호환을 유지한다(코어는 aria-* 별칭을 같은 상태로 병합).
+function toAccessibilityState(props: {
+  disabled?: boolean;
+  "aria-checked"?: boolean | "mixed";
+  "aria-selected"?: boolean;
+  "aria-expanded"?: boolean;
+}) {
+  const state: {
+    disabled?: boolean;
+    checked?: boolean | "mixed";
+    selected?: boolean;
+    expanded?: boolean;
+  } = {};
+  if (props.disabled !== undefined) state.disabled = props.disabled;
+  if (props["aria-checked"] !== undefined) state.checked = props["aria-checked"];
+  if (props["aria-selected"] !== undefined) state.selected = props["aria-selected"];
+  if (props["aria-expanded"] !== undefined) state.expanded = props["aria-expanded"];
+  return Object.keys(state).length > 0 ? state : undefined;
+}
+
 const Pressable = forwardRef<BridgePressableRef, PressableProps>(
   (
     {
       className,
+      style,
       children,
       onPress,
       disabled,
       accessibilityLabel,
       accessibilityRole,
+      "aria-disabled": ariaDisabled,
+      "aria-pressed": ariaPressed,
+      "aria-checked": ariaChecked,
+      "aria-selected": ariaSelected,
+      "aria-expanded": ariaExpanded,
+      "aria-controls": ariaControls,
+      "aria-labelledby": ariaLabelledBy,
       hitSlop,
       nativeID,
       testID,
@@ -95,15 +168,35 @@ const Pressable = forwardRef<BridgePressableRef, PressableProps>(
     ref,
   ) => (
     <RNPressable
-      ref={ref as Ref<PressableInstance>}
+      // BridgePressableRef(구조적 최소 계약) ↔ RN PressableInstance 불일치를
+      // unknown 경유 이중 단언으로만 해소 — any 사용 금지(M-3).
+      ref={ref as unknown as Ref<PressableInstance>}
       nativeID={nativeID}
       testID={testID}
       onPress={onPress ? () => onPress() : undefined}
       disabled={disabled}
       accessibilityLabel={accessibilityLabel}
       accessibilityRole={accessibilityRole}
+      aria-disabled={ariaDisabled}
+      aria-checked={ariaChecked}
+      aria-selected={ariaSelected}
+      aria-expanded={ariaExpanded}
+      aria-labelledby={ariaLabelledBy}
+      accessibilityState={toAccessibilityState({
+        disabled,
+        "aria-checked": ariaChecked,
+        "aria-selected": ariaSelected,
+        "aria-expanded": ariaExpanded,
+      })}
+      // aria-pressed(toggle)·aria-controls(tab↔panel 연결)은 RN 코어 타입에
+      // 없는 RNW 전용 속성 — 무형 스프레드로 전달(네이티브에서는 폐기됨).
+      {...({
+        "aria-pressed": ariaPressed,
+        "aria-controls": ariaControls,
+      } as Record<string, unknown>)}
       hitSlop={hitSlop}
       className={className}
+      style={style as ViewStyle}
       {...rest}
     >
       {children}
@@ -120,6 +213,7 @@ const TextInput = forwardRef<BridgeTextInputRef, TextInputProps>(
   (
     {
       className,
+      style,
       value,
       defaultValue,
       placeholder,
@@ -132,6 +226,7 @@ const TextInput = forwardRef<BridgeTextInputRef, TextInputProps>(
       autoFocus,
       secureTextEntry,
       inputMode,
+      multiline,
       ...rest
     },
     ref,
@@ -142,6 +237,7 @@ const TextInput = forwardRef<BridgeTextInputRef, TextInputProps>(
       testID={testID}
       accessibilityLabelledBy={accessibilityLabelledBy}
       className={className}
+      style={style as TextStyle}
       value={value}
       defaultValue={defaultValue}
       placeholder={placeholder}
@@ -150,11 +246,46 @@ const TextInput = forwardRef<BridgeTextInputRef, TextInputProps>(
       autoFocus={autoFocus}
       secureTextEntry={secureTextEntry}
       inputMode={inputMode}
+      multiline={multiline}
       {...rest}
     />
   ),
 );
 TextInput.displayName = "TextInput";
+
+// ---------------------------------------------------------------------------
+// Image — RN Image 재노출. 원격 {uri} 소스만 브리지 공통 계약으로 한다
+// (require() 정적 소스는 네이티브 전용 기능이므로 타입에서 제외).
+// ---------------------------------------------------------------------------
+const Image = forwardRef<BridgeImageRef, ImageProps>(
+  (
+    {
+      className,
+      style,
+      source,
+      alt: _alt, // 웹 관용 — 네이티브는 accessibilityLabel이 스크린리더 텍스트
+      onError,
+      accessibilityLabel,
+      nativeID,
+      testID,
+      ...rest
+    },
+    ref,
+  ) => (
+    <RNImage
+      ref={ref as Ref<ImageInstance>}
+      nativeID={nativeID}
+      testID={testID}
+      accessibilityLabel={accessibilityLabel}
+      source={source}
+      className={className}
+      style={style as ImageStyle}
+      onError={onError ? () => onError() : undefined}
+      {...rest}
+    />
+  ),
+);
+Image.displayName = "Image";
 
 // ---------------------------------------------------------------------------
 // 테마 바인딩
@@ -167,4 +298,4 @@ const applyColorScheme: ApplyColorScheme = (colorScheme) => {
   Uniwind.setTheme(colorScheme);
 };
 
-export { View, Text, Pressable, TextInput, applyColorScheme };
+export { View, Text, Pressable, TextInput, Image, applyColorScheme };
