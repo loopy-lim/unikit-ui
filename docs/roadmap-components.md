@@ -122,7 +122,7 @@ shadcn/ui(new-york-v4)의 `registry:ui` 61종을 UniKit 유니버설(한 벌 소
 ## 다음 사이클 제안
 
 1. **패키지 게시 + 레지스트리 공개 호스팅** — npm 0.2.0 게시분은 1차 28종 시점이에요. 61종 반영 게시와 함께 `registry.json`의 homepage(현재 localhost) 갱신·공개 호스팅.
-2. **쇼케이스 전시 확장** — 2차 분의 대표 섹션 6종(chart·command·form·layout·message·overlay)은 이번 사이클에 양측(Expo·Web) 전시를 마쳤어요. 잔여 2차 컴포넌트의 개별 전시가 후속 과제예요.
+2. **쇼케이스 전시 확장** — 웹 `/showcase`는 61종 카탈로그·사이드바 TOC·컴포넌트별 Preview/Code/설치 스니펫(`/showcase/[name]`)으로 전환했어요. Expo는 기존 전체 스크롤 데모를 유지하고, 웹 kitchen-sink(`/showcase/kitchen-sink`)가 그와 같은 구성을 보존해요.
 3. **AI 계층** — llms.txt·AGENTS.md는 이번 사이클에 정비됐어요. shadcn MCP(7도구) 대응 MCP 서버 착수 여부 결정.
 4. **미지원 기능 중 수요 상위** — 오버레이 애니메이션(웹 한정 `web:` 클래스), select·메뉴 키보드 탐색, chart 반응형 크기.
 5. **shadcn 2026-10 신규(trace·code-block)·문서 전용 항목**의 편성 결정(카탈로그 61종은 완료 — 신규 항목은 별도 티어 판단).

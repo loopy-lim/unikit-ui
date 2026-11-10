@@ -312,7 +312,7 @@ function TeaserSection() {
           28종 카탈로그
         </h2>
         <p className="mt-4 max-w-2xl text-base leading-relaxed text-muted-foreground">
-          Button부터 Table까지 1차 이식분 전체를 쇼케이스에서 바로 확인할 수
+          61종 카탈로그·컴포넌트별 Preview/Code를 쇼케이스에서 바로 확인할 수
           있습니다.
         </p>
         <div className="mt-8 flex flex-wrap items-center gap-3">

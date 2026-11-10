@@ -41,7 +41,9 @@ cd apps/web && bun run dev -p 3000
 ```
 
 - 소개 랜딩: <http://localhost:3000/>
-- 컴포넌트 쇼케이스: <http://localhost:3000/showcase>
+- 컴포넌트 쇼케이스(카탈로그): <http://localhost:3000/showcase>
+- 컴포넌트 문서 예: <http://localhost:3000/showcase/button>
+- 전체 스크롤 데모: <http://localhost:3000/showcase/kitchen-sink>
 - 레지스트리: <http://localhost:3000/r/registry.json>
 - 공개 호스팅(예정): <https://ui.unikit.ll3.kr> — 배포 절차는 [apps/web/DEPLOY.md](apps/web/DEPLOY.md)
 
