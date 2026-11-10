@@ -5,10 +5,10 @@
 
 UniKit은 **import 문 하나로 React(웹)와 React Native 양쪽에서 똑같이 보이는** UI 컴포넌트 모음이에요.
 
-- **단일 소스·단일 import** — 컴포넌트는 React Native 프리미티브(`View`/`Text`/`Pressable`/`TextInput`)와 NativeWind의 `className`으로만 작성돼요. 플랫폼 분기(`.web.tsx` 등)는 없고, 웹에서는 react-native-web이 같은 소스를 렌더링해요. 모노레포 안에서는 `import { Button } from "@unikit/core"` 하나면 Expo 앱과 Next.js 앱 양쪽에서 동작합니다.
+- **한 벌 소스·브리지로 양쪽 렌더** — 컴포넌트는 `@unikit-bridge/ui`의 브리지 프리미티브(`View`·`Text`·`Pressable`·`TextInput`·`Image`)와 `className`으로만 작성돼요. 패키지의 exports 조건이 플랫폼을 갈라요 — 네이티브(iOS/Android)는 React Native 프리미티브 + uniwind(Tailwind v4 바인딩), 웹(Next.js·Vite)은 같은 `className`을 `div`·`span`·`button`·`input` DOM 요소에 그대로 얹고 표준 Tailwind CSS v4가 스타일링해요. 플랫폼 분기(`.web.tsx` 등)는 없고, 모노레포 안에서는 `import { Button } from "@unikit-bridge/ui"` 하나면 Expo 앱과 Next.js 앱 양쪽에서 동작합니다.
 - **같은 모습** — 색·테두리·간격이 모두 CSS 변수 토큰(zinc 계열, 라이트/다크)으로 정의되어 있어 두 플랫폼에서 동일한 디자인이 나와요.
-- **shadcn/ui 형태 배포** — npm 패키지로 배포하는 대신, shadcn CLI로 **컴포넌트 소스를 내 프로젝트로 복사**해서 쓰는 형태예요. 복사한 코드는 내 것이 되니 자유롭게 고칠 수 있고, `cn`(clsx + tailwind-merge)·`class-variance-authority`(cva)·CSS 변수 토큰 패턴은 shadcn/ui 표준을 따릅니다.
-- **v0.1 컴포넌트 5종** — Button, Card, Input, Label, Badge (+ cn 유틸). 변형·접근성 명세는 [docs/components.md](docs/components.md)에 있어요.
+- **두 가지 소비 방식** — npm 패키지 `@unikit-bridge/ui`(v0.1.0, 게시 완료)를 설치해 쓰거나, shadcn CLI로 **컴포넌트 소스를 내 프로젝트로 복사**해서 쓸 수 있어요. 복사한 코드는 내 것이 되니 자유롭게 고칠 수 있고, `cn`(clsx + tailwind-merge)·`class-variance-authority`(cva)·CSS 변수 토큰 패턴은 shadcn/ui 표준을 따릅니다.
+- **컴포넌트 28종** — shadcn/ui 카탈로그(new-york-v4) 61종 중 1차 28종을 유니버설로 이식했어요: 기초 5종(Button·Card·Input·Label·Badge) + 폼 입력(Checkbox·Radio·Switch·Toggle·ToggleGroup·Textarea) + 내비게이션(Tabs·Accordion·Collapsible·Breadcrumb·Pagination·Progress·Separator) + 피드백·데이터(Alert·Avatar·Empty·Skeleton·Table) + 레이아웃(AspectRatio·Kbd·Field·Item·ButtonGroup). 변형·접근성 명세는 [docs/components.md](docs/components.md), 잔여 33종 계획은 [docs/roadmap-components.md](docs/roadmap-components.md)에 있어요.
 
 처음 개발하는 분을 위해 모든 안내를 한글로 작성했어요. 이 README의 모든 명령은 실제로 실행해서 성공하는 것을 확인한 것뿐이에요.
 
@@ -63,11 +63,56 @@ cd apps/web && bun x next dev -p 3000
 
 ## 내 프로젝트에 컴포넌트 추가하기
 
-shadcn CLI로 UniKit 컴포넌트 소스를 내 Next.js 프로젝트로 복사하는 절차예요. UniKit 저장소가 로컬에 있어야 해요(아래 3단계에서 레지스트리 서버를 띄우니까요).
+두 가지 방법이 있어요. **방법 1(npm 설치)**이 가장 간단하고, **방법 2(소스 복사)**는 shadcn/ui 방식대로 컴포넌트 코드를 내 프로젝트로 가져와 자유롭게 고치는 방법이에요. 어느 쪽이든 디자인 토큰 설정은 같아요.
 
-복사되는 것: 컴포넌트 소스 1개(`components/unikit/<이름>.tsx`)와 자동 설치되는 의존성 6종(`class-variance-authority`, `clsx`, `tailwind-merge`, `nativewind`, `react-native`, `react-native-web`)이에요. 복사본의 import는 전부 내 프로젝트 경로(`@/lib/utils`) 또는 npm 패키지로 해석돼요.
+### 방법 1 — npm 패키지로 설치
 
-### 1단계 — Next.js 프로젝트 준비
+```bash
+bun add @unikit-bridge/ui class-variance-authority clsx tailwind-merge
+```
+
+그다음 내 앱의 스타일링 엔진 쪽을 준비해요.
+
+- **웹(Next.js 등)** — Tailwind CSS v4가 설정된 프로젝트면 돼요(create-next-app 기본). 전역 CSS(예: `app/globals.css`)에 아래를 추가하고:
+
+  ```css
+  @custom-variant dark (&:where(.dark, .dark *));
+  @custom-variant web (&:where(:root, :root *));   /* UniKit의 web: 접두 클래스 활성화 */
+  @source '../node_modules/@unikit-bridge/ui/src'; /* 패키지 내부의 클래스 문자열 스캔 */
+  ```
+
+  토큰 값 20종(`:root`/`.dark` 블록)은 아래 방법 2의 **토큰 받기** 절과 같은 방식(`theme` 항목 add 한 줄)으로 받아요. Next.js라면 `next.config.ts`에 패키지 컴파일 설정 한 줄도 필요해요(방법 2 3단계 (a)와 동일).
+
+- **네이티브(Expo)** — `bun add uniwind react-native` 후 Metro 설정(`withUniwindConfig`)과 전역 CSS(`cssEntryFile`)를 등록해요. 실제 동작하는 설정 전체가 궁금하면 데모 앱의 `apps/expo/metro.config.js`·`apps/expo/global.css`를 그대로 참고하세요. 상세 안내는 [packages/unikit/README.md](packages/unikit/README.md)(npm 패키지 문서, 영어)에도 있어요.
+
+사용 예:
+
+```tsx
+"use client";
+
+import { UnikitThemeProvider, Button, Card, CardContent } from "@unikit-bridge/ui";
+
+export default function Home() {
+  return (
+    <UnikitThemeProvider defaultColorScheme="light">
+      <Card>
+        <CardContent className="gap-2">
+          <Button variant="default">기본 버튼</Button>
+          <Button variant="outline" size="sm">외곽선 버튼</Button>
+        </CardContent>
+      </Card>
+    </UnikitThemeProvider>
+  );
+}
+```
+
+### 방법 2 — shadcn CLI로 소스 복사 (로컬 레지스트리)
+
+UniKit 저장소가 로컬에 있어야 해요(아래 2단계에서 레지스트리 서버를 띄우니까요).
+
+복사되는 것: 컴포넌트 소스 1개(`components/unikit/<이름>.tsx`)와 자동 설치되는 의존성 7종(`@unikit-bridge/ui`, `class-variance-authority`, `clsx`, `tailwind-merge`, `tailwindcss`, `uniwind`, `react-native`)이에요. 복사본의 `cn` import는 내 프로젝트 경로(`@/lib/utils`)로, 브리지 프리미티브 import는 npm 패키지(`@unikit-bridge/ui/primitives`)로 해석돼요.
+
+#### 1단계 — Next.js 프로젝트 준비
 
 새 프로젝트를 만들고 shadcn을 초기화해요. 프로젝트 이름은 예시로 `my-unikit-app`을 쓸게요:
 
@@ -79,27 +124,9 @@ bunx shadcn@latest init -b base -p nova -y
 
 > shadcn CLI 4.23에서는 `-b base`(기본 색)와 `-p nova`(프리셋)를 함께 지정해야 대화형 질문 없이 진행돼요. 프리셋을 지정하지 않으면 선택을 기다리며 멈추니 주의하세요.
 
-### 2단계 — Tailwind를 4에서 3.4로 낮추기
+> create-next-app이 만드는 Tailwind CSS v4 환경을 그대로 써요 — 버전을 내리거나 별도 설정 파일을 만들 필요가 없어요.
 
-최신 create-next-app은 Tailwind 4를 설치하는데, UniKit이 의존하는 NativeWind 4.2는 **Tailwind 3.4계**가 필요해요. 프로젝트 폴더에서:
-
-```bash
-bun add -d tailwindcss@^3.4.17 postcss autoprefixer
-bun remove @tailwindcss/turbopack
-```
-
-그리고 프로젝트 루트에 `postcss.config.js` 파일을 만들어요:
-
-```js
-module.exports = {
-  plugins: {
-    tailwindcss: {},
-    autoprefixer: {},
-  },
-};
-```
-
-### 3단계 — UniKit 레지스트리에서 컴포넌트 가져오기
+#### 2단계 — UniKit 레지스트리에서 컴포넌트 가져오기
 
 **다른 터미널**에서 UniKit 저장소 루트로 이동해 레지스트리 서버를 띄워요:
 
@@ -115,11 +142,13 @@ cd apps/web && bun x next dev -p 3000
 bunx shadcn@latest add http://localhost:3000/r/button.json -y
 ```
 
-한 번에 5종을 가져와도 돼요:
+한 번에 여러 종을 가져와도 돼요:
 
 ```bash
-bunx shadcn@latest add http://localhost:3000/r/button.json http://localhost:3000/r/card.json http://localhost:3000/r/input.json http://localhost:3000/r/label.json http://localhost:3000/r/badge.json -y
+bunx shadcn@latest add http://localhost:3000/r/button.json http://localhost:3000/r/card.json http://localhost:3000/r/checkbox.json http://localhost:3000/r/tabs.json http://localhost:3000/r/avatar.json -y
 ```
+
+등록된 컴포넌트 28종 전체 목록은 <http://localhost:3000/r/registry.json> 에서 확인할 수 있어요.
 
 `components/unikit/` 폴더에 소스가 복사되고 의존성이 자동으로 설치돼요. 확인이 끝나면 레지스트리 서버는 `Ctrl+C`로 종료해도 됩니다.
 
@@ -127,110 +156,37 @@ bunx shadcn@latest add http://localhost:3000/r/button.json http://localhost:3000
 > - `lib/utils.ts`는 CLI가 특수 취급해요. `add`가 `lib/utils.ts`를 "이미 존재한다"며 건너뛰는 출력이 나오는데, init이 만든 표준 cn(`export { cn } from "cn"`)이 그대로 쓰인다는 뜻이에요. UniKit 컴포넌트가 쓰는 `cn`과 기능이 같으니 그대로 두면 됩니다.
 > - 복사된 컴포넌트 파일에서 원본 소스의 앞부분 주석은 CLI가 제거해요. 기능에는 영향이 없어요.
 
-### 4단계 — 소비자 프로젝트 필수 설정
+#### 3단계 — 소비자 프로젝트 필수 설정
 
-복사만으로는 빌드가 실패해요. UniKit 컴포넌트가 React Native 프리미티브 + NativeWind로 작성되어 있어서, 내 프로젝트에 맞는 설정 4가지를 추가해야 해요. **이 단계를 빠뜨리는 것이 빌드 실패의 가장 흔한 원인**이에요.
+복사만으로는 빌드가 실패해요. 복사 컴포넌트가 npm 패키지 `@unikit-bridge/ui`의 브리지를 쓰므로, 내 프로젝트에 맞는 설정 3가지를 추가해야 해요. **이 단계를 빠뜨리는 것이 빌드 실패의 가장 흔한 원인**이에요.
 
-**(a) NativeWind 타입 보강** — `className` prop을 TypeScript가 알아보게 만들어요.
-
-`tsconfig.json`의 `compilerOptions`에 한 줄을 추가하고:
-
-```json
-"jsxImportSource": "nativewind",
-```
-
-(`"jsx": "react-jsx"`는 create-next-app이 이미 만들어 두니 **건드리지 마세요** — 같이 넣으면 JSON에 같은 키가 두 번 생겨 깨져요.)
-
-프로젝트 루트에 `nativewind-env.d.ts` 파일을 만들어요:
-
-```ts
-/// <reference types="nativewind/types" />
-```
-
-**(b) react-native → react-native-web 별칭 + 트랜스파일 설정** — 웹 번들에서 React Native를 react-native-web으로 치환해요. `next.config.ts`를 통째로 다음으로 바꿔도 됩니다(원본: UniKit의 `apps/web/next.config.ts`):
+**(a) Next.js가 패키지를 컴파일하도록** — `@unikit-bridge/ui`는 TypeScript 소스로 배포돼서 Next가 직접 컴파일하게 해야 해요. `next.config.ts`를 통째로 다음으로 바꿔도 됩니다(원본: UniKit의 `apps/web/next.config.ts`):
 
 ```ts
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  // UniKit 컴포넌트는 RN 프리미티브 + nativewind로 작성되므로 번들러가 함께 트랜스파일해야 해요.
-  transpilePackages: [
-    "nativewind",
-    "react-native-css-interop",
-    "react-native",
-    "react-native-web",
-  ],
-  // 웹 번들에서 react-native를 react-native-web으로 치환(RNW 표준 설정).
-  turbopack: {
-    resolveAlias: {
-      "react-native": "react-native-web",
-    },
-  },
+  // @unikit-bridge/ui는 TS 소스 배포 — Next가 직접 컴파일한다.
+  transpilePackages: ["@unikit-bridge/ui"],
 };
 
 export default nextConfig;
 ```
 
-**(c) Tailwind 3.4 설정 파일** — `tailwind.config.js`를 프로젝트 루트에 새로 만들어요(NativeWind 프리셋 + UniKit 토큰 매핑. 원본: UniKit의 `apps/web/tailwind.config.js`):
+(웹 번들에는 react-native가 아예 들어오지 않아요 — 브리지가 DOM으로 렌더링하므로 react-native 별칭·트랜스파일 설정은 더 이상 불필요해요.)
 
-```js
-/** @type {import('tailwindcss').Config} */
-module.exports = {
-  presets: [require("nativewind/preset")],
-  content: [
-    "./app/**/*.{ts,tsx}",
-    "./components/**/*.{ts,tsx}",
-    "./lib/**/*.{ts,tsx}",
-  ],
-  theme: {
-    extend: {
-      colors: {
-        border: "hsl(var(--border))",
-        input: "hsl(var(--input))",
-        ring: "hsl(var(--ring))",
-        background: "hsl(var(--background))",
-        foreground: "hsl(var(--foreground))",
-        primary: {
-          DEFAULT: "hsl(var(--primary))",
-          foreground: "hsl(var(--primary-foreground))",
-        },
-        secondary: {
-          DEFAULT: "hsl(var(--secondary))",
-          foreground: "hsl(var(--secondary-foreground))",
-        },
-        destructive: {
-          DEFAULT: "hsl(var(--destructive))",
-          foreground: "hsl(var(--destructive-foreground))",
-        },
-        muted: {
-          DEFAULT: "hsl(var(--muted))",
-          foreground: "hsl(var(--muted-foreground))",
-        },
-        accent: {
-          DEFAULT: "hsl(var(--accent))",
-          foreground: "hsl(var(--accent-foreground))",
-        },
-        popover: {
-          DEFAULT: "hsl(var(--popover))",
-          foreground: "hsl(var(--popover-foreground))",
-        },
-        card: {
-          DEFAULT: "hsl(var(--card))",
-          foreground: "hsl(var(--card-foreground))",
-        },
-      },
-      borderRadius: {
-        lg: "var(--radius)",
-        md: "calc(var(--radius) - 2px)",
-        sm: "calc(var(--radius) - 4px)",
-      },
-    },
-  },
-  plugins: [],
-};
+**(b) 전역 CSS 두 줄** — `app/globals.css`에 추가해요:
+
+```css
+@custom-variant dark (&:where(.dark, .dark *));  /* shadcn init이 이미 넣었으면 생략 */
+@custom-variant web (&:where(:root, :root *));   /* UniKit의 web: 접두 클래스 활성화 */
+@source '../node_modules/@unikit-bridge/ui/src'; /* 브리지 프리미티브 내부 클래스 스캔 */
 ```
 
-**(d) 토큰 CSS 변수** — 복사·붙여넣기 대신 레지스트리에서 **한 줄**로 받아요. **3단계에서 띄운 레지스트리 서버(3000 포트)가 아직 실행 중이어야 해요.** 소비자 프로젝트 터미널에서:
+- `web:` 변형 — UniKit 컴포넌트의 웹 전용 효과(그림자·전환 등)는 `web:shadow-*`처럼 접두가 붙어요. 이 줄이 있어야 웹에서 활성화돼요(네이티브는 uniwind가 같은 접두를 처리해요).
+- `@source` — 복사한 파일이 아니라 **패키지 내부**(브리지 프리미티브의 기본 클래스)에 있는 클래스 문자열도 Tailwind가 생성하도록 스캔 대상에 넣는 줄이에요.
+
+**(c) 토큰 받기** — 복사·붙여넣기 대신 레지스트리에서 **한 줄**로 받아요. **2단계에서 띄운 레지스트리 서버(3000 포트)가 아직 실행 중이어야 해요.** 소비자 프로젝트 터미널에서:
 
 ```bash
 bunx shadcn@latest add http://localhost:3000/r/theme.json -y
@@ -254,7 +210,7 @@ bunx shadcn@latest add http://localhost:3000/r/theme.json -y
 
 각 프리셋의 핵심 대비비(WCAG ≥4.5:1 검증)는 [토큰 카탈로그](packages/unikit/docs/tokens.md)의 프리셋 절에서 기계 검증돼요.
 
-### 5단계 — 사용해 보기
+#### 4단계 — 사용해 보기
 
 페이지에서 복사한 컴포넌트를 가져다 써 보세요. import 경로만 내 프로젝트 경로(`@/components/unikit/...`)로 바꾸면 UniKit 데모 앱과 똑같이 동작해요:
 
@@ -283,15 +239,15 @@ bun x tsc --noEmit
 bun run build
 ```
 
-둘 다 오류 없이 끝나면 성공이에요. `"use client"` 지시문이 페이지에 필요해요(NativeWind는 서버 컴포넌트를 지원하지 않아요). 컴포넌트별 props·변형·접근성 동작은 [docs/components.md](docs/components.md)를 참고하세요.
+둘 다 오류 없이 끝나면 성공이에요. `"use client"` 지시문이 페이지에 필요해요(컴포넌트가 ref·상태를 다루는 클라이언트 컴포넌트라서요). 컴포넌트별 props·변형·접근성 동작은 [docs/components.md](docs/components.md)를 참고하세요.
 
 ## UniKit에 새 컴포넌트 추가하기 (저장소 기여)
 
 UniKit 자체에 컴포넌트를 추가할 때는 **소스가 두 벌**이라는 점을 기억하세요. 모노레포용(`src/`)과 소비자 복사용(`registry/`) 트리가 있고, 본문 차이는 import 문뿐이어야 해요. 절차는 3단계예요:
 
-1. **`packages/unikit/src/components/`에 컴포넌트 작성** — RN 프리미티브 + `className` + cva + `cn`, 플랫폼 분기 금지. `src/index.ts`에서 export도 추가하세요.
+1. **`packages/unikit/src/components/`에 컴포넌트 작성** — 브리지 프리미티브(`@unikit-bridge/ui/primitives`) + `className` + cva + `cn`, 플랫폼 분기 금지. `src/index.ts`에서 export도 추가하세요.
 2. **`packages/unikit/registry/ui/`에 복사** — 본문은 그대로 두고 import만 소비자 기준으로 바꿔요: `import { cn } from "../lib/utils"` → `import { cn } from "@/lib/utils"`.
-3. **`packages/unikit/registry.json`에 아이템 등록** — `name`·`type: "registry:ui"`·`registryDependencies: ["utils"]`·`dependencies`(nativewind, react-native, react-native-web 등)·`files`(`path` + `target: "components/unikit/<이름>.tsx"`).
+3. **`packages/unikit/registry.json`에 아이템 등록** — `name`·`type: "registry:ui"`·`registryDependencies: ["utils"]`·`dependencies`(@unikit-bridge/ui, class-variance-authority, clsx, tailwind-merge, tailwindcss, uniwind, react-native)·`files`(`path` + `target: "components/unikit/<이름>.tsx"`).
 
 토큰(색·radius)을 바꿀 때는 소스가 `packages/unikit/src/theme/tokens.ts` 하나뿐이에요. 값을 고친 뒤 저장소 루트에서:
 
@@ -307,14 +263,14 @@ bun run audit:design      # 일관성 기계 검사 8종 — 위반이 있으면
 ```text
 UniKit/
 ├── apps/
-│   ├── expo/          # @unikit/expo — Expo(SDK 58) 데모 앱. 쇼케이스 화면 + 테마 토글
+│   ├── expo/          # @unikit/expo — Expo(SDK 58) 데모 앱. 쇼케이스 화면 + 테마 토글 (uniwind 엔진)
 │   └── web/           # @unikit/web — Next.js 16 데모 앱. 같은 쇼케이스 + 레지스트리 서빙(/r/)
 ├── packages/
-│   └── unikit/        # @unikit/core — 유니버설 컴포넌트 패키지
-│       ├── src/       #   모노레포용 소스(components 5종 + cn + 테마 토큰/Provider)
+│   └── unikit/        # @unikit-bridge/ui — 유니버설 컴포넌트 패키지(npm 0.1.0 게시)
+│       ├── src/       #   components 28종 + cn + 테마 토큰/Provider + bridge/(네이티브·웹 브리지)
 │       ├── registry/  #   소비자 복사용 소스 트리(import가 @/lib/utils 기준)
 │       ├── docs/tokens.md  # 생성된 토큰 카탈로그(generate:design 산출)
-│       └── registry.json  # shadcn 규격 레지스트리(아이템 10종: utils + 컴포넌트 5종 + theme 4종[기본+프리셋 3])
+│       └── registry.json  # shadcn 규격 레지스트리(아이템 33종: utils + 컴포넌트 28종 + theme 4종[기본+프리셋 3])
 ├── docs/
 │   ├── components.md  # 컴포넌트별 사용법·Props·접근성 (한글)
 │   ├── expo-go.md     # 스마트폰 Expo Go 실물 확인 가이드 (한글)
@@ -323,16 +279,19 @@ UniKit/
 └── package.json       # 워크스페이스 루트(workspaces: apps/*, packages/*)
 ```
 
-두 데모 앱(`apps/expo`, `apps/web`)은 **같은 컴포넌트를 같은 import(`@unikit/core`)로** 렌더링해요. 이것이 "한 개의 import로 양쪽에서 같이 보이게"라는 원 요청의 실증이에요.
+두 데모 앱(`apps/expo`, `apps/web`)은 **같은 컴포넌트를 같은 import(`@unikit-bridge/ui`)로** 렌더링해요. 이것이 "한 개의 import로 양쪽에서 같이 보이게"라는 원 요청의 실증이에요.
 
 ## 문서
 
-- [docs/components.md](docs/components.md) — Button·Card·Input·Label·Badge별 import, Props 표, 변형·크기 전체 목록, 접근성 동작, 테마 다루기
+- [docs/components.md](docs/components.md) — 컴포넌트 28종별 import, Props 표, 변형·크기 전체 목록, 접근성 동작, 테마 다루기
+- [docs/roadmap-components.md](docs/roadmap-components.md) — shadcn 61종 중 잔여 33종의 티어별 이식 계획과 필요 브리지 기능
+- [packages/unikit/README.md](packages/unikit/README.md) — npm 패키지 문서(설치·브리지 구조·테마, 영어)
 - [packages/unikit/docs/tokens.md](packages/unikit/docs/tokens.md) — 디자인 토큰 20종의 값·역할 카탈로그(자동 생성)
 - [docs/expo-go.md](docs/expo-go.md) — 내 스마트폰의 Expo Go 앱으로 실물 네이티브 화면을 확인하는 가이드
 - [docs/sdd/](docs/sdd/) — 요구 정의·기술 설계·검증 원장 등 개발 과정 문서
 
 ## 알려진 한계
 
-- **네이티브 실물 확인** — 이 저장소의 자동 검증은 웹 렌더링(react-native-web)과 네이티브 번들 빌드까지만 가능해요(개발 환경에 에뮬레이터가 없어요). 실물 기기의 화면·테마 전환은 [docs/expo-go.md](docs/expo-go.md)로 직접 확인하세요.
-- **v0.1 범위 밖** — npm 배포(`@unikit/*` 퍼블리시), GitHub 공개·CI, 컴포넌트 추가(Dialog·Select 등), 애니메이션은 후속 버전 과제예요.
+- **네이티브 실물 확인** — 이 저장소의 자동 검증은 웹 렌더링(Expo web 내보내기·Next.js 빌드)과 네이티브 번들 빌드까지만 가능해요(개발 환경에 에뮬레이터가 없어요). 실물 기기의 화면·테마 전환은 [docs/expo-go.md](docs/expo-go.md)로 직접 확인하세요.
+- **컴포넌트 카탈로그 확장 중** — 1차 28종까지 완료됐고, shadcn 전체 카탈로그(61종) 중 잔여 33종 이식이 [docs/roadmap-components.md](docs/roadmap-components.md)의 티어 순서로 진행돼요. 포털 계열(Dialog·Select 등)은 포털·위치 계산 브리지가, 제스처(Slider 등)·차트는 각각 별도 계약이 먼저 필요해요.
+- **아이콘** — lucide 같은 아이콘 라이브러리 의존은 아직 없어요. 필요한 표시는 글리프 문자(✓ › ⌄ 등)로 대체하며, 아이콘 인프라는 후속 과제예요.

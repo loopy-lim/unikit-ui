@@ -2,7 +2,7 @@
 
 One typed component set that **renders React Native views on native and plain DOM on web** — the same `className` strings, the same look, no platform branches in your code.
 
-- **Native (iOS/Android)** — components render React Native primitives styled by [uniwind](https://uniwind.dev) (Tailwind CSS v4 bindings, 2× faster than NativeWind).
+- **Native (iOS/Android)** — components render React Native primitives styled by [uniwind](https://uniwind.dev) (Tailwind CSS v4 bindings).
 - **Web (React DOM)** — the very same components render `div`/`span`/`button`/`input` styled by **standard Tailwind CSS v4**. No react-native-web, no extra styling engine: your Tailwind CSS is the engine.
 - **Design tokens as a single source of truth** — light/dark themes are CSS variables generated from one `tokens.ts`; switching schemes is instant on both platforms (`UnikitThemeProvider`).
 - **shadcn-style variants** — built with `class-variance-authority`; `cn()` (clsx + tailwind-merge) is exported for custom styling.
