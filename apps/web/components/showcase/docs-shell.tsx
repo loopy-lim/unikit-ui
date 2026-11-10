@@ -176,10 +176,59 @@ function DocsSidebar({
   );
 }
 
-export function PreviewFrame({ children }: { children: ReactNode }) {
+export function PreviewFrame({
+  children,
+  align = "center",
+}: {
+  children: ReactNode;
+  align?: "center" | "start";
+}) {
   return (
-    <View className="site-preview-enter flex min-h-48 items-center justify-center rounded-xl border border-border bg-muted/20 px-6 py-10 sm:min-h-52 sm:px-10 sm:py-12">
-      <View className="flex w-full max-w-xl flex-col items-start">{children}</View>
+    <View
+      className={
+        align === "start"
+          ? "site-preview-enter site-preview-stage flex min-h-40 items-start justify-start rounded-xl border border-border px-6 py-8 sm:min-h-44 sm:px-8 sm:py-10"
+          : "site-preview-enter site-preview-stage flex min-h-40 items-center justify-center rounded-xl border border-border px-6 py-8 sm:min-h-44 sm:px-8 sm:py-10"
+      }
+    >
+      <View
+        className={
+          align === "start"
+            ? "flex w-full max-w-md flex-col items-stretch"
+            : "flex w-full max-w-md flex-col items-center"
+        }
+      >
+        {children}
+      </View>
+    </View>
+  );
+}
+
+/** shadcn Examples / Seed 변형 섹션 — 제목 + Preview */
+export function ExampleBlock({
+  title,
+  description,
+  children,
+  align = "center",
+}: {
+  title: string;
+  description?: string;
+  children: ReactNode;
+  align?: "center" | "start";
+}) {
+  return (
+    <View className="space-y-3">
+      <View className="space-y-1">
+        <Text className="font-sans text-lg font-semibold tracking-tight text-foreground">
+          {title}
+        </Text>
+        {description ? (
+          <Text className="font-sans text-sm leading-6 text-muted-foreground">
+            {description}
+          </Text>
+        ) : null}
+      </View>
+      <PreviewFrame align={align}>{children}</PreviewFrame>
     </View>
   );
 }

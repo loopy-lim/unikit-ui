@@ -19,16 +19,16 @@ export const checkboxDemo: ShowcaseDemo = {
     return (
       <View className="flex flex-col gap-3">
         <View className="flex flex-row items-center gap-2">
-          <Checkbox defaultChecked accessibilityLabel="알림 받기" />
-          <Text className="font-sans text-sm text-foreground">알림 받기</Text>
+          <Checkbox defaultChecked accessibilityLabel="이용약관 동의" />
+          <Text className="font-sans text-sm text-foreground">
+            이용약관에 동의합니다
+          </Text>
         </View>
         <View className="flex flex-row items-center gap-2">
           <Checkbox accessibilityLabel="마케팅 수신" />
-          <Text className="font-sans text-sm text-foreground">마케팅 수신</Text>
-        </View>
-        <View className="flex flex-row items-center gap-2 opacity-50">
-          <Checkbox disabled accessibilityLabel="비활성" />
-          <Text className="font-sans text-sm text-foreground">비활성</Text>
+          <Text className="font-sans text-sm text-foreground">
+            마케팅 정보 수신（선택）
+          </Text>
         </View>
       </View>
     );
@@ -36,6 +36,19 @@ export const checkboxDemo: ShowcaseDemo = {
   code: `import { Checkbox } from "@unikit-bridge/ui";
 
 <Checkbox defaultChecked accessibilityLabel="동의" />`,
+  examples: [
+    {
+      title: "Disabled",
+      Demo: function CheckboxDisabled() {
+        return (
+          <View className="flex flex-row items-center gap-2 opacity-60">
+            <Checkbox disabled accessibilityLabel="비활성" />
+            <Text className="font-sans text-sm text-foreground">비활성</Text>
+          </View>
+        );
+      },
+    },
+  ],
 };
 
 export const radioGroupDemo: ShowcaseDemo = {
@@ -63,21 +76,35 @@ export const radioGroupDemo: ShowcaseDemo = {
 export const switchDemo: ShowcaseDemo = {
   Demo: function SwitchDemo() {
     return (
-      <View className="flex flex-col gap-3">
-        <View className="flex flex-row items-center gap-2">
-          <Switch defaultChecked accessibilityLabel="알림" />
-          <Text className="font-sans text-sm text-foreground">알림 켜기</Text>
+      <View className="w-full gap-4">
+        <View className="flex flex-row items-center justify-between gap-4">
+          <View className="min-w-0 flex-1 gap-0.5">
+            <Text className="font-sans text-sm font-medium text-foreground">
+              푸시 알림
+            </Text>
+            <Text className="font-sans text-xs text-muted-foreground">
+              새 메시지와 멘션을 바로 알려줘요.
+            </Text>
+          </View>
+          <Switch defaultChecked accessibilityLabel="푸시 알림" />
         </View>
-        <View className="flex flex-row items-center gap-2">
+        <View className="flex flex-row items-center justify-between gap-4">
+          <View className="min-w-0 flex-1 gap-0.5">
+            <Text className="font-sans text-sm font-medium text-foreground">
+              자동 저장
+            </Text>
+            <Text className="font-sans text-xs text-muted-foreground">
+              작성 중인 내용을 임시 저장해요.
+            </Text>
+          </View>
           <Switch accessibilityLabel="자동 저장" />
-          <Text className="font-sans text-sm text-foreground">자동 저장</Text>
         </View>
       </View>
     );
   },
   code: `import { Switch } from "@unikit-bridge/ui";
 
-<Switch defaultChecked accessibilityLabel="알림" />`,
+<Switch defaultChecked accessibilityLabel="푸시 알림" />`,
 };
 
 export const toggleDemo: ShowcaseDemo = {

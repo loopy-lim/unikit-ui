@@ -69,79 +69,139 @@ import type { ShowcaseDemo } from "./types";
 export const buttonDemo: ShowcaseDemo = {
   Demo: function ButtonDemo() {
     return (
-      <View className="flex w-full flex-col gap-5">
-        <View className="flex flex-row flex-wrap gap-2">
-          <Button variant="default">기본</Button>
-          <Button variant="secondary">보조</Button>
-          <Button variant="destructive">삭제</Button>
-          <Button variant="outline">외곽선</Button>
-          <Button variant="ghost">고스트</Button>
-          <Button variant="link">링크</Button>
-        </View>
-        <View className="flex flex-row flex-wrap items-center gap-2">
-          <Button size="sm">작게</Button>
-          <Button size="default">기본</Button>
-          <Button size="lg">크게</Button>
-          <Button size="icon" accessibilityLabel="더보기">
-            ⋯
-          </Button>
-          <Button variant="outline" disabled>
-            비활성
-          </Button>
-        </View>
+      <View className="flex flex-row flex-wrap items-center justify-center gap-3">
+        <Button>계속하기</Button>
+        <Button variant="outline">취소</Button>
+        <Button size="icon" variant="outline" accessibilityLabel="공유">
+          ↑
+        </Button>
       </View>
     );
   },
   code: `import { Button } from "@unikit-bridge/ui";
 
-<Button variant="default">기본</Button>
-<Button variant="outline" size="sm">외곽선</Button>
-<Button disabled>비활성</Button>`,
+<Button>계속하기</Button>
+<Button variant="outline">취소</Button>`,
+  examples: [
+    {
+      title: "Variants",
+      description: "강조도에 따라 기본·보조·위험·외곽선·고스트·링크를 골라요.",
+      Demo: function ButtonVariants() {
+        return (
+          <View className="flex flex-row flex-wrap items-center justify-center gap-2">
+            <Button variant="default">기본</Button>
+            <Button variant="secondary">보조</Button>
+            <Button variant="destructive">삭제</Button>
+            <Button variant="outline">외곽선</Button>
+            <Button variant="ghost">고스트</Button>
+            <Button variant="link">링크</Button>
+          </View>
+        );
+      },
+    },
+    {
+      title: "Size",
+      description: "작게·기본·크게·아이콘 크기.",
+      Demo: function ButtonSizes() {
+        return (
+          <View className="flex flex-row flex-wrap items-center justify-center gap-2">
+            <Button size="sm">작게</Button>
+            <Button size="default">기본</Button>
+            <Button size="lg">크게</Button>
+            <Button size="icon" accessibilityLabel="더보기">
+              ⋯
+            </Button>
+          </View>
+        );
+      },
+    },
+    {
+      title: "Disabled",
+      Demo: function ButtonDisabled() {
+        return (
+          <View className="flex flex-row flex-wrap items-center justify-center gap-2">
+            <Button disabled>비활성</Button>
+            <Button variant="outline" disabled>
+              외곽선
+            </Button>
+          </View>
+        );
+      },
+    },
+  ],
 };
 
 export const badgeDemo: ShowcaseDemo = {
   Demo: function BadgeDemo() {
     return (
-      <View className="flex flex-row flex-wrap gap-2">
-        <Badge>기본</Badge>
-        <Badge variant="secondary">보조</Badge>
-        <Badge variant="destructive">위험</Badge>
-        <Badge variant="outline">외곽선</Badge>
+      <View className="flex flex-row flex-wrap items-center justify-center gap-2">
+        <Badge>신규</Badge>
+        <Badge variant="secondary">베타</Badge>
+        <Badge variant="outline">초안</Badge>
       </View>
     );
   },
   code: `import { Badge } from "@unikit-bridge/ui";
 
-<Badge variant="secondary">보조</Badge>
-<Badge variant="destructive">위험</Badge>`,
+<Badge>신규</Badge>
+<Badge variant="secondary">베타</Badge>`,
+  examples: [
+    {
+      title: "Variants",
+      Demo: function BadgeVariants() {
+        return (
+          <View className="flex flex-row flex-wrap items-center justify-center gap-2">
+            <Badge>기본</Badge>
+            <Badge variant="secondary">보조</Badge>
+            <Badge variant="destructive">위험</Badge>
+            <Badge variant="outline">외곽선</Badge>
+          </View>
+        );
+      },
+    },
+  ],
 };
 
 export const cardDemo: ShowcaseDemo = {
   Demo: function CardDemo() {
     return (
-      <Card className="w-full">
+      <Card className="w-full shadow-sm">
         <CardHeader>
-          <CardTitle>안녕, UniKit!</CardTitle>
-          <CardDescription>복사해서 쓰는 유니버설 컴포넌트</CardDescription>
+          <CardTitle>프로젝트 만들기</CardTitle>
+          <CardDescription>
+            이름과 설명을 입력하면 바로 시작할 수 있어요.
+          </CardDescription>
         </CardHeader>
-        <CardContent>
-          <Text className="font-sans text-sm text-foreground">
-            웹과 앱에서 같은 모습으로 렌더링돼요.
-          </Text>
+        <CardContent className="gap-4">
+          <View className="flex flex-col gap-2">
+            <Label nativeID="card-name">이름</Label>
+            <Input
+              accessibilityLabelledBy="card-name"
+              placeholder="UniKit Demo"
+            />
+          </View>
+          <View className="flex flex-col gap-2">
+            <Label nativeID="card-desc">설명</Label>
+            <Input
+              accessibilityLabelledBy="card-desc"
+              placeholder="간단한 소개"
+            />
+          </View>
         </CardContent>
-        <CardFooter>
+        <CardFooter className="flex flex-row justify-end gap-2">
           <Button variant="outline" size="sm">
-            자세히
+            취소
           </Button>
+          <Button size="sm">만들기</Button>
         </CardFooter>
       </Card>
     );
   },
-  code: `import { Card, CardHeader, CardTitle, CardContent } from "@unikit-bridge/ui";
+  code: `import { Card, CardHeader, CardTitle, CardContent, CardFooter, Button } from "@unikit-bridge/ui";
 
 <Card>
-  <CardHeader><CardTitle>제목</CardTitle></CardHeader>
-  <CardContent>내용</CardContent>
+  <CardHeader><CardTitle>프로젝트 만들기</CardTitle></CardHeader>
+  <CardFooter><Button>만들기</Button></CardFooter>
 </Card>`,
 };
 
@@ -149,31 +209,44 @@ export const inputDemo: ShowcaseDemo = {
   Demo: function InputDemo() {
     const ref = useRef<BridgeTextInputRef>(null);
     return (
-      <View className="flex w-full flex-col gap-4">
-        <View className="flex flex-col gap-2">
-          <Label nativeID="demo-input" onPress={() => ref.current?.focus()}>
-            이름
-          </Label>
-          <Input
-            ref={ref}
-            accessibilityLabelledBy="demo-input"
-            placeholder="홍길동"
-          />
-        </View>
-        <View className="flex flex-col gap-2">
-          <Label nativeID="demo-input-disabled">비활성</Label>
-          <Input
-            accessibilityLabelledBy="demo-input-disabled"
-            placeholder="수정할 수 없어요"
-            editable={false}
-          />
-        </View>
+      <View className="flex w-full flex-col gap-2">
+        <Label nativeID="demo-input" onPress={() => ref.current?.focus()}>
+          이메일
+        </Label>
+        <Input
+          ref={ref}
+          accessibilityLabelledBy="demo-input"
+          placeholder="you@example.com"
+          keyboardType="email-address"
+          autoCapitalize="none"
+        />
+        <Text className="font-sans text-xs leading-5 text-muted-foreground">
+          계정에 사용할 이메일을 입력하세요.
+        </Text>
       </View>
     );
   },
-  code: `import { Input } from "@unikit-bridge/ui";
+  code: `import { Input, Label } from "@unikit-bridge/ui";
 
-<Input placeholder="이름" />`,
+<Label nativeID="email">이메일</Label>
+<Input accessibilityLabelledBy="email" placeholder="you@example.com" />`,
+  examples: [
+    {
+      title: "Disabled",
+      Demo: function InputDisabled() {
+        return (
+          <View className="flex w-full flex-col gap-2">
+            <Label nativeID="demo-input-disabled">비활성</Label>
+            <Input
+              accessibilityLabelledBy="demo-input-disabled"
+              placeholder="수정할 수 없어요"
+              editable={false}
+            />
+          </View>
+        );
+      },
+    },
+  ],
 };
 
 export const labelDemo: ShowcaseDemo = {
@@ -197,9 +270,33 @@ export const alertDemo: ShowcaseDemo = {
   code: `import { Alert, AlertTitle, AlertDescription } from "@unikit-bridge/ui";
 
 <Alert>
-  <AlertTitle>알림</AlertTitle>
-  <AlertDescription>설명</AlertDescription>
+  <AlertTitle>저장 완료</AlertTitle>
+  <AlertDescription>변경사항이 안전하게 저장됐어요.</AlertDescription>
 </Alert>`,
+  examples: [
+    {
+      title: "With action",
+      description: "알림 옆에서 바로 이어갈 액션을 붙일 수 있어요.",
+      Demo: function AlertWithAction() {
+        return (
+          <View className="w-full gap-3">
+            <Alert className="w-full">
+              <AlertTitle>업데이트 가능</AlertTitle>
+              <AlertDescription>
+                새 버전이 준비됐어요. 지금 적용할까요?
+              </AlertDescription>
+            </Alert>
+            <View className="flex flex-row justify-end gap-2">
+              <Button variant="outline" size="sm">
+                나중에
+              </Button>
+              <Button size="sm">업데이트</Button>
+            </View>
+          </View>
+        );
+      },
+    },
+  ],
 };
 
 export const progressDemo: ShowcaseDemo = {

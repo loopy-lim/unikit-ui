@@ -13,6 +13,7 @@ import { demos } from "../../../components/showcase/demos";
 import {
   CodeBlock,
   DocsTabs,
+  ExampleBlock,
   InstallSnippet,
   PreviewFrame,
 } from "../../../components/showcase/docs-shell";
@@ -39,9 +40,27 @@ export function ComponentDoc({ name }: { name: string }) {
   }
 
   const Demo = demo.Demo;
+  const examples = demo.examples ?? [];
+  const formLike = [
+    "input",
+    "textarea",
+    "field",
+    "form",
+    "card",
+    "alert",
+    "progress",
+    "table",
+    "item",
+    "switch",
+    "checkbox",
+    "radio-group",
+    "slider",
+    "input-group",
+    "input-otp",
+  ].includes(name);
 
   return (
-    <View className="w-full max-w-3xl space-y-10 pb-8">
+    <View className="w-full max-w-3xl space-y-12 pb-8">
       <View className="space-y-3">
         <View className="flex flex-row items-center gap-1.5">
           <Link
@@ -55,7 +74,7 @@ export function ComponentDoc({ name }: { name: string }) {
             {item.title}
           </Text>
         </View>
-        <Text className="site-display text-4xl font-semibold tracking-tight text-foreground">
+        <Text className="site-display text-3xl font-semibold tracking-tight text-foreground sm:text-4xl">
           {item.title}
         </Text>
         <Text className="max-w-2xl font-sans text-[15px] leading-7 text-muted-foreground">
@@ -63,10 +82,10 @@ export function ComponentDoc({ name }: { name: string }) {
         </Text>
       </View>
 
-      <View className="space-y-5">
+      <View className="space-y-4">
         <DocsTabs tab={tab} onChange={setTab} />
         {tab === "preview" ? (
-          <PreviewFrame>
+          <PreviewFrame align={formLike ? "start" : "center"}>
             <Demo />
           </PreviewFrame>
         ) : (
@@ -75,6 +94,27 @@ export function ComponentDoc({ name }: { name: string }) {
       </View>
 
       <InstallSnippet name={item.name} />
+
+      {examples.length > 0 ? (
+        <View className="space-y-10 border-t border-border/80 pt-10">
+          <Text className="font-sans text-xl font-semibold tracking-tight text-foreground">
+            Examples
+          </Text>
+          {examples.map((example) => {
+            const ExampleDemo = example.Demo;
+            return (
+              <ExampleBlock
+                key={example.title}
+                title={example.title}
+                description={example.description}
+                align={formLike ? "start" : "center"}
+              >
+                <ExampleDemo />
+              </ExampleBlock>
+            );
+          })}
+        </View>
+      ) : null}
 
       <View className="flex flex-row flex-wrap items-center justify-between gap-4 border-t border-border/80 pt-8">
         {neighbors.prev ? (

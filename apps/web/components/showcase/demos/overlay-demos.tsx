@@ -1,6 +1,6 @@
 "use client";
 
-import { cn } from "@unikit-bridge/ui";
+import { buttonVariants, cn } from "@unikit-bridge/ui";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -64,14 +64,24 @@ export const dialogDemo: ShowcaseDemo = {
   Demo: function DialogDemo() {
     return (
       <Dialog>
-        <DialogTrigger className={outlineTriggerClass}>Dialog 열기</DialogTrigger>
+        <DialogTrigger className={outlineTriggerClass}>설정 열기</DialogTrigger>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>알림</DialogTitle>
-            <DialogDescription>바깥 눌림·ESC로 닫혀요.</DialogDescription>
+            <DialogTitle>프로필 공유</DialogTitle>
+            <DialogDescription>
+              링크가 있는 사람은 누구나 볼 수 있어요. 바깥을 누르거나 ESC로
+              닫혀요.
+            </DialogDescription>
           </DialogHeader>
           <DialogFooter>
-            <DialogClose className={outlineTriggerClass}>닫기</DialogClose>
+            <DialogClose className={outlineTriggerClass}>취소</DialogClose>
+            <DialogClose
+              className={cn(buttonVariants({ variant: "default" }), "self-start")}
+            >
+              <Text className="font-sans text-sm font-medium text-primary-foreground">
+                공유
+              </Text>
+            </DialogClose>
           </DialogFooter>
         </DialogContent>
       </Dialog>
@@ -79,7 +89,10 @@ export const dialogDemo: ShowcaseDemo = {
   },
   code: `import { Dialog, DialogTrigger, DialogContent, DialogTitle } from "@unikit-bridge/ui";
 
-<Dialog><DialogTrigger>열기</DialogTrigger><DialogContent>...</DialogContent></Dialog>`,
+<Dialog>
+  <DialogTrigger>설정 열기</DialogTrigger>
+  <DialogContent>...</DialogContent>
+</Dialog>`,
 };
 
 export const alertDialogDemo: ShowcaseDemo = {

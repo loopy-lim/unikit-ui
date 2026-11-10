@@ -86,6 +86,16 @@
   animation: site-fade-up 420ms cubic-bezier(0.22, 1, 0.36, 1) 60ms both;
 }
 
+/* 쇼케이스 Preview 스테이지 — shadcn/Seed 식 점 격자 + 얇은 보더 */
+.site-preview-stage {
+  background-color: hsl(var(--background));
+  background-image: radial-gradient(
+    hsl(var(--border) / 0.7) 1px,
+    transparent 1px
+  );
+  background-size: 18px 18px;
+}
+
 .site-card {
   transition:
     transform 220ms cubic-bezier(0.22, 1, 0.36, 1),
