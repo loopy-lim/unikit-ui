@@ -44,7 +44,7 @@ import {
 import { cva } from "class-variance-authority";
 
 import { ModalOverlay, type ModalOverlayPosition } from "../lib/overlay";
-import { cn } from "../lib/utils";
+import { cn } from "@/lib/utils";
 
 type SheetContextValue = {
   open: boolean;
@@ -76,10 +76,10 @@ const sheetContentVariants = cva(
   {
     variants: {
       side: {
-        top: "w-full border-b",
-        bottom: "w-full border-t",
-        left: "h-full w-3/4 border-r sm:max-w-sm",
-        right: "h-full w-3/4 border-l sm:max-w-sm",
+        top: "w-full border-b unikit-sheet-in-top",
+        bottom: "w-full border-t unikit-sheet-in-bottom",
+        left: "h-full w-3/4 border-r unikit-sheet-in-left sm:max-w-sm",
+        right: "h-full w-3/4 border-l unikit-sheet-in-right sm:max-w-sm",
       },
     },
     defaultVariants: {

@@ -48,7 +48,7 @@ import {
 
 import { Button } from "./button";
 import { ModalOverlay } from "../lib/overlay";
-import { cn } from "../lib/utils";
+import { cn } from "@/lib/utils";
 
 type DialogContextValue = {
   open: boolean;
@@ -217,7 +217,7 @@ const DialogContent = forwardRef<BridgeViewRef, DialogContentProps>(
           aria-describedby={dialog.descriptionId}
           className={cn(
             // pointer-events-auto — 래퍼 box-none 상속 회피（lib/overlay 머리주석）.
-            "pointer-events-auto relative w-full gap-4 rounded-lg border bg-background p-6 shadow-lg sm:max-w-lg web:outline-none",
+            "pointer-events-auto relative w-full gap-4 rounded-lg border bg-background p-6 shadow-lg sm:max-w-lg unikit-dialog-in web:outline-none",
             className,
           )}
           {...props}

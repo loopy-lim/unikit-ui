@@ -50,7 +50,7 @@ import {
 import { cva } from "class-variance-authority";
 
 import { AnchoredOverlay, type OverlayAlign, type OverlayPlacement } from "../lib/overlay";
-import { cn } from "../lib/utils";
+import { cn } from "@/lib/utils";
 
 type PopoverContextValue = {
   open: boolean;
@@ -141,7 +141,7 @@ PopoverTrigger.displayName = "PopoverTrigger";
 
 const popoverContentVariants = cva(
   // pointer-events-auto: 웹에서 오버레이 래퍼 box-none 상속 회피（기본 포함）.
-  "pointer-events-auto w-72 rounded-md border bg-popover p-4 text-popover-foreground web:outline-none",
+  "pointer-events-auto w-72 rounded-md border bg-popover p-4 text-popover-foreground unikit-popover-in web:outline-none",
 );
 
 export type PopoverContentProps = ViewProps & {

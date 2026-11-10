@@ -29,10 +29,23 @@ export function DocsShell({ children }: { children: ReactNode }) {
         <DocsHeader onToggleNav={() => setNavOpen((v) => !v)} navOpen={navOpen} />
         <View className="mx-auto flex w-full max-w-6xl flex-col gap-0 px-4 pb-16 md:flex-row md:gap-10">
           <DocsSidebar open={navOpen} onNavigate={() => setNavOpen(false)} />
-          <View className="min-w-0 flex-1 pt-6 md:pt-8">{children}</View>
+          <DocsMain>{children}</DocsMain>
         </View>
       </View>
     </DocsProviders>
+  );
+}
+
+/** 경로가 바뀔 때마다 본문을 다시 마운트해 진입 모션을 재생한다. */
+function DocsMain({ children }: { children: ReactNode }) {
+  const pathname = usePathname();
+  return (
+    <View
+      key={pathname}
+      className="site-docs-enter min-w-0 flex-1 pt-6 md:pt-8"
+    >
+      {children}
+    </View>
   );
 }
 
@@ -129,8 +142,8 @@ function DocsSidebar({
                   onClick={onNavigate}
                   className={
                     active
-                      ? "site-focusable block rounded-md bg-muted px-2 py-1.5 font-sans text-sm font-medium text-foreground"
-                      : "site-focusable block rounded-md px-2 py-1.5 font-sans text-sm text-muted-foreground hover:bg-muted/60 hover:text-foreground"
+                      ? "site-focusable site-nav-link block rounded-md bg-muted px-2 py-1.5 font-sans text-sm font-medium text-foreground"
+                      : "site-focusable site-nav-link block rounded-md px-2 py-1.5 font-sans text-sm text-muted-foreground hover:bg-muted/60 hover:text-foreground"
                   }
                 >
                   {item.title}
@@ -146,7 +159,7 @@ function DocsSidebar({
 
 export function PreviewFrame({ children }: { children: ReactNode }) {
   return (
-    <View className="flex min-h-40 items-center justify-center rounded-lg border border-border bg-background p-8">
+    <View className="site-preview-enter flex min-h-40 items-center justify-center rounded-lg border border-border bg-background p-8">
       <View className="w-full max-w-lg">{children}</View>
     </View>
   );

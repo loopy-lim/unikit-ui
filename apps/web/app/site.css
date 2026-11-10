@@ -77,6 +77,61 @@
   animation: site-fade-up 800ms cubic-bezier(0.22, 1, 0.36, 1) 120ms both;
 }
 
+/* 쇼케이스 문서 — 라우트 전환·카드·프리뷰 */
+.site-docs-enter {
+  animation: site-fade-up 480ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.site-preview-enter {
+  animation: site-fade-up 420ms cubic-bezier(0.22, 1, 0.36, 1) 60ms both;
+}
+
+.site-card {
+  transition:
+    transform 200ms cubic-bezier(0.22, 1, 0.36, 1),
+    border-color 200ms ease,
+    background-color 200ms ease;
+}
+
+.site-card:hover {
+  transform: translateY(-2px);
+}
+
+.site-nav-link {
+  transition:
+    background-color 160ms ease,
+    color 160ms ease;
+}
+
+/* 오버레이 진입（웹 전용 — 패키지 컴포넌트가 클래스명으로 연결） */
+.unikit-backdrop-in {
+  animation: unikit-fade-in 180ms ease-out both;
+}
+
+.unikit-dialog-in {
+  animation: unikit-zoom-in 200ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.unikit-sheet-in-top {
+  animation: unikit-slide-from-top 260ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.unikit-sheet-in-bottom {
+  animation: unikit-slide-from-bottom 260ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.unikit-sheet-in-left {
+  animation: unikit-slide-from-left 260ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.unikit-sheet-in-right {
+  animation: unikit-slide-from-right 260ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.unikit-popover-in {
+  animation: unikit-zoom-in 160ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
 .site-stage-band {
   background: linear-gradient(
     to bottom,
@@ -100,10 +155,87 @@
   }
 }
 
+@keyframes unikit-fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes unikit-zoom-in {
+  from {
+    opacity: 0;
+    transform: scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes unikit-slide-from-top {
+  from {
+    opacity: 0;
+    transform: translateY(-12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes unikit-slide-from-bottom {
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes unikit-slide-from-left {
+  from {
+    opacity: 0;
+    transform: translateX(-16px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes unikit-slide-from-right {
+  from {
+    opacity: 0;
+    transform: translateX(16px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .site-fade-up,
-  .site-fade-up-delay {
+  .site-fade-up-delay,
+  .site-docs-enter,
+  .site-preview-enter,
+  .unikit-backdrop-in,
+  .unikit-dialog-in,
+  .unikit-sheet-in-top,
+  .unikit-sheet-in-bottom,
+  .unikit-sheet-in-left,
+  .unikit-sheet-in-right,
+  .unikit-popover-in {
     animation: none;
+  }
+
+  .site-card:hover {
+    transform: none;
   }
 }
 

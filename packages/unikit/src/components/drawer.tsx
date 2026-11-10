@@ -91,10 +91,10 @@ const drawerContentVariants = cva(
   {
     variants: {
       direction: {
-        top: "w-full mb-24 max-h-96 rounded-b-lg border-b",
-        bottom: "w-full mt-24 max-h-96 rounded-t-lg border-t",
-        left: "h-full w-3/4 border-r sm:max-w-sm",
-        right: "h-full w-3/4 border-l sm:max-w-sm",
+        top: "w-full mb-24 max-h-96 rounded-b-lg border-b unikit-sheet-in-top",
+        bottom: "w-full mt-24 max-h-96 rounded-t-lg border-t unikit-sheet-in-bottom",
+        left: "h-full w-3/4 border-r unikit-sheet-in-left sm:max-w-sm",
+        right: "h-full w-3/4 border-l unikit-sheet-in-right sm:max-w-sm",
       },
     },
     defaultVariants: {

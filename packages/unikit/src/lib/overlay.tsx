@@ -98,7 +98,7 @@ export function ModalOverlay({
       visible={visible}
       onBackdropPress={dismissOnBackdrop ? onClose : undefined}
       onRequestClose={onClose}
-      backdropClassName={cn("bg-black/50", backdropClassName)}
+      backdropClassName={cn("bg-black/50 unikit-backdrop-in", backdropClassName)}
     >
       <View
         ref={contentRef}

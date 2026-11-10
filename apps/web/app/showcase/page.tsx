@@ -54,7 +54,7 @@ export default function ShowcaseIndexPage() {
               <Link
                 key={item.name}
                 href={`/showcase/${item.name}`}
-                className="site-focusable group rounded-lg border border-border p-4 transition-colors hover:border-foreground/30 hover:bg-muted/40"
+                className="site-focusable site-card group rounded-lg border border-border p-4 hover:border-foreground/30 hover:bg-muted/40"
               >
                 <Text className="font-sans text-sm font-medium text-foreground group-hover:underline">
                   {item.title}

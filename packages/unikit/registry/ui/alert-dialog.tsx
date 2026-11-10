@@ -53,7 +53,7 @@ import { cva } from "class-variance-authority";
 
 import { Button, type ButtonProps } from "./button";
 import { ModalOverlay } from "../lib/overlay";
-import { cn } from "../lib/utils";
+import { cn } from "@/lib/utils";
 
 type AlertDialogContextValue = {
   open: boolean;
@@ -87,7 +87,7 @@ const AlertDialogSizeContext = createContext<"default" | "sm">("default");
 
 // 카드 — 원본 fixed 중앙 배치는 ModalOverlay position="center"가 담당.
 const alertDialogContentVariants = cva(
-  "pointer-events-auto relative w-full gap-4 rounded-lg border bg-background p-6 shadow-lg web:outline-none",
+  "pointer-events-auto relative w-full gap-4 rounded-lg border bg-background p-6 shadow-lg unikit-dialog-in web:outline-none",
   {
     variants: {
       size: {
