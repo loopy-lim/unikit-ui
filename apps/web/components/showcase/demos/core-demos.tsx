@@ -217,8 +217,7 @@ export const inputDemo: ShowcaseDemo = {
           ref={ref}
           accessibilityLabelledBy="demo-input"
           placeholder="you@example.com"
-          keyboardType="email-address"
-          autoCapitalize="none"
+          inputMode="email"
         />
         <Text className="font-sans text-xs leading-5 text-muted-foreground">
           계정에 사용할 이메일을 입력하세요.
