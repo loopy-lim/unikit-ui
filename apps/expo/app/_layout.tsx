@@ -23,7 +23,12 @@ function RootShell() {
     <View style={{ flex: 1 }} className="flex-1 bg-background">
       <StatusBar style={colorScheme === "dark" ? "light" : "dark"} />
       <SafeAreaProvider initialMetrics={INITIAL_METRICS}>
-        <Stack screenOptions={{ headerShown: false }} />
+        <Stack
+          screenOptions={{
+            headerShown: false,
+            contentStyle: { backgroundColor: "transparent" },
+          }}
+        />
         <Toaster position="bottom-right" richColors closeButton />
       </SafeAreaProvider>
     </View>

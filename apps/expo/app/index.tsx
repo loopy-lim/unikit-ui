@@ -82,11 +82,12 @@ export default function Index() {
   }, [query]);
 
   return (
-    <SafeAreaView style={{ flex: 1 }} className="bg-background">
-      <SectionList
-        style={{ flex: 1 }}
-        className="w-full flex-1"
-        contentContainerClassName="w-full max-w-[640px] mx-auto px-4 pb-12"
+    <SafeAreaView style={{ flex: 1 }}>
+      <View className="flex-1 bg-background">
+        <SectionList
+          style={{ flex: 1 }}
+          className="w-full flex-1"
+          contentContainerClassName="w-full max-w-[640px] mx-auto px-4 pb-12"
         keyboardShouldPersistTaps="handled"
         keyboardDismissMode="on-drag"
         stickySectionHeadersEnabled={false}
