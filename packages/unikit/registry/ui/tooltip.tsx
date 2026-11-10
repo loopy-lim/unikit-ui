@@ -62,7 +62,7 @@ import {
 import { cva } from "class-variance-authority";
 
 import { AnchoredOverlay, type OverlayAlign, type OverlayPlacement } from "../lib/overlay";
-import { cn } from "../lib/utils";
+import { cn } from "@/lib/utils";
 
 // ---------------------------------------------------------------------------
 // Provider — 지연 정책 공유（원본과 달리 요소를 렌더하지 않는다）
@@ -247,6 +247,8 @@ Tooltip.displayName = "Tooltip";
 // ---------------------------------------------------------------------------
 
 export type TooltipTriggerProps = PressableProps;
+// children에 문자열을 쓸 때는 Text로 감싸주세요 — 트리거는 내부 Text 래핑이
+// 없어서 네이티브에서 문자열 children이 런타임 에러를 낸다(2026-11-10 실증).
 
 const TooltipTrigger = forwardRef<BridgePressableRef, TooltipTriggerProps>(
   ({ onPress, onLongPress, ...props }, ref) => {
