@@ -247,6 +247,8 @@ Tooltip.displayName = "Tooltip";
 // ---------------------------------------------------------------------------
 
 export type TooltipTriggerProps = PressableProps;
+// children에 문자열을 쓸 때는 Text로 감싸주세요 — 트리거는 내부 Text 래핑이
+// 없어서 네이티브에서 문자열 children이 런타임 에러를 낸다(2026-11-10 실증).
 
 const TooltipTrigger = forwardRef<BridgePressableRef, TooltipTriggerProps>(
   ({ onPress, onLongPress, ...props }, ref) => {

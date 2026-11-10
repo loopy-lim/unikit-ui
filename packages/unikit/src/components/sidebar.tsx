@@ -173,8 +173,10 @@ const SidebarProvider = React.forwardRef<
     }, [isMobile, setOpen]);
 
     // Ctrl/Cmd+B 단축키 — 웹 window 리스너（네이티브 no-op）.
+    // RN(Hermes)은 window 전역이 global의 별칭이라 존재하지만 DOM API가 없다 —
+    // 존재 여부가 아니라 addEventListener 함수 여부로 가드해야 한다(실증 2026-11-10).
     React.useEffect(() => {
-      if (typeof window === "undefined") return;
+      if (typeof window?.addEventListener !== "function") return;
       const handleKeyDown = (event: Event) => {
         const keyboardEvent = event as {
           key?: string;
