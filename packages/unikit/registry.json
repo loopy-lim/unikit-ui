@@ -59,7 +59,7 @@
           "--muted-foreground": "240 5% 64.9%",
           "--accent": "240 3.7% 15.9%",
           "--accent-foreground": "0 0% 98%",
-          "--destructive": "0 62.8% 30.6%",
+          "--destructive": "0 72% 65%",
           "--destructive-foreground": "0 0% 98%",
           "--border": "240 3.7% 15.9%",
           "--input": "240 3.7% 15.9%",
@@ -111,7 +111,7 @@
           "--muted-foreground": "215 20.2% 65.1%",
           "--accent": "217.2 32.6% 17.5%",
           "--accent-foreground": "210 40% 98%",
-          "--destructive": "0 62.8% 30.6%",
+          "--destructive": "0 72% 65%",
           "--destructive-foreground": "0 0% 98%",
           "--border": "217.2 32.6% 17.5%",
           "--input": "217.2 32.6% 17.5%",
@@ -163,7 +163,7 @@
           "--muted-foreground": "240 5% 64.9%",
           "--accent": "240 3.7% 15.9%",
           "--accent-foreground": "0 0% 98%",
-          "--destructive": "0 62.8% 30.6%",
+          "--destructive": "0 72% 65%",
           "--destructive-foreground": "0 0% 98%",
           "--border": "240 3.7% 15.9%",
           "--input": "240 3.7% 15.9%",
@@ -215,7 +215,7 @@
           "--muted-foreground": "24 5.4% 63.9%",
           "--accent": "12 6.5% 15.1%",
           "--accent-foreground": "60 9.1% 97.8%",
-          "--destructive": "0 62.8% 30.6%",
+          "--destructive": "0 72% 65%",
           "--destructive-foreground": "0 0% 98%",
           "--border": "12 6.5% 15.1%",
           "--input": "12 6.5% 15.1%",
@@ -346,6 +346,579 @@
           "path": "registry/ui/badge.tsx",
           "type": "registry:ui",
           "target": "components/unikit/badge.tsx"
+        }
+      ]
+    },
+    {
+      "name": "checkbox",
+      "type": "registry:ui",
+      "title": "Checkbox",
+      "description": "유니버설 체크박스 — 제어/비제어 checked, 중간 상태(aria-checked=mixed + − 글리프), 44px 터치 타깃 보정. role=checkbox.",
+      "registryDependencies": [
+        "utils"
+      ],
+      "dependencies": [
+        "@unikit-bridge/ui",
+        "class-variance-authority",
+        "clsx",
+        "tailwind-merge",
+        "tailwindcss",
+        "uniwind",
+        "react-native"
+      ],
+      "files": [
+        {
+          "path": "registry/ui/checkbox.tsx",
+          "type": "registry:ui",
+          "target": "components/unikit/checkbox.tsx"
+        }
+      ]
+    },
+    {
+      "name": "radio-group",
+      "type": "registry:ui",
+      "title": "RadioGroup",
+      "description": "유니버설 라디오 그룹 — context 단일 선택(value/onValueChange), 항목 role=radio + 8px 선택 점, 그룹 disabled 일괄 전파.",
+      "registryDependencies": [
+        "utils"
+      ],
+      "dependencies": [
+        "@unikit-bridge/ui",
+        "class-variance-authority",
+        "clsx",
+        "tailwind-merge",
+        "tailwindcss",
+        "uniwind",
+        "react-native"
+      ],
+      "files": [
+        {
+          "path": "registry/ui/radio-group.tsx",
+          "type": "registry:ui",
+          "target": "components/unikit/radio-group.tsx"
+        }
+      ]
+    },
+    {
+      "name": "switch",
+      "type": "registry:ui",
+      "title": "Switch",
+      "description": "유니버설 토글 스위치 — 트랙+썸 구조, default/sm 크기, role=switch + aria-checked. 썸 이동은 justify 전환으로 재현.",
+      "registryDependencies": [
+        "utils"
+      ],
+      "dependencies": [
+        "@unikit-bridge/ui",
+        "class-variance-authority",
+        "clsx",
+        "tailwind-merge",
+        "tailwindcss",
+        "uniwind",
+        "react-native"
+      ],
+      "files": [
+        {
+          "path": "registry/ui/switch.tsx",
+          "type": "registry:ui",
+          "target": "components/unikit/switch.tsx"
+        }
+      ]
+    },
+    {
+      "name": "toggle",
+      "type": "registry:ui",
+      "title": "Toggle",
+      "description": "눌림 유지 버튼 — pressed 상태(aria-pressed), default/outline 변형 × default/sm/lg 크기. toggle-group의 기본 부품.",
+      "registryDependencies": [
+        "utils"
+      ],
+      "dependencies": [
+        "@unikit-bridge/ui",
+        "class-variance-authority",
+        "clsx",
+        "tailwind-merge",
+        "tailwindcss",
+        "uniwind",
+        "react-native"
+      ],
+      "files": [
+        {
+          "path": "registry/ui/toggle.tsx",
+          "type": "registry:ui",
+          "target": "components/unikit/toggle.tsx"
+        }
+      ]
+    },
+    {
+      "name": "toggle-group",
+      "type": "registry:ui",
+      "title": "ToggleGroup",
+      "description": "토글 그룹 — single/multiple 선택 모드(shadcn API 준수), context로 Toggle 재사용, 그룹 disabled 일괄 전파.",
+      "registryDependencies": [
+        "utils",
+        "toggle"
+      ],
+      "dependencies": [
+        "@unikit-bridge/ui",
+        "class-variance-authority",
+        "clsx",
+        "tailwind-merge",
+        "tailwindcss",
+        "uniwind",
+        "react-native"
+      ],
+      "files": [
+        {
+          "path": "registry/ui/toggle-group.tsx",
+          "type": "registry:ui",
+          "target": "components/unikit/toggle-group.tsx"
+        }
+      ]
+    },
+    {
+      "name": "tabs",
+      "type": "registry:ui",
+      "title": "Tabs",
+      "description": "유니버설 탭 — tablist/tab 역할, aria-selected, useId로 trigger↔content 연결. TabsList 변형 default/line(line은 인디케이터 바).",
+      "registryDependencies": [
+        "utils"
+      ],
+      "dependencies": [
+        "@unikit-bridge/ui",
+        "class-variance-authority",
+        "clsx",
+        "tailwind-merge",
+        "tailwindcss",
+        "uniwind",
+        "react-native"
+      ],
+      "files": [
+        {
+          "path": "registry/ui/tabs.tsx",
+          "type": "registry:ui",
+          "target": "components/unikit/tabs.tsx"
+        }
+      ]
+    },
+    {
+      "name": "accordion",
+      "type": "registry:ui",
+      "title": "Accordion",
+      "description": "유니버설 아코디언 — single/multiple 모드, ⌄/⌃ 글리프 전환, trigger aria-expanded. 콘텐츠는 펼침 시 마운트.",
+      "registryDependencies": [
+        "utils"
+      ],
+      "dependencies": [
+        "@unikit-bridge/ui",
+        "class-variance-authority",
+        "clsx",
+        "tailwind-merge",
+        "tailwindcss",
+        "uniwind",
+        "react-native"
+      ],
+      "files": [
+        {
+          "path": "registry/ui/accordion.tsx",
+          "type": "registry:ui",
+          "target": "components/unikit/accordion.tsx"
+        }
+      ]
+    },
+    {
+      "name": "collapsible",
+      "type": "registry:ui",
+      "title": "Collapsible",
+      "description": "접기/펼치기 — open/defaultOpen/onOpenChange + trigger(aria-expanded)·content 3종 구성. 무스타일 패스스루(shadcn 원본 계약).",
+      "registryDependencies": [],
+      "dependencies": [
+        "@unikit-bridge/ui",
+        "clsx",
+        "tailwind-merge",
+        "tailwindcss",
+        "uniwind",
+        "react-native"
+      ],
+      "files": [
+        {
+          "path": "registry/ui/collapsible.tsx",
+          "type": "registry:ui",
+          "target": "components/unikit/collapsible.tsx"
+        }
+      ]
+    },
+    {
+      "name": "progress",
+      "type": "registry:ui",
+      "title": "Progress",
+      "description": "진행 바 — value(0~100)/max, 트랙 role=progressbar, 인디케이터 폭은 동적 style 계약(className 동적 생성 없음).",
+      "registryDependencies": [
+        "utils"
+      ],
+      "dependencies": [
+        "@unikit-bridge/ui",
+        "clsx",
+        "tailwind-merge",
+        "tailwindcss",
+        "uniwind",
+        "react-native"
+      ],
+      "files": [
+        {
+          "path": "registry/ui/progress.tsx",
+          "type": "registry:ui",
+          "target": "components/unikit/progress.tsx"
+        }
+      ]
+    },
+    {
+      "name": "aspect-ratio",
+      "type": "registry:ui",
+      "title": "AspectRatio",
+      "description": "가로세로 비율 컨테이너 — ratio prop(기본 1)을 동적 style 계약으로 적용, overflow-hidden.",
+      "registryDependencies": [
+        "utils"
+      ],
+      "dependencies": [
+        "@unikit-bridge/ui",
+        "clsx",
+        "tailwind-merge",
+        "tailwindcss",
+        "uniwind",
+        "react-native"
+      ],
+      "files": [
+        {
+          "path": "registry/ui/aspect-ratio.tsx",
+          "type": "registry:ui",
+          "target": "components/unikit/aspect-ratio.tsx"
+        }
+      ]
+    },
+    {
+      "name": "skeleton",
+      "type": "registry:ui",
+      "title": "Skeleton",
+      "description": "로딩 자리표시 블록 — web:animate-pulse(웹 전용 펄스, 네이티브는 정적 — uniwind 애니메이션 미보증).",
+      "registryDependencies": [
+        "utils"
+      ],
+      "dependencies": [
+        "@unikit-bridge/ui",
+        "class-variance-authority",
+        "clsx",
+        "tailwind-merge",
+        "tailwindcss",
+        "uniwind",
+        "react-native"
+      ],
+      "files": [
+        {
+          "path": "registry/ui/skeleton.tsx",
+          "type": "registry:ui",
+          "target": "components/unikit/skeleton.tsx"
+        }
+      ]
+    },
+    {
+      "name": "separator",
+      "type": "registry:ui",
+      "title": "Separator",
+      "description": "구분선 — orientation 가로/세로, decorative(장식·aria-hidden)와 의미(role=separator) 구분(radix 계약 준수).",
+      "registryDependencies": [
+        "utils"
+      ],
+      "dependencies": [
+        "@unikit-bridge/ui",
+        "class-variance-authority",
+        "clsx",
+        "tailwind-merge",
+        "tailwindcss",
+        "uniwind",
+        "react-native"
+      ],
+      "files": [
+        {
+          "path": "registry/ui/separator.tsx",
+          "type": "registry:ui",
+          "target": "components/unikit/separator.tsx"
+        }
+      ]
+    },
+    {
+      "name": "alert",
+      "type": "registry:ui",
+      "title": "Alert",
+      "description": "상황 알림 박스 — default/destructive 변형, ⓘ/⚠ 글리프, role=alert. variant는 context로 하위 텍스트 톤 전달.",
+      "registryDependencies": [
+        "utils"
+      ],
+      "dependencies": [
+        "@unikit-bridge/ui",
+        "class-variance-authority",
+        "clsx",
+        "tailwind-merge",
+        "tailwindcss",
+        "uniwind",
+        "react-native"
+      ],
+      "files": [
+        {
+          "path": "registry/ui/alert.tsx",
+          "type": "registry:ui",
+          "target": "components/unikit/alert.tsx"
+        }
+      ]
+    },
+    {
+      "name": "kbd",
+      "type": "registry:ui",
+      "title": "Kbd",
+      "description": "키보드 키 표시 — Kbd + KbdGroup(묶음). 원본 토큰 유지, 이중 지정(View+Text).",
+      "registryDependencies": [
+        "utils"
+      ],
+      "dependencies": [
+        "@unikit-bridge/ui",
+        "class-variance-authority",
+        "clsx",
+        "tailwind-merge",
+        "tailwindcss",
+        "uniwind",
+        "react-native"
+      ],
+      "files": [
+        {
+          "path": "registry/ui/kbd.tsx",
+          "type": "registry:ui",
+          "target": "components/unikit/kbd.tsx"
+        }
+      ]
+    },
+    {
+      "name": "table",
+      "type": "registry:ui",
+      "title": "Table",
+      "description": "표 — 8종 하위 컴포넌트(Table/Header/Body/Footer/Row/Head/Cell/Caption). View+flex 이식, 표 시맨틱 role은 브리지 계약상 미지원(로드맵).",
+      "registryDependencies": [
+        "utils"
+      ],
+      "dependencies": [
+        "@unikit-bridge/ui",
+        "class-variance-authority",
+        "clsx",
+        "tailwind-merge",
+        "tailwindcss",
+        "uniwind",
+        "react-native"
+      ],
+      "files": [
+        {
+          "path": "registry/ui/table.tsx",
+          "type": "registry:ui",
+          "target": "components/unikit/table.tsx"
+        }
+      ]
+    },
+    {
+      "name": "breadcrumb",
+      "type": "registry:ui",
+      "title": "Breadcrumb",
+      "description": "이동 경로 — 7종 구성(Link는 Pressable role=link), › 구분자·⋯ 생략 글리프. 현재 페이지는 시각 톤으로만 구분.",
+      "registryDependencies": [
+        "utils"
+      ],
+      "dependencies": [
+        "@unikit-bridge/ui",
+        "class-variance-authority",
+        "clsx",
+        "tailwind-merge",
+        "tailwindcss",
+        "uniwind",
+        "react-native"
+      ],
+      "files": [
+        {
+          "path": "registry/ui/breadcrumb.tsx",
+          "type": "registry:ui",
+          "target": "components/unikit/breadcrumb.tsx"
+        }
+      ]
+    },
+    {
+      "name": "pagination",
+      "type": "registry:ui",
+      "title": "Pagination",
+      "description": "페이지 매김 — 7종 구성, ‹ › 글리프, isActive 페이지 스타일. Button 변형(buttonVariants) 재사용.",
+      "registryDependencies": [
+        "utils",
+        "button"
+      ],
+      "dependencies": [
+        "@unikit-bridge/ui",
+        "class-variance-authority",
+        "clsx",
+        "tailwind-merge",
+        "tailwindcss",
+        "uniwind",
+        "react-native"
+      ],
+      "files": [
+        {
+          "path": "registry/ui/pagination.tsx",
+          "type": "registry:ui",
+          "target": "components/unikit/pagination.tsx"
+        }
+      ]
+    },
+    {
+      "name": "textarea",
+      "type": "registry:ui",
+      "title": "Textarea",
+      "description": "여러 줄 입력창 — 브리지 TextInput multiline(웹 textarea · 네이티브 multiline), invalid 상태 스타일, Input과 동일 focus 링.",
+      "registryDependencies": [
+        "utils"
+      ],
+      "dependencies": [
+        "@unikit-bridge/ui",
+        "class-variance-authority",
+        "clsx",
+        "tailwind-merge",
+        "tailwindcss",
+        "uniwind",
+        "react-native"
+      ],
+      "files": [
+        {
+          "path": "registry/ui/textarea.tsx",
+          "type": "registry:ui",
+          "target": "components/unikit/textarea.tsx"
+        }
+      ]
+    },
+    {
+      "name": "avatar",
+      "type": "registry:ui",
+      "title": "Avatar",
+      "description": "아바타 — 이미지(브리지 Image onError 폴백 전환)·Fallback(이니셜/글리프)·배지·그룹 6종. sm/default/lg 크기.",
+      "registryDependencies": [
+        "utils"
+      ],
+      "dependencies": [
+        "@unikit-bridge/ui",
+        "class-variance-authority",
+        "clsx",
+        "tailwind-merge",
+        "tailwindcss",
+        "uniwind",
+        "react-native"
+      ],
+      "files": [
+        {
+          "path": "registry/ui/avatar.tsx",
+          "type": "registry:ui",
+          "target": "components/unikit/avatar.tsx"
+        }
+      ]
+    },
+    {
+      "name": "empty",
+      "type": "registry:ui",
+      "title": "Empty",
+      "description": "빈 상태 안내 — Media(큰 글리프)·Title·Description·Header·Content 6종 레이아웃.",
+      "registryDependencies": [
+        "utils"
+      ],
+      "dependencies": [
+        "@unikit-bridge/ui",
+        "class-variance-authority",
+        "clsx",
+        "tailwind-merge",
+        "tailwindcss",
+        "uniwind",
+        "react-native"
+      ],
+      "files": [
+        {
+          "path": "registry/ui/empty.tsx",
+          "type": "registry:ui",
+          "target": "components/unikit/empty.tsx"
+        }
+      ]
+    },
+    {
+      "name": "field",
+      "type": "registry:ui",
+      "title": "Field",
+      "description": "폼 필드 묶음 — 라벨·설명·오류·그룹·set·제목 10종, invalid/disabled 상태 context 전파, Label 재사용.",
+      "registryDependencies": [
+        "utils",
+        "label"
+      ],
+      "dependencies": [
+        "@unikit-bridge/ui",
+        "class-variance-authority",
+        "clsx",
+        "tailwind-merge",
+        "tailwindcss",
+        "uniwind",
+        "react-native"
+      ],
+      "files": [
+        {
+          "path": "registry/ui/field.tsx",
+          "type": "registry:ui",
+          "target": "components/unikit/field.tsx"
+        }
+      ]
+    },
+    {
+      "name": "item",
+      "type": "registry:ui",
+      "title": "Item",
+      "description": "리스트 아이템 카드 — media·내용·행동·구분·머리/바닥 10종, variant(default/outline/muted) × size(default/sm).",
+      "registryDependencies": [
+        "utils"
+      ],
+      "dependencies": [
+        "@unikit-bridge/ui",
+        "class-variance-authority",
+        "clsx",
+        "tailwind-merge",
+        "tailwindcss",
+        "uniwind",
+        "react-native"
+      ],
+      "files": [
+        {
+          "path": "registry/ui/item.tsx",
+          "type": "registry:ui",
+          "target": "components/unikit/item.tsx"
+        }
+      ]
+    },
+    {
+      "name": "button-group",
+      "type": "registry:ui",
+      "title": "ButtonGroup",
+      "description": "버튼 무리 — 방향(가로/세로) 변형, 자식 버튼 모서리 연접·테두리 중복 제거를 cloneElement 주입으로 재현. 구분선·텍스트 포함.",
+      "registryDependencies": [
+        "utils"
+      ],
+      "dependencies": [
+        "@unikit-bridge/ui",
+        "class-variance-authority",
+        "clsx",
+        "tailwind-merge",
+        "tailwindcss",
+        "uniwind",
+        "react-native"
+      ],
+      "files": [
+        {
+          "path": "registry/ui/button-group.tsx",
+          "type": "registry:ui",
+          "target": "components/unikit/button-group.tsx"
         }
       ]
     }

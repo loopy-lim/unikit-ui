@@ -65,6 +65,8 @@ export const themePresets = {
 
 ### 2.3 프리셋 값 표 (설계 확정값 — 구현은 이 표를 presets.ts로 옮긴다)
 
+> **수정 이력(사이클 30, G4·G5)**: 다크 `--destructive`를 `0 62.8% 30.6%` → `0 72% 65%`(red-400 계)로 조정. 기본 테마 G4 UX 감사(다크 경고 텍스트 대비 1.99:1 → 6.08:1)의 동일 결함이 프리셋에 남아 있다는 G5 출시 판정의 경등 지적을 반영해 3종 공통 적용. 프리셋 다크 배경 기준 대비: blue(slate-950) 6.16·emerald(zinc-950) 6.08·amber(stone-950) 6.03 — 전부 ≥4.5. §2.2 규칙("현행 다크값 공통")과의 정합 회복.
+
 계산 재료: TW 3.4 공식 팔레트 hex → HSL 채널(소수 1자리). 전수 대비(라이트): primary↔전경 5.17/5.48/5.02, background↔foreground 20.17/19.90/19.76, background↔muted-foreground 4.76/4.83/4.80, secondary↔secondary-foreground 16.30/16.12/16.03, destructive↔전경 4.83(공통) — **전부 ≥4.5**. 다크 primary↔전경(중립-950): 5.48/7.84/9.20.
 
 **theme-blue** (중립 slate):
@@ -85,7 +87,7 @@ export const themePresets = {
 | --muted-foreground | 215.4 16.3% 46.9% | 215 20.2% 65.1% |
 | --accent | 210 40% 96.1% | 217.2 32.6% 17.5% |
 | --accent-foreground | 222.2 47.4% 11.2% | 210 40% 98% |
-| --destructive | 0 72.2% 50.6% | 0 62.8% 30.6% |
+| --destructive | 0 72.2% 50.6% | 0 72% 65% |
 | --destructive-foreground | 0 0% 98% | 0 0% 98% |
 | --border | 214.3 31.8% 91.4% | 217.2 32.6% 17.5% |
 | --input | 214.3 31.8% 91.4% | 217.2 32.6% 17.5% |
@@ -105,7 +107,7 @@ export const themePresets = {
 | --secondary / --muted / --accent | 240 4.8% 95.9% | 240 3.7% 15.9% |
 | --secondary-foreground / --accent-foreground | 240 5.9% 10% | 0 0% 98% |
 | --muted-foreground | 240 3.8% 46.1% | 240 5% 64.9% |
-| --destructive / --destructive-foreground | 0 72.2% 50.6% / 0 0% 98% | 0 62.8% 30.6% / 0 0% 98% |
+| --destructive / --destructive-foreground | 0 72.2% 50.6% / 0 0% 98% | 0 72% 65% / 0 0% 98% |
 | --border / --input | 240 5.9% 90% | 240 3.7% 15.9% |
 | --ring | 162.9 93.5% 24.3% | 160.1 84.1% 39.4% |
 | --radius | 0.5rem | 0.5rem |
@@ -123,7 +125,7 @@ export const themePresets = {
 | --secondary / --muted / --accent | 60 4.8% 95.9% | 12 6.5% 15.1% |
 | --secondary-foreground / --accent-foreground | 24 9.8% 10% | 60 9.1% 97.8% |
 | --muted-foreground | 25 5.3% 44.7% | 24 5.4% 63.9% |
-| --destructive / --destructive-foreground | 0 72.2% 50.6% / 0 0% 98% | 0 62.8% 30.6% / 0 0% 98% |
+| --destructive / --destructive-foreground | 0 72.2% 50.6% / 0 0% 98% | 0 72% 65% / 0 0% 98% |
 | --border / --input | 20 5.9% 90% | 12 6.5% 15.1% |
 | --ring | 26 90.5% 37.1% | 37.7 92.1% 50.2% |
 | --radius | 0.5rem | 0.5rem |

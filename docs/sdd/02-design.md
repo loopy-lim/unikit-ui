@@ -95,6 +95,8 @@ Expo 앱에서만 최상단을 `SafeAreaView`(react-native-safe-area-context, pe
 
 shadcn/ui 표준 zinc 토큰을 기준으로 하되, 라이트 `--destructive`만 대비 확보를 위해 red-600 계(`0 72.2% 50.6%`)로 조정했다. 모든 값은 HSL 채널 값(공백 구분, TW3 `hsl(var(--token))` 매핑용)이며 HEX는 스크린샷 판정용 환산값이다.
 
+> **수정 이력(사이클 30, G4 UX 감사 반영)**: 다크 `--destructive`는 shadcn 원본 값(`0 62.8% 30.6%`)을 그대로 쓰면 다크 배경 대비 1.99:1로 WCAG AA(4.5:1)에 크게 미달해 "경고" 텍스트가 사실상 안 읽힌다. red-400 계(`0 72% 65%`, #e66666)로 조정 — 다크 배경 대비 6.1:1. 라이트 값은 기존 red-600 유지(4.83:1).
+
 ### 2.1 색 토큰 표
 
 | 변수 | 라이트 값 (HSL) | 라이트 HEX | 다크 값 (HSL) | 다크 HEX | 용도 |
@@ -113,7 +115,7 @@ shadcn/ui 표준 zinc 토큰을 기준으로 하되, 라이트 `--destructive`�
 | `--muted-foreground` | `240 3.8% 46.1%` | #71717a | `240 5% 64.9%` | #a1a1aa | 흐린 텍스트(설명문, placeholder) |
 | `--accent` | `240 4.8% 95.9%` | #f4f4f5 | `240 3.7% 15.9%` | #27272a | hover/press 강조 배경(ghost·outline 버튼) |
 | `--accent-foreground` | `240 5.9% 10%` | #18181b | `0 0% 98%` | #fafafa | accent 위 텍스트 |
-| `--destructive` | `0 72.2% 50.6%` | #dc2626 | `0 62.8% 30.6%` | #7f1d1d | 위험·삭제 행동 배경 |
+| `--destructive` | `0 72.2% 50.6%` | #dc2626 | `0 72% 65%` | #e66666 | 위험·삭제 행동 배경 |
 | `--destructive-foreground` | `0 0% 98%` | #fafafa | `0 0% 98%` | #fafafa | 위험 행동 위 텍스트 |
 | `--border` | `240 5.9% 90%` | #e4e4e7 | `240 3.7% 15.9%` | #27272a | 일반 테두리(카드, outline 배지) |
 | `--input` | `240 5.9% 90%` | #e4e4e7 | `240 3.7% 15.9%` | #27272a | 입력창 테두리 |

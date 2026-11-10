@@ -21,7 +21,7 @@
 | `--muted-foreground` | `240 3.8% 46.1%` | `240 5% 64.9%` | 강조를 낮춘 텍스트(설명문) | `text-muted-foreground` |
 | `--accent` | `240 4.8% 95.9%` | `240 3.7% 15.9%` | 호버·눌림 강조 배경(outline/ghost active) | `active:bg-accent` |
 | `--accent-foreground` | `240 5.9% 10%` | `0 0% 98%` | 강조 배경 위 텍스트 | `active:text-accent-foreground` |
-| `--destructive` | `0 72.2% 50.6%` | `0 62.8% 30.6%` | 위험·삭제 행동 색 | `bg-destructive` |
+| `--destructive` | `0 72.2% 50.6%` | `0 72% 65%` | 위험·삭제 행동 색 | `bg-destructive` |
 | `--destructive-foreground` | `0 0% 98%` | `0 0% 98%` | 위험 행동 위 텍스트 | `text-destructive-foreground` |
 | `--border` | `240 5.9% 90%` | `240 3.7% 15.9%` | 일반 테두리(card outline 등) | `border-border` |
 | `--input` | `240 5.9% 90%` | `240 3.7% 15.9%` | 입력창 테두리 | `border-input` |

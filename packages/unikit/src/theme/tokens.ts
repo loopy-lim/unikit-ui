@@ -8,6 +8,8 @@
  *
  * 주의: 값을 임의로 변경하면 안 된다 — 수정이 필요하면 설계 문서(02-design)를 먼저 고친다.
  * `--destructive`(라이트)는 shadcn 기본값이 아닌 red-600 계(02-design §2.1 주석, WCAG AA 확보).
+ * `--destructive`(다크)도 shadcn 원본 대비 red-400 계로 조정(사이클 30 G4 — 원본 값은
+ * 다크 배경 대비 1.99:1로 텍스트가 사실상 안 읽힘. 조정값 6.1:1).
  * `--radius`는 스킴과 무관한 공통값(§2.2)이며 두 객체에 동일하게 포함한다.
  */
 
@@ -53,7 +55,7 @@ export const darkTokens = {
   "--muted-foreground": "240 5% 64.9%",
   "--accent": "240 3.7% 15.9%",
   "--accent-foreground": "0 0% 98%",
-  "--destructive": "0 62.8% 30.6%",
+  "--destructive": "0 72% 65%",
   "--destructive-foreground": "0 0% 98%",
   "--border": "240 3.7% 15.9%",
   "--input": "240 3.7% 15.9%",

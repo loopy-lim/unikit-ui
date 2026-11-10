@@ -9,7 +9,8 @@
  *   - 다크 primary    = 주색-500
  *   - 다크 primary-foreground = 중립-950 (주색-950은 blue에서 4.00:1로 미달 — 중립-950은 3종 전부 ≥5.48)
  *   - 중립 계열 N     = blue→slate, emerald→zinc, amber→stone (shadcn 관례)
- *   - destructive 쌍·radius = 기본 테마(tokens.ts)값 공통
+ *   - destructive 쌍·radius = 기본 테마(tokens.ts)값 공통 — 다크 --destructive는
+ *     사이클 30 G4/G5 조정값(0 72% 65%, red-400 계) 반영(22-design-plan §2.3 수정 이력)
  *
  * 기본 테마(zinc)는 이 파일에 없다 — src/theme/tokens.ts의 lightTokens/darkTokens이
  * 곧 기본 프리셋이다(값 사본 금지). registry 항목 이름 매핑은 generate-design.ts의
@@ -74,7 +75,7 @@ export const themePresets = {
       "--muted-foreground": "215 20.2% 65.1%",
       "--accent": "217.2 32.6% 17.5%",
       "--accent-foreground": "210 40% 98%",
-      "--destructive": "0 62.8% 30.6%",
+      "--destructive": "0 72% 65%",
       "--destructive-foreground": "0 0% 98%",
       "--border": "217.2 32.6% 17.5%",
       "--input": "217.2 32.6% 17.5%",
@@ -123,7 +124,7 @@ export const themePresets = {
       "--muted-foreground": "240 5% 64.9%",
       "--accent": "240 3.7% 15.9%",
       "--accent-foreground": "0 0% 98%",
-      "--destructive": "0 62.8% 30.6%",
+      "--destructive": "0 72% 65%",
       "--destructive-foreground": "0 0% 98%",
       "--border": "240 3.7% 15.9%",
       "--input": "240 3.7% 15.9%",
@@ -172,7 +173,7 @@ export const themePresets = {
       "--muted-foreground": "24 5.4% 63.9%",
       "--accent": "12 6.5% 15.1%",
       "--accent-foreground": "60 9.1% 97.8%",
-      "--destructive": "0 62.8% 30.6%",
+      "--destructive": "0 72% 65%",
       "--destructive-foreground": "0 0% 98%",
       "--border": "12 6.5% 15.1%",
       "--input": "12 6.5% 15.1%",
