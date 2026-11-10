@@ -178,8 +178,8 @@ function DocsSidebar({
 
 export function PreviewFrame({ children }: { children: ReactNode }) {
   return (
-    <View className="site-preview-enter flex min-h-56 items-center justify-center rounded-xl border border-border bg-muted/25 px-8 py-14 sm:min-h-64 sm:px-12 sm:py-16">
-      <View className="w-full max-w-xl">{children}</View>
+    <View className="site-preview-enter flex min-h-48 items-center justify-center rounded-xl border border-border bg-muted/20 px-6 py-10 sm:min-h-52 sm:px-10 sm:py-12">
+      <View className="flex w-full max-w-xl flex-col items-start">{children}</View>
     </View>
   );
 }

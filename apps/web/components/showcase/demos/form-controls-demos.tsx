@@ -17,9 +17,19 @@ import type { ShowcaseDemo } from "./types";
 export const checkboxDemo: ShowcaseDemo = {
   Demo: function CheckboxDemo() {
     return (
-      <View className="flex flex-row items-center gap-2">
-        <Checkbox defaultChecked accessibilityLabel="알림 받기" />
-        <Text className="font-sans text-sm text-foreground">알림 받기</Text>
+      <View className="flex flex-col gap-3">
+        <View className="flex flex-row items-center gap-2">
+          <Checkbox defaultChecked accessibilityLabel="알림 받기" />
+          <Text className="font-sans text-sm text-foreground">알림 받기</Text>
+        </View>
+        <View className="flex flex-row items-center gap-2">
+          <Checkbox accessibilityLabel="마케팅 수신" />
+          <Text className="font-sans text-sm text-foreground">마케팅 수신</Text>
+        </View>
+        <View className="flex flex-row items-center gap-2 opacity-50">
+          <Checkbox disabled accessibilityLabel="비활성" />
+          <Text className="font-sans text-sm text-foreground">비활성</Text>
+        </View>
       </View>
     );
   },
@@ -53,9 +63,15 @@ export const radioGroupDemo: ShowcaseDemo = {
 export const switchDemo: ShowcaseDemo = {
   Demo: function SwitchDemo() {
     return (
-      <View className="flex flex-row items-center gap-2">
-        <Switch defaultChecked accessibilityLabel="알림" />
-        <Text className="font-sans text-sm text-foreground">알림 켜기</Text>
+      <View className="flex flex-col gap-3">
+        <View className="flex flex-row items-center gap-2">
+          <Switch defaultChecked accessibilityLabel="알림" />
+          <Text className="font-sans text-sm text-foreground">알림 켜기</Text>
+        </View>
+        <View className="flex flex-row items-center gap-2">
+          <Switch accessibilityLabel="자동 저장" />
+          <Text className="font-sans text-sm text-foreground">자동 저장</Text>
+        </View>
       </View>
     );
   },
@@ -67,9 +83,15 @@ export const switchDemo: ShowcaseDemo = {
 export const toggleDemo: ShowcaseDemo = {
   Demo: function ToggleDemo() {
     return (
-      <Toggle defaultPressed accessibilityLabel="즐겨찾기">
-        ★ 즐겨찾기
-      </Toggle>
+      <View className="flex flex-row flex-wrap gap-2">
+        <Toggle defaultPressed accessibilityLabel="즐겨찾기">
+          ★ 즐겨찾기
+        </Toggle>
+        <Toggle accessibilityLabel="고정">📌 고정</Toggle>
+        <Toggle variant="outline" accessibilityLabel="굵게">
+          B
+        </Toggle>
+      </View>
     );
   },
   code: `import { Toggle } from "@unikit-bridge/ui";
@@ -95,7 +117,9 @@ export const toggleGroupDemo: ShowcaseDemo = {
 
 export const textareaDemo: ShowcaseDemo = {
   Demo: function TextareaDemo() {
-    return <Textarea placeholder="메모를 입력해 보세요." />;
+    return (
+      <Textarea className="w-full" placeholder="메모를 입력해 보세요." />
+    );
   },
   code: `import { Textarea } from "@unikit-bridge/ui";
 

@@ -69,18 +69,34 @@ import type { ShowcaseDemo } from "./types";
 export const buttonDemo: ShowcaseDemo = {
   Demo: function ButtonDemo() {
     return (
-      <View className="flex flex-row flex-wrap gap-3">
-        <Button variant="default">기본</Button>
-        <Button variant="outline">외곽선</Button>
-        <Button variant="ghost" size="sm">
-          고스트
-        </Button>
+      <View className="flex w-full flex-col gap-5">
+        <View className="flex flex-row flex-wrap gap-2">
+          <Button variant="default">기본</Button>
+          <Button variant="secondary">보조</Button>
+          <Button variant="destructive">삭제</Button>
+          <Button variant="outline">외곽선</Button>
+          <Button variant="ghost">고스트</Button>
+          <Button variant="link">링크</Button>
+        </View>
+        <View className="flex flex-row flex-wrap items-center gap-2">
+          <Button size="sm">작게</Button>
+          <Button size="default">기본</Button>
+          <Button size="lg">크게</Button>
+          <Button size="icon" accessibilityLabel="더보기">
+            ⋯
+          </Button>
+          <Button variant="outline" disabled>
+            비활성
+          </Button>
+        </View>
       </View>
     );
   },
   code: `import { Button } from "@unikit-bridge/ui";
 
-<Button variant="default">기본</Button>`,
+<Button variant="default">기본</Button>
+<Button variant="outline" size="sm">외곽선</Button>
+<Button disabled>비활성</Button>`,
 };
 
 export const badgeDemo: ShowcaseDemo = {
@@ -89,19 +105,21 @@ export const badgeDemo: ShowcaseDemo = {
       <View className="flex flex-row flex-wrap gap-2">
         <Badge>기본</Badge>
         <Badge variant="secondary">보조</Badge>
+        <Badge variant="destructive">위험</Badge>
         <Badge variant="outline">외곽선</Badge>
       </View>
     );
   },
   code: `import { Badge } from "@unikit-bridge/ui";
 
-<Badge variant="secondary">보조</Badge>`,
+<Badge variant="secondary">보조</Badge>
+<Badge variant="destructive">위험</Badge>`,
 };
 
 export const cardDemo: ShowcaseDemo = {
   Demo: function CardDemo() {
     return (
-      <Card>
+      <Card className="w-full">
         <CardHeader>
           <CardTitle>안녕, UniKit!</CardTitle>
           <CardDescription>복사해서 쓰는 유니버설 컴포넌트</CardDescription>
@@ -131,15 +149,25 @@ export const inputDemo: ShowcaseDemo = {
   Demo: function InputDemo() {
     const ref = useRef<BridgeTextInputRef>(null);
     return (
-      <View className="flex flex-col gap-2">
-        <Label nativeID="demo-input" onPress={() => ref.current?.focus()}>
-          이름
-        </Label>
-        <Input
-          ref={ref}
-          accessibilityLabelledBy="demo-input"
-          placeholder="홍길동"
-        />
+      <View className="flex w-full flex-col gap-4">
+        <View className="flex flex-col gap-2">
+          <Label nativeID="demo-input" onPress={() => ref.current?.focus()}>
+            이름
+          </Label>
+          <Input
+            ref={ref}
+            accessibilityLabelledBy="demo-input"
+            placeholder="홍길동"
+          />
+        </View>
+        <View className="flex flex-col gap-2">
+          <Label nativeID="demo-input-disabled">비활성</Label>
+          <Input
+            accessibilityLabelledBy="demo-input-disabled"
+            placeholder="수정할 수 없어요"
+            editable={false}
+          />
+        </View>
       </View>
     );
   },
@@ -160,7 +188,7 @@ export const labelDemo: ShowcaseDemo = {
 export const alertDemo: ShowcaseDemo = {
   Demo: function AlertDemo() {
     return (
-      <Alert>
+      <Alert className="w-full">
         <AlertTitle>저장 완료</AlertTitle>
         <AlertDescription>변경사항이 안전하게 저장됐어요.</AlertDescription>
       </Alert>
@@ -176,7 +204,12 @@ export const alertDemo: ShowcaseDemo = {
 
 export const progressDemo: ShowcaseDemo = {
   Demo: function ProgressDemo() {
-    return <Progress value={72} accessibilityLabel="진행률" />;
+    return (
+      <View className="w-full gap-3">
+        <Progress value={72} accessibilityLabel="진행률" />
+        <Progress value={28} accessibilityLabel="업로드" />
+      </View>
+    );
   },
   code: `import { Progress } from "@unikit-bridge/ui";
 

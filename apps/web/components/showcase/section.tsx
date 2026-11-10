@@ -3,7 +3,7 @@
 // (제목 text-lg semibold / 설명 text-sm muted / 본문 mt-4). 기존 8개 섹션은
 // page.tsx 안에 그대로 보존하고, 신규 6개 티어 섹션만 이 골격을 공유한다.
 import type { ReactNode } from "react";
-import { buttonVariants } from "@unikit-bridge/ui";
+import { buttonVariants, cn } from "@unikit-bridge/ui";
 import { Text, View } from "@unikit-bridge/ui/primitives";
 
 export function Section({
@@ -33,7 +33,10 @@ export function Section({
  * DialogTrigger 같은 트리거는 브리지 Pressable(웹 <button>)이라 Button 컴포넌트를
  * 자식으로 두면 웹에서 버튼 중첩이 되므로, 변형 토큰만 빌려 쓴다.
  */
-export const outlineTriggerClass = buttonVariants({ variant: "outline" });
+export const outlineTriggerClass = cn(
+  buttonVariants({ variant: "outline" }),
+  "self-start",
+);
 
 /** 본문 안내 문구(상태 시나리오 힌트) — 섹션마다 1~2줄로 제약을 적는다. */
 export function Hint({ children }: { children: ReactNode }) {
