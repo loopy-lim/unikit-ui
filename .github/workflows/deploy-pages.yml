@@ -48,11 +48,19 @@ jobs:
       - name: Attach custom domain
         if: github.event_name == 'workflow_dispatch' || (github.event_name == 'push' && github.ref == 'refs/heads/main')
         run: |
-          echo "Attaching custom domain ui.unikit.ll3.kr..."
+          echo "Attaching custom domain ui.unikit.ll3.kr to Pages..."
           curl -s -X POST "https://api.cloudflare.com/client/v4/accounts/${{ secrets.CLOUDFLARE_ACCOUNT_ID }}/pages/projects/unikit-ui/domains" \
             -H "Authorization: Bearer ${{ secrets.CLOUDFLARE_API_TOKEN }}" \
             -H "Content-Type: application/json" \
             --data '{"name":"ui.unikit.ll3.kr"}' | jq . || true
+
+          echo "Ensuring DNS CNAME record exists in zone e32b724ffd0443fa1149fd28cf5f9081 (ll3.kr)..."
+          curl -s -X POST "https://api.cloudflare.com/client/v4/zones/e32b724ffd0443fa1149fd28cf5f9081/dns_records" \
+            -H "Authorization: Bearer ${{ secrets.CLOUDFLARE_API_TOKEN }}" \
+            -H "Content-Type: application/json" \
+            --data '{"type":"CNAME","name":"ui.unikit","content":"unikit-ui.pages.dev","proxied":true,"ttl":1}' | jq . || true
+
+          echo "Querying Pages domains status..."
           curl -s -X GET "https://api.cloudflare.com/client/v4/accounts/${{ secrets.CLOUDFLARE_ACCOUNT_ID }}/pages/projects/unikit-ui/domains" \
             -H "Authorization: Bearer ${{ secrets.CLOUDFLARE_API_TOKEN }}" \
             -H "Content-Type: application/json" | jq . || true
