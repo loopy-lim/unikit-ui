@@ -155,7 +155,14 @@ function scanPattern(files: string[], pattern: RegExp, label: string): Violation
 
 // ── (d) registry 사본 == 원본 (import 치환 제외) ────────────────────────────
 {
-  const names = ["button", "card", "input", "label", "badge"];
+  const names = [
+    "button", "card", "input", "label", "badge",
+    "checkbox", "radio-group", "switch", "toggle", "toggle-group",
+    "tabs", "accordion", "collapsible", "progress", "aspect-ratio",
+    "skeleton", "separator", "alert", "kbd", "table",
+    "breadcrumb", "pagination", "textarea", "avatar", "empty",
+    "field", "item", "button-group",
+  ];
   const vs: Violation[] = [];
   for (const n of names) {
     const orig = readFileSync(path.join(PKG, "src", "components", `${n}.tsx`), "utf8");

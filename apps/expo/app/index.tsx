@@ -16,16 +16,86 @@ import { ScrollView, Text, View, type TextInputInstance } from "react-native";
 import { SafeAreaProvider, SafeAreaView } from "react-native-safe-area-context";
 
 import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+  Alert,
+  AlertDescription,
+  AlertTitle,
+  AspectRatio,
+  Avatar,
+  AvatarFallback,
+  AvatarGroup,
+  AvatarGroupCount,
   Badge,
+  Breadcrumb,
+  BreadcrumbEllipsis,
+  BreadcrumbItem,
+  BreadcrumbLink,
+  BreadcrumbList,
+  BreadcrumbPage,
+  BreadcrumbSeparator,
   Button,
+  ButtonGroup,
   Card,
   CardContent,
   CardDescription,
   CardFooter,
   CardHeader,
   CardTitle,
+  Checkbox,
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+  Empty,
+  EmptyContent,
+  EmptyDescription,
+  EmptyHeader,
+  EmptyMedia,
+  EmptyTitle,
+  Field,
+  FieldContent,
+  FieldDescription,
+  FieldLabel,
   Input,
+  Item,
+  ItemActions,
+  ItemContent,
+  ItemDescription,
+  ItemMedia,
+  ItemTitle,
+  Kbd,
+  KbdGroup,
   Label,
+  Pagination,
+  PaginationContent,
+  PaginationEllipsis,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+  Progress,
+  RadioGroup,
+  RadioGroupItem,
+  Separator,
+  Skeleton,
+  Switch,
+  Table,
+  TableBody,
+  TableCaption,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+  Tabs,
+  TabsContent,
+  TabsList,
+  TabsTrigger,
+  Textarea,
+  Toggle,
+  ToggleGroup,
+  ToggleGroupItem,
   useUnikitTheme,
 } from "@unikit-bridge/ui";
 
@@ -250,6 +320,303 @@ export default function Index() {
                 <Badge variant="secondary">보조</Badge>
                 <Badge variant="destructive">삭제</Badge>
                 <Badge variant="outline">외곽선</Badge>
+              </View>
+            </Section>
+
+            {/* 폼 컨트롤 섹션: Checkbox·RadioGroup·Switch·Toggle·ToggleGroup·Textarea
+                — apps/web 쇼케이스와 같은 구성·문구(1차 23종 전시). */}
+            <Section
+              title="폼 컨트롤 — Checkbox · Radio · Switch · Toggle"
+              description="눌러 보세요. 체크·선택·전환이 모두 한 벌 소스로 동작해요."
+            >
+              <View className="flex flex-col gap-4">
+                <View className="flex flex-col gap-2">
+                  <View className="flex flex-row items-center gap-2">
+                    <Checkbox defaultChecked accessibilityLabel="이메일로 받기" />
+                    <Text className="font-sans text-sm text-foreground">
+                      이메일로 받기 (기본 선택)
+                    </Text>
+                  </View>
+                  <View className="flex flex-row items-center gap-2">
+                    <Checkbox indeterminate accessibilityLabel="일부만 선택됨" />
+                    <Text className="font-sans text-sm text-foreground">
+                      일부만 선택됨 (중간 상태)
+                    </Text>
+                  </View>
+                </View>
+                <RadioGroup defaultValue="email" accessibilityLabel="알림 받을 방법">
+                  <View className="flex flex-row flex-wrap gap-6">
+                    <View className="flex flex-row items-center gap-2">
+                      <RadioGroupItem value="email" />
+                      <Text className="font-sans text-sm text-foreground">이메일</Text>
+                    </View>
+                    <View className="flex flex-row items-center gap-2">
+                      <RadioGroupItem value="sms" />
+                      <Text className="font-sans text-sm text-foreground">문자</Text>
+                    </View>
+                    <View className="flex flex-row items-center gap-2">
+                      <RadioGroupItem value="push" />
+                      <Text className="font-sans text-sm text-foreground">푸시</Text>
+                    </View>
+                  </View>
+                </RadioGroup>
+                <View className="flex flex-row items-center gap-3">
+                  <Switch defaultChecked accessibilityLabel="알림 켜기" />
+                  <Text className="font-sans text-sm text-foreground">알림 켜기</Text>
+                  <Switch size="sm" accessibilityLabel="작은 스위치" />
+                  <Text className="font-sans text-sm text-muted-foreground">작게</Text>
+                </View>
+                <View className="flex flex-row flex-wrap items-center gap-3">
+                  <Toggle defaultPressed accessibilityLabel="즐겨찾기">
+                    ★ 즐겨찾기
+                  </Toggle>
+                  <ToggleGroup type="single" defaultValue="list">
+                    <ToggleGroupItem value="list">목록</ToggleGroupItem>
+                    <ToggleGroupItem value="gallery">갤러리</ToggleGroupItem>
+                    <ToggleGroupItem value="map">지도</ToggleGroupItem>
+                  </ToggleGroup>
+                </View>
+                <Textarea placeholder="여러 줄 메모를 입력해 보세요." />
+              </View>
+            </Section>
+
+            {/* 여닫이 섹션: Tabs·Accordion·Collapsible */}
+            <Section
+              title="Tabs · Accordion · Collapsible"
+              description="탭과 접기를 열고 닫아 보세요."
+            >
+              <View className="flex flex-col gap-4">
+                <Tabs defaultValue="account">
+                  <TabsList variant="line">
+                    <TabsTrigger value="account">계정</TabsTrigger>
+                    <TabsTrigger value="profile">프로필</TabsTrigger>
+                    <TabsTrigger value="security">보안</TabsTrigger>
+                  </TabsList>
+                  <TabsContent value="account">
+                    <Text className="font-sans text-sm text-foreground">
+                      계정 탭 내용이에요.
+                    </Text>
+                  </TabsContent>
+                  <TabsContent value="profile">
+                    <Text className="font-sans text-sm text-foreground">
+                      프로필 탭 내용이에요.
+                    </Text>
+                  </TabsContent>
+                  <TabsContent value="security">
+                    <Text className="font-sans text-sm text-foreground">
+                      보안 탭 내용이에요.
+                    </Text>
+                  </TabsContent>
+                </Tabs>
+                <Accordion defaultValue="what">
+                  <AccordionItem value="what">
+                    <AccordionTrigger>UniKit이 뭔가요?</AccordionTrigger>
+                    <AccordionContent>
+                      <Text className="font-sans text-sm text-muted-foreground">
+                        한 벌 소스로 React(웹)와 React Native 양쪽에 같은 모습을 내는
+                        컴포넌트 모음이에요.
+                      </Text>
+                    </AccordionContent>
+                  </AccordionItem>
+                  <AccordionItem value="how">
+                    <AccordionTrigger>어떻게 쓰나요?</AccordionTrigger>
+                    <AccordionContent>
+                      <Text className="font-sans text-sm text-muted-foreground">
+                        npm으로 설치하거나 shadcn CLI로 소스를 복사해 쓸 수 있어요.
+                      </Text>
+                    </AccordionContent>
+                  </AccordionItem>
+                </Accordion>
+                <Collapsible defaultOpen>
+                  <CollapsibleTrigger>자세히 보기</CollapsibleTrigger>
+                  <CollapsibleContent className="mt-2">
+                    <Text className="font-sans text-sm text-muted-foreground">
+                      접기를 접었다 펼 수 있어요.
+                    </Text>
+                  </CollapsibleContent>
+                </Collapsible>
+              </View>
+            </Section>
+
+            {/* 피드백 섹션: Alert·Progress·Separator·Skeleton·Avatar·Empty */}
+            <Section
+              title="Alert · Progress · Avatar · Empty"
+              description="상태와 정보를 알려주는 표시 요소예요."
+            >
+              <View className="flex flex-col gap-4">
+                <Alert>
+                  <AlertTitle>저장 완료</AlertTitle>
+                  <AlertDescription>변경사항이 안전하게 저장됐어요.</AlertDescription>
+                </Alert>
+                <Alert variant="destructive">
+                  <AlertTitle>주의</AlertTitle>
+                  <AlertDescription>이 작업은 되돌릴 수 없어요.</AlertDescription>
+                </Alert>
+                <Progress value={72} accessibilityLabel="저장 공간 사용률" />
+                <Separator />
+                <View className="flex flex-row items-center gap-4">
+                  <Skeleton className="size-10 rounded-full" />
+                  <View className="flex flex-1 flex-col gap-2">
+                    <Skeleton className="h-4 w-2/3" />
+                    <Skeleton className="h-4 w-1/3" />
+                  </View>
+                </View>
+                <View className="flex flex-row flex-wrap items-center gap-3">
+                  <Avatar>
+                    <AvatarFallback>홍</AvatarFallback>
+                  </Avatar>
+                  <Avatar size="lg">
+                    <AvatarFallback>유</AvatarFallback>
+                  </Avatar>
+                  <AvatarGroup>
+                    <Avatar>
+                      <AvatarFallback>김</AvatarFallback>
+                    </Avatar>
+                    <Avatar>
+                      <AvatarFallback>이</AvatarFallback>
+                    </Avatar>
+                    <Avatar>
+                      <AvatarFallback>박</AvatarFallback>
+                    </Avatar>
+                    <AvatarGroupCount>+5</AvatarGroupCount>
+                  </AvatarGroup>
+                </View>
+                <Empty>
+                  <EmptyHeader>
+                    <EmptyMedia variant="icon">◻</EmptyMedia>
+                    <EmptyTitle>아직 항목이 없어요</EmptyTitle>
+                    <EmptyDescription>
+                      첫 번째 항목을 추가해 보세요.
+                    </EmptyDescription>
+                  </EmptyHeader>
+                  <EmptyContent>
+                    <Button size="sm">항목 추가</Button>
+                  </EmptyContent>
+                </Empty>
+              </View>
+            </Section>
+
+            {/* 데이터·레이아웃 섹션: Breadcrumb·Pagination·Table·Kbd·AspectRatio·Item·ButtonGroup·Field */}
+            <Section
+              title="Table · Breadcrumb · Pagination · 레이아웃"
+              description="데이터를 담고 위치를 안내하는 컴포넌트예요."
+            >
+              <View className="flex flex-col gap-4">
+                <Breadcrumb>
+                  <BreadcrumbList>
+                    <BreadcrumbItem>
+                      <BreadcrumbLink onPress={() => {}}>홈</BreadcrumbLink>
+                    </BreadcrumbItem>
+                    <BreadcrumbSeparator />
+                    <BreadcrumbItem>
+                      <BreadcrumbLink onPress={() => {}}>문서</BreadcrumbLink>
+                    </BreadcrumbItem>
+                    <BreadcrumbSeparator />
+                    <BreadcrumbItem>
+                      <BreadcrumbPage>컴포넌트</BreadcrumbPage>
+                    </BreadcrumbItem>
+                  </BreadcrumbList>
+                </Breadcrumb>
+                <Pagination>
+                  <PaginationContent>
+                    <PaginationItem>
+                      <PaginationPrevious
+                        onPress={() => {}}
+                        label="이전"
+                        accessibilityLabel="이전 페이지로 이동"
+                      />
+                    </PaginationItem>
+                    <PaginationItem>
+                      <PaginationLink onPress={() => {}}>1</PaginationLink>
+                    </PaginationItem>
+                    <PaginationItem>
+                      <PaginationLink isActive onPress={() => {}}>
+                        2
+                      </PaginationLink>
+                    </PaginationItem>
+                    <PaginationItem>
+                      <PaginationLink onPress={() => {}}>3</PaginationLink>
+                    </PaginationItem>
+                    <PaginationItem>
+                      <PaginationEllipsis />
+                    </PaginationItem>
+                    <PaginationItem>
+                      <PaginationNext
+                        onPress={() => {}}
+                        label="다음"
+                        accessibilityLabel="다음 페이지로 이동"
+                      />
+                    </PaginationItem>
+                  </PaginationContent>
+                </Pagination>
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>이름</TableHead>
+                      <TableHead>역할</TableHead>
+                      <TableHead>상태</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    <TableRow>
+                      <TableCell>홍길동</TableCell>
+                      <TableCell>관리자</TableCell>
+                      <TableCell>활성</TableCell>
+                    </TableRow>
+                    <TableRow>
+                      <TableCell>김철수</TableCell>
+                      <TableCell>편집자</TableCell>
+                      <TableCell>대기</TableCell>
+                    </TableRow>
+                  </TableBody>
+                  <TableCaption>팀 구성원 2명</TableCaption>
+                </Table>
+                <View className="flex flex-row flex-wrap items-center gap-3">
+                  <KbdGroup>
+                    <Kbd>⌘</Kbd>
+                    <Kbd>K</Kbd>
+                  </KbdGroup>
+                  <AspectRatio ratio={2} className="w-40 overflow-hidden rounded-md">
+                    <View className="flex h-full w-full items-center justify-center bg-muted">
+                      <Text className="font-sans text-sm text-muted-foreground">
+                        2:1 비율
+                      </Text>
+                    </View>
+                  </AspectRatio>
+                </View>
+                <Item variant="outline">
+                  <ItemMedia variant="icon">
+                    <Text className="font-sans text-base text-muted-foreground">★</Text>
+                  </ItemMedia>
+                  <ItemContent>
+                    <ItemTitle>즐겨찾는 프로젝트</ItemTitle>
+                    <ItemDescription>
+                      어디서나 같은 모습으로 열리는 UniKit이에요.
+                    </ItemDescription>
+                  </ItemContent>
+                  <ItemActions>
+                    <Button variant="outline" size="sm">
+                      열기
+                    </Button>
+                  </ItemActions>
+                </Item>
+                <ButtonGroup>
+                  <Button variant="outline">편집</Button>
+                  <Button variant="outline">복제</Button>
+                  <Button variant="outline">삭제</Button>
+                </ButtonGroup>
+                <Field>
+                  <FieldContent>
+                    <FieldLabel nativeID="unikit-label-field-team">팀 이름</FieldLabel>
+                    <Input
+                      accessibilityLabelledBy="unikit-label-field-team"
+                      placeholder="예: 유니키팀"
+                    />
+                    <FieldDescription>
+                      팀 이름은 언제든 바꿀 수 있어요.
+                    </FieldDescription>
+                  </FieldContent>
+                </Field>
               </View>
             </Section>
 
