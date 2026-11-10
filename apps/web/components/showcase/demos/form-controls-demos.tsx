@@ -11,6 +11,7 @@ import {
   ToggleGroupItem,
 } from "@unikit-bridge/ui";
 import { Text, View } from "@unikit-bridge/ui/primitives";
+import { Bold, Bookmark, Pin } from "lucide-react";
 
 import type { ShowcaseDemo } from "./types";
 
@@ -112,18 +113,23 @@ export const toggleDemo: ShowcaseDemo = {
     return (
       <View className="flex flex-row flex-wrap gap-2">
         <Toggle defaultPressed accessibilityLabel="즐겨찾기">
-          ★ 즐겨찾기
+          <Bookmark className="size-4" />
         </Toggle>
-        <Toggle accessibilityLabel="고정">📌 고정</Toggle>
+        <Toggle accessibilityLabel="고정">
+          <Pin className="size-4" />
+        </Toggle>
         <Toggle variant="outline" accessibilityLabel="굵게">
-          B
+          <Bold className="size-4" />
         </Toggle>
       </View>
     );
   },
   code: `import { Toggle } from "@unikit-bridge/ui";
+import { Bookmark } from "lucide-react";
 
-<Toggle accessibilityLabel="토글">★</Toggle>`,
+<Toggle accessibilityLabel="즐겨찾기">
+  <Bookmark className="size-4" />
+</Toggle>`,
 };
 
 export const toggleGroupDemo: ShowcaseDemo = {
