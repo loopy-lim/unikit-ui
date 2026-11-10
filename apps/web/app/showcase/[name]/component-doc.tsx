@@ -11,11 +11,9 @@ import {
 } from "../../../components/showcase/catalog";
 import { demos } from "../../../components/showcase/demos";
 import {
-  CodeBlock,
-  DocsTabs,
+  DemoPanel,
   ExampleBlock,
   InstallSnippet,
-  PreviewFrame,
 } from "../../../components/showcase/docs-shell";
 
 export function ComponentDoc({ name }: { name: string }) {
@@ -82,16 +80,13 @@ export function ComponentDoc({ name }: { name: string }) {
         </Text>
       </View>
 
-      <View className="space-y-4">
-        <DocsTabs tab={tab} onChange={setTab} />
-        {tab === "preview" ? (
-          <PreviewFrame align={formLike ? "start" : "center"}>
-            <Demo />
-          </PreviewFrame>
-        ) : (
-          <CodeBlock code={demo.code} />
-        )}
-      </View>
+      <DemoPanel
+        tab={tab}
+        onChange={setTab}
+        align={formLike ? "start" : "center"}
+        preview={<Demo />}
+        code={demo.code}
+      />
 
       <InstallSnippet name={item.name} />
 
