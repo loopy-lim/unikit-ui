@@ -1,6 +1,6 @@
 {
   "name": "@unikit-bridge/ui",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Bridge UI kit — one component set that renders React Native views on native (uniwind) and plain DOM on web (Tailwind CSS v4). Same className, same look.",
   "license": "MIT",
   "repository": {
