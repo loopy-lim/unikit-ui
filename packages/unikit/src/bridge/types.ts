@@ -32,8 +32,10 @@ export type BridgeStyle = Record<string, string | number | undefined>;
 /**
  * 플랫폼 공통 접근성 역할 — ARIA role과 RN accessibilityRole의 교집합 +
  * 카탈로그 확장에 필요한 역할. 웹에서는 그대로 role 속성이 되고,
- * RN이 모르는 role（dialogtable 등）은 네이티브에서 무시된다（웹 스크린리더만
- * 이득을 얻는다 — 한계는 컴포넌트 파일 머리 주석에 기록）.
+ * RN이 모르는 role（tabpanel·dialog 등）은 Android 런타임에서 무시되지 않고
+ * 크래시하므로(2026-11-10 실증) native 브리지가 근접 RN 역할로 매핑한다
+ * （매핑표는 native.tsx의 RN_ROLE_FALLBACK — 웹 스크린리더만 이득을 얻는
+ * 역할은 none으로 낮아지는 한계를 컴포넌트 머리 주석에 기록）.
  */
 export type BridgeRole =
   | "button"
