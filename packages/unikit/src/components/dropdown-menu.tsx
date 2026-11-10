@@ -164,11 +164,15 @@ const DropdownMenuRadioGroupContext =
 
 // 메뉴 카드 — 원본 콘텐츠 토큰 + 골격 요구 pointer-events-auto（§규칙 6）.
 const CARD_CLASSES =
-  "pointer-events-auto z-50 min-w-32 rounded-md border bg-popover p-1 text-popover-foreground web:max-h-96 web:overflow-x-hidden web:overflow-y-auto web:shadow-md";
+  "pointer-events-auto z-50 min-w-32 rounded-md border border-border bg-popover p-1 text-popover-foreground web:max-h-96 web:overflow-x-hidden web:overflow-y-auto web:shadow-md";
 
-// 일반 항목 — radix 하이라이트（focus）를 active（네이티브 눌림）+hover/focus-visible으로.
+// 일반 항목 — 기본 상호작용 및 커서/선택 방지/포커스 아웃라인.
 const ITEM_CLASSES =
-  "relative flex-row items-center gap-2 rounded-sm px-2 py-1.5 active:bg-accent web:cursor-default web:select-none web:outline-none web:hover:bg-accent web:focus-visible:bg-accent";
+  "relative flex-row items-center gap-2 rounded-sm px-2 py-1.5 web:cursor-default web:select-none web:outline-none";
+
+// 일반 항목 하이라이트 — radix 하이라이트（focus）를 active（네이티브 눌림）+hover/focus-visible으로.
+const ITEM_HIGHLIGHT_CLASSES =
+  "active:bg-accent web:hover:bg-accent web:focus-visible:bg-accent";
 
 // 표시자（체크/라디오） 항목 — 왼쪽 pl-8 표시자 슬롯（원본 py-1.5 pr-2 pl-8）.
 const INDICATED_ITEM_CLASSES =
@@ -181,9 +185,8 @@ const ITEM_TEXT_CLASSES = "flex-1 font-sans text-sm text-popover-foreground";
 const INDICATOR_SLOT_CLASSES =
   "absolute left-2 size-3.5 items-center justify-center web:pointer-events-none";
 
-// 트리거 리셋 — 웹 <button> UA 스타일（배경테두리패딩가운데 정렬） 제거.
-const TRIGGER_RESET_CLASSES =
-  "web:border-0 web:bg-transparent web:p-0 web:text-left web:outline-none";
+// 트리거 리셋 — 포커스 아웃라인 기본 처리(소비자 클래스 우선 보존).
+const TRIGGER_RESET_CLASSES = "web:outline-none";
 
 // ---------------------------------------------------------------------------
 // 컴포넌트
@@ -355,9 +358,10 @@ const DropdownMenuItem = forwardRef<BridgePressableRef, DropdownMenuItemProps>(
         }}
         className={cn(
           ITEM_CLASSES,
+          destructive
+            ? "active:bg-destructive/10 web:hover:bg-destructive/10 web:focus-visible:bg-destructive/10"
+            : ITEM_HIGHLIGHT_CLASSES,
           inset && "pl-8",
-          destructive &&
-            "active:bg-destructive/10 web:hover:bg-destructive/10 web:focus-visible:bg-destructive/10",
           disabled && "web:pointer-events-none opacity-50",
           className,
         )}
@@ -618,6 +622,7 @@ const DropdownMenuSubTrigger = forwardRef<
         onPress={() => sub.setOpen(!sub.open)}
         className={cn(
           ITEM_CLASSES,
+          ITEM_HIGHLIGHT_CLASSES,
           inset && "pl-8",
           // 원본 data-［state=open］:bg-accent → 조건부 클래스
           sub.open && "bg-accent active:bg-accent",

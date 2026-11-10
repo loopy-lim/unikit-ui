@@ -144,7 +144,7 @@ HoverCardTrigger.displayName = "HoverCardTrigger";
 
 const hoverCardContentVariants = cva(
   // pointer-events-auto: 웹에서 오버레이 래퍼 box-none 상속 회피（기본 포함）.
-  "pointer-events-auto w-64 rounded-md border bg-popover p-4 text-popover-foreground web:outline-none",
+  "pointer-events-auto w-64 rounded-md border border-border bg-popover p-4 text-popover-foreground web:outline-none web:shadow-md",
 );
 
 export type HoverCardContentProps = ViewProps & {

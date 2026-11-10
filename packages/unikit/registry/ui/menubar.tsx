@@ -132,7 +132,7 @@ const Menubar = forwardRef<BridgeViewRef, MenubarProps>(
           ref={ref}
           accessibilityRole="menubar"
           className={cn(
-            "h-9 flex-row items-center gap-1 rounded-md border bg-background p-1 web:shadow-xs",
+            "h-9 flex-row items-center gap-1 rounded-md border border-border bg-background p-1 web:shadow-xs",
             className,
           )}
           {...props}

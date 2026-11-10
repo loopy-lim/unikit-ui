@@ -10,6 +10,7 @@
 import { useMemo, useState } from "react";
 import { Link } from "expo-router";
 import { Pressable, SectionList, Text, View } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 import {
   Badge,
   Button,
@@ -81,9 +82,10 @@ export default function Index() {
   }, [query]);
 
   return (
-    <View className="flex-1 bg-background">
+    <SafeAreaView style={{ flex: 1 }} className="bg-background">
       <SectionList
-        className="w-full"
+        style={{ flex: 1 }}
+        className="w-full flex-1"
         contentContainerClassName="w-full max-w-[640px] mx-auto px-4 pb-12"
         keyboardShouldPersistTaps="handled"
         keyboardDismissMode="on-drag"
@@ -155,6 +157,6 @@ export default function Index() {
           </View>
         }
       />
-    </View>
+    </SafeAreaView>
   );
 }

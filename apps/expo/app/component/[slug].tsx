@@ -7,6 +7,7 @@
 import { useMemo } from "react";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { Pressable, ScrollView, Text, View } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 import { Badge, Button } from "@unikit-bridge/ui";
 
 import { CATALOG, findEntry } from "../../components/showcase/catalog";
@@ -44,9 +45,10 @@ export default function ComponentScreen() {
   const exampleSlides = entry.slides.slice(1);
 
   return (
-    <View className="flex-1 bg-background">
+    <SafeAreaView style={{ flex: 1 }} className="bg-background">
       <ScrollView
-        className="w-full"
+        style={{ flex: 1 }}
+        className="w-full flex-1"
         contentContainerClassName="w-full max-w-[640px] mx-auto px-4 pt-5 pb-16 space-y-8"
         keyboardShouldPersistTaps="handled"
       >
@@ -143,6 +145,6 @@ export default function ComponentScreen() {
           )}
         </View>
       </ScrollView>
-    </View>
+    </SafeAreaView>
   );
 }

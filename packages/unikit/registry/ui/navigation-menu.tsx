@@ -315,7 +315,7 @@ const NavigationMenuContent = forwardRef<
         ref={ref}
         nativeID={nativeID ?? item.contentId}
         className={cn(
-          "pointer-events-auto rounded-md border bg-popover p-2 pr-2.5 text-popover-foreground web:shadow-md",
+          "pointer-events-auto rounded-md border border-border bg-popover p-2 pr-2.5 text-popover-foreground web:shadow-md",
           className,
         )}
         {...props}

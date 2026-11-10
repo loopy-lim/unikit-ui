@@ -107,9 +107,8 @@ function textValueOf(nodes: ReactNode): string {
     .trim();
 }
 
-/** 웹 <button> UA 스타일 리셋（dropdown-menu TRIGGER_RESET 관행） */
-const TRIGGER_RESET_CLASSES =
-  "web:border-0 web:bg-transparent web:p-0 web:outline-none";
+/** 웹 <button> 포커스 아웃라인 기본 처리(소비자 클래스 우선 보존) */
+const TRIGGER_RESET_CLASSES = "web:outline-none";
 
 // ---------------------------------------------------------------------------
 // 상태 context — 열림（Popover 미러）값（단일/다중）라벨 레지스트리
