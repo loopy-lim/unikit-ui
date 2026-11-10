@@ -79,6 +79,7 @@ import type {
   SelectProps,
   TextProps,
   TextInputProps,
+  BridgeRole,
   GetViewport,
   UseDismiss,
   UseDragOptions,
@@ -96,6 +97,38 @@ export type * from "./types";
 const STYLES = StyleSheet.create({
   selectList: { maxHeight: 288 },
 });
+
+// ---------------------------------------------------------------------------
+// 접근성 역할 매핑 — 웹 ARIA role 중 RN 유효 목록에 없는 값(tabpanel·dialog·
+// listbox 등)은 Android 런타임에서 "Invalid accessibility role value" 크래시를
+// 낸다(2026-11-10 에뮬레이터 실증 — 기존 "네이티브에서 무시된다" 판단 정정).
+// 컴포넌트는 웹 role을 그대로 쓰고 브리지가 근접 RN 값으로 치환한다
+// (플랫폼 분기는 브리지가 담당한다는 원칙의 적용).
+// ---------------------------------------------------------------------------
+const RN_VALID_ROLES = new Set([
+  "none", "button", "link", "search", "image", "keyboardkey", "text",
+  "adjustable", "imagebutton", "header", "summary", "alert", "checkbox",
+  "combobox", "menu", "menubar", "menuitem", "progressbar", "radio",
+  "radiogroup", "scrollbar", "spinbutton", "switch", "tab", "tablist",
+  "timer", "toolbar",
+]);
+
+/** RN에 없는 웹 role → 근접 RN 역할. 대응이 없으면 none으로 낮춘다. */
+const RN_ROLE_FALLBACK: Partial<Record<BridgeRole, string>> = {
+  // 오버레이 계열 — RN alert(중요 알림)이 가장 근접.
+  dialog: "alert",
+  alertdialog: "alert",
+  // 웹 heading — RN은 header.
+  heading: "header",
+  // 범위 입력 — RN은 adjustable.
+  slider: "adjustable",
+};
+
+const toNativeRole = (role?: BridgeRole) => {
+  if (!role) return undefined;
+  if (RN_VALID_ROLES.has(role)) return role;
+  return RN_ROLE_FALLBACK[role] ?? "none";
+};
 
 // ---------------------------------------------------------------------------
 // View — RN View 재노출（타입만 브리지 계약으로 좁힌다）.
@@ -137,7 +170,7 @@ const View = forwardRef<BridgeViewRef, ViewProps>(
         ref={ref as Ref<ViewInstance>}
         nativeID={nativeID}
         testID={testID}
-        accessibilityRole={accessibilityRole}
+        accessibilityRole={toNativeRole(accessibilityRole)}
         accessibilityLabel={accessibilityLabel}
         aria-hidden={ariaHidden}
         accessibilityElementsHidden={ariaHidden}
@@ -183,7 +216,7 @@ const Text = forwardRef<BridgeTextRef, TextProps>(
       nativeID={nativeID}
       testID={testID}
       onPress={onPress}
-      accessibilityRole={accessibilityRole}
+      accessibilityRole={toNativeRole(accessibilityRole)}
       accessibilityLabel={accessibilityLabel}
       // 장식용 글리프 숨김（T-2a 제기） — View 관례와 동일 치환
       accessibilityElementsHidden={ariaHidden}
@@ -285,7 +318,7 @@ const Pressable = forwardRef<BridgePressableRef, PressableProps>(
         onLongPress={longPress ? () => longPress() : undefined}
         disabled={disabled}
         accessibilityLabel={accessibilityLabel}
-        accessibilityRole={accessibilityRole}
+        accessibilityRole={toNativeRole(accessibilityRole)}
         aria-disabled={ariaDisabled}
         aria-checked={ariaChecked}
         aria-selected={ariaSelected}
@@ -498,7 +531,7 @@ const ScrollView = forwardRef<BridgeScrollViewRef, ScrollViewProps>(
       ref={ref as unknown as Ref<ScrollViewInstance>}
       nativeID={nativeID}
       testID={testID}
-      accessibilityRole={accessibilityRole}
+      accessibilityRole={toNativeRole(accessibilityRole)}
       accessibilityLabel={accessibilityLabel}
       horizontal={horizontal}
       pagingEnabled={pagingEnabled}
@@ -585,7 +618,7 @@ function Select({
                 <RNPressable
                   key={key}
                   disabled={props.disabled}
-                  accessibilityRole="option"
+                  accessibilityRole={toNativeRole("option")}
                   accessibilityState={{ selected: props.value === current }}
                   onPress={() => commit(props.value)}
                   className={cn(
