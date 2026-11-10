@@ -58,7 +58,7 @@ export function ComponentDoc({ name }: { name: string }) {
   ].includes(name);
 
   return (
-    <View className="w-full max-w-3xl space-y-12 pb-8">
+    <View className="w-full max-w-4xl space-y-12">
       <View className="space-y-3">
         <View className="flex flex-row items-center gap-1.5">
           <Link

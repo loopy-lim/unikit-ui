@@ -11,6 +11,7 @@ import { useMemo, useState } from "react";
 import { Link } from "expo-router";
 import { Pressable, SectionList, Text, View } from "react-native";
 import {
+  Badge,
   Button,
   Empty,
   EmptyContent,
@@ -28,30 +29,30 @@ import {
   type CatalogEntry,
 } from "../components/showcase/catalog";
 
-/** 목록 행 — 컴포넌트 하나(탭하면 상세 화면으로) */
-function CatalogRow({ entry }: { entry: CatalogEntry }) {
+/** 카탈로그 카드 — 웹 쇼케이스 카드와 동일한 시각 계층 */
+function CatalogCard({ entry }: { entry: CatalogEntry }) {
   return (
     <Link href={`/component/${entry.slug}`} asChild>
       <Pressable
-        className="flex-row items-center justify-between border-b border-border/40 py-4 active:bg-muted/40"
+        className="mb-3 rounded-xl border border-border bg-card p-4 active:bg-muted/40"
         accessibilityLabel={`${entry.title} ${entry.subtitle} 데모 열기`}
       >
-        <View className="flex-1 pr-3">
-          <View className="flex-row items-center gap-2">
-            <Text className="font-sans text-sm font-medium text-foreground">
+        <View className="flex-row items-center justify-between">
+          <View className="flex-row items-baseline gap-2">
+            <Text className="font-sans text-base font-semibold text-foreground">
               {entry.title}
             </Text>
-            {entry.webOnly ? (
-              <Text className="font-sans text-xs text-muted-foreground">
-                웹 전용
-              </Text>
-            ) : null}
+            <Text className="font-sans text-xs text-muted-foreground">
+              {entry.subtitle}
+            </Text>
           </View>
-          <Text className="mt-0.5 font-sans text-xs text-muted-foreground">
-            {entry.subtitle}
-          </Text>
+          {entry.webOnly ? (
+            <Badge variant="outline">웹 전용</Badge>
+          ) : null}
         </View>
-        <Text className="font-sans text-base text-muted-foreground">›</Text>
+        <Text className="mt-1 font-sans text-xs leading-5 text-muted-foreground">
+          {entry.description}
+        </Text>
       </Pressable>
     </Link>
   );
@@ -89,10 +90,10 @@ export default function Index() {
         stickySectionHeadersEnabled={false}
         sections={sections}
         keyExtractor={(entry) => entry.slug}
-        renderItem={({ item }) => <CatalogRow entry={item} />}
+        renderItem={({ item }) => <CatalogCard entry={item} />}
         renderSectionHeader={({ section }) => (
-          <View className="flex-row items-baseline justify-between border-b border-border pb-3 pt-8">
-            <Text className="font-sans text-sm font-semibold text-foreground">
+          <View className="flex-row items-baseline justify-between pb-3 pt-6">
+            <Text className="font-sans text-sm font-semibold tracking-tight text-foreground">
               {section.title}
             </Text>
             <Text className="font-sans text-xs text-muted-foreground">

@@ -27,7 +27,7 @@ export function DocsShell({ children }: { children: ReactNode }) {
     <DocsProviders>
       <View className="min-h-screen bg-background">
         <DocsHeader onToggleNav={() => setNavOpen((v) => !v)} navOpen={navOpen} />
-        <View className="mx-auto flex w-full max-w-7xl flex-col md:flex-row">
+        <View className="mx-auto flex w-full max-w-7xl flex-col px-4 sm:px-6 md:flex-row lg:px-8">
           <DocsSidebar open={navOpen} onNavigate={() => setNavOpen(false)} />
           <DocsMain>{children}</DocsMain>
         </View>
@@ -41,7 +41,7 @@ function DocsMain({ children }: { children: ReactNode }) {
   return (
     <View
       key={pathname}
-      className="site-docs-enter min-w-0 flex-1 px-6 pb-20 pt-8 sm:px-8 lg:px-10 lg:pt-10"
+      className="site-docs-enter min-w-0 flex-1 pb-16 pt-6 sm:pt-8 md:pl-8 lg:pl-10"
     >
       {children}
     </View>
@@ -61,7 +61,7 @@ function DocsHeader({
 
   return (
     <View className="sticky top-0 z-40 border-b border-border/80 bg-background/90 backdrop-blur supports-[backdrop-filter]:bg-background/75">
-      <View className="mx-auto flex h-16 w-full max-w-7xl flex-row items-center justify-between gap-4 px-6 sm:px-8">
+      <View className="mx-auto flex h-16 w-full max-w-7xl flex-row items-center justify-between gap-4 px-4 sm:px-6 lg:px-8">
         <View className="flex min-w-0 flex-row items-center gap-4">
           <Button
             variant="ghost"
@@ -130,8 +130,8 @@ function DocsSidebar({
     <View
       className={
         open
-          ? "block w-full shrink-0 border-b border-border px-6 py-6 md:sticky md:top-16 md:block md:h-[calc(100dvh-4rem)] md:w-60 md:overflow-y-auto md:border-b-0 md:border-r md:border-border/80 md:px-5 md:py-8 lg:w-64 lg:px-6"
-          : "hidden w-full shrink-0 border-b border-border px-6 py-6 md:sticky md:top-16 md:block md:h-[calc(100dvh-4rem)] md:w-60 md:overflow-y-auto md:border-b-0 md:border-r md:border-border/80 md:px-5 md:py-8 lg:w-64 lg:px-6"
+          ? "block w-full shrink-0 border-b border-border py-4 md:sticky md:top-16 md:block md:h-[calc(100dvh-4rem)] md:w-60 md:overflow-y-auto md:border-b-0 md:border-r md:border-border/80 md:py-8 md:pr-6 lg:w-64 lg:pr-8"
+          : "hidden w-full shrink-0 border-b border-border py-4 md:sticky md:top-16 md:block md:h-[calc(100dvh-4rem)] md:w-60 md:overflow-y-auto md:border-b-0 md:border-r md:border-border/80 md:py-8 md:pr-6 lg:w-64 lg:pr-8"
       }
     >
       <Link
@@ -187,15 +187,15 @@ export function PreviewFrame({
     <View
       className={
         align === "start"
-          ? "site-preview-enter site-preview-stage flex min-h-40 items-start justify-start rounded-xl border border-border px-6 py-8 sm:min-h-44 sm:px-8 sm:py-10"
-          : "site-preview-enter site-preview-stage flex min-h-40 items-center justify-center rounded-xl border border-border px-6 py-8 sm:min-h-44 sm:px-8 sm:py-10"
+          ? "site-preview-enter site-preview-stage flex min-h-44 items-start justify-start rounded-xl border border-border p-6 sm:p-8"
+          : "site-preview-enter site-preview-stage flex min-h-44 items-center justify-center rounded-xl border border-border p-6 sm:p-8"
       }
     >
       <View
         className={
           align === "start"
-            ? "flex w-full max-w-md flex-col items-stretch"
-            : "flex w-full max-w-md flex-col items-center"
+            ? "flex w-full max-w-xl flex-col items-stretch"
+            : "flex w-full max-w-xl flex-col items-center"
         }
       >
         {children}
@@ -254,13 +254,13 @@ export function CodeBlock({
 
   return (
     <View className="relative overflow-hidden rounded-xl border border-border bg-muted/30">
-      <View className="flex flex-row items-center justify-between border-b border-border/80 px-4 py-2.5">
-        <Text className="font-sans text-xs text-muted-foreground">{label}</Text>
+      <View className="flex flex-row items-center justify-between border-b border-border/80 px-4 py-2">
+        <Text className="font-sans text-xs font-medium text-muted-foreground">{label}</Text>
         <Button variant="ghost" size="sm" onPress={copy}>
           {copied ? "복사됨" : "복사"}
         </Button>
       </View>
-      <pre className="site-mono overflow-x-auto px-4 py-5 text-[13px] leading-6 text-foreground">
+      <pre className="site-mono overflow-x-auto p-4 sm:p-5 text-[13px] leading-6 text-foreground">
         <code>{code}</code>
       </pre>
     </View>
@@ -295,7 +295,7 @@ export function DemoPanel({
 }) {
   return (
     <View className="site-preview-enter overflow-hidden rounded-xl border border-border">
-      <View className="flex flex-row gap-1 border-b border-border bg-muted/20 p-1.5">
+      <View className="flex flex-row gap-1 border-b border-border bg-muted/20 px-3 py-2">
         {(
           [
             ["preview", "미리보기"],
@@ -310,8 +310,8 @@ export function DemoPanel({
               onClick={() => onChange(id)}
               className={
                 active
-                  ? "site-focusable rounded-md bg-background px-3 py-1.5 font-sans text-sm font-medium text-foreground shadow-sm"
-                  : "site-focusable rounded-md px-3 py-1.5 font-sans text-sm text-muted-foreground transition-colors hover:text-foreground"
+                  ? "site-focusable rounded-md bg-background px-3 py-1.5 font-sans text-xs font-medium text-foreground shadow-sm"
+                  : "site-focusable rounded-md px-3 py-1.5 font-sans text-xs text-muted-foreground transition-colors hover:text-foreground"
               }
             >
               {label}
@@ -323,22 +323,22 @@ export function DemoPanel({
         <View
           className={
             align === "start"
-              ? "site-preview-stage flex min-h-40 items-start justify-start px-6 py-8 sm:min-h-44 sm:px-8 sm:py-10"
-              : "site-preview-stage flex min-h-40 items-center justify-center px-6 py-8 sm:min-h-44 sm:px-8 sm:py-10"
+              ? "site-preview-stage flex min-h-44 items-start justify-start p-6 sm:p-8"
+              : "site-preview-stage flex min-h-44 items-center justify-center p-6 sm:p-8"
           }
         >
           <View
             className={
               align === "start"
-                ? "flex w-full max-w-md flex-col items-stretch"
-                : "flex w-full max-w-md flex-col items-center"
+                ? "flex w-full max-w-xl flex-col items-stretch"
+                : "flex w-full max-w-xl flex-col items-center"
             }
           >
             {preview}
           </View>
         </View>
       ) : (
-        <pre className="site-mono overflow-x-auto bg-muted/30 px-4 py-5 text-[13px] leading-6 text-foreground">
+        <pre className="site-mono overflow-x-auto bg-muted/30 p-4 sm:p-5 text-[13px] leading-6 text-foreground">
           <code>{code}</code>
         </pre>
       )}

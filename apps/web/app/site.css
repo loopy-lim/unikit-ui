@@ -46,65 +46,40 @@
 
 .site-canvas {
   position: relative;
-  isolation: isolate;
   min-height: 100dvh;
   background-color: hsl(var(--background));
-  /* 격자만 유지. 섹션 border와 겹치지 않게 셀을 키우고 끝줄에만 그림(이중선 방지). */
-  background-image:
-    radial-gradient(ellipse 90% 50% at 50% -8%, var(--site-wash), transparent 68%),
-    linear-gradient(
-      to right,
-      transparent calc(var(--site-grid-size) - 1px),
-      var(--site-grid) calc(var(--site-grid-size) - 1px),
-      var(--site-grid) var(--site-grid-size)
-    ),
-    linear-gradient(
-      to bottom,
-      transparent calc(var(--site-grid-size) - 1px),
-      var(--site-grid) calc(var(--site-grid-size) - 1px),
-      var(--site-grid) var(--site-grid-size)
-    );
-  background-size: auto, var(--site-grid-size) var(--site-grid-size),
-    var(--site-grid-size) var(--site-grid-size);
-  background-position: 0 0, 0 0, 0 0;
 }
 
 .site-fade-up {
-  animation: site-fade-up 700ms cubic-bezier(0.22, 1, 0.36, 1) both;
+  /* 불필요한 진입 애니메이션 제거 */
 }
 
 .site-fade-up-delay {
-  animation: site-fade-up 800ms cubic-bezier(0.22, 1, 0.36, 1) 120ms both;
+  /* 불필요한 지연 애니메이션 제거 */
 }
 
 /* 쇼케이스 문서 — 라우트 전환·카드·프리뷰 */
 .site-docs-enter {
-  animation: site-fade-up 480ms cubic-bezier(0.22, 1, 0.36, 1) both;
+  /* 불필요한 라우트 애니메이션 제거 */
 }
 
 .site-preview-enter {
-  animation: site-fade-up 420ms cubic-bezier(0.22, 1, 0.36, 1) 60ms both;
+  /* 불필요한 프리뷰 애니메이션 제거 */
 }
 
-/* 쇼케이스 Preview 스테이지 — shadcn/Seed 식 점 격자 + 얇은 보더 */
+/* 쇼케이스 Preview 스테이지 — AI-slop 점 격자 제거하고 깔끔한 배경 사용 */
 .site-preview-stage {
   background-color: hsl(var(--background));
-  background-image: radial-gradient(
-    hsl(var(--border) / 0.7) 1px,
-    transparent 1px
-  );
-  background-size: 18px 18px;
 }
 
 .site-card {
   transition:
-    transform 220ms cubic-bezier(0.22, 1, 0.36, 1),
-    border-color 200ms ease,
-    background-color 200ms ease;
+    border-color 150ms ease,
+    background-color 150ms ease;
 }
 
 .site-card:hover {
-  transform: translateY(-3px);
+  /* 들뜸 애니메이션(translateY) 제거 */
 }
 
 .site-nav-link {
@@ -143,15 +118,11 @@
 }
 
 .site-stage-band {
-  background: linear-gradient(
-    to bottom,
-    hsl(var(--card) / 0.55),
-    hsl(var(--card) / 0.35)
-  );
+  background-color: hsl(var(--card) / 0.5);
 }
 
 .site-band {
-  background: hsl(var(--muted) / 0.35);
+  background-color: hsl(var(--muted) / 0.3);
 }
 
 @keyframes site-fade-up {

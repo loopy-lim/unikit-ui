@@ -11,7 +11,7 @@ export default function ShowcaseIndexPage() {
   const groups = catalogByCategory();
 
   return (
-    <View className="w-full max-w-5xl space-y-14 pb-8">
+    <View className="w-full space-y-12">
       <View className="space-y-4">
         <Text className="site-display text-4xl font-semibold tracking-tight text-foreground sm:text-5xl">
           Components
