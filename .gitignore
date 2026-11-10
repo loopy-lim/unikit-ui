@@ -10,6 +10,10 @@ dist/
 .next/
 out/
 
+# 웹 레지스트리 정적 산출(prebuild/predev 생성) — .gitkeep 만 추적
+apps/web/public/r/*
+!apps/web/public/r/.gitkeep
+
 # misc
 .DS_Store
 *.local

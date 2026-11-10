@@ -1,6 +1,6 @@
 // Card — docs/sdd/02-design.md v2 §3.2 그대로. 하위 컴포넌트 5종 포함 총 6종 export.
-// Card의 text-card-foreground는 §0.5(상속 차단)로 자식 Text에 닿지 않아 클래스에서 제외됨.
-// CardContent 안의 본문 텍스트는 사용처에서 색·폰트를 명시한다(§1.2 표기 규칙).
+// Card의 text-card-foreground는 §0.5（상속 차단）로 자식 Text에 닿지 않아 클래스에서 제외됨.
+// CardContent 안의 본문 텍스트는 사용처에서 색·폰트를 명시한다（§1.2 표기 규칙）.
 import { forwardRef } from "react";
 import {
   Text,
@@ -12,7 +12,7 @@ import {
 } from "@unikit-bridge/ui/primitives";
 import { cva } from "class-variance-authority";
 
-import { cn } from "@/lib/utils";
+import { cn } from "../lib/utils";
 
 const cardVariants = cva("rounded-xl border border-border bg-card shadow-sm");
 const cardHeaderVariants = cva("flex flex-col gap-1.5 p-6");

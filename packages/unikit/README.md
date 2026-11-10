@@ -89,11 +89,34 @@ function ThemeToggle() {
 
 The provider holds the scheme and binds it to each engine: `Uniwind.setTheme()` on native, a `.dark` class on `<html>` on web. Prebuilt token presets (`themePresets`) and raw token access (`getThemeTokens`, `lightTokens`, `darkTokens`) are exported for advanced theming.
 
-## Components
+## Components — 61 universal components
 
-`Button` · `Card` (+ Header / Title / Description / Content / Footer) · `Input` · `Label` · `Badge`
+The full shadcn/ui catalog (new-york-v4, 61 items) ported to one source that renders on web and native alike:
 
-All components accept a `className` and forward variant helpers (`buttonVariants`, `cardVariants`, …) for composition.
+- **Basics (5)** — `Button` · `Card` (+ Header / Title / Description / Content / Footer) · `Input` · `Label` · `Badge`
+- **Forms (13)** — `Checkbox` · `RadioGroup` · `Switch` · `Toggle` · `ToggleGroup` · `Textarea` · `Select` · `NativeSelect` · `Slider` · `Calendar` · `InputOTP` · `InputGroup` · `Form` (react-hook-form integration, optional peer)
+- **Overlays & menus (13)** — `Dialog` · `AlertDialog` · `Sheet` · `Drawer` · `Popover` · `HoverCard` · `Tooltip` · `DropdownMenu` · `ContextMenu` · `Command` · `Combobox` · `Menubar` · `NavigationMenu` — portaled via the built-in overlay layer (`Portal`, anchored positioning, focus trap, dismiss)
+- **Feedback & data (7)** — `Alert` · `Avatar` · `Empty` · `Skeleton` · `Table` · `Spinner` · `Sonner` (toast)
+- **Data viz & composites (3)** — `Chart` (declarative bar/line/area series — see below) · `Carousel` · `Sidebar`
+- **Messaging (5)** — `Message` · `MessageScroller` · `Bubble` · `Attachment` · `Marker`
+- **Navigation & layout (15)** — `Tabs` · `Accordion` · `Collapsible` · `Breadcrumb` · `Pagination` · `Progress` · `Separator` · `AspectRatio` · `Kbd` · `Field` · `Item` · `ButtonGroup` · `ScrollArea` · `Resizable` · `Direction`
+
+All components accept a `className`, forward refs, and forward variant helpers (`buttonVariants`, `cardVariants`, …) for composition. Per-component props, variants and accessibility behavior are documented in [`docs/components.md`](../../docs/components.md) (Korean); porting decisions are recorded in each source file's header comment.
+
+### Chart — separate entry point
+
+`Chart` is the one component excluded from the main barrel: the npm package exposes only its renderer through a dedicated entry, so the chart dependency tree never leaks into the main bundle (Metro safety):
+
+```tsx
+// Renderer primitives (what the npm package provides):
+import { ChartSurface, ChartPath, ChartRect } from "@unikit-bridge/ui/chart";
+```
+
+The declarative component itself (`ChartContainer`, `ChartBarSeries`, `ChartTooltip`, …) is consumed via the shadcn registry copy (`components/unikit/chart.tsx`), which imports the renderer above. Web renders standard JSX `<svg>`; native renders through `react-native-svg` (optional peer dependency — install it only when you use charts). Series colors come from the `--chart-1..5` tokens (consumer-owned, shadcn chart standard).
+
+### Optional peer dependencies
+
+Only two components add optional peers: `Form` → `react-hook-form`, `Chart` → `react-native-svg`. Everything else works with the base install.
 
 ## License
 

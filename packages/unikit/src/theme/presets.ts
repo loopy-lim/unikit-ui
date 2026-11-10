@@ -1,38 +1,38 @@
 /**
- * UniKit 프리셋 테마 — 미리 준비된 디자인 세트 3종 (3차 사이클, T-17).
+ * UniKit 프리셋 테마 — 미리 준비된 디자인 세트 3종 （3차 사이클, T-17）.
  *
- * 값의 원천: docs/sdd/22-design-plan.md §2.3(설계 확정값 표).
- * 계산 재료는 Tailwind 공식 팔레트(hex) → HSL 채널(소수 1자리)이며,
- * 색 선택 규칙(22-design-plan §2.2)은 다음과 같다:
+ * 값의 원천: docs/sdd/22-design-plan.md §2.3（설계 확정값 표）.
+ * 계산 재료는 Tailwind 공식 팔레트（hex） → HSL 채널（소수 1자리）이며,
+ * 색 선택 규칙（22-design-plan §2.2）은 다음과 같다:
  *   - 라이트 primary  = «흰 전경과 WCAG 대비 ≥4.5:1을 만족하는 가장 밝은 주색 단계»
- *                      → blue-600(5.17) / emerald-700(5.48) / amber-700(5.02)
+ *                      → blue-600（5.17） / emerald-700（5.48） / amber-700（5.02）
  *   - 다크 primary    = 주색-500
- *   - 다크 primary-foreground = 중립-950 (주색-950은 blue에서 4.00:1로 미달 — 중립-950은 3종 전부 ≥5.48)
- *   - 중립 계열 N     = blue→slate, emerald→zinc, amber→stone (shadcn 관례)
- *   - destructive 쌍·radius = 기본 테마(tokens.ts)값 공통 — 다크 --destructive는
- *     사이클 30 G4/G5 조정값(0 72% 65%, red-400 계) 반영(22-design-plan §2.3 수정 이력)
+ *   - 다크 primary-foreground = 중립-950 （주색-950은 blue에서 4.00:1로 미달 — 중립-950은 3종 전부 ≥5.48）
+ *   - 중립 계열 N     = blue→slate, emerald→zinc, amber→stone （shadcn 관례）
+ *   - destructive 쌍·radius = 기본 테마（tokens.ts）값 공통 — 다크 --destructive는
+ *     사이클 30 G4/G5 조정값（0 72% 65%, red-400 계） 반영（22-design-plan §2.3 수정 이력）
  *
- * 기본 테마(zinc)는 이 파일에 없다 — src/theme/tokens.ts의 lightTokens/darkTokens이
- * 곧 기본 프리셋이다(값 사본 금지). registry 항목 이름 매핑은 generate-design.ts의
+ * 기본 테마（zinc）는 이 파일에 없다 — src/theme/tokens.ts의 lightTokens/darkTokens이
+ * 곧 기본 프리셋이다（값 사본 금지）. registry 항목 이름 매핑은 generate-design.ts의
  * THEME_ITEMS 상수가 담당한다.
  *
- * 주의: 값을 임의로 변경하면 안 된다 — 수정이 필요하면 설계 문서(22-design-plan §2.2·§2.3)를
- * 먼저 고친다. audit:design가 registry 사본·대비 기준(≥4.5)과의 일치를 검사한다.
+ * 주의: 값을 임의로 변경하면 안 된다 — 수정이 필요하면 설계 문서（22-design-plan §2.2·§2.3）를
+ * 먼저 고친다. audit:design가 registry 사본·대비 기준（≥4.5）과의 일치를 검사한다.
  */
 import type { UnikitThemeTokens } from "./tokens";
 
-/** 프리셋 정의 — label·neutral·primaryStep은 카탈로그 표기용 메타(값 아님) */
+/** 프리셋 정의 — label·neutral·primaryStep은 카탈로그 표기용 메타（값 아님） */
 export interface ThemePreset {
   label: string;
-  /** 중립 계열 이름(slate/zinc/stone) */
+  /** 중립 계열 이름（slate/zinc/stone） */
   neutral: string;
-  /** 카탈로그 표기용 라이트 primary 단계(예: "blue-600") */
+  /** 카탈로그 표기용 라이트 primary 단계（예: "blue-600"） */
   primaryStep: string;
   light: UnikitThemeTokens;
   dark: UnikitThemeTokens;
 }
 
-/** 프리셋 3종 — 키 순서는 tokens.ts 선언 순서와 동일(멱등성 기준) */
+/** 프리셋 3종 — 키 순서는 tokens.ts 선언 순서와 동일（멱등성 기준） */
 export const themePresets = {
   blue: {
     label: "Blue",
@@ -183,5 +183,5 @@ export const themePresets = {
   },
 } as const satisfies Record<string, ThemePreset>;
 
-/** 프리셋 키 집합("blue" | "emerald" | "amber") */
+/** 프리셋 키 집합（"blue" | "emerald" | "amber"） */
 export type PresetKey = keyof typeof themePresets;

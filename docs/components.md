@@ -1,6 +1,6 @@
 # UniKit 컴포넌트 사용법
 
-UniKit의 컴포넌트 28종(기초 5종 Button·Card·Input·Label·Badge + shadcn 카탈로그 1차 23종)과 테마를 다루는 법을 정리했어요. 모든 내용은 실제 소스(`packages/unikit/src/`)와 쇼케이스(`apps/expo/app/index.tsx`) 기준이에요.
+UniKit의 컴포넌트 61종(기초 5종 Button·Card·Input·Label·Badge + shadcn 카탈로그 1차 23종 + 2차 33종)과 테마를 다루는 법을 정리했어요. 모든 내용은 실제 소스(`packages/unikit/src/`)와 쇼케이스(`apps/expo/app/index.tsx`) 기준이에요. 기초 5종과 1차 23종은 아래에 상세(Props 표·변형)를 적었고, 2차 33종(2026-11-10 완료)은 계열별 표로 각 1줄 요점만 적어요 — 상세 포팅 판단(원본 대비 차이·미지원 항목)은 각 소스 파일의 머리 주석에 있어요.
 
 ## import 방법
 
@@ -20,7 +20,7 @@ import { Label } from "@/components/unikit/label";
 import { Badge } from "@/components/unikit/badge";
 ```
 
-## 공통 규칙 (28종 모두 해당)
+## 공통 규칙 (61종 모두 해당)
 
 - **`className` 병합** — 모든 컴포넌트는 `className` prop을 받아 내부 스타일과 병합해요(`cn` = clsx + tailwind-merge). 같은 속성을 덮어쓰면 내가 준 클래스가 이겨요.
 - **cva 변형** — 색·크기 같은 변형은 `class-variance-authority`(cva)로 정의돼 있어요. 변형 함수 자체도 export돼서(`buttonVariants` 등) 다른 요소에 재활용할 수 있어요.
@@ -374,6 +374,97 @@ import { Checkbox, Switch, Tabs, Accordion, Progress, Alert } from "@unikit-brid
 
 ---
 
+## shadcn 카탈로그 2차 — 33종 추가 컴포넌트 (사이클 40, 2026-11-10 완료)
+
+shadcn 카탈로그 잔여 33종을 전량 이식해 UniKit은 61종 전부를 갖추게 됐어요(61/61). 1차와 같은 규칙(shadcn API 유지·Radix 제거 후 React state+context·글리프 아이콘)에 더해, 이번 배치의 공통 사항:
+
+- **오버레이 계열은 `src/lib/overlay.tsx`가 떠받쳐요.** 포털(웹 createPortal / 네이티브 Modal), 백드롭, 바깥 눌림·ESC 닫기, 포커스 이동·트랩·복귀, 앵커 위치 계산(measure 기반 side/align 배치 + 뷰포트 클램프)을 통합 오버레이 훈이 담당해요. dialog 계열(중앙 모달)은 포털+백드롭만, popover 계열은 앵커 위치 계산까지 소비해요.
+- **등장/퇴장 애니메이션은 마운트/언마운트 즉시 전환**이에요(`data-[state]` 셀렉터가 없는 네이티브에서 재현 불가 — 로드맵). 웹 전용 효과는 역시 `web:` 접두 클래스예요.
+- **브리지 프리미티브가 확장됐어요.** Select(웹 진짜 `<select>`)·ScrollView(웹 overflow div)·useDrag(웹 PointerEvent / 네이티브 PanResponder)·measure 계약이 추가됐고, BridgeRole에 table·grid·listbox·dialog 등이 포함됐어요.
+- **`chart`는 npm 배럴에서 제외**되고 `@unikit-bridge/ui/chart` 단독 진입점이에요(react-native-svg 선택 peer — 웹 번들 오염 방지). 선언형 컴포넌트(ChartContainer 등)는 레지스트리 복사로 써요.
+- **`form`은 react-hook-form 선택 peer**예요(설치 시 연동, 미설치 시 타입만 노출).
+
+### 오버레이·모달 7종
+
+| 이름 | 컴포넌트 | 요점 |
+|---|---|---|
+| `dialog` | `Dialog` 외 7종 | 중앙 모달. 열림 상태는 React state+context, 포털·백드롭·포커스 트랩/복귀·ESC 닫기·배경 스크롤 잠금은 오버레이 훈 담당. role=dialog·aria-modal |
+| `alert-dialog` | `AlertDialog` 외 9종 | 확인 모달(Action/Cancel). 원본 grid 레이아웃은 flex 스택으로 근사, Media·Title 배치 일부 소실 |
+| `sheet` | `Sheet` 외 7종 | 측면 슬라이드 패널(side top/bottom/left/right). ModalOverlay 방향별 배치 |
+| `drawer` | `Drawer` 외 7종 | 바닥 슬라이드 패널. useDrag로 아래 드래그 닫기(다른 방향 드래그는 미지원) |
+| `popover` | `Popover` 외 6종 | 앵커 팝오버(비모달). 앵커 위치 계산(side/align/offset), 열림 중 스크롤·리사이즈 시 재계산(웹) |
+| `hover-card` | `HoverCard` 외 2종 | 호버 카드. 웹 지연 개방(setTimeout), 네이티브는 탭 토글(hover 없음) |
+| `tooltip` | `Tooltip` 외 3종 | 짧은 힌트. 트리거 aria-describedby 연결, delayDuration 지연 |
+
+### 메뉴·명령 6종
+
+| 이름 | 컴포넌트 | 요점 |
+|---|---|---|
+| `dropdown-menu` | `DropdownMenu` 외 14종 | 드롭다운 메뉴. 하위 메뉴 1단계 캐스케이드, 체크·라디오·구분 항목 포함 |
+| `context-menu` | `ContextMenu` 외 14종 | 우클릭 메뉴 — 웹 onContextMenu / 네이티브 길게 누르기(onLongPress) 매핑 |
+| `command` | `Command` 외 7종 | 명령 팔레트. 자체 필터 + 키보드 탐색(웹 방향키·엔터, 네이티브 onKeyPress 래핑) |
+| `combobox` | `Combobox` 외 14종+훅 | 검색 셀렉트. popover + command 조립(원본도 조립형), ▾ 트리거 개방 |
+| `menubar` | `Menubar` 외 15종 | 수평 메뉴 바. dropdown-menu 소비, 인접 트리거 hover 전환은 미지원(눌림 전환) |
+| `navigation-menu` | `NavigationMenu` 외 7종 | 내비게이션 메뉴. 링크+전개 패널, hover 지연 개방은 미지원 |
+
+### 입력 확장 9종
+
+| 이름 | 컴포넌트 | 요점 |
+|---|---|---|
+| `native-select` | `NativeSelect` 외 2종 | 브리지 Select 프리미티브(옵션·옵션 그룹 포함) — 웹은 진짜 `<select>`, 네이티브는 폴백 목록 |
+| `select` | `Select` 외 9종 | 커스텀 셀렉트. popover 기반 목록, role=combobox/listbox/option |
+| `input-otp` | `InputOTP` 외 3종 | OTP 입력. 숨은 TextInput 하나로 값 분배·자동 포커스 이동·붙여넣기 분배 |
+| `input-group` | `InputGroup` 외 5종 | 입력 묶음(애드온·버튼·텍스트 조립). 기존 input·field 재사용 |
+| `form` | `Form` 외 6종+훅 | react-hook-form 연동(선택 peer). FormField·FormItem 등 shadcn API 유지, 오류 메시지 aria 연결 |
+| `slider` | `Slider` | 브리지 useDrag 기반 슬라이더. 웹 방향키 값 조정, 트랙 전체 드래그 조작(수평 전용) |
+| `resizable` | `ResizablePanelGroup` 외 2종 | 크기 조절 패널. useDrag 드래그 리사이즈(키보드 리사이즈는 미지원) |
+| `scroll-area` | `ScrollArea`·`ScrollBar` | 스크롤 영역. 브리지 ScrollView 프리미티브(웹 overflow div), 커스텀 스크롤바는 미지원 셸 |
+| `calendar` | `Calendar` | 달력. 월 이동 + 6주 날짜 격자 직접 구현(role=grid/gridcell), 단일 선택(다중·범위는 미지원) |
+
+### 데이터 시각화·복합 5종
+
+| 이름 | 컴포넌트 | 요점 |
+|---|---|---|
+| `chart` | `ChartContainer` 외 12종 | 선언형 차트(막대·선·영역 시리즈 + 축·그리드·툴팁·범례). recharts 제거, 렌더러는 `@unikit-bridge/ui/chart` 진입점, 시리즈 색은 `--chart-1..5` 토큰(소비자 소유) |
+| `carousel` | `Carousel` 외 4종 | 캐러셀. 네이티브 ScrollView paging / 웹 scroll-snap, ←/→ 글리프 버튼 |
+| `sidebar` | `Sidebar` 외 22종 | 사이드바 블록. sheet+collapsible 조립, 원본의 쿠키·컨테이너 쿼리는 제거 |
+| `sonner` | `Toaster`·`toast()` | 토스트. 모듈 저장소 큐 + 전역 `toast()` 함수, Portal + role=status 라이브 영역 |
+| `spinner` | `Spinner` | 로딩 스피너. View 원호 조형, 웹 `web:animate-spin`(네이티브는 정적) |
+
+### 메시지 계열 5종
+
+| 이름 | 컴포넌트 | 요점 |
+|---|---|---|
+| `message` | `Message` 외 5종 | 채팅 메시지 레이아웃(아바타·내용·머리/바닥·그룹) |
+| `message-scroller` | `MessageScroller` 외 5종+훅 3종 | 메시지 스크롤. 하단 고정·자동 스크롤, 가시성 훅 노출 |
+| `bubble` | `Bubble` 외 3종 | 말풍선. 배경 View + 전경 Text 이중 지정, 반응(리액션) 표시 |
+| `attachment` | `Attachment` 외 8종 | 첨부 표시(미디어·내용·행동·그룹·트리거) |
+| `marker` | `Marker` 외 2종 | 마커(하이라이트). 기본 텍스트 / 구분 변형 |
+
+### 방향 1종
+
+| 이름 | 컴포넌트 | 요점 |
+|---|---|---|
+| `direction` | `DirectionProvider`·`useDirection` | RTL/LTR 방향 컨텍스트 제공(원본 useDirection 재노출) |
+
+사용 예(오버레이):
+
+```tsx
+import { Dialog, DialogContent, DialogTrigger, DialogTitle } from "@unikit-bridge/ui";
+
+<Dialog>
+  <DialogTrigger>열기</DialogTrigger>
+  <DialogContent>
+    <DialogTitle>제목</DialogTitle>
+    <Text className="font-sans text-sm text-muted-foreground">내용</Text>
+  </DialogContent>
+</Dialog>
+```
+
+> 2차 컴포넌트도 전부 `"use client"`가 필요한 클라이언트 컴포넌트예요(열림·드래그 상태를 React state로 들고 있어요).
+
+---
+
 ## 테마 — 라이트/다크 토큰
 
 UniKit의 모든 색은 CSS 변수 토큰이에요. 값의 단일 출처는 `packages/unikit/src/theme/tokens.ts`이고, 소비자 프로젝트에서는 [README](../README.md)의 "토큰 받기" 절(`theme` 항목 add 한 줄)로 같은 토큰을 받아요.
@@ -400,7 +491,7 @@ const { colorScheme, toggleColorScheme, setColorScheme } = useUnikitTheme();
 
 토큰 20종의 라이트/다크 **값 전체는 생성 카탈로그 [packages/unikit/docs/tokens.md](../packages/unikit/docs/tokens.md)를 보세요.** 이 문서에는 역할 구조만 요약해요 — 값 사본이 여러 곳에 있으면 어느 순간 어긋나는(드리프트) 위험이 생겨서, 기계 검사되는 카탈로그 한 곳에만 값을 둬요.
 
-- 색 토큰은 **표면/전경 쌍** 구조예요. 기본 `--background`·`--foreground`, 표면 `--card`·`--popover`(v0.1 컴포넌트 미사용, 확장 예약), 행동 `--primary`·`--secondary`·`--muted`·`--accent`·`--destructive`가 각각 `-foreground` 짝을 가져요. 테두리는 `--border`(일반)·`--input`(입력창), 키보드 포커스 링은 `--ring`이에요. 색 계열은 zinc예요.
+- 색 토큰은 **표면/전경 쌍** 구조예요. 기본 `--background`·`--foreground`, 표면 `--card`·`--popover`(popover·dropdown-menu 등 2차 오버레이 계열의 카드 표면), 행동 `--primary`·`--secondary`·`--muted`·`--accent`·`--destructive`가 각각 `-foreground` 짝을 가져요. 테두리는 `--border`(일반)·`--input`(입력창), 키보드 포커스 링은 `--ring`이에요. 색 계열은 zinc예요. 차트 시리즈 색 `--chart-1..5`는 UniKit 토큰이 아니라 소비자 앱이 정의하는 토큰이에요(shadcn 차트 표준 — chart 컴포넌트가 참조해요).
 - `--destructive` 라이트값은 WCAG AA 대비 확보를 위해 shadcn 기본 대신 한 단계 진한 red-600 계로 조정했어요(정확한 값은 카탈로그 참조).
 - `--radius`는 모서리 반경 기준값이에요. `rounded-md`는 기준값 − 2px, `rounded-lg`는 기준값, Card의 `rounded-xl`은 기준값 + 4px로 파생돼요.
 
@@ -422,6 +513,6 @@ UniKit 컴포넌트에 지정하는 접근성 prop이 브리지를 거쳐 각 �
 | `hitSlop` | 무시(포인터 정밀도가 높아 불필요) | 터치 타깃 확장 | 44px 최소 보정용 |
 | `focus:`/`focus-visible:` 클래스 | Tab 이동 시 포커스 링 | 해당 없음(웹 전용 변형) | Input·Button에 기본 적용 |
 
-지정할 수 있는 역할(`accessibilityRole` 값)은 브리지 타입 `BridgeRole`로 정의돼 있어요 — `button`·`link`·`checkbox`·`radio`·`switch`·`tab`·`tablist`·`separator`·`progressbar`·`alert` 등 두 플랫폼이 공통으로 이해하는 역할이에요.
+지정할 수 있는 역할(`accessibilityRole` 값)은 브리지 타입 `BridgeRole`로 정의돼 있어요 — `button`·`link`·`checkbox`·`radio`·`switch`·`tab`·`tablist`·`separator`·`progressbar`·`alert` 등 두 플랫폼이 공통으로 이해하는 역할이에요. 사이클 40 확장으로 `table`·`row`·`cell`·`columnheader`·`grid`·`gridcell`·`listbox`·`option`·`dialog`·`menu` 계열도 포함됐어요(table·calendar·select·오버레이 계열이 사용). RN이 모르는 역할은 네이티브에서 무시되고 웹에서만 ARIA로 나가요.
 
 터치 타깃: 상호작용 요소는 44×44px 최소를 지켜요. Button은 크기별 `hitSlop`으로 보정하고(위 Button 절의 표), 시각 크기는 그대로예요.

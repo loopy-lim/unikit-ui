@@ -1,15 +1,15 @@
-// Item — shadcn/ui new-york-v4 item(193줄)을 UniKit 유니버설로 이식.
+// Item — shadcn/ui new-york-v4 item（193줄）을 UniKit 유니버설로 이식.
 //
 // 포팅 판단:
-// - asChild(radix Slot) 제거 — View 렌더 고정.
-// - data-variant/data-size 속성·group/item·group-has-...·[&_svg]·[&>a] 셀렉터
-//   제거(네이티브에 data 속성 없음). 토큰은 cva 변형으로 그대로 보존.
+// - asChild（radix Slot） 제거 — View 렌더 고정.
+// - data-variant/data-size 속성·group/item·group-has-·［&_svg］·［&>a］ 셀렉터
+//   제거（네이티브에 data 속성 없음）. 토큰은 cva 변형으로 그대로 보존.
 // - ItemMedia는 순수 컨테이너 — 소비자가 글리프 Text 또는 Image를 넣는다
-//   (이중 지정: 글리프 색·크기는 소비자 Text에 명시). image 변형의
-//   [&_img]:size-full은 내부 Image에 직접 지정하도록 안내로 대체.
-// - line-clamp-2·text-balance는 웹 전용 → web: 접두(네이티브은 전문 전체 표시).
-// - ItemSeparator는 인라인 View(h-px bg-border) — 원본 Separator 대리
-//   (신규 파일 6종 제한).
+//   （이중 지정: 글리프 색·크기는 소비자 Text에 명시）. image 변형의
+//   ［&_img］:size-full은 내부 Image에 직접 지정하도록 안내로 대체.
+// - line-clamp-2·text-balance는 웹 전용 → web: 접두（네이티브은 전문 전체 표시）.
+// - ItemSeparator는 인라인 View（h-px bg-border） — 원본 Separator 대리
+//   （신규 파일 6종 제한）.
 // - focus-visible 링·transition은 웹 전용 → web: 접두.
 import { forwardRef } from "react";
 import {
@@ -22,10 +22,10 @@ import {
 } from "@unikit-bridge/ui/primitives";
 import { cva, type VariantProps } from "class-variance-authority";
 
-import { cn } from "@/lib/utils";
+import { cn } from "../lib/utils";
 
 // ---------------------------------------------------------------------------
-// ItemGroup — 리스트 묶음(role="list").
+// ItemGroup — 리스트 묶음（role="list"）.
 // ---------------------------------------------------------------------------
 export type ItemGroupProps = ViewProps;
 
@@ -42,7 +42,7 @@ const ItemGroup = forwardRef<BridgeViewRef, ItemGroupProps>(
 ItemGroup.displayName = "ItemGroup";
 
 // ---------------------------------------------------------------------------
-// ItemSeparator — 항목 사이 가로 구분선(원본 Separator 대리).
+// ItemSeparator — 항목 사이 가로 구분선（원본 Separator 대리）.
 // ---------------------------------------------------------------------------
 export type ItemSeparatorProps = ViewProps;
 
@@ -58,7 +58,7 @@ const ItemSeparator = forwardRef<BridgeViewRef, ItemSeparatorProps>(
 ItemSeparator.displayName = "ItemSeparator";
 
 // ---------------------------------------------------------------------------
-// Item — 리스트 아이템 카드(원본 변형·토큰 그대로).
+// Item — 리스트 아이템 카드（원본 변형·토큰 그대로）.
 // ---------------------------------------------------------------------------
 const itemVariants = cva(
   "flex flex-wrap items-center rounded-md border border-transparent text-sm web:transition-colors web:duration-100 web:outline-none web:focus-visible:border-ring web:focus-visible:ring-2 web:focus-visible:ring-ring/50",
@@ -95,7 +95,7 @@ const Item = forwardRef<BridgeViewRef, ItemProps>(
 Item.displayName = "Item";
 
 // ---------------------------------------------------------------------------
-// ItemMedia — 미디어 영역(글리프 Text 또는 Image를 소비자가 선택).
+// ItemMedia — 미디어 영역（글리프 Text 또는 Image를 소비자가 선택）.
 // ---------------------------------------------------------------------------
 const itemMediaVariants = cva(
   "flex shrink-0 items-center justify-center gap-2",
@@ -144,7 +144,7 @@ const ItemContent = forwardRef<BridgeViewRef, ItemContentProps>(
 ItemContent.displayName = "ItemContent";
 
 // ---------------------------------------------------------------------------
-// ItemTitle — 항목 제목(원본 flex/gap는 Text 레이아웃이라 제거, 토큰만 유지).
+// ItemTitle — 항목 제목（원본 flex/gap는 Text 레이아웃이라 제거, 토큰만 유지）.
 // ---------------------------------------------------------------------------
 export type ItemTitleProps = TextProps;
 
@@ -198,7 +198,7 @@ const ItemActions = forwardRef<BridgeViewRef, ItemActionsProps>(
 ItemActions.displayName = "ItemActions";
 
 // ---------------------------------------------------------------------------
-// ItemHeader — 항목 헤더(basis-full로 첫 줄을 차지).
+// ItemHeader — 항목 헤더（basis-full로 첫 줄을 차지）.
 // ---------------------------------------------------------------------------
 export type ItemHeaderProps = ViewProps;
 
@@ -214,7 +214,7 @@ const ItemHeader = forwardRef<BridgeViewRef, ItemHeaderProps>(
 ItemHeader.displayName = "ItemHeader";
 
 // ---------------------------------------------------------------------------
-// ItemFooter — 항목 푸터(헤더와 동일 구조).
+// ItemFooter — 항목 푸터（헤더와 동일 구조）.
 // ---------------------------------------------------------------------------
 export type ItemFooterProps = ViewProps;
 

@@ -93,11 +93,28 @@ import {
   TabsList,
   TabsTrigger,
   Textarea,
+  Toaster,
   Toggle,
   ToggleGroup,
   ToggleGroupItem,
   useUnikitTheme,
 } from "@unikit-bridge/ui";
+
+// 사이클 40 신규 섹션(T-4.6) — 신규 이식 33종 대표 데모. 웹 쇼케이스와 동일
+// 섹션 제목·순서(Resizable·HoverCard는 웹 전용 — 안내 문구로 표시, Chart는
+// 네이티브 SVG 렌더로 표시 — G3 F-8).
+import {
+  OverlaySection,
+  PopupMenuSection,
+} from "../components/showcase/overlay-sections";
+import { ChartSection } from "../components/showcase/chart-section";
+import {
+  CommandNavigationSection,
+  SelectSection,
+} from "../components/showcase/command-sections";
+import { FormInputsSection } from "../components/showcase/form-sections";
+import { LayoutFeedbackSection } from "../components/showcase/layout-sections";
+import { MessageUISection } from "../components/showcase/message-sections";
 
 // 정적 내보내기 시에도 SafeAreaProvider가 children을 즉시 렌더하도록 하는 초기값.
 // 웹에서 safe-area 인셋은 보통 0이고, 측정 후 실제 값으로 교정된다.
@@ -620,6 +637,21 @@ export default function Index() {
               </View>
             </Section>
 
+            {/* ———— 사이클 40 신규 섹션(T-4.6): 신규 이식 33종 데모 ———
+                웹 쇼케이스(apps/web/app/showcase)와 동일 제목·순서. 웹 전용
+                (Resizable·HoverCard·Chart)은 안내 문구로 패리티를 유지한다. */}
+            <OverlaySection />
+            <PopupMenuSection />
+            <CommandNavigationSection />
+            <SelectSection />
+            <FormInputsSection />
+            <LayoutFeedbackSection />
+            <MessageUISection />
+
+            {/* Chart — 네이티브 SVG(react-native-svg). G3 F-8: 양측 데모
+                충족 — 색은 global.css 소비자 @theme --color-chart-1..5. */}
+            <ChartSection />
+
             </View>
 
             {/* 푸터(§1.2): pt-10 · 중앙 정렬 */}
@@ -629,6 +661,10 @@ export default function Index() {
               </Text>
             </View>
         </ScrollView>
+
+        {/* Toaster(사이클 40) — 네이티브 비모달 포털 한계로 화면 루트(ScrollView
+            밖)에 1개만 둔다. Sonner 섹션의 toast 호출이 여기에 쌓여요. */}
+        <Toaster position="bottom-right" richColors closeButton />
       </SafeAreaView>
     </SafeAreaProvider>
   );

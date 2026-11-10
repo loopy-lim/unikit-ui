@@ -1,16 +1,16 @@
-// Breadcrumb — shadcn/ui new-york-v4 breadcrumb 포팅(/tmp/shadcn-ref/src/breadcrumb).
+// Breadcrumb — shadcn/ui new-york-v4 breadcrumb 포팅（/tmp/shadcn-ref/src/breadcrumb）.
 // 7종 export. radix Slot·lucide 아이콘 제거.
 // 포팅 판단:
 // - 아이콘 금지 규칙에 따라 ChevronRight → "›", MoreHorizontal → "⋯" 글리프 Text.
-// - BreadcrumbLink는 Pressable role="link" + onPress(무인자). radix Slot(asChild)은
+// - BreadcrumbLink는 Pressable role="link" + onPress（무인자）. radix Slot（asChild）은
 //   미지원 — 사용처 라우팅은 onPress에서 호출한다.
-// - BreadcrumbPage의 aria-current는 브리지 계약에 없어 현재 페이지를 시각(색·
-//   굵기)으로만 표현한다. 원본의 role="link"·aria-disabled도 Text 계약에 없어
-//   생략(활성 아닌 링크로 오독 방지).
-// - 원본 <nav>의 내재 role(navigation)도 BridgeRole에 없어 미지원 — 라벨만
-//   유지. 스크린리더 전용(sr-only) 보조 텍스트는 웹 전용 클래스라 생략하되,
-//   원본처럼 장식 요소(Separator·Ellipsis)에는 aria-hidden을 지정한다.
-// - 웹 전용 토큰(transition·hover·break-words·sm: 반응형)은 web: 접두.
+// - BreadcrumbPage의 aria-current는 브리지 계약에 없어 현재 페이지를 시각（색·
+//   굵기）으로만 표현한다. 원본의 role="link"·aria-disabled도 Text 계약에 없어
+//   생략（활성 아닌 링크로 오독 방지）.
+// - 원본 <nav>의 내재 role（navigation）도 BridgeRole에 없어 미지원 — 라벨만
+//   유지. 스크린리더 전용（sr-only） 보조 텍스트는 웹 전용 클래스라 생략하되,
+//   원본처럼 장식 요소（Separator·Ellipsis）에는 aria-hidden을 지정한다.
+// - 웹 전용 토큰（transition·hover·break-words·sm: 반응형）은 web: 접두.
 import { forwardRef } from "react";
 import {
   Pressable,
@@ -25,20 +25,20 @@ import {
 } from "@unikit-bridge/ui/primitives";
 import { cva } from "class-variance-authority";
 
-import { cn } from "@/lib/utils";
+import { cn } from "../lib/utils";
 
 const breadcrumbListVariants = cva(
   "flex-row flex-wrap items-center gap-1.5 web:break-words web:sm:gap-2.5",
 );
 const breadcrumbItemVariants = cva("flex-row items-center gap-1.5");
 
-// 링크 컨테이너(Pressable) — 투명 배경·무테두리, 전경색은 내부 Text에.
+// 링크 컨테이너（Pressable） — 투명 배경·무테두리, 전경색은 내부 Text에.
 const breadcrumbLinkVariants = cva("flex-row items-center");
 const breadcrumbLinkTextVariants = cva(
   "font-sans text-sm text-muted-foreground web:transition-colors web:hover:text-foreground active:text-foreground",
 );
 
-// 현재 페이지 — 원본 font-normal text-foreground(시각적 구분만).
+// 현재 페이지 — 원본 font-normal text-foreground（시각적 구분만）.
 const breadcrumbPageVariants = cva(
   "font-sans text-sm font-normal text-foreground",
 );
@@ -121,7 +121,7 @@ const BreadcrumbPage = forwardRef<BridgeTextRef, BreadcrumbPageProps>(
 );
 BreadcrumbPage.displayName = "BreadcrumbPage";
 
-// 구분 글리프 — children 미지정 시 기본 "›"(원본 ChevronRight 대체).
+// 구분 글리프 — children 미지정 시 기본 "›"（원본 ChevronRight 대체）.
 const BreadcrumbSeparator = forwardRef<BridgeViewRef, BreadcrumbSeparatorProps>(
   ({ className, children, ...props }, ref) => (
     <View
@@ -138,7 +138,7 @@ const BreadcrumbSeparator = forwardRef<BridgeViewRef, BreadcrumbSeparatorProps>(
 );
 BreadcrumbSeparator.displayName = "BreadcrumbSeparator";
 
-// 생략 글리프 — "⋯"(원본 MoreHorizontal 대체).
+// 생략 글리프 — "⋯"（원본 MoreHorizontal 대체）.
 const BreadcrumbEllipsis = forwardRef<BridgeViewRef, BreadcrumbEllipsisProps>(
   ({ className, ...props }, ref) => (
     <View

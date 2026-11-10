@@ -1,21 +1,21 @@
-// Avatar — shadcn/ui new-york-v4 avatar(Radix Avatar 기반)를 UniKit 유니버설로 이식.
+// Avatar — shadcn/ui new-york-v4 avatar（Radix Avatar 기반）를 UniKit 유니버설로 이식.
 //
-// 포팅 판단(radix 엔진 의존 제거):
-// - 로드 실패 상태 공유는 React context로 재현 — Avatar(루트)가
+// 포팅 판단（radix 엔진 의존 제거）:
+// - 로드 실패 상태 공유는 React context로 재현 — Avatar（루트）가
 //   { size, hasImage, imageFailed }를 제공하고, AvatarImage가 마운트 등록/
-//   실패 보고(브리지 Image onError), AvatarFallback이
+//   실패 보고（브리지 Image onError）, AvatarFallback이
 //   "소스 없음 또는 로드 실패"일 때만 렌더된다.
 // - 브리지 Image에 onLoad 계약이 없어 '로드 성공'을 알 수 없으므로 폴백
 //   표시 조건을 Radix의 "로드 전+실패"에서 "소스 없음+실패"로 단순화했다.
-//   실패한 AvatarImage는 렌더를 중단한다(Radix는 깨진 img를 남긴다).
-// - 원본의 data-size + group-data size/avatar 셀렉터(폴백 글자 크기·배지
-//   크기 연동)는 아래 조회 테이블로 치환 — 각 컴포넌트가 context size를 읽어
+//   실패한 AvatarImage는 렌더를 중단한다（Radix는 깨진 img를 남긴다）.
+// - 원본의 data-size + group-data size/avatar 셀렉터（폴백 글자 크기·배지
+//   크기 연동）는 아래 조회 테이블로 치환 — 각 컴포넌트가 context size를 읽어
 //   자기 크기 클래스를 적용한다.
-// - AvatarGroup의 겹침(-space-x-2)과 data-slot=avatar 자식 링은 자식 셀렉터가
-//   필요하다. 겹침은 웹 전용 클래스로 유지(네이티브은 나란히 배치)하고, 링은
+// - AvatarGroup의 겹침（-space-x-2）과 data-slot=avatar 자식 링은 자식 셀렉터가
+//   필요하다. 겹침은 웹 전용 클래스로 유지（네이티브은 나란히 배치）하고, 링은
 //   Avatar가 AvatarGroupContext를 읽어 자신에게 ring-2를 건다.
-// - AvatarGroupCount의 그룹 크기 반응(group-has-data-...)은 고정 토큰(size-8)으로
-//   단순화. AvatarBadge 내용은 글리프 Text 또는 비움(배경 자체가 상태 점).
+// - AvatarGroupCount의 그룹 크기 반응（group-has-data-）은 고정 토큰（size-8）으로
+//   단순화. AvatarBadge 내용은 글리프 Text 또는 비움（배경 자체가 상태 점）.
 import {
   createContext,
   forwardRef,
@@ -36,11 +36,11 @@ import {
 } from "@unikit-bridge/ui/primitives";
 import { cva, type VariantProps } from "class-variance-authority";
 
-import { cn } from "@/lib/utils";
+import { cn } from "../lib/utils";
 
 export type AvatarSize = "default" | "sm" | "lg";
 
-// 루트 크기 — 원본 data-size 셀렉터(size-8 · sm:size-6 · lg:size-10) 치환.
+// 루트 크기 — 원본 data-size 셀렉터（size-8 · sm:size-6 · lg:size-10） 치환.
 const avatarVariants = cva(
   "relative flex shrink-0 overflow-hidden rounded-full web:select-none",
   {
@@ -57,8 +57,8 @@ const avatarVariants = cva(
   },
 );
 
-// 폴백 글자 크기(원본의 group-data size=sm → text-xs)·배지 크기
-// (sm 2 · default 2.5 · lg 3) — context size 값으로 조회하는 치환 테이블.
+// 폴백 글자 크기（원본의 group-data size=sm → text-xs）·배지 크기
+// （sm 2 · default 2.5 · lg 3） — context size 값으로 조회하는 치환 테이블.
 const AVATAR_FALLBACK_TEXT: Record<AvatarSize, string> = {
   default: "text-sm",
   sm: "text-xs",
@@ -87,7 +87,7 @@ const AvatarContext = createContext<AvatarContextValue | null>(null);
 const AvatarGroupContext = createContext(false);
 
 // ---------------------------------------------------------------------------
-// Avatar — 루트 컨테이너. 상태 제공자역도 겸한다(원본 AvatarPrimitive.Root).
+// Avatar — 루트 컨테이너. 상태 제공자역도 겸한다（원본 AvatarPrimitive.Root）.
 // ---------------------------------------------------------------------------
 export type AvatarProps = ViewProps &
   VariantProps<typeof avatarVariants> & {
@@ -129,7 +129,7 @@ const Avatar = forwardRef<BridgeViewRef, AvatarProps>(
 Avatar.displayName = "Avatar";
 
 // ---------------------------------------------------------------------------
-// AvatarImage — 브리지 Image(원격 {uri}만). 실패 보고는 context로.
+// AvatarImage — 브리지 Image（원격 {uri}만）. 실패 보고는 context로.
 // ---------------------------------------------------------------------------
 // onError는 폴백 전환의 통로이므로 props에서 제외하고 컴포넌트가 소유한다.
 export type AvatarImageProps = Omit<ImageProps, "onError">;
@@ -137,12 +137,12 @@ export type AvatarImageProps = Omit<ImageProps, "onError">;
 const AvatarImage = forwardRef<BridgeImageRef, AvatarImageProps>(
   ({ className, source, ...props }, ref) => {
     const avatar = useContext(AvatarContext);
-    // 마운트 등록/해제 — 폴백의 "소스 없음" 판단 근거(provider는 안정적).
+    // 마운트 등록/해제 — 폴백의 "소스 없음" 판단 근거（provider는 안정적）.
     useEffect(() => {
       avatar?.reportImageMounted(true);
       return () => avatar?.reportImageMounted(false);
     }, [avatar]);
-    // 실패한 이미지는 렌더하지 않는다(포팅 노트 — Radix는 깨진 img를 남김).
+    // 실패한 이미지는 렌더하지 않는다（포팅 노트 — Radix는 깨진 img를 남김）.
     if (avatar?.imageFailed) {
       return null;
     }
@@ -169,7 +169,7 @@ export type AvatarFallbackProps = ViewProps & {
 const AvatarFallback = forwardRef<BridgeViewRef, AvatarFallbackProps>(
   ({ className, children, ...props }, ref) => {
     const avatar = useContext(AvatarContext);
-    // Avatar 밖 단독 사용(문맥 없음)이면 항상 렌드한다.
+    // Avatar 밖 단독 사용（문맥 없음）이면 항상 렌드한다.
     const visible = avatar ? !avatar.hasImage || avatar.imageFailed : true;
     if (!visible) {
       return null;
@@ -222,7 +222,7 @@ const AvatarBadge = forwardRef<BridgeViewRef, AvatarBadgeProps>(
 AvatarBadge.displayName = "AvatarBadge";
 
 // ---------------------------------------------------------------------------
-// AvatarGroup — 아바타 무리. 겹침은 웹 전용(네이티브은 나란히).
+// AvatarGroup — 아바타 무리. 겹침은 웹 전용（네이티브은 나란히）.
 // ---------------------------------------------------------------------------
 export type AvatarGroupProps = ViewProps;
 
@@ -240,7 +240,7 @@ const AvatarGroup = forwardRef<BridgeViewRef, AvatarGroupProps>(
 AvatarGroup.displayName = "AvatarGroup";
 
 // ---------------------------------------------------------------------------
-// AvatarGroupCount — 넘친 인원 표시("+9" 등 문자열 children).
+// AvatarGroupCount — 넘친 인원 표시（"+9" 등 문자열 children）.
 // ---------------------------------------------------------------------------
 export type AvatarGroupCountProps = ViewProps & {
   children?: ReactNode;

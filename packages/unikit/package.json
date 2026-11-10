@@ -28,6 +28,10 @@
     "./primitives": {
       "react-native": "./src/bridge/native.tsx",
       "default": "./src/bridge/web.tsx"
+    },
+    "./chart": {
+      "react-native": "./src/chart/native.tsx",
+      "default": "./src/chart/web.tsx"
     }
   },
   "main": "./src/index.ts",
@@ -53,14 +57,26 @@
     "class-variance-authority": "^0.7.0",
     "clsx": "^2.1.0",
     "tailwind-merge": "^3.0.0",
+    "react-dom": "^18.0.0 || ^19.0.0",
     "react-native": ">=0.81.0",
-    "uniwind": ">=1.13.0"
+    "uniwind": ">=1.13.0",
+    "react-native-svg": ">=15.0.0",
+    "react-hook-form": "^7.0.0"
   },
   "peerDependenciesMeta": {
+    "react-dom": {
+      "optional": true
+    },
     "react-native": {
       "optional": true
     },
     "uniwind": {
+      "optional": true
+    },
+    "react-native-svg": {
+      "optional": true
+    },
+    "react-hook-form": {
       "optional": true
     }
   },
@@ -68,7 +84,11 @@
     "typescript": "~5.9.0",
     "@types/react": "~19.3.0",
     "react": "19.3.0",
+    "react-dom": "19.3.0",
+    "@types/react-dom": "~19.3.0",
     "react-native": "0.88.1",
+    "react-native-svg": "~15.12.0",
+    "react-hook-form": "~7.65.0",
     "uniwind": "~1.13.2",
     "class-variance-authority": "~0.7.1",
     "clsx": "~2.1.1",

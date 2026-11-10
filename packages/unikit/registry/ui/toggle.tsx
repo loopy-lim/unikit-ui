@@ -1,10 +1,10 @@
 // Toggle — shadcn/ui new-york-v4 toggle을 UniKit 브리지로 이식.
 // 포팅 판단:
-// - radix Toggle 제거 — 눌림 상태는 React state(제어/비제어)로 관리.
-// - 원본의 data-state=on 셀렉터 → pressed 조건부 클래스(bg-accent·text-accent-foreground).
-// - [&_svg]:* 규칙은 아이콘 없는 글리프 구조(내부 Text)에서 대상이 없어 제외.
-// - 이중 지정 원칙(§0.5): 눌림 배경은 Pressable, 전경색(hover 포함)은 내부 Text에
-//   명시(네이티브는 컨테이너 색이 자식 Text로 상속되지 않는다).
+// - radix Toggle 제거 — 눌림 상태는 React state（제어/비제어）로 관리.
+// - 원본의 data-state=on 셀렉터 → pressed 조건부 클래스（bg-accent·text-accent-foreground）.
+// - ［&_svg］:* 규칙은 아이콘 없는 글리프 구조（내부 Text）에서 대상이 없어 제외.
+// - 이중 지정 원칙（§0.5）: 눌림 배경은 Pressable, 전경색（hover 포함）은 내부 Text에
+//   명시（네이티브는 컨테이너 색이 자식 Text로 상속되지 않는다）.
 import { forwardRef, useState, type ReactNode } from "react";
 import {
   Pressable,
@@ -14,9 +14,9 @@ import {
 } from "@unikit-bridge/ui/primitives";
 import { cva, type VariantProps } from "class-variance-authority";
 
-import { cn } from "@/lib/utils";
+import { cn } from "../lib/utils";
 
-// 컨테이너(Pressable) — 원본 base의 hover:bg-muted(기본 변형 호버)를 포함.
+// 컨테이너（Pressable） — 원본 base의 hover:bg-muted（기본 변형 호버）를 포함.
 // outline 변형의 hover:bg-accent는 변형 클래스가 뒤에 오므로 twMerge가 대체한다.
 const toggleVariants = cva(
   "flex flex-row items-center justify-center gap-2 rounded-md web:whitespace-nowrap web:transition-all web:outline-none web:hover:bg-muted web:focus-visible:border-ring web:focus-visible:ring-2 web:focus-visible:ring-ring/50",
@@ -40,9 +40,9 @@ const toggleVariants = cva(
   },
 );
 
-// 내부 Text — 변형별 hover 전경색(원본 base의 hover:text-muted-foreground와
-// outline 변형의 hover:text-accent-foreground 대응). pressed 오버라이드
-// (text-accent-foreground)는 렌더 시 조건부로 뒤에 합성한다.
+// 내부 Text — 변형별 hover 전경색（원본 base의 hover:text-muted-foreground와
+// outline 변형의 hover:text-accent-foreground 대응）. pressed 오버라이드
+// （text-accent-foreground）는 렌더 시 조건부로 뒤에 합성한다.
 const toggleTextVariants = cva("font-sans text-sm font-medium", {
   variants: {
     variant: {
@@ -55,12 +55,12 @@ const toggleTextVariants = cva("font-sans text-sm font-medium", {
   },
 });
 
-// 터치 타깃 44px 보정 — h-9/h-8/h-10(button.tsx 관례와 동일 스케일).
+// 터치 타깃 44px 보정 — h-9/h-8/h-10（button.tsx 관례와 동일 스케일）.
 const HIT_SLOP = { default: 4, sm: 4, lg: 0 } as const;
 
 export type ToggleProps = Omit<PressableProps, "onPress" | "aria-pressed"> &
   VariantProps<typeof toggleVariants> & {
-    /** 제어형 눌림 상태(지정 시 내부 state를 대체) */
+    /** 제어형 눌림 상태（지정 시 내부 state를 대체） */
     pressed?: boolean;
     /** 비제어형 초기 눌림 상태 */
     defaultPressed?: boolean;

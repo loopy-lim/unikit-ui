@@ -1,0 +1,51 @@
+# UniKit
+
+> UniKit은 import 하나로 React(웹)와 React Native 양쪽에서 같은 모습을 내는 shadcn/ui 형태의 UI 컴포넌트 라이브러리예요. 컴포넌트 61종(shadcn/ui new-york-v4 카탈로그 전량)을 한 벌 소스로 제공해요. npm 패키지명은 `@unikit-bridge/ui`(게시분 0.2.0은 1차 28종 시점).
+
+## 한 벌 소스 원칙 (가장 중요)
+
+- 컴포넌트는 브리지 프리미티브(`View`·`Text`·`Pressable`·`TextInput`·`Image`)와 `className`으로만 작성돼요. 플랫폼 분기(`.web.tsx`·`Platform.select`)는 없어요.
+- 진입점 3개:
+  - `@unikit-bridge/ui` — 컴포넌트 배럴(60종 export).
+  - `@unikit-bridge/ui/primitives` — 브리지 프리미티브. package exports 조건이 플랫폼을 갈라요(`react-native` 조건 → RN 프리미티브 + uniwind, `default` → div/span/button/input DOM + 표준 Tailwind CSS v4).
+  - `@unikit-bridge/ui/chart` — 차트 렌더러(ChartSurface·ChartPath·ChartRect·ChartLine·ChartText·ChartCircle). 웹은 JSX `<svg>`, 네이티브는 react-native-svg(선택 peer). chart 컴포넌트(ChartContainer 등)는 배럴에서 제외되고 shadcn 레지스트리 복사로 소비해요.
+- 상태 관리는 React state + context(Radix·외부 엔진 없음). 오버레이 계열의 포털·앵커 위치 계산·포커스 트랙은 `packages/unikit/src/lib/overlay.tsx`가 담당해요.
+
+## 컴포넌트 61종
+
+- 기초(5): button, card, input, label, badge
+- 폼 입력(13): checkbox, radio-group, switch, toggle, toggle-group, textarea, select, native-select, slider, calendar, input-otp, input-group, form(react-hook-form 선택 peer)
+- 오버레이·메뉴(13): dialog, alert-dialog, sheet, drawer, popover, hover-card, tooltip, dropdown-menu, context-menu, command, combobox, menubar, navigation-menu
+- 피드백·데이터(7): alert, avatar, empty, skeleton, table, spinner, sonner
+- 데이터 시각화·복합(3): chart, carousel, sidebar
+- 메시지(5): message, message-scroller, bubble, attachment, marker
+- 내비게이션·레이아웃(15): tabs, accordion, collapsible, breadcrumb, pagination, progress, separator, aspect-ratio, kbd, field, item, button-group, scroll-area, resizable, direction
+
+전체 목록·설명: `packages/unikit/registry.json`(66 아이템 = UI 61 + utils 1 + theme 4). 사용법·Props: `docs/components.md`.
+
+## 디자인 토큰 규칙 (컴포넌트 코드 작성·수정 시 준수)
+
+- **토큰 클래스만 사용** — 색·간격은 CSS 변수 토큰 클래스(`bg-background`·`text-foreground`·`border-border`·`bg-chart-1` 등). 스키마는 zinc 계열, 라이트/다크 값은 `packages/unikit/src/theme/tokens.ts`가 단일 출처.
+- **임의값 클래스 금지** — `max-w-[calc(100%-2rem)]` 같은 `[...]` 임의값은 금지(`bun run audit:design` 검사 (c)가 실패해요). 동적 값(진행률 폭 등)은 동적 `style` 계약으로.
+- **`web:` 접두** — 웹 전용 효과(호버·전환 애니메이션·펄스·스핀)는 `web:animate-pulse`처럼 접두를 붙여요. 네이티브에서는 정적으로 렌더돼요.
+- **`dark:` 변형 금지** — 다크 모드는 토큰 값 전환(`.dark` 블록)으로만. 컴포넌트 코드에 `dark:` 클래스를 넣지 않아요(사이클 40 이식분부터 전면 제거 관행).
+- **아이콘 글리프 대체** — lucide 의존 없음. ✓ › ⌄ ⋯ ⚠ ✕ 같은 글리프 문자를 써요.
+
+## 주요 한계 (안내 시 참고)
+
+- 오버레이·전개 계열의 등장/퇴장 애니메이션은 즉시 전환(마운트/언마운트). 네이티브에서 skeleton 펄스·spinner 회전도 정적.
+- hover 개방 미지원(hover-card는 웹 지연·네이티브 탭 토글, navigation-menu·menubar는 눌림 전환만).
+- select·메뉴 계열의 화살표키·타입어헤드 탐색 일부 미지원. asChild 미지원(트리거는 Pressable 고정).
+- chart는 반응형(뷰포트 비례) 크기·다크 전환·recharts 고급 차트(스택·극좌표 등) 미지원. 시리즈 색은 소비자 앱의 `--chart-1..5` 토큰.
+- 전체 목록: `docs/roadmap-components.md`의 미지원 기능 로드맵. 각 컴포넌트 소스 머리 주석에 포팅 판단·한계가 기록돼 있어요.
+
+## 소비 방식
+
+- npm 설치: `bun add @unikit-bridge/ui class-variance-authority clsx tailwind-merge` + 엔진(웹 tailwindcss v4 / 네이티브 uniwind·react-native).
+- 소스 복사: shadcn CLI로 로컬 레지스트리에서 add(복사본의 cn은 `@/lib/utils`, 브리지는 `@unikit-bridge/ui/primitives` import). 자세한 절차는 `README.md`.
+
+## 기여·검증 (에이전트용 상세 지침: AGENTS.md)
+
+- 검증: 루트에서 `bun run typecheck`(워크스페이스 3패키지)와 `bun run audit:design`(일관성 검사 8종).
+- 패키지 매니저는 bun만(pnpm 금지). 소스는 `src/`(배럴)와 `registry/`(복사용) 두 트리가 있고 본문은 같아야 해요(import 문만 다름).
+- 문서: README.md(루트 안내) · docs/components.md(사용법) · docs/roadmap-components.md(로드맵·경쟁) · packages/unikit/docs/tokens.md(토큰 값) · docs/sdd/(개발 과정 문서).

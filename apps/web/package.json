@@ -3,16 +3,21 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
+    "generate:registry": "bun scripts/generate-registry-static.ts",
+    "predev": "bun run generate:registry",
     "dev": "next dev",
+    "prebuild": "bun run generate:registry",
     "build": "next build",
-    "start": "next start",
-    "typecheck": "next typegen && tsc --noEmit"
+    "start": "bun x serve out",
+    "typecheck": "next typegen && tsc --noEmit",
+    "deploy": "bun x wrangler pages deploy out --project-name=unikit-ui --branch=main"
   },
   "dependencies": {
     "@unikit-bridge/ui": "workspace:*",
     "next": "16.4.5",
     "react": "19.3.0",
     "react-dom": "19.3.0",
+    "react-hook-form": "~7.65.0",
     "shadcn": "^4.23.0"
   },
   "devDependencies": {
@@ -20,8 +25,10 @@
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "postcss": "^8.5.32",
+    "serve": "^14.2.4",
     "typescript": "^5",
     "tailwindcss": "^4.3.5",
-    "@tailwindcss/postcss": "^4.3.5"
+    "@tailwindcss/postcss": "^4.3.5",
+    "wrangler": "3.114.17"
   }
 }

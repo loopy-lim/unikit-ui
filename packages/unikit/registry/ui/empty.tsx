@@ -2,12 +2,12 @@
 //
 // 포팅 판단:
 // - 단순 레이아웃 컴포넌트군 — 엔진 의존이 없어 구조·토큰을 그대로 옮기고
-//   data-slot 속성과 [&_svg]·[&>a] 자식 셀렉터만 제거했다.
-// - EmptyMedia의 아이콘: 원본 svg 대신 큰 글리프(⊕ ⬚ ◻ 등)를 내부 Text로
-//   렌더한다(아이콘 금지 규칙). children에 문자열을 넘긴다.
-// - 텍스트 정렬(text-center)은 웹은 상속되지만 네이티브은 되지 않으므로
-//   Title/Description Text에 직접 지정한다(루트의 text-center는 웹 중첩
-//   자식용으로 유지 — 네이티브 View에서는 무해한 no-op).
+//   data-slot 속성과 ［&_svg］·［&>a］ 자식 셀렉터만 제거했다.
+// - EmptyMedia의 아이콘: 원본 svg 대신 큰 글리프（⊕ ⬚ ◻ 등）를 내부 Text로
+//   렌더한다（아이콘 금지 규칙）. children에 문자열을 넘긴다.
+// - 텍스트 정렬（text-center）은 웹은 상속되지만 네이티브은 되지 않으므로
+//   Title/Description Text에 직접 지정한다（루트의 text-center는 웹 중첩
+//   자식용으로 유지 — 네이티브 View에서는 무해한 no-op）.
 // - text-balance·md: 반응형 패딩은 웹 전용 → web: 접두.
 import { forwardRef, type ReactNode } from "react";
 import {
@@ -20,10 +20,10 @@ import {
 } from "@unikit-bridge/ui/primitives";
 import { cva, type VariantProps } from "class-variance-authority";
 
-import { cn } from "@/lib/utils";
+import { cn } from "../lib/utils";
 
-// Empty — 빈 상태 컨테이너(원본 border-dashed 토큰 보존 — 테두리 굵기는
-// 소비자 className으로 지정하는 원본 사용법과 동일).
+// Empty — 빈 상태 컨테이너（원본 border-dashed 토큰 보존 — 테두리 굵기는
+// 소비자 className으로 지정하는 원본 사용법과 동일）.
 export type EmptyProps = ViewProps;
 
 const Empty = forwardRef<BridgeViewRef, EmptyProps>(
@@ -57,8 +57,8 @@ const EmptyHeader = forwardRef<BridgeViewRef, EmptyHeaderProps>(
 );
 EmptyHeader.displayName = "EmptyHeader";
 
-// EmptyMedia — 글리프 아이콘 영역. icon 변형은 원본 bg-muted 상자(size-10)를
-// 유지하고, 글리프 크기(text-2xl ≈ 원본 svg size-6)·색은 내부 Text에 명시.
+// EmptyMedia — 글리프 아이콘 영역. icon 변형은 원본 bg-muted 상자（size-10）를
+// 유지하고, 글리프 크기（text-2xl ≈ 원본 svg size-6）·색은 내부 Text에 명시.
 const emptyMediaVariants = cva(
   "mb-2 flex shrink-0 items-center justify-center",
   {
@@ -76,7 +76,7 @@ const emptyMediaVariants = cva(
 
 export type EmptyMediaProps = ViewProps &
   VariantProps<typeof emptyMediaVariants> & {
-    /** 큰 글리프 문자열(⊕ ⬚ ◻ 등) — svg 아이콘 치환 */
+    /** 큰 글리프 문자열（⊕ ⬚ ◻ 등） — svg 아이콘 치환 */
     children?: ReactNode;
   };
 
@@ -95,7 +95,7 @@ const EmptyMedia = forwardRef<BridgeViewRef, EmptyMediaProps>(
 );
 EmptyMedia.displayName = "EmptyMedia";
 
-// EmptyTitle — 빈 상태 제목(원본 text-lg font-medium tracking-tight).
+// EmptyTitle — 빈 상태 제목（원본 text-lg font-medium tracking-tight）.
 export type EmptyTitleProps = TextProps & {
   children?: ReactNode;
 };
@@ -114,7 +114,7 @@ const EmptyTitle = forwardRef<BridgeTextRef, EmptyTitleProps>(
 );
 EmptyTitle.displayName = "EmptyTitle";
 
-// EmptyDescription — 보조 설명(원본 text-sm/relaxed → text-sm + leading-relaxed).
+// EmptyDescription — 보조 설명（원본 text-sm/relaxed → text-sm + leading-relaxed）.
 export type EmptyDescriptionProps = TextProps & {
   children?: ReactNode;
 };

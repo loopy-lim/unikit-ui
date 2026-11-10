@@ -1,0 +1,46 @@
+# UniKit 소개 사이트 → Cloudflare Pages (정적 out/)
+name: Deploy Pages
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+    paths:
+      - "apps/web/**"
+      - "packages/unikit/**"
+      - ".github/workflows/deploy-pages.yml"
+      - "bun.lock"
+      - "package.json"
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+
+      - name: Install dependencies
+        run: bun install --frozen-lockfile
+
+      - name: Build static site
+        working-directory: apps/web
+        env:
+          SITE_ORIGIN: https://ui.unikit.ll3.kr
+        run: bun run build
+
+      - name: Deploy to Cloudflare Pages
+        if: github.event_name == 'workflow_dispatch' || (github.event_name == 'push' && github.ref == 'refs/heads/main')
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          workingDirectory: apps/web
+          command: pages deploy out --project-name=unikit-ui --branch=main

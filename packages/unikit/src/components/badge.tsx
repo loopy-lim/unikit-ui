@@ -1,5 +1,5 @@
 // Badge — docs/sdd/02-design.md v2 §3.5 그대로.
-// 이중 지정 원칙(§0.5): 배경·테두리는 View, 전경색은 내부 Text에 명시(Button과 동일 패턴).
+// 이중 지정 원칙（§0.5）: 배경·테두리는 View, 전경색은 내부 Text에 명시（Button과 동일 패턴）.
 import { forwardRef } from "react";
 import {
   Text,
@@ -13,7 +13,7 @@ import { cva, type VariantProps } from "class-variance-authority";
 
 import { cn } from "../lib/utils";
 
-// View(컨테이너)
+// View（컨테이너）
 const badgeVariants = cva(
   "flex flex-row items-center rounded-md border px-2.5 py-0.5",
   {

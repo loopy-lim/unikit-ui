@@ -1,87 +1,128 @@
-# UniKit 컴포넌트 로드맵 — shadcn 카탈로그 전체 가져오기
+# UniKit 컴포넌트 로드맵 — shadcn 카탈로그 전량 이식 완료
 
-shadcn/ui(new-york-v4)의 `registry:ui` 61종을 UniKit 유니버설(한 벌 소스 → 웹·네이티브 동일 렌더)로 가져오는 전체 계획이에요. 이 문서는 어디까지 왔고, 남은 컴포넌트가 어떤 브리지 기능을 필요로 하는지를 정리해요. 수치의 기준일: 2026-11-10.
+shadcn/ui(new-york-v4)의 `registry:ui` 61종을 UniKit 유니버설(한 벌 소스 → 웹·네이티브 동일 렌더)로 가져오는 작업이 **2026-11-10에 61/61 전량 완료**됐어요. 이 문서는 완료 이력, 브리지 계약상 아직 재현하지 못한 **미지원 기능 로드맵**, 그리고 **경쟁 현황**을 정리해요. 수치의 기준일: 2026-11-10.
 
-## 현재 상태: 28 / 61종
+## 현재 상태: 61 / 61종 완료
 
-| 단계 | 수량 | 컴포넌트 |
-|---|---|---|
-| v0.1 기초 (완료) | 5 | button, card, input, label, badge |
-| 1차 배치 (완료, 이번 사이클) | 23 | accordion, alert, aspect-ratio, avatar, breadcrumb, button-group, checkbox, collapsible, empty, field, item, kbd, pagination, progress, radio-group, separator, skeleton, switch, table, tabs, textarea, toggle, toggle-group |
-| 잔여 | 33 | 아래 티어 표 |
+| 단계 | 수량 | 컴포넌트 | 상태 |
+|---|---|---|---|
+| v0.1 기초 | 5 | button, card, input, label, badge | 완료 |
+| 1차 배치 (사이클 30) | 23 | accordion, alert, aspect-ratio, avatar, breadcrumb, button-group, checkbox, collapsible, empty, field, item, kbd, pagination, progress, radio-group, separator, skeleton, switch, table, tabs, textarea, toggle, toggle-group | 완료 |
+| 2차 배치 (사이클 40) | 33 | 아래 티어 표 전체 | **완료 (2026-11-10)** |
 
-잔여 33종은 **필요한 브리지 기능**에 따라 3개 티어로 나뉘어요. 티어 순서가 구현 순서 후보예요(티어가 낮을수록 브리지 확장 없이 지금 패턴으로 가능하거나 확장이 가벼워요).
+- `packages/unikit/src/components/` 61종 · `packages/unikit/registry/ui/` 61종 · `registry.json` 66 아이템(UI 61 + utils 1 + theme 4).
+- `chart`는 index.ts 배럴에서 제외되고 `@unikit-bridge/ui/chart` 단독 진입점이에요(react-native-svg 선택 peer — 웹 번들 오염 방지). `form`은 react-hook-form 선택 peer.
 
-## 티어 2 — 오버레이·포털 13종
+## 완료 이력 — 티어별 구현 방식
 
-화면 최상위에 떠야 하는 컴포넌트예요. 현재 브리지(View/Text/Pressable/TextInput/Image)로는 부모 레이아웃을 벗어날 수 없어서, **포털 프리미티브**가 먼저 필요해요.
+계획 당시에는 잔여 33종을 필요한 브리지 기능별 3개 티어로 나눴었어요. 실제로는 티어 2(오버레이)를 먼저 풀면서 브리지가 한 번에 확장됐고(사이클 40 Wave 0), 전 티어가 같은 사이클에 완성됐어요.
 
-| 컴포넌트 | 종류 | 추가로 필요한 것 |
-|---|---|---|
-| `dialog` | 중앙 모달 | 포털 + 배경 눌림 닫기 + ESC(웹) |
-| `alert-dialog` | 확인 모달 | dialog 공유 |
-| `sheet` | 측면 슬라이드 패널 | dialog 공유 |
-| `drawer` | 바닥 슬라이드 패널 | 드래그 닫기 제스처(네이티브 PanResponder) |
-| `popover` | 앵커 팝오버 | **위치 계산**(앵커 기준 배치 — 웹 getBoundingClientRect / RN measure) |
-| `hover-card` | 호버 카드 | popover 공유 + 웹 호버 지연 |
-| `tooltip` | 짧은 힌트 | popover 공유 |
-| `dropdown-menu` | 드롭다운 메뉴 | popover 공유 + 하위 메뉴 캐스케이드 |
-| `context-menu` | 우클릭 메뉴 | 웹 onContextMenu / 네이티브 길게 누르기 매핑 |
-| `combobox` | 검색 셀렉트 | popover + command 공유 |
-| `command` | 명령 팔레트 | 키보드 탐색(웹) ↔ 방향키/포커스(네이티브) 통합 입력 모델 |
-| `menubar` | 수평 메뉴 바 | dropdown-menu 공유 |
-| `navigation-menu` | 내비게이션 메뉴 | dropdown-menu 공유 |
+### 티어 2 — 오버레이·포털 13종 (완료)
 
-**선행 브리지 작업(B-1):** `Portal`(웹 `createPortal` → document.body / 네이티브 RN `Modal`), 바깥 눌림 감지, 앵커 위치 계산 유틸. 이 계약이 잡히면 13종 대부분이 같은 패턴으로 이식돼요.
+**구현**: `src/lib/overlay.tsx` 통합 오버레이 훈이 포털(웹 createPortal / 네이티브 Modal)·백드롭·바깥 눌림 감지·ESC 닫기·포커스 이동/트랩/복귀·measure 기반 앵커 위치 계산(side/align/offset 12방 배치 + 뷰포트 클램프)을 담당해요. dialog 계열은 `ModalOverlay`(포털+백드롭만), popover 계열은 `AnchoredOverlay`(앵커 위치 계산까지)를 소비해요.
 
-## 티어 3 — 입력 확장·제스처 9종
+| 컴포넌트 | 구현 요점 |
+|---|---|
+| `dialog` | React state+context 관리, 배경 스크롤 잠금 포함 |
+| `alert-dialog` | dialog 계열 공유, 원본 grid 레이아웃은 flex 근사 |
+| `sheet` | ModalOverlay 방향별 배치(side 4방향) |
+| `drawer` | useDrag 아래 드래그 닫기 |
+| `popover` | 앵커 위치 계산, 열림 중 스크롤·리사이즈 재계산(웹) |
+| `hover-card` | 웹 지연 개방, 네이티브 탭 토글 |
+| `tooltip` | 트리거 aria-describedby 연결 |
+| `dropdown-menu` | popover 패턴 + 하위 메뉴 1단계 캐스케이드 |
+| `context-menu` | 웹 onContextMenu / 네이티브 길게 누르기 매핑 |
+| `combobox` | popover + command 조립 |
+| `command` | 자체 필터 + 키보드 탐색 통합 입력 모델 |
+| `menubar`·`navigation-menu` | dropdown-menu 소비 조립 |
 
-| 컴포넌트 | 종류 | 추가로 필요한 것 |
-|---|---|---|
-| `native-select` | 기본 셀렉트 | 웹 `<select>` 옵션 렌더 — 브리지 Select 프리미티브(가장 가벼움, 티어 3 시작점) |
-| `select` | 커스텀 셀렉트 | 티어 2 popover + 목록 키보드 탐색 |
-| `slider` | 슬라이더 | 포인터 드래그 추적(웹 PointerEvent / RN PanResponder) 공통 추상화 |
-| `resizable` | 크기 조절 패널 | 드래그 공통 추상화 공유 |
-| `scroll-area` | 커스텀 스크롤 영역 | 웹 overflow 스타일 / 네이티브 ScrollView — `web:` 분기 폭 넓음, 감싸기 계약 필요 |
-| `calendar` | 달력 | 순수 로직(날짜 그리드)이라 브리지 확장 불필요, 그리드 레이아웃만 |
-| `input-otp` | OTP 입력 | TextInput value 분배 + 자동 포커스 이동 |
-| `input-group` | 입력 묶음 | 지금 패턴으로 가능(조립형) — 티어 상관없이 언제든 |
-| `form` | 폼 라이브러리 통합 | react-hook-form/zod 의존 추가 여부 결정(레지스트리 deps 정책) |
+### 티어 3 — 입력 확장·제스처 9종 (완료)
 
-## 티어 4 — 데이터 시각화·복합 11종
+**구현**: 브리지 프리미티브가 확장됐어요 — `Select`(웹 진짜 `<select>`), `ScrollView`(웹 overflow div), `useDrag`(웹 PointerEvent / 네이티브 PanResponder), measure ref 계약.
 
-| 컴포넌트 | 종류 | 추가로 필요한 것 |
-|---|---|---|
-| `chart` | Recharts 래퍼 | 웹 Recharts / 네이티브 대체(react-native-svg 기반 또는 정적 View 차트) — 이원화 전략 필요 |
-| `carousel` | 캐러셀 | 가로 스와이프(네이티브 FlatList paging / 웹 scroll-snap) |
-| `sidebar` | 사이드바(블록급) | sheet + collapsible 조립 + 컨테이너 쿼리 대응 |
-| `sonner` | 토스트 | 포털(티어 2) + 전역 큐 상태 |
-| `spinner` | 로딩 스피너 | 애니메이션 계약(아래 한계 참고) |
-| `message` | 채팅 메시지 | 지금 패턴으로 대부분 가능 |
-| `message-scroller` | 메시지 스크롤 | scroll-area 공유 + 하단 고정 |
-| `bubble` | 말풍선 | 지금 패턴으로 가능 |
-| `attachment` | 첨부 표시 | 지금 패턴으로 가능 |
-| `marker` | 마커(하이라이트) | 지금 패턴으로 가능 |
-| `direction` | RTL/LTR 방향 | 논리 속성(ms-/me-) 토큰 정책 — Tailwind v4는 지원, uniwind 확인 필요 |
+| 컴포넌트 | 구현 요점 |
+|---|---|
+| `native-select` | Select 프리미티브 소비(네이티브 폴백 포함) |
+| `select` | popover 기반 목록(role combobox/listbox/option) |
+| `slider` | useDrag, 웹 방향키 값 조정 |
+| `resizable` | useDrag 드래그 리사이즈 |
+| `scroll-area` | ScrollView 프리미티브 |
+| `calendar` | 순수 날짜 그리드 직접 구현(role grid/gridcell) |
+| `input-otp` | 숨은 TextInput 하나로 값 분배·포커스 이동 |
+| `input-group` | 기존 input·field 조립형 |
+| `form` | react-hook-form 선택 peer 연동 유지 |
 
-티어 4의 `message`·`bubble`·`attachment`·`marker` 4종은 사실상 티어 없이 지금 패턴으로 이식 가능해서, 다음 사이클의 "가성비 배치"로 먼저 가져올 수 있어요.
+### 티어 4 — 데이터 시각화·복합 11종 (완료)
 
-## 알려진 한계 (1차 배치에서 기록)
+| 컴포넌트 | 구현 요점 |
+|---|---|
+| `chart` | recharts 제거 — 선언형 시리즈(막대·선·영역) + 전용 렌더러 진입점(`@unikit-bridge/ui/chart`), 시리즈 색은 `--chart-1..5` 토큰 순환 |
+| `carousel` | 네이티브 ScrollView paging / 웹 scroll-snap |
+| `sidebar` | sheet+collapsible 조립(쿠키·컨테이너 쿼리 제거) |
+| `sonner` | 모듈 저장소 전역 큐 + `toast()` 함수, role=status 라이브 영역 |
+| `spinner` | View 원호 조형 — 웹 CSS `web:animate-spin`·네이티브 브리지 `LoopRotate`(RN Animated) 회전 |
+| `message`·`message-scroller`·`bubble`·`attachment`·`marker` | 기존 패턴 그대로(채팅 계열), message-scroller는 하단 고정 |
+| `direction` | useDirection 재노출 래퍼 |
 
-완료된 28종에도 브리지 계약상 아직 표현하지 못한 것이 있어요. 잔여 티어와 함께 후속에서 다뤄요.
+## 미지원 기능 로드맵
 
-- **표 시맨틱** — `table`은 View+flex 이식이라 `role="table"/"row"/"cell"`이 없어요(BridgeRole에 해당 역할이 없음). 스크린리더가 표 구조를 읽지 못해요.
-- **표·빈상태 셀 children** — `TableHead`·`TableCell`·`EmptyMedia`는 children을 내부 Text로 강제 래핑해요. 문자열이 아니라 View 기반 children을 넣으면 네이티브에서 렌더가 깨져요(문자열 권장, 파일 머리 주석에 표기).
-- **`aria-valuenow`** — `progress`가 `role="progressbar"`는 지정하지만 현재값 속성은 브리지 계약에 없어요.
-- **`aria-current`** — `pagination`의 현재 페이지는 시각 강조만 가능하고 `aria-current="page"`는 브리지 계약에 없어요.
-- **`aria-pressed`(네이티브)** — toggle은 웹에서 `aria-pressed`가 나가지만 네이티브에서는 시각 상태만 반영돼요(accessibilityState 매핑에 pressed 없음).
-- **경고 테두리 대비** — `alert` destructive의 `border-destructive/50`은 비텍스트 3:1에 미달해요(shadcn 원본과 동일한 값 — 글리프 ⚠·글자색이 상태의 주 신호).
-- **애니메이션** — `skeleton`의 펄스 등은 `web:animate-pulse`로 웹 전용이에요. 네이티브 애니메이션은 uniwind 지원 확인 후 계약이 필요해요(티어 4 spinner와 연동).
-- **셀렉터 의존 스타일** — 원본의 `data-[state=…]`·`group`/`peer` 셀렉터는 전부 조건부 클래스 문자열로 치환했어요. 상태 조합이 많은 컴포넌트(dialog 계열)는 이 비용이 커져서, 포털 작업 시 상태 전파 방식을 함께 설계해야 해요.
+완료된 61종에도 브리지 계약상 아직 표현하지 못한 것이 있어요. 각 컴포넌트 소스 파일 머리 주석의 "로드맵" 기록을 계열별로 묶은 목록이에요.
 
-## 다음 사이클 제안 순서
+### 1차 배치 한계의 해소·유지 (사이클 40 브리지 확장으로)
 
-1. **B-1 포털·위치 계약 설계** → 티어 2 오버레이 13종 (오버레이가 shadcn 사용처의 가장 큰 빈자리)
-2. 티어 4 가성비 4종(message, bubble, attachment, marker) — 브리지 확장 불필요
-3. 티어 3 입력 확장(native-select → select → slider 순)
-4. chart·carousel 등 이원화 전략이 필요한 것들
+- **해소** — 표 시맨틱(`table`·`row`·`cell` 등 BridgeRole 추가), `progress`의 `aria-valuemin/max/now`, `pagination`의 `aria-current="page"`, `toggle`의 네이티브 `aria-pressed`(accessibilityState 매핑).
+- **유지** — 표·빈상태 셀 children은 문자열 권장(내부 Text 래핑). `alert` destructive 테두리 대비(3:1 미달)는 shadcn 원본과 같은 값이라 유지 — 글리프 ⚠·글자색이 상태의 주 신호예요.
+
+### 오버레이·애니메이션
+
+- **측정 캐시 무효화** — slider(트래크 폭)·resizable(컨테이너 크기)가 최초 1회만 측정값을 캐시해요. 화면 회전·리사이즈 후 드래그 수치가 이전 크기 기준으로 남아요(G3 리뷰 제기). 로드맵: 측정 훈에 무효화 신호(bridge onLayout 재구독) 도입 검토.
+- **등장/퇴장 애니메이션** — dialog·sheet·drawer·popover·tooltip·dropdown-menu·select·command·sonner·tabs·accordion·calendar 등 오버레이·전개 계열 전반이 마운트/언마운트 **즉시 전환**이에요(`data-[state]` 셀렉터가 없는 네이티브에서 재현 불가). 로드맵: 웹 전용 애니메이션 클래스(`web:` 접두) 도입 검토.
+- **네이티브 애니메이션 계약(1차 해소 2026-11-10)** — 루프 계열(회전·펄스)은 브리지 `LoopRotate`·`LoopPulse`(RN Animated useNativeDriver — UI 스레드)로 네이티브도 구동해요. 잔여: 오버레이 등장/퇴장 슬라이드(제스처 연동은 Reanimated optional peer 도입 검토 — chart의 react-native-svg 패턴 준용).
+- **hover 개방** — `navigation-menu`(hover 지연 개방)·`menubar`(인접 트리거 hover 전환) 미지원 — 브리지 onHoverIn 계약 부재, 눌림 전환만. `hover-card`는 웹 지연·네이티브 탭 토글로 근사.
+- **포인터 이벤트 계약** — `popover` 충돌 감지(avoidCollisions·sticky) 미지원(뷰포트 클램프 8px로 근사), `hover-card` 콘텐츠 이탈 닫힘 미지원, `tooltip` 웹 키보드(focus) 진입 미지원.
+- **asChild** — radix Slot 상당 기능이 없어 popover·tooltip·hover-card 트리거와 sidebar 일부 요소는 Pressable/View 고정 렌더예요.
+
+### 키보드·포커스
+
+- **select·메뉴 키보드 탐색** — 화살표키·타입어헤드·루프 탐색이 `select`·`dropdown-menu`·`context-menu`·`command`(네이티브)에 미지원이에요. command는 웹 방향키·엔터를 지원하지만 네이티브 onKeyPress 래핑 한계로 IME 조합 키는 발화되지 않아요. 항목 자동 스크롤(scrollIntoView)도 측정 계약 부재로 미지원.
+- **resizable 키보드 리사이즈** — 포커서블 계약(tabIndex) 부재로 화살표 리사이즈 미지원.
+- **slider** — 수직 방향 미지원(수평 전용), 썸별 포커스·썸별 aria 미지원(트랙 전체 드래그 조작).
+
+### 차트·데이터
+
+- **chart 반응형 크기** — 뷰포트 비례 높이는 BridgeStyle 퍼센트 계약이 없어 고정 근사예요.
+- **chart 다크 전환** — 스킴 조회 계약이 없어 `config.theme`의 light 값만 써요.
+- **recharts 고급 차트** — 스택·극좌표·방사형·브러시·줌·참조선 등 미지원(막대·선·영역 기본 시리즈만).
+- **calendar 다중 선택** — 다중 선택·범위 선택(range_*)·matcher prop 미지원(단일 선택만), 선택 애니메이션·RTL 화살표 회전도 미지원.
+- **carousel 스크롤 오프셋 읽기** — 계약상 오프셋·콘텐츠 폭 읽기가 불가해 페이지 표시(페이지니스)가 자체 추정이에요.
+
+### 입력·폼
+
+- **form RN 전파** — `aria-invalid`·`aria-describedby`가 웹 전용 계약이라 RN 입력창에는 미전달돼요(nativeID·accessibilityLabelledBy는 양쪽 동작).
+- **input-otp** — 캐럿 깜빡임: 웹은 keyframes 하드 온오프, 네이티브는 `LoopPulse` 부드러운 맥동 근사(1.25s 주기). 미포커스 상태에도 캐럿이 보일 수 있어요.
+- **input-group** — 원본의 파일 셀 focus 링(data-attribute 셀렉터)이 컨트롤 자체 슬림 링으로 근사돼 있어요.
+- **scroll-area** — 커스텀 스크롤바는 미지원 셀(항상 null 렌더), 기본 스크롤 동작만 제공해요.
+- **combobox** — 자동 필터 변경 훅 미지원(▾ 트리거 개방), 팝업 폭 w-72 고정(앵커 폭 추종 불가).
+
+## 경쟁 현황 (2026-11-10 실측 — docs/sdd/51-research.md §4)
+
+| 항목 | shadcn/ui | Astryx | react-native-reusables | UniKit |
+|---|---|---|---|---|
+| 카탈로그 | 61종(ui 디렉터리)·66(문서) | 코어 122 디렉터리 | 32종(+인증 폼 14) | **61종 — 전량 유니버설** |
+| 플랫폼 범위 | 웹(3엔진) | 웹 안정 + SwiftUI 실험(canary) | RN 중심 | **웹+RN 단일 소스** |
+| 레지스트리 | 커뮤니티 디렉터리 548 | npm+CLI | 공개 r/ 2엔진(nativewind·uniwind) | 비공개(localhost) — 공개 호스팅이 과제 |
+| AI 계층 | MCP 7도구·skills/ | "agent ready"·AGENTS.md | — | llms.txt·AGENTS.md(이번 사이클) → MCP 과제 |
+
+- **shadcn/ui** — 2026-10 Trace·Code Block 추가, AI Elements 21 패턴. RN 공식 지원은 여전히 없어요.
+- **Astryx**(Meta) — ★20,252·주간 다운로드 약 66만. `@astryxdesign/native` v0.1.0(canary)은 SwiftUI 네이티브 뷰 + JS 코어(JSON 브리지) 실험 — "React Native and Android bindings are not built yet". UniKit(React 단일 소스 + RN 브리지)과는 접근 자체가 달라요.
+- **react-native-reusables** — ★8,720, 마지막 푸시 2026-09-27(약 6주 공백). nativewind·uniwind 이중 발행, 인증 폼 패턴 14항목이 컴포넌트와 혼재.
+- **@aniui·@tetra-ui**(신규 확인) — shadcn 커뮤니티 디렉터리에 등재된 RN 전용 경쟁자예요. @aniui는 93종(uniwind/NativeWind)이지만 현재 디렉터리 헬스 unavailable(30일 가용성 3%)·숨김 처리, @tetra-ui는 45종 healthy예요. 둘 다 RN 전용이라 웹+RN 단일 소스 포지션엔 영향이 없어요(2026-11-10 실측 — docs/sdd/51-research.md §4.6).
+- **UniKit 위치** — "shadcn 카탈로그 전량 + 웹·네이티브 단일 소스" 주장이 카탈로그 규모(61/61)에서 실제로 성립하는 시점이 됐어요. 남은 갭은 레지스트리 공개 호스팅·AI 계층·게시 물량이에요.
+
+## 다음 사이클 제안
+
+1. **패키지 게시 + 레지스트리 공개 호스팅** — npm 0.2.0 게시분은 1차 28종 시점이에요. 61종 반영 게시와 함께 `registry.json`의 homepage(현재 localhost) 갱신·공개 호스팅.
+2. **쇼케이스 전시 확장** — 2차 분의 대표 섹션 6종(chart·command·form·layout·message·overlay)은 이번 사이클에 양측(Expo·Web) 전시를 마쳤어요. 잔여 2차 컴포넌트의 개별 전시가 후속 과제예요.
+3. **AI 계층** — llms.txt·AGENTS.md는 이번 사이클에 정비됐어요. shadcn MCP(7도구) 대응 MCP 서버 착수 여부 결정.
+4. **미지원 기능 중 수요 상위** — 오버레이 애니메이션(웹 한정 `web:` 클래스), select·메뉴 키보드 탐색, chart 반응형 크기.
+5. **shadcn 2026-10 신규(trace·code-block)·문서 전용 항목**의 편성 결정(카탈로그 61종은 완료 — 신규 항목은 별도 티어 판단).

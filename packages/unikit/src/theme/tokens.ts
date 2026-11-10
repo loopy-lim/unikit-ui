@@ -1,21 +1,21 @@
 /**
- * UniKit 디자인 토큰 — 라이트/다크 단일 출처(single source of truth).
+ * UniKit 디자인 토큰 — 라이트/다크 단일 출처（single source of truth）.
  *
- * 값의 원천: docs/sdd/02-design.md §2.1(색 19종, HSL 채널값)·§2.2(반경).
- * 값 형식은 TW3 `hsl(var(--token))` 매핑과 호환하는 HSL 채널 문자열("H S% L%")이며,
- * `vars()` 주입(웹·네이티브 공통)과 apps/web/app/globals.css의 변수 블록이
- * 이 객체를 그대로 복사한 값이다(완료 기준: 값 1:1 대조).
+ * 값의 원천: docs/sdd/02-design.md §2.1（색 19종, HSL 채널값）·§2.2（반경）.
+ * 값 형식은 TW3 `hsl（var（--token））` 매핑과 호환하는 HSL 채널 문자열（"H S% L%"）이며,
+ * `vars（）` 주입（웹·네이티브 공통）과 apps/web/app/globals.css의 변수 블록이
+ * 이 객체를 그대로 복사한 값이다（완료 기준: 값 1:1 대조）.
  *
- * 주의: 값을 임의로 변경하면 안 된다 — 수정이 필요하면 설계 문서(02-design)를 먼저 고친다.
- * `--destructive`(라이트)는 shadcn 기본값이 아닌 red-600 계(02-design §2.1 주석, WCAG AA 확보).
- * `--destructive`(다크)도 shadcn 원본 대비 red-400 계로 조정(사이클 30 G4 — 원본 값은
- * 다크 배경 대비 1.99:1로 텍스트가 사실상 안 읽힘. 조정값 6.1:1).
- * `--radius`는 스킴과 무관한 공통값(§2.2)이며 두 객체에 동일하게 포함한다.
+ * 주의: 값을 임의로 변경하면 안 된다 — 수정이 필요하면 설계 문서（02-design）를 먼저 고친다.
+ * `--destructive`（라이트）는 shadcn 기본값이 아닌 red-600 계（02-design §2.1 주석, WCAG AA 확보）.
+ * `--destructive`（다크）도 shadcn 원본 대비 red-400 계로 조정（사이클 30 G4 — 원본 값은
+ * 다크 배경 대비 1.99:1로 텍스트가 사실상 안 읽힘. 조정값 6.1:1）.
+ * `--radius`는 스킴과 무관한 공통값（§2.2）이며 두 객체에 동일하게 포함한다.
  */
 
 export type UnikitColorScheme = "light" | "dark";
 
-/** 라이트 스킴 토큰(기본값 — 02-design §1.4) */
+/** 라이트 스킴 토큰（기본값 — 02-design §1.4） */
 export const lightTokens = {
   "--background": "0 0% 100%",
   "--foreground": "240 10% 3.9%",
@@ -63,10 +63,10 @@ export const darkTokens = {
   "--radius": "0.5rem",
 } as const satisfies Record<keyof typeof lightTokens, string>;
 
-/** 토큰 CSS 변수 이름(--background 등 색 19종 + --radius) */
+/** 토큰 CSS 변수 이름（--background 등 색 19종 + --radius） */
 export type UnikitThemeTokenName = keyof typeof lightTokens;
 
-/** CSS 변수 이름 → 값("H S% L%" 문자열) 매핑. vars() 주입·globals.css 복사 양쪽에 쓴다. */
+/** CSS 변수 이름 → 값（"H S% L%" 문자열） 매핑. vars（） 주입·globals.css 복사 양쪽에 쓴다. */
 export type UnikitThemeTokens = Record<UnikitThemeTokenName, string>;
 
 /** 스킴에 해당하는 토큰 객체를 반환한다 */

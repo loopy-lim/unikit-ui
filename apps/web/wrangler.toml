@@ -1,0 +1,3 @@
+# Cloudflare Pages — 정적 out/ 직접 업로드(leftcar site 과 동일 패턴)
+name = "unikit-ui"
+pages_build_output_dir = "out"

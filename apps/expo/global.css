@@ -10,6 +10,20 @@
  */
 @source '../../packages/unikit/src';
 
+/*
+ * shadcn 차트 표준 팔레트(chart-1..5) — 소비자 앱 소유 값(웹 site.css와 동일
+ * 라이트 oklch). chart 컴포넌트가 config 색 미지정 시 fill-chart-N /
+ * stroke-chart-N 클래스로 소비한다. 값의 소유자는 소비자 앱(차트 컴포넌트
+ * 머리주석 계약)이라 생성 블록 밖에 둔다. 네이티브 데모는 라이트 팔레트 고정.
+ */
+@theme {
+  --color-chart-1: oklch(0.646 0.222 41.116);
+  --color-chart-2: oklch(0.6 0.118 184.704);
+  --color-chart-3: oklch(0.398 0.07 227.392);
+  --color-chart-4: oklch(0.828 0.189 84.429);
+  --color-chart-5: oklch(0.769 0.188 70.08);
+}
+
 /* ⛔ UNIKIT-THEME-MAP:BEGIN — bun run generate:design이 생성. 수동 수정 금지. */
 @theme inline {
   --color-background: hsl(var(--background));

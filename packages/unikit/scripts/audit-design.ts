@@ -64,6 +64,10 @@ function scanPattern(files: string[], pattern: RegExp, label: string): Violation
   for (const f of files) {
     const { rows } = lines(f);
     rows.forEach((row, i) => {
+      // 주석 라인(포팅 판단 기록의 원본 클래스·색 인용)은 실제 토큰이 아니므로
+      // 제외한다 — 사이클 40 T-4(오탐 154건 해소).
+      const t = row.trim();
+      if (t.startsWith("//") || t.startsWith("*") || t.startsWith("/*") || t.includes("{/*")) return;
       pattern.lastIndex = 0;
       if (pattern.test(row)) found.push({ file: rel(f), line: i + 1, detail: `${label} 발견: ${row.trim().slice(0, 90)}` });
     });
@@ -156,12 +160,21 @@ function scanPattern(files: string[], pattern: RegExp, label: string): Violation
 // ── (d) registry 사본 == 원본 (import 치환 제외) ────────────────────────────
 {
   const names = [
+    // 1차 배치(사이클 30)
     "button", "card", "input", "label", "badge",
     "checkbox", "radio-group", "switch", "toggle", "toggle-group",
     "tabs", "accordion", "collapsible", "progress", "aspect-ratio",
     "skeleton", "separator", "alert", "kbd", "table",
     "breadcrumb", "pagination", "textarea", "avatar", "empty",
     "field", "item", "button-group",
+    // 2차 배치(사이클 40) — 33종
+    "alert-dialog", "attachment", "bubble", "calendar", "carousel",
+    "chart", "combobox", "command", "context-menu", "dialog",
+    "direction", "drawer", "dropdown-menu", "form", "hover-card",
+    "input-group", "input-otp", "marker", "menubar", "message-scroller",
+    "message", "native-select", "navigation-menu", "popover", "resizable",
+    "scroll-area", "select", "sheet", "sidebar", "slider",
+    "sonner", "spinner", "tooltip",
   ];
   const vs: Violation[] = [];
   for (const n of names) {
@@ -198,28 +211,60 @@ function scanPattern(files: string[], pattern: RegExp, label: string): Violation
   }
 }
 
-// ── (g) Tailwind 기본 팔레트 클래스 0건 (확정 매처 — 12-design-plan §2.2) ──
+// ── (g) Tailwind 기본 팔레트 클래스 — 원본 인용 허용 목록 외 0건 ──
+// G3 F-7 보정: ① 라인 단위 스캔 + 주석 제외(scanPattern과 동일 판정),
+// ② 클래스 경계를 인용부호까지 확장(기존 (^|\s) 매처는 "bg-red-500"처럼
+// 따옴표에 붙은 클래스를 놓쳤다), ③ 이식 9조 #3(원본 토큰 유지)과 충돌하는
+// 원본 인용 팔레트는 허용 목록으로 명시한다 — 머리주석 포팅 판단과 정합.
 {
   const files = [
     ...walk(path.join(PKG, "src", "components"), [".tsx"]),
     ...walk(path.join(PKG, "registry"), [".tsx"]),
   ];
   const PALETTES = "red|orange|amber|yellow|lime|green|emerald|teal|cyan|sky|blue|indigo|violet|purple|fuchsia|pink|rose|slate|gray|zinc|neutral|stone";
+  // 클래스 경계 — 공백·따옴표·줄 끝(기존 (^|\s) 매처는 "bg-red-500"처럼
+  // 따옴표에 붙은 클래스를 놓쳤다 — G3 F-7).
+  const EDGE = "[\\s\"'`]";
   const pattern = new RegExp(
-    `(?:^|\\s)(?:[a-z-]+:)*(?:bg|text|border|ring|fill|stroke|from|via|to|divide|outline|decoration|caret|accent)-(?:white|black|(?:${PALETTES})-\\d{2,3})(?:\\/\\d+)?(?=\\s|$)`,
+    `(?:${EDGE})((?:[a-z-]+:)*(?:bg|text|border|ring|fill|stroke|from|via|to|divide|outline|decoration|caret|accent)-(?:white|black|(?:${PALETTES})-\\d{2,3})(?:\\/\\d+)?)(?=${EDGE})`,
     "g",
   );
+  // 원본 shadcn 토큰을 그대로 유지하는 허용 목록(파일명 → 클래스들).
+  // - slider: 원본 썸 bg-white(shadcn-ref/ui/slider.tsx — 이식 9조 #3)
+  // - sonner: richColors 원본 팔레트 재현(머리주석 포팅 판단 — 원본 sonner
+  //   토큰 emerald-600/red-600/amber-500/sky-500·white 계열)
+  const PALETTE_ALLOWLIST: Record<string, RegExp> = {
+    "slider.tsx": /^bg-white$/,
+    "sonner.tsx": /^(?:border|bg)-(?:emerald-600|red-600|amber-500|sky-500)$|^text-white(?:\/80)?$/,
+  };
   const vs: Violation[] = [];
+  let allowed = 0;
   for (const f of files) {
-    const { text } = lines(f);
-    pattern.lastIndex = 0;
-    let m: RegExpExecArray | null;
-    while ((m = pattern.exec(text)) !== null) {
-      const line = text.slice(0, m.index).split("\n").length;
-      vs.push({ file: rel(f), line, detail: `팔레트 클래스: ${m[0].trim()}` });
-    }
+    const base = path.basename(f);
+    const { rows } = lines(f);
+    rows.forEach((row, i) => {
+      const t = row.trim();
+      if (t.startsWith("//") || t.startsWith("*") || t.startsWith("/*") || t.includes("{/*")) return;
+      pattern.lastIndex = 0;
+      let m: RegExpExecArray | null;
+      const probe = ` ${row} `;
+      while ((m = pattern.exec(probe)) !== null) {
+        const cls = m[1];
+        const allow = PALETTE_ALLOWLIST[base];
+        if (allow && allow.test(cls)) {
+          allowed += 1;
+        } else {
+          vs.push({ file: rel(f), line: i + 1, detail: `팔레트 클래스: ${cls}` });
+        }
+      }
+    });
   }
-  report("g", vs.length === 0, `Tailwind 팔레트 클래스 0건 (대상 ${files.length}파일)`, vs);
+  report(
+    "g",
+    vs.length === 0,
+    `Tailwind 팔레트 클래스 0건 (대상 ${files.length}파일, 원본 인용 허용 ${allowed}건)`,
+    vs,
+  );
 }
 
 console.log(failures.length === 0 ? "\naudit:design PASS — 8/8 검사 통과" : `\naudit:design FAIL — 위반: ${failures.join(", ")}`);
