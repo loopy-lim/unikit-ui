@@ -233,7 +233,13 @@ export function ExampleBlock({
   );
 }
 
-export function CodeBlock({ code }: { code: string }) {
+export function CodeBlock({
+  code,
+  label = "Usage",
+}: {
+  code: string;
+  label?: string;
+}) {
   const [copied, setCopied] = useState(false);
 
   async function copy() {
@@ -249,7 +255,7 @@ export function CodeBlock({ code }: { code: string }) {
   return (
     <View className="relative overflow-hidden rounded-xl border border-border bg-muted/30">
       <View className="flex flex-row items-center justify-between border-b border-border/80 px-4 py-2.5">
-        <Text className="font-sans text-xs text-muted-foreground">Usage</Text>
+        <Text className="font-sans text-xs text-muted-foreground">{label}</Text>
         <Button variant="ghost" size="sm" onPress={copy}>
           {copied ? "복사됨" : "복사"}
         </Button>
@@ -268,7 +274,74 @@ export function InstallSnippet({ name }: { name: string }) {
       <Text className="font-sans text-base font-semibold tracking-tight text-foreground">
         Installation
       </Text>
-      <CodeBlock code={cmd} />
+      <CodeBlock code={cmd} label="Command" />
+    </View>
+  );
+}
+
+/** Seed식 미리보기 카드 — 탭이 카드 안에 있음 */
+export function DemoPanel({
+  tab,
+  onChange,
+  preview,
+  code,
+  align = "center",
+}: {
+  tab: "preview" | "code";
+  onChange: (next: "preview" | "code") => void;
+  preview: ReactNode;
+  code: string;
+  align?: "center" | "start";
+}) {
+  return (
+    <View className="site-preview-enter overflow-hidden rounded-xl border border-border">
+      <View className="flex flex-row gap-1 border-b border-border bg-muted/20 p-1.5">
+        {(
+          [
+            ["preview", "미리보기"],
+            ["code", "코드"],
+          ] as const
+        ).map(([id, label]) => {
+          const active = tab === id;
+          return (
+            <button
+              key={id}
+              type="button"
+              onClick={() => onChange(id)}
+              className={
+                active
+                  ? "site-focusable rounded-md bg-background px-3 py-1.5 font-sans text-sm font-medium text-foreground shadow-sm"
+                  : "site-focusable rounded-md px-3 py-1.5 font-sans text-sm text-muted-foreground transition-colors hover:text-foreground"
+              }
+            >
+              {label}
+            </button>
+          );
+        })}
+      </View>
+      {tab === "preview" ? (
+        <View
+          className={
+            align === "start"
+              ? "site-preview-stage flex min-h-40 items-start justify-start px-6 py-8 sm:min-h-44 sm:px-8 sm:py-10"
+              : "site-preview-stage flex min-h-40 items-center justify-center px-6 py-8 sm:min-h-44 sm:px-8 sm:py-10"
+          }
+        >
+          <View
+            className={
+              align === "start"
+                ? "flex w-full max-w-md flex-col items-stretch"
+                : "flex w-full max-w-md flex-col items-center"
+            }
+          >
+            {preview}
+          </View>
+        </View>
+      ) : (
+        <pre className="site-mono overflow-x-auto bg-muted/30 px-4 py-5 text-[13px] leading-6 text-foreground">
+          <code>{code}</code>
+        </pre>
+      )}
     </View>
   );
 }
