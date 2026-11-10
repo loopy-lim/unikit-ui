@@ -13,6 +13,8 @@
 // - 웹 전용 토큰（transition·hover·break-words·sm: 반응형）은 web: 접두.
 import { forwardRef } from "react";
 import {
+  ChevronRightIcon,
+  MoreHorizontalIcon,
   Pressable,
   Text,
   View,
@@ -121,7 +123,7 @@ const BreadcrumbPage = forwardRef<BridgeTextRef, BreadcrumbPageProps>(
 );
 BreadcrumbPage.displayName = "BreadcrumbPage";
 
-// 구분 글리프 — children 미지정 시 기본 "›"（원본 ChevronRight 대체）.
+// 구분 아이콘 — children 미지정 시 기본 ChevronRightIcon.
 const BreadcrumbSeparator = forwardRef<BridgeViewRef, BreadcrumbSeparatorProps>(
   ({ className, children, ...props }, ref) => (
     <View
@@ -130,15 +132,15 @@ const BreadcrumbSeparator = forwardRef<BridgeViewRef, BreadcrumbSeparatorProps>(
       className={cn(breadcrumbSeparatorVariants(), className)}
       {...props}
     >
-      <Text className={cn(breadcrumbSeparatorTextVariants())}>
-        {children ?? "›"}
-      </Text>
+      {children ?? (
+        <ChevronRightIcon className="size-3.5 text-muted-foreground" />
+      )}
     </View>
   ),
 );
 BreadcrumbSeparator.displayName = "BreadcrumbSeparator";
 
-// 생략 글리프 — "⋯"（원본 MoreHorizontal 대체）.
+// 생략 아이콘 — MoreHorizontalIcon.
 const BreadcrumbEllipsis = forwardRef<BridgeViewRef, BreadcrumbEllipsisProps>(
   ({ className, ...props }, ref) => (
     <View
@@ -147,7 +149,7 @@ const BreadcrumbEllipsis = forwardRef<BridgeViewRef, BreadcrumbEllipsisProps>(
       className={cn(breadcrumbEllipsisVariants(), className)}
       {...props}
     >
-      <Text className={cn(breadcrumbEllipsisTextVariants())}>⋯</Text>
+      <MoreHorizontalIcon className="size-4 text-muted-foreground" />
     </View>
   ),
 );

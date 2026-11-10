@@ -34,6 +34,7 @@ import {
   type ReactNode,
 } from "react";
 import {
+  ChevronDownIcon,
   Select,
   SelectOption,
   Text,
@@ -114,15 +115,13 @@ const NativeSelect = forwardRef<BridgeViewRef, NativeSelectProps>(
       >
         {flattenOptions(children)}
       </Select>
-      {/* ChevronDownIcon 근사 글리프 — 절대 배치로 트리거 위에 겹친다（양측 동일）.
+      {/* ChevronDownIcon — 절대 배치로 트리거 위에 겹친다（양측 동일）.
           -translate-y-1/2 대신 top-0 bottom-0 + items-center 조합(네이티브 안전). */}
       <View
         aria-hidden
-        className="absolute top-0 bottom-0 right-3.5 items-center justify-center"
+        className="pointer-events-none absolute top-0 bottom-0 right-3.5 items-center justify-center"
       >
-        <Text className="text-base leading-none text-muted-foreground opacity-50 web:select-none">
-          ⌄
-        </Text>
+        <ChevronDownIcon className="size-4 shrink-0 text-muted-foreground opacity-50 web:select-none" />
       </View>
     </View>
   ),

@@ -8,12 +8,18 @@ import { useMemo } from "react";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { Pressable, ScrollView, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { Badge, Button } from "@unikit-bridge/ui";
+import { ChevronLeft, ChevronRight } from "lucide-react-native";
+import { Badge, Button, useUnikitTheme } from "@unikit-bridge/ui";
 
 import { CATALOG, findEntry } from "../../components/showcase/catalog";
-import { DemoLabel } from "../../components/showcase/section";
 
 export default function ComponentScreen() {
+  const { colorScheme } = useUnikitTheme();
+  const iconColor =
+    colorScheme === "dark" ? "hsl(240 5% 96%)" : "hsl(240 10% 3.9%)";
+  const mutedIconColor =
+    colorScheme === "dark" ? "hsl(240 5% 65%)" : "hsl(240 3.8% 46.1%)";
+
   const { slug } = useLocalSearchParams<{ slug: string }>();
   const router = useRouter();
 
@@ -45,106 +51,121 @@ export default function ComponentScreen() {
   const exampleSlides = entry.slides.slice(1);
 
   return (
-    <SafeAreaView style={{ flex: 1 }} className="bg-background">
-      <ScrollView
-        style={{ flex: 1 }}
-        className="w-full flex-1"
-        contentContainerClassName="w-full max-w-[640px] mx-auto px-4 pt-5 pb-16 space-y-8"
-        keyboardShouldPersistTaps="handled"
-      >
-        {/* 헤더 */}
-        <View>
-          <Button
-            variant="ghost"
-            size="sm"
-            onPress={() => router.back()}
-            accessibilityLabel="목록으로"
-            className="self-start -ml-2"
-          >
-            ‹ 목록
-          </Button>
-          <View className="mt-3 flex-row items-center gap-2">
-            <Text className="font-sans text-2xl font-bold web:tracking-tight text-foreground">
-              {entry.title}
+    <SafeAreaView style={{ flex: 1 }}>
+      <View className="flex-1 bg-background">
+        <ScrollView
+          style={{ flex: 1 }}
+          className="w-full flex-1"
+          contentContainerClassName="w-full max-w-[640px] mx-auto px-4 pt-5 pb-16 space-y-8"
+          keyboardShouldPersistTaps="handled"
+        >
+          {/* 헤더 */}
+          <View>
+            <Button
+              variant="ghost"
+              size="sm"
+              onPress={() => router.back()}
+              accessibilityLabel="목록으로"
+              className="self-start -ml-2.5 flex-row items-center gap-1.5 text-muted-foreground"
+            >
+              <ChevronLeft size={16} color={iconColor} />
+              <Text className="font-sans text-sm font-medium text-foreground">
+                목록
+              </Text>
+            </Button>
+            <View className="mt-3 flex-row items-center gap-2">
+              <Text className="font-sans text-2xl font-bold tracking-tight text-foreground">
+                {entry.title}
+              </Text>
+              {entry.webOnly ? <Badge variant="outline">웹 전용</Badge> : null}
+            </View>
+            <Text className="mt-1.5 font-sans text-sm leading-6 text-muted-foreground">
+              {entry.description}
             </Text>
-            {entry.webOnly ? <Badge variant="outline">웹 전용</Badge> : null}
           </View>
-          <Text className="mt-1.5 font-sans text-sm leading-6 text-muted-foreground">
-            {entry.description}
-          </Text>
-        </View>
 
-        {/* 대표 미리보기 (Preview) */}
-        {primarySlide ? (
-          <View className="space-y-3">
-            <DemoLabel>{primarySlide.name}</DemoLabel>
-            {entry.webOnly ? (
-              primarySlide.element
+          {/* 대표 미리보기 (Preview) — 주 무대 */}
+          {primarySlide ? (
+            <View className="space-y-2.5">
+              <Text className="font-sans text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                {primarySlide.name}
+              </Text>
+              {entry.webOnly ? (
+                primarySlide.element
+              ) : (
+                <View className="min-h-36 items-center justify-center rounded-2xl border border-border/80 bg-card p-6 shadow-xs">
+                  {primarySlide.element}
+                </View>
+              )}
+            </View>
+          ) : null}
+
+          {/* 변형 예시 목록 (Examples) — 박스 중첩(Containeritis) 완화 */}
+          {exampleSlides.length > 0 ? (
+            <View className="space-y-6 border-t border-border/60 pt-7">
+              <Text className="font-sans text-lg font-semibold tracking-tight text-foreground">
+                Examples
+              </Text>
+              {exampleSlides.map((slide) => (
+                <View key={slide.name} className="space-y-2">
+                  <Text className="font-sans text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                    {slide.name}
+                  </Text>
+                  <View className="items-center justify-center rounded-xl bg-muted/40 p-5">
+                    {slide.element}
+                  </View>
+                </View>
+              ))}
+            </View>
+          ) : null}
+
+          {/* 이전 / 다음 컴포넌트 이동 */}
+          <View className="flex-row items-center justify-between gap-4 border-t border-border/60 pt-8">
+            {neighbors.prev ? (
+              <Pressable
+                onPress={() =>
+                  router.replace(`/component/${neighbors.prev!.slug}`)
+                }
+                className="flex-1 rounded-xl border border-border/70 bg-card p-4 active:bg-muted/40"
+                accessibilityLabel={`이전 컴포넌트: ${neighbors.prev.title}`}
+              >
+                <Text className="font-sans text-xs text-muted-foreground">
+                  이전
+                </Text>
+                <View className="mt-1 flex-row items-center gap-1.5">
+                  <ChevronLeft size={14} color={iconColor} />
+                  <Text className="font-sans text-sm font-medium text-foreground">
+                    {neighbors.prev.title}
+                  </Text>
+                </View>
+              </Pressable>
             ) : (
-              <View className="min-h-36 items-center justify-center rounded-xl border border-border bg-card p-6">
-                {primarySlide.element}
-              </View>
+              <View className="flex-1" />
+            )}
+            {neighbors.next ? (
+              <Pressable
+                onPress={() =>
+                  router.replace(`/component/${neighbors.next!.slug}`)
+                }
+                className="flex-1 rounded-xl border border-border/70 bg-card p-4 active:bg-muted/40"
+                accessibilityLabel={`다음 컴포넌트: ${neighbors.next.title}`}
+              >
+                <Text className="font-sans text-xs text-muted-foreground text-right">
+                  다음
+                </Text>
+                <View className="mt-1 flex-row items-center justify-end gap-1.5">
+                  <Text className="font-sans text-sm font-medium text-foreground">
+                    {neighbors.next.title}
+                  </Text>
+                  <ChevronRight size={14} color={iconColor} />
+                </View>
+              </Pressable>
+            ) : (
+              <View className="flex-1" />
             )}
           </View>
-        ) : null}
-
-        {/* 변형 예시 목록 (Examples) — 웹 문서와 동일하게 세로로 나열 */}
-        {exampleSlides.length > 0 ? (
-          <View className="space-y-6 border-t border-border/80 pt-8">
-            <Text className="font-sans text-lg font-semibold tracking-tight text-foreground">
-              Examples
-            </Text>
-            {exampleSlides.map((slide) => (
-              <View key={slide.name} className="space-y-3">
-                <DemoLabel>{slide.name}</DemoLabel>
-                <View className="min-h-32 items-center justify-center rounded-xl border border-border bg-card p-6">
-                  {slide.element}
-                </View>
-              </View>
-            ))}
-          </View>
-        ) : null}
-
-        {/* 이전 / 다음 컴포넌트 이동 */}
-        <View className="flex-row items-center justify-between gap-4 border-t border-border/80 pt-8">
-          {neighbors.prev ? (
-            <Pressable
-              onPress={() =>
-                router.replace(`/component/${neighbors.prev!.slug}`)
-              }
-              className="flex-1 rounded-xl border border-border bg-card p-4 active:bg-muted/40"
-              accessibilityLabel={`이전 컴포넌트: ${neighbors.prev.title}`}
-            >
-              <Text className="font-sans text-xs text-muted-foreground">
-                이전
-              </Text>
-              <Text className="mt-1 font-sans text-sm font-medium text-foreground">
-                ← {neighbors.prev.title}
-              </Text>
-            </Pressable>
-          ) : (
-            <View className="flex-1" />
-          )}
-          {neighbors.next ? (
-            <Pressable
-              onPress={() =>
-                router.replace(`/component/${neighbors.next!.slug}`)
-              }
-              className="flex-1 rounded-xl border border-border bg-card p-4 text-right active:bg-muted/40"
-              accessibilityLabel={`다음 컴포넌트: ${neighbors.next.title}`}
-            >
-              <Text className="font-sans text-xs text-muted-foreground text-right">
-                다음
-              </Text>
-              <Text className="mt-1 font-sans text-sm font-medium text-foreground text-right">
-                {neighbors.next.title} →
-              </Text>
-            </Pressable>
-          ) : (
-            <View className="flex-1" />
-          )}
-        </View>
-      </ScrollView>
+        </ScrollView>
+      </View>
     </SafeAreaView>
   );
 }

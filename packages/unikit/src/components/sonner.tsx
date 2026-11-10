@@ -41,11 +41,17 @@ import {
   useSyncExternalStore,
 } from "react";
 import {
+  AlertCircleIcon,
+  CheckCircle2Icon,
+  InfoIcon,
+  Loader2Icon,
   LoopRotate,
   Portal,
   Pressable,
   Text,
   View,
+  XCircleIcon,
+  XIcon,
   useDrag,
   type BridgeViewRef,
   type ViewProps,
@@ -225,14 +231,32 @@ const POSITION_CLASSES: Record<NonNullable<ToasterProps["position"]>, string> = 
   "bottom-right": "items-end justify-end",
 };
 
-const GLYPHS: Record<ToastVariant, string> = {
-  default: "",
-  success: "✓",
-  error: "✕",
-  warning: "!",
-  info: "i",
-  loading: "↻",
-};
+function ToastIcon({
+  variant,
+  className,
+}: {
+  variant: ToastVariant;
+  className?: string;
+}) {
+  switch (variant) {
+    case "success":
+      return <CheckCircle2Icon className={className} />;
+    case "error":
+      return <XCircleIcon className={className} />;
+    case "warning":
+      return <AlertCircleIcon className={className} />;
+    case "info":
+      return <InfoIcon className={className} />;
+    case "loading":
+      return (
+        <LoopRotate>
+          <Loader2Icon className={cn(className, "web:animate-spin")} />
+        </LoopRotate>
+      );
+    default:
+      return null;
+  }
+}
 
 const toastCardVariants = cva(
   "pointer-events-auto relative flex-row items-start gap-3 rounded-lg border bg-popover px-4 py-3 shadow-lg web:max-w-sm",
@@ -325,20 +349,12 @@ function ToastCard({
       )}
       {...(dragHandlers as ViewProps)}
     >
-      {GLYPHS[toastItem.variant] !== "" && (
+      {toastItem.variant !== "default" && (
         <View aria-hidden className="shrink-0 pt-0.5">
-          {/* loading ↻ 회전 — 웹은 web:animate-spin 클래스, 네이티브는 LoopRotate */}
-          <LoopRotate>
-            <Text
-              className={cn(
-                "font-sans text-sm font-bold",
-                colored ? "text-white" : "text-foreground",
-                toastItem.variant === "loading" && "web:animate-spin",
-              )}
-            >
-              {GLYPHS[toastItem.variant]}
-            </Text>
-          </LoopRotate>
+          <ToastIcon
+            variant={toastItem.variant}
+            className={cn("size-4", colored ? "text-white" : "text-foreground")}
+          />
         </View>
       )}
       <View className="min-w-0 flex-1 flex-col gap-1">
@@ -359,7 +375,7 @@ function ToastCard({
           onPress={() => dismissToast(toastItem.id)}
           className="shrink-0 rounded-xs p-1"
         >
-          <Text className={cn("text-xs leading-none", titleColor)}>✕</Text>
+          <XIcon className={cn("size-3.5", titleColor)} />
         </Pressable>
       )}
     </View>

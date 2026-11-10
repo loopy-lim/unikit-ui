@@ -54,9 +54,12 @@ import {
   type ReactNode,
 } from "react";
 import {
+  CheckIcon,
+  ChevronDownIcon,
   Pressable,
   Text,
   View,
+  XIcon,
   type BridgePressableRef,
   type BridgeScrollViewRef,
   type BridgeTextRef,
@@ -303,8 +306,7 @@ const ComboboxTrigger = forwardRef<BridgePressableRef, ComboboxTriggerProps>(
       {...props}
     >
       {wrapTextChildren(children, "font-sans text-sm text-foreground")}
-      {/* 원본 ChevronDownIcon → ▾ 글리프 */}
-      <Text className="text-sm leading-none text-muted-foreground">▾</Text>
+      <ChevronDownIcon className="size-4 shrink-0 text-muted-foreground opacity-50" />
     </PopoverTrigger>
   ),
 );
@@ -362,8 +364,7 @@ const ComboboxClear = forwardRef<BridgePressableRef, ComboboxClearProps>(
         {...props}
       >
         {children ?? (
-          // 원본 XIcon → × 글리프
-          <Text className="text-sm leading-none text-muted-foreground">×</Text>
+          <XIcon className="size-3.5 text-muted-foreground" />
         )}
       </Pressable>
     );
@@ -418,7 +419,7 @@ const ComboboxInput = forwardRef<BridgeTextInputRef, ComboboxInputProps>(
           accessibilityLabel="목록 열기"
           className={cn("mr-3", TRIGGER_RESET_CLASSES)}
         >
-          <Text className="text-sm leading-none text-muted-foreground">▾</Text>
+          <ChevronDownIcon className="size-4 shrink-0 text-muted-foreground opacity-50" />
         </PopoverTrigger>
       ) : null}
       {children}
@@ -569,15 +570,13 @@ const ComboboxItem = forwardRef<BridgePressableRef, ComboboxItemProps>(
         {...props}
       >
         {children}
-        {/* 원본 ItemIndicator+CheckIcon → ✓ 글리프 표시자（absolute right-2） */}
+        {/* 표시자 — 원본 ItemIndicator + CheckIcon */}
         <View
           aria-hidden
           className="absolute right-2 size-4 items-center justify-center"
         >
           {isSelected ? (
-            <Text className="font-sans text-sm font-bold leading-none text-foreground">
-              ✓
-            </Text>
+            <CheckIcon className="size-3.5 text-foreground" />
           ) : null}
         </View>
       </CommandItem>
@@ -644,14 +643,13 @@ const ComboboxChip = forwardRef<BridgeViewRef, ComboboxChipProps>(
           "font-sans text-xs font-medium text-foreground",
         )}
         {showRemove ? (
-          // 원본 ChipRemove+XIcon → × Pressable（내부 구현 — export 목록에 없음）
           <Pressable
             accessibilityRole="button"
             accessibilityLabel="제거"
             className={TRIGGER_RESET_CLASSES}
             onPress={() => combobox.removeValue(value)}
           >
-            <Text className="text-xs leading-none text-muted-foreground">×</Text>
+            <XIcon className="size-3 text-muted-foreground hover:text-foreground" />
           </Pressable>
         ) : null}
       </View>

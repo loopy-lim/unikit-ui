@@ -4,6 +4,7 @@
 // 포장만 벗겼다(문구·구성 유지).
 import { useRef, type ReactNode } from "react";
 import { Text, View, type TextInputInstance } from "react-native";
+import { Inbox, Plus } from "lucide-react-native";
 import {
   Accordion,
   AccordionContent,
@@ -134,8 +135,8 @@ function ButtonDemoSizes() {
       <Button variant="default" size="lg">
         크게
       </Button>
-      <Button variant="default" size="icon">
-        +
+      <Button variant="default" size="icon" accessibilityLabel="추가">
+        <Plus size={16} />
       </Button>
     </View>
   );
@@ -417,7 +418,9 @@ function EmptyDemo() {
   return (
     <Empty>
       <EmptyHeader>
-        <EmptyMedia variant="icon">◻</EmptyMedia>
+        <EmptyMedia variant="icon">
+          <Inbox size={28} className="text-muted-foreground" />
+        </EmptyMedia>
         <EmptyTitle>아직 항목이 없어요</EmptyTitle>
         <EmptyDescription>첫 번째 항목을 추가해 보세요.</EmptyDescription>
       </EmptyHeader>

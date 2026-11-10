@@ -34,6 +34,7 @@ import {
   Pressable,
   Text,
   View,
+  XIcon,
   type BridgePressableRef,
   type BridgeTextRef,
   type BridgeViewRef,
@@ -44,7 +45,7 @@ import {
 import { cva } from "class-variance-authority";
 
 import { ModalOverlay, type ModalOverlayPosition } from "../lib/overlay";
-import { cn } from "@/lib/utils";
+import { cn } from "../lib/utils";
 
 type SheetContextValue = {
   open: boolean;
@@ -240,14 +241,12 @@ const SheetContent = forwardRef<BridgeViewRef, SheetContentProps>(
             <SheetClose
               accessibilityLabel="Close"
               className={cn(
-                "absolute top-4 right-4 rounded-xs opacity-70",
+                "absolute top-4 right-4 rounded-sm p-1 opacity-70",
                 "web:transition-opacity web:hover:opacity-100",
                 "web:focus-visible:ring-2 web:focus-visible:ring-ring web:focus-visible:ring-offset-2 web:focus-visible:ring-offset-background",
               )}
             >
-              <View aria-hidden>
-                <Text className="text-base leading-none text-foreground">✕</Text>
-              </View>
+              <XIcon className="size-4 text-foreground" />
             </SheetClose>
           )}
         </View>

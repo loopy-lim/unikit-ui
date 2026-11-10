@@ -30,6 +30,7 @@
 import { createContext, forwardRef, useContext, useState } from "react";
 import {
   LoopPulse,
+  MinusIcon,
   Text,
   TextInput,
   View,
@@ -40,7 +41,7 @@ import {
 } from "@unikit-bridge/ui/primitives";
 import { cva } from "class-variance-authority";
 
-import { cn } from "@/lib/utils";
+import { cn } from "../lib/utils";
 
 // 원본 input-otp의 OTPInputContext 슬롯 상태와 동일 형태.
 type OTPSlotState = {
@@ -223,16 +224,13 @@ export type InputOTPSeparatorProps = ViewProps;
 
 const InputOTPSeparator = forwardRef<BridgeViewRef, InputOTPSeparatorProps>(
   ({ className, ...props }, ref) => (
-    // MinusIcon 근사 − 글리프（원본 currentColor 상속 → text-foreground）.
     <View
       ref={ref}
       accessibilityRole="separator"
       className={cn("flex-row items-center", className)}
       {...props}
     >
-      <Text className="text-base leading-none text-foreground web:select-none">
-        −
-      </Text>
+      <MinusIcon className="size-4 text-muted-foreground web:select-none" />
     </View>
   ),
 );

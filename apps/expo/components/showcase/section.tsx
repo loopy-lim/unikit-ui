@@ -5,6 +5,7 @@
 // @unikit-bridge/ui에서 가져온다(기존 쇼케이스 관행).
 import type { ReactNode } from "react";
 import { Text } from "react-native";
+import { ExternalLink } from "lucide-react-native";
 import {
   buttonVariants,
   Empty,
@@ -42,7 +43,9 @@ export function WebOnlyNotice({ reason }: { reason: string }) {
   return (
     <Empty className="py-12">
       <EmptyHeader>
-        <EmptyMedia variant="icon">↗</EmptyMedia>
+        <EmptyMedia variant="icon">
+          <ExternalLink size={24} className="text-muted-foreground" />
+        </EmptyMedia>
         <EmptyTitle>웹 전용 컴포넌트예요</EmptyTitle>
         <EmptyDescription>{reason}</EmptyDescription>
       </EmptyHeader>

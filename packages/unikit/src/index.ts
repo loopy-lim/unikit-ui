@@ -911,3 +911,29 @@ export {
 // 테마（T-5가 packages/unikit/src/theme/ 을 병렬 생성） — 디렉터리 존재 여부와
 // 무관하게 이 라인은 항상 유지한다（T-6 지시）.
 export * from "./theme";
+
+// ── 유니버설 벡터 아이콘 ──
+export {
+  CheckIcon,
+  ChevronDownIcon,
+  ChevronUpIcon,
+  ChevronRightIcon,
+  ChevronLeftIcon,
+  XIcon,
+  SearchIcon,
+  MinusIcon,
+  CircleIcon,
+  MoreHorizontalIcon,
+  ArrowLeftIcon,
+  ArrowRightIcon,
+  ArrowUpIcon,
+  ArrowDownIcon,
+  InfoIcon,
+  AlertCircleIcon,
+  CheckCircle2Icon,
+  XCircleIcon,
+  Loader2Icon,
+  type IconProps,
+  type IconComponent,
+} from "@unikit-bridge/ui/primitives";
+

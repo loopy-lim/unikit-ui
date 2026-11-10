@@ -50,6 +50,8 @@ import {
   type ReactNode,
 } from "react";
 import {
+  CheckIcon,
+  ChevronRightIcon,
   Pressable,
   Text,
   View,
@@ -430,12 +432,10 @@ const DropdownMenuCheckboxItem = forwardRef<
         )}
         {...props}
       >
-        {/* 표시자 — 원본 ItemIndicator + CheckIcon 대신 ✓ 글리프（checkbox.tsx 관행） */}
+        {/* 표시자 — 원본 ItemIndicator + CheckIcon */}
         <View aria-hidden className={INDICATOR_SLOT_CLASSES}>
           {isChecked ? (
-            <Text className="font-sans text-sm font-bold leading-none text-foreground">
-              ✓
-            </Text>
+            <CheckIcon className="size-3.5 text-foreground" />
           ) : null}
         </View>
         {wrapTextChildren(children, ITEM_TEXT_CLASSES)}
@@ -638,17 +638,12 @@ const DropdownMenuSubTrigger = forwardRef<
             sub.open && "text-accent-foreground",
           ),
         )}
-        {/* 원본 ChevronRightIcon 대신 › 글리프（accordion.tsx 관행）.
-            TextProps에 aria-hidden 계약이 없어 생략 — 글리프는 스크린리더가
-            트리거 라벨 뒤에 부수적으로 읽을 수 있다(한계). */}
-        <Text
+        <ChevronRightIcon
           className={cn(
-            "font-sans text-base leading-none web:select-none",
+            "ml-auto size-4",
             sub.open ? "text-accent-foreground" : "text-muted-foreground",
           )}
-        >
-          ›
-        </Text>
+        />
       </Pressable>
     );
   },

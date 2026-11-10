@@ -22,6 +22,7 @@ import {
   type ReactNode,
 } from "react";
 import {
+  ChevronDownIcon,
   Pressable,
   Text,
   View,
@@ -184,7 +185,7 @@ const AccordionTrigger = forwardRef<BridgePressableRef, AccordionTriggerProps>(
           onPress?.();
         }}
         className={cn(
-          "flex-row items-start justify-between gap-4 rounded-md py-4 web:transition-all",
+          "flex-row items-center justify-between gap-4 rounded-md py-4 web:transition-all",
           "web:focus-visible:ring-2 web:focus-visible:ring-ring web:focus-visible:ring-offset-2 web:focus-visible:ring-offset-background",
           disabled && "web:pointer-events-none opacity-50",
           className,
@@ -195,12 +196,12 @@ const AccordionTrigger = forwardRef<BridgePressableRef, AccordionTriggerProps>(
         <Text className="flex-1 font-sans text-left text-sm font-medium text-foreground web:hover:underline">
           {children}
         </Text>
-        {/* 펼침 표시 글리프 — 원본 svg 회전 대신 글자 교체（⌄ 닫힘 / ⌃ 펼침） */}
-        <View aria-hidden>
-          <Text className="text-base text-muted-foreground web:select-none">
-            {item.open ? "⌃" : "⌄"}
-          </Text>
-        </View>
+        <ChevronDownIcon
+          className={cn(
+            "size-4 shrink-0 text-muted-foreground web:transition-transform web:duration-200",
+            item.open && "web:rotate-180",
+          )}
+        />
       </Pressable>
     );
   },

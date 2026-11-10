@@ -8,8 +8,9 @@
 // - 이중 지정 원칙（§0.5）: 체크 배경·테두리는 Pressable, 글리프 색은 내부 Text에 명시.
 import { forwardRef, useState } from "react";
 import {
+  CheckIcon,
+  MinusIcon,
   Pressable,
-  Text,
   type BridgePressableRef,
   type PressableProps,
 } from "@unikit-bridge/ui/primitives";
@@ -79,11 +80,11 @@ const Checkbox = forwardRef<BridgePressableRef, CheckboxProps>(
         )}
         {...props}
       >
-        {/* 글리프 — 체크 ✓ / 중간 −. 원본 Indicator처럼 상태일 때만 렌더. */}
-        {indeterminate || isChecked ? (
-          <Text className="font-sans text-sm font-bold leading-none text-primary-foreground">
-            {indeterminate ? "−" : "✓"}
-          </Text>
+        {/* 아이콘 — 체크 CheckIcon / 중간 MinusIcon. 원본 Indicator처럼 상태일 때만 렌더. */}
+        {indeterminate ? (
+          <MinusIcon className="size-3 text-primary-foreground" strokeWidth={3} />
+        ) : isChecked ? (
+          <CheckIcon className="size-3 text-primary-foreground" strokeWidth={3} />
         ) : null}
       </Pressable>
     );

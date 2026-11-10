@@ -3,7 +3,7 @@
 // (제목 text-lg semibold / 설명 text-sm muted / 본문 mt-4). 기존 8개 섹션은
 // page.tsx 안에 그대로 보존하고, 신규 6개 티어 섹션만 이 골격을 공유한다.
 import type { ReactNode } from "react";
-import { buttonVariants, cn } from "@unikit-bridge/ui";
+import { buttonTextVariants, buttonVariants, cn } from "@unikit-bridge/ui";
 import { Text, View } from "@unikit-bridge/ui/primitives";
 
 export function Section({
@@ -35,6 +35,7 @@ export function Section({
  */
 export const outlineTriggerClass = cn(
   buttonVariants({ variant: "outline" }),
+  buttonTextVariants({ variant: "outline" }),
   "self-start",
 );
 

@@ -30,6 +30,7 @@
 import { createContext, forwardRef, useContext, useState } from "react";
 import {
   LoopPulse,
+  MinusIcon,
   Text,
   TextInput,
   View,
@@ -223,16 +224,13 @@ export type InputOTPSeparatorProps = ViewProps;
 
 const InputOTPSeparator = forwardRef<BridgeViewRef, InputOTPSeparatorProps>(
   ({ className, ...props }, ref) => (
-    // MinusIcon 근사 − 글리프（원본 currentColor 상속 → text-foreground）.
     <View
       ref={ref}
       accessibilityRole="separator"
       className={cn("flex-row items-center", className)}
       {...props}
     >
-      <Text className="text-base leading-none text-foreground web:select-none">
-        −
-      </Text>
+      <MinusIcon className="size-4 text-muted-foreground web:select-none" />
     </View>
   ),
 );

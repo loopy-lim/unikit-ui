@@ -17,7 +17,7 @@
  * measureInWindowuseDrag오버레이 훈 4종（useOverlayFocususeDismiss
  * useRepositionuseScrollLock）.
  */
-import type { ReactNode } from "react";
+import type { ReactElement, ReactNode } from "react";
 
 export type BridgeColorScheme = "light" | "dark";
 
@@ -413,13 +413,25 @@ export type LoopPulseProps = {
   durationMs?: number;
 };
 
-// ---------------------------------------------------------------------------
-// 테마 엔진 바인딩
-// ---------------------------------------------------------------------------
-
 /**
  * 색 스킴을 스타일링 엔진에 반영한다（UnikitThemeProvider가 호출）.
  * - native.tsx → uniwind `Uniwind.setTheme（）`（native 표준 다이얼로그까지 동기）
  * - web.tsx → document.documentElement의 `.dark` 클래스 토글（표준 Tailwind dark 변형）
  */
 export type ApplyColorScheme = (colorScheme: BridgeColorScheme) => void;
+
+// ---------------------------------------------------------------------------
+// 유니버설 벡터 아이콘 타입 (Web SVG / React Native Svg)
+// ---------------------------------------------------------------------------
+
+export type IconProps = {
+  className?: string;
+  size?: number | string;
+  color?: string;
+  strokeWidth?: number;
+  style?: BridgeStyle;
+  "aria-hidden"?: boolean | "true" | "false";
+};
+
+export type IconComponent = (props: IconProps) => ReactElement | null;
+

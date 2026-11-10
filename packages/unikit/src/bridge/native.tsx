@@ -57,6 +57,12 @@ import {
   type ViewStyle,
 } from "react-native";
 import { Uniwind } from "uniwind";
+import {
+  Circle as SvgCircle,
+  Line as SvgLine,
+  Path as SvgPath,
+  Svg,
+} from "react-native-svg";
 
 import { cn } from "../lib/utils";
 import type {
@@ -66,6 +72,7 @@ import type {
   BridgeScrollViewRef,
   BridgeTextRef,
   BridgeTextInputRef,
+  IconProps,
   BridgeViewRef,
   ImageProps,
   LoopPulseProps,
@@ -790,6 +797,118 @@ const getViewport: GetViewport = () => {
   return { width, height };
 };
 
+// ---------------------------------------------------------------------------
+// 유니버설 벡터 아이콘 (Native react-native-svg)
+// ---------------------------------------------------------------------------
+
+function createNativeIcon(
+  renderPaths: (color: string, strokeWidth: number) => ReactElement,
+  defaultClassName = "size-4",
+) {
+  return function NativeIcon({
+    className,
+    size = 16,
+    color = "currentColor",
+    strokeWidth = 2,
+    style,
+    "aria-hidden": ariaHidden = true,
+  }: IconProps) {
+    return (
+      <Svg
+        width={size}
+        height={size}
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke={color}
+        strokeWidth={strokeWidth}
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        aria-hidden={ariaHidden ? true : undefined}
+        style={style as any}
+        {...({ className: cn(defaultClassName, className) } as Record<string, unknown>)}
+      >
+        {renderPaths(color, strokeWidth)}
+      </Svg>
+    );
+  };
+}
+
+const CheckIcon = createNativeIcon((_c, _w) => <SvgPath d="M20 6 9 17l-5-5" />);
+const ChevronDownIcon = createNativeIcon((_c, _w) => <SvgPath d="m6 9 6 6 6-6" />);
+const ChevronUpIcon = createNativeIcon((_c, _w) => <SvgPath d="m18 15-6-6-6 6" />);
+const ChevronRightIcon = createNativeIcon((_c, _w) => <SvgPath d="m9 18 6-6-6-6" />);
+const ChevronLeftIcon = createNativeIcon((_c, _w) => <SvgPath d="m15 18-6-6 6-6" />);
+const XIcon = createNativeIcon((_c, _w) => <SvgPath d="M18 6 6 18M6 6l12 12" />);
+const SearchIcon = createNativeIcon((_c, _w) => (
+  <>
+    <SvgCircle cx={11} cy={11} r={8} />
+    <SvgPath d="m21 21-4.3-4.3" />
+  </>
+));
+const MinusIcon = createNativeIcon((_c, _w) => <SvgPath d="M5 12h14" />);
+const CircleIcon = createNativeIcon((_c, _w) => <SvgCircle cx={12} cy={12} r={10} />);
+const MoreHorizontalIcon = createNativeIcon((c, _w) => (
+  <>
+    <SvgCircle cx={12} cy={12} r={1} fill={c} />
+    <SvgCircle cx={19} cy={12} r={1} fill={c} />
+    <SvgCircle cx={5} cy={12} r={1} fill={c} />
+  </>
+));
+const ArrowLeftIcon = createNativeIcon((_c, _w) => (
+  <>
+    <SvgPath d="m12 19-7-7 7-7" />
+    <SvgPath d="M19 12H5" />
+  </>
+));
+const ArrowRightIcon = createNativeIcon((_c, _w) => (
+  <>
+    <SvgPath d="M5 12h14" />
+    <SvgPath d="m12 5 7 7-7 7" />
+  </>
+));
+const ArrowUpIcon = createNativeIcon((_c, _w) => (
+  <>
+    <SvgPath d="m5 12 7-7 7 7" />
+    <SvgPath d="M12 19V5" />
+  </>
+));
+const ArrowDownIcon = createNativeIcon((_c, _w) => (
+  <>
+    <SvgPath d="M12 5v14" />
+    <SvgPath d="m19 12-7 7-7-7" />
+  </>
+));
+const InfoIcon = createNativeIcon((_c, _w) => (
+  <>
+    <SvgCircle cx={12} cy={12} r={10} />
+    <SvgPath d="M12 16v-4" />
+    <SvgPath d="M12 8h.01" />
+  </>
+));
+const AlertCircleIcon = createNativeIcon((_c, _w) => (
+  <>
+    <SvgCircle cx={12} cy={12} r={10} />
+    <SvgLine x1={12} x2={12} y1={8} y2={12} />
+    <SvgLine x1={12} x2={12.01} y1={16} y2={16} />
+  </>
+));
+const CheckCircle2Icon = createNativeIcon((_c, _w) => (
+  <>
+    <SvgCircle cx={12} cy={12} r={10} />
+    <SvgPath d="m9 12 2 2 4-4" />
+  </>
+));
+const XCircleIcon = createNativeIcon((_c, _w) => (
+  <>
+    <SvgCircle cx={12} cy={12} r={10} />
+    <SvgPath d="m15 9-6 6" />
+    <SvgPath d="m9 9 6 6" />
+  </>
+));
+const Loader2Icon = createNativeIcon((_c, _w) => (
+  <SvgPath d="M21 12a9 9 0 1 1-6.219-8.56" />
+));
+
 export {
   View,
   Text,
@@ -810,4 +929,23 @@ export {
   useScrollLock,
   getViewport,
   applyColorScheme,
+  CheckIcon,
+  ChevronDownIcon,
+  ChevronUpIcon,
+  ChevronRightIcon,
+  ChevronLeftIcon,
+  XIcon,
+  SearchIcon,
+  MinusIcon,
+  CircleIcon,
+  MoreHorizontalIcon,
+  ArrowLeftIcon,
+  ArrowRightIcon,
+  ArrowUpIcon,
+  ArrowDownIcon,
+  InfoIcon,
+  AlertCircleIcon,
+  CheckCircle2Icon,
+  XCircleIcon,
+  Loader2Icon,
 };

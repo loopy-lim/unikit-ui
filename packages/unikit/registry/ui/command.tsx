@@ -53,6 +53,7 @@ import {
 import {
   Pressable,
   ScrollView,
+  SearchIcon,
   Text,
   TextInput,
   View,
@@ -69,7 +70,7 @@ import {
   type ViewProps,
 } from "@unikit-bridge/ui/primitives";
 
-import { cn } from "../lib/utils";
+import { cn } from "@/lib/utils";
 import { Dialog, DialogContent, type DialogProps } from "./dialog";
 
 /** 항목 등록 정보 — 키보드 탐색필터 판정의 단일 출처 */
@@ -343,12 +344,7 @@ const CommandInput = forwardRef<BridgeTextInputRef, CommandInputProps>(
           className,
         )}
       >
-        {/* 검색 글리프 — 원본 SearchIcon（lucide） 대체 */}
-        <View aria-hidden>
-          <Text className="text-sm leading-none text-muted-foreground web:select-none">
-            ⌕
-          </Text>
-        </View>
+        <SearchIcon className="size-4 shrink-0 text-muted-foreground opacity-50" />
         <TextInput
           {...props}
           ref={ref}

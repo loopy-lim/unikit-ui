@@ -34,6 +34,8 @@
 //   강조는 시각（bg-accentbg-primary）으로도 표현된다.
 import { forwardRef, useId, useMemo, useState } from "react";
 import {
+  ChevronLeftIcon,
+  ChevronRightIcon,
   Pressable,
   Text,
   View,
@@ -158,11 +160,11 @@ const Calendar = forwardRef<BridgeViewRef, CalendarProps>(
         <View className="flex-row items-center justify-between gap-1">
           <Button
             variant="ghost"
-            className="size-8"
+            className="size-8 p-0"
             accessibilityLabel="이전 달"
             onPress={() => goToMonth(addMonths(currentMonth, -1))}
           >
-            ‹
+            <ChevronLeftIcon className="size-4" />
           </Button>
           <Text
             nativeID={captionId}
@@ -172,11 +174,11 @@ const Calendar = forwardRef<BridgeViewRef, CalendarProps>(
           </Text>
           <Button
             variant="ghost"
-            className="size-8"
+            className="size-8 p-0"
             accessibilityLabel="다음 달"
             onPress={() => goToMonth(addMonths(currentMonth, 1))}
           >
-            ›
+            <ChevronRightIcon className="size-4" />
           </Button>
         </View>
 

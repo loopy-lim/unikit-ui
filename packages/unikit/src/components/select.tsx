@@ -45,6 +45,9 @@ import {
   type ReactNode,
 } from "react";
 import {
+  CheckIcon,
+  ChevronDownIcon,
+  ChevronUpIcon,
   Pressable,
   ScrollView,
   Text,
@@ -268,10 +271,7 @@ const SelectTrigger = forwardRef<BridgePressableRef, SelectTriggerProps>(
         {...props}
       >
         {wrapTextChildren(children, "font-sans text-sm text-foreground")}
-        {/* ChevronDownIcon 근사 글리프（원본 size-4 opacity-50） */}
-        <Text className="text-base leading-none text-muted-foreground opacity-50 web:select-none">
-          ⌄
-        </Text>
+        <ChevronDownIcon className="size-4 shrink-0 text-muted-foreground opacity-50 web:select-none" />
       </PopoverTrigger>
     );
   },
@@ -411,15 +411,13 @@ const SelectItem = forwardRef<BridgePressableRef, SelectItemProps>(
         )}
         {...props}
       >
-        {/* 표시자 — 원본 ItemIndicator + CheckIcon 대신 ✓ 글리프（관행） */}
+        {/* 표시자 — 원본 ItemIndicator + CheckIcon */}
         <View
           aria-hidden
           className="absolute right-2 size-3.5 items-center justify-center web:pointer-events-none"
         >
           {selected ? (
-            <Text className="font-sans text-sm font-bold leading-none text-foreground">
-              ✓
-            </Text>
+            <CheckIcon className="size-3.5 text-foreground" />
           ) : null}
         </View>
         {wrapTextChildren(
@@ -449,7 +447,6 @@ SelectSeparator.displayName = "SelectSeparator";
 export type SelectScrollButtonProps = ViewProps;
 
 // API 유지용 표시 컴포넌트 — SelectContent가 기본 렌더하지 않는다（머리 주석）.
-// ChevronUpIcon 근사 글리프 ⌃.
 const SelectScrollUpButton = forwardRef<
   BridgeViewRef,
   SelectScrollButtonProps
@@ -459,12 +456,11 @@ const SelectScrollUpButton = forwardRef<
     className={cn("flex-row items-center justify-center py-1", className)}
     {...props}
   >
-    <Text className="text-base leading-none text-muted-foreground">⌃</Text>
+    <ChevronUpIcon className="size-4 text-muted-foreground" />
   </View>
 ));
 SelectScrollUpButton.displayName = "SelectScrollUpButton";
 
-// ChevronDownIcon 근사 글리프 ⌄.
 const SelectScrollDownButton = forwardRef<
   BridgeViewRef,
   SelectScrollButtonProps
@@ -474,7 +470,7 @@ const SelectScrollDownButton = forwardRef<
     className={cn("flex-row items-center justify-center py-1", className)}
     {...props}
   >
-    <Text className="text-base leading-none text-muted-foreground">⌄</Text>
+    <ChevronDownIcon className="size-4 text-muted-foreground" />
   </View>
 ));
 SelectScrollDownButton.displayName = "SelectScrollDownButton";

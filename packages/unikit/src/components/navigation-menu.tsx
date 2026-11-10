@@ -52,6 +52,7 @@ import {
   type ReactNode,
 } from "react";
 import {
+  ChevronDownIcon,
   Pressable,
   Text,
   View,
@@ -275,15 +276,12 @@ const NavigationMenuTrigger = forwardRef<
       {...props}
     >
       {wrapTextChildren(children, "font-sans text-sm font-medium text-foreground")}
-      {/* 원본 ChevronDownIcon → ▾ 글리프. 개방 시 회전 근사 */}
-      <Text
+      <ChevronDownIcon
         className={cn(
-          "ml-1 text-xs leading-none text-muted-foreground web:transition-transform web:duration-300",
+          "ml-1 size-3 text-muted-foreground web:transition-transform web:duration-300",
           isOpen && "web:rotate-180",
         )}
-      >
-        ▾
-      </Text>
+      />
     </Pressable>
   );
 });

@@ -45,6 +45,10 @@ import {
   type MutableRefObject,
 } from "react";
 import {
+  ArrowDownIcon,
+  ArrowLeftIcon,
+  ArrowRightIcon,
+  ArrowUpIcon,
   ScrollView,
   View,
   measureInWindow,
@@ -295,8 +299,11 @@ const CarouselPrevious = forwardRef<BridgePressableRef, CarouselPreviousProps>(
         )}
         {...props}
       >
-        {/* 원본 lucide ArrowLeft — 세로 orientation은 rotate-90 대신 글리프 교체 */}
-        {orientation === "horizontal" ? "←" : "↑"}
+        {orientation === "horizontal" ? (
+          <ArrowLeftIcon className="size-4" />
+        ) : (
+          <ArrowUpIcon className="size-4" />
+        )}
       </Button>
     );
   },
@@ -325,7 +332,11 @@ const CarouselNext = forwardRef<BridgePressableRef, CarouselNextProps>(
         )}
         {...props}
       >
-        {orientation === "horizontal" ? "→" : "↓"}
+        {orientation === "horizontal" ? (
+          <ArrowRightIcon className="size-4" />
+        ) : (
+          <ArrowDownIcon className="size-4" />
+        )}
       </Button>
     );
   },

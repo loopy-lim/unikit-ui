@@ -19,6 +19,9 @@
 // - 터치 타깃 44px 보정은 button.tsx와 같은 hitSlop 기준（§3.1）.
 import { forwardRef, type ReactNode } from "react";
 import {
+  ChevronLeftIcon,
+  ChevronRightIcon,
+  MoreHorizontalIcon,
   Pressable,
   Text,
   View,
@@ -151,7 +154,7 @@ const PaginationPrevious = forwardRef<
     className={cn("gap-1 px-2.5 web:sm:pl-2.5", className)}
     {...props}
   >
-    <Text className={cn(paginationGlyphVariants())}>‹</Text>
+    <ChevronLeftIcon className="size-4" />
     <Text className={cn(paginationLabelVariants())}>{label}</Text>
   </PaginationLink>
 ));
@@ -167,13 +170,13 @@ const PaginationNext = forwardRef<BridgePressableRef, PaginationNextProps>(
       {...props}
     >
       <Text className={cn(paginationLabelVariants())}>{label}</Text>
-      <Text className={cn(paginationGlyphVariants())}>›</Text>
+      <ChevronRightIcon className="size-4" />
     </PaginationLink>
   ),
 );
 PaginationNext.displayName = "PaginationNext";
 
-// 페이지 생략 글리프 — "⋯"（원본 MoreHorizontalIcon 대체）.
+// 페이지 생략 아이콘 — MoreHorizontalIcon.
 const PaginationEllipsis = forwardRef<BridgeViewRef, PaginationEllipsisProps>(
   ({ className, ...props }, ref) => (
     <View
@@ -182,7 +185,7 @@ const PaginationEllipsis = forwardRef<BridgeViewRef, PaginationEllipsisProps>(
       className={cn(paginationEllipsisVariants(), className)}
       {...props}
     >
-      <Text className={cn(paginationEllipsisTextVariants())}>⋯</Text>
+      <MoreHorizontalIcon className="size-4 text-muted-foreground" />
     </View>
   ),
 );

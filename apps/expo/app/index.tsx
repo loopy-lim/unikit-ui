@@ -12,6 +12,13 @@ import { Link } from "expo-router";
 import { Pressable, SectionList, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import {
+  ChevronRight,
+  Moon,
+  Search,
+  SearchX,
+  Sun,
+} from "lucide-react-native";
+import {
   Badge,
   Button,
   Empty,
@@ -30,15 +37,33 @@ import {
   type CatalogEntry,
 } from "../components/showcase/catalog";
 
-/** 카탈로그 카드 — 웹 쇼케이스 카드와 동일한 시각 계층 */
-function CatalogCard({ entry }: { entry: CatalogEntry }) {
+/** 카탈로그 항목 — 카테고리 그룹화된 리스트 행 (Containeritis 해소) */
+function CatalogRow({
+  entry,
+  isFirst,
+  isLast,
+  chevronColor,
+}: {
+  entry: CatalogEntry;
+  isFirst: boolean;
+  isLast: boolean;
+  chevronColor: string;
+}) {
   return (
     <Link href={`/component/${entry.slug}`} asChild>
       <Pressable
-        className="mb-3 rounded-xl border border-border bg-card p-4 active:bg-muted/40"
+        className={`flex-row items-center justify-between px-4 py-3.5 bg-card active:bg-muted/50 ${
+          isFirst && isLast
+            ? "rounded-2xl border border-border/70"
+            : isFirst
+              ? "rounded-t-2xl border-t border-x border-border/70"
+              : isLast
+                ? "rounded-b-2xl border-b border-x border-border/70"
+                : "border-x border-b border-border/70"
+        }`}
         accessibilityLabel={`${entry.title} ${entry.subtitle} 데모 열기`}
       >
-        <View className="flex-row items-center justify-between">
+        <View className="flex-1 pr-3">
           <View className="flex-row items-baseline gap-2">
             <Text className="font-sans text-base font-semibold text-foreground">
               {entry.title}
@@ -46,25 +71,35 @@ function CatalogCard({ entry }: { entry: CatalogEntry }) {
             <Text className="font-sans text-xs text-muted-foreground">
               {entry.subtitle}
             </Text>
+            {entry.webOnly ? (
+              <Badge variant="outline" className="px-1.5 py-0 text-[10px]">
+                웹 전용
+              </Badge>
+            ) : null}
           </View>
-          {entry.webOnly ? (
-            <Badge variant="outline">웹 전용</Badge>
-          ) : null}
+          <Text
+            className="mt-0.5 font-sans text-xs leading-5 text-muted-foreground"
+            numberOfLines={1}
+          >
+            {entry.description}
+          </Text>
         </View>
-        <Text className="mt-1 font-sans text-xs leading-5 text-muted-foreground">
-          {entry.description}
-        </Text>
+        <ChevronRight size={16} color={chevronColor} />
       </Pressable>
     </Link>
   );
 }
 
 export default function Index() {
-  // 테마 토글(§1.4): Provider는 _layout이 이미 랩. 라벨은 "누르면 될 모드".
   const { colorScheme, toggleColorScheme } = useUnikitTheme();
-
-  // 검색 — 영문명·한글명·카테고리를 모두 대상으로.
   const [query, setQuery] = useState("");
+
+  const iconColor =
+    colorScheme === "dark" ? "hsl(240 5% 96%)" : "hsl(240 10% 3.9%)";
+  const mutedIconColor =
+    colorScheme === "dark" ? "hsl(240 5% 65%)" : "hsl(240 3.8% 46.1%)";
+  const subtleIconColor =
+    colorScheme === "dark" ? "hsl(240 5% 45%)" : "hsl(240 5% 75%)";
 
   const sections = useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -88,76 +123,93 @@ export default function Index() {
           style={{ flex: 1 }}
           className="w-full flex-1"
           contentContainerClassName="w-full max-w-[640px] mx-auto px-4 pb-12"
-        keyboardShouldPersistTaps="handled"
-        keyboardDismissMode="on-drag"
-        stickySectionHeadersEnabled={false}
-        sections={sections}
-        keyExtractor={(entry) => entry.slug}
-        renderItem={({ item }) => <CatalogCard entry={item} />}
-        renderSectionHeader={({ section }) => (
-          <View className="flex-row items-baseline justify-between pb-3 pt-6">
-            <Text className="font-sans text-sm font-semibold tracking-tight text-foreground">
-              {section.title}
-            </Text>
-            <Text className="font-sans text-xs text-muted-foreground">
-              {section.data.length}종
-            </Text>
-          </View>
-        )}
-        ListHeaderComponent={
-          <View>
-            {/* 헤더(§1.2 v3): 좌 타이틀 블록(flex-1) · 우 테마 토글 — 카피 유지 */}
-            {/* items-start — 토글 상단을 타이틀 첫 줄에 맞춘다(부제가 2줄이면
-                items-center는 토글이 아래로 처져 어긋나 보임, 감사 2026-11-10) */}
-            <View className="mb-8 flex-row items-start justify-between gap-3 pt-8">
-              <View className="flex-1">
-                <Text className="font-sans text-2xl font-bold web:tracking-tight text-foreground">
-                  UniKit
-                </Text>
-                <Text className="mt-1 font-sans text-sm text-muted-foreground">
-                  React와 React Native에서 같은 컴포넌트, 같은 모습.
-                </Text>
-              </View>
-              <Button
-                variant="outline"
-                size="sm"
-                onPress={toggleColorScheme}
-                accessibilityLabel="색 테마 전환"
-              >
-                {colorScheme === "light" ? "🌙 다크" : "☀️ 라이트"}
-              </Button>
-            </View>
-            {/* 검색 — 컴포넌트 61종을 이름으로 찾는다 */}
-            <Input
-              placeholder="컴포넌트 검색 (예: 버튼, dialog)"
-              value={query}
-              onChangeText={setQuery}
-              accessibilityLabel="컴포넌트 검색"
+          keyboardShouldPersistTaps="handled"
+          keyboardDismissMode="on-drag"
+          stickySectionHeadersEnabled={false}
+          sections={sections}
+          keyExtractor={(entry) => entry.slug}
+          renderItem={({ item, index, section }) => (
+            <CatalogRow
+              entry={item}
+              isFirst={index === 0}
+              isLast={index === section.data.length - 1}
+              chevronColor={subtleIconColor}
             />
-          </View>
-        }
-        ListEmptyComponent={
-          <Empty>
-            <EmptyHeader>
-              <EmptyMedia variant="icon">⌕</EmptyMedia>
-              <EmptyTitle>검색 결과가 없어요</EmptyTitle>
-              <EmptyDescription>다른 이름으로 찾아 보세요.</EmptyDescription>
-            </EmptyHeader>
-            <EmptyContent>
-              <Button variant="outline" size="sm" onPress={() => setQuery("")}>
-                검색 지우기
-              </Button>
-            </EmptyContent>
-          </Empty>
-        }
-        ListFooterComponent={
-          <View className="pt-8">
-            <Text className="text-center font-sans text-xs text-muted-foreground">
-              UniKit v0.2 · Expo와 Next.js에서 같은 화면을 보고 있어요.
-            </Text>
-          </View>
-        }
-      />
+          )}
+          renderSectionHeader={({ section }) => (
+            <View className="flex-row items-baseline justify-between pb-2.5 pt-7 px-1">
+              <Text className="font-sans text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                {section.title}
+              </Text>
+              <Text className="font-sans text-xs text-muted-foreground/60">
+                {section.data.length}종
+              </Text>
+            </View>
+          )}
+          ListHeaderComponent={
+            <View className="pb-3">
+              <View className="mb-6 flex-row items-start justify-between gap-3 pt-6">
+                <View className="flex-1">
+                  <Text className="font-sans text-2xl font-bold tracking-tight text-foreground">
+                    UniKit
+                  </Text>
+                  <Text className="mt-1 font-sans text-sm text-muted-foreground">
+                    React와 React Native에서 같은 컴포넌트, 같은 모습.
+                  </Text>
+                </View>
+                <Button
+                  variant="outline"
+                  size="icon"
+                  onPress={toggleColorScheme}
+                  accessibilityLabel="색 테마 전환"
+                  className="h-10 w-10 rounded-full border-border/80"
+                >
+                  {colorScheme === "light" ? (
+                    <Moon size={18} color={iconColor} />
+                  ) : (
+                    <Sun size={18} color={iconColor} />
+                  )}
+                </Button>
+              </View>
+              <View className="relative justify-center">
+                <View className="absolute left-3.5 z-10 pointer-events-none">
+                  <Search size={16} color={mutedIconColor} />
+                </View>
+                <Input
+                  className="pl-10 h-11 rounded-xl bg-card border-border/80 text-sm"
+                  placeholder="컴포넌트 검색 (예: 버튼, dialog)"
+                  value={query}
+                  onChangeText={setQuery}
+                  accessibilityLabel="컴포넌트 검색"
+                />
+              </View>
+            </View>
+          }
+          ListEmptyComponent={
+            <Empty className="py-12">
+              <EmptyHeader>
+                <EmptyMedia variant="icon">
+                  <SearchX size={32} color={mutedIconColor} />
+                </EmptyMedia>
+                <EmptyTitle>검색 결과가 없어요</EmptyTitle>
+                <EmptyDescription>다른 이름으로 찾아 보세요.</EmptyDescription>
+              </EmptyHeader>
+              <EmptyContent>
+                <Button variant="outline" size="sm" onPress={() => setQuery("")}>
+                  검색 지우기
+                </Button>
+              </EmptyContent>
+            </Empty>
+          }
+          ListFooterComponent={
+            <View className="pt-8">
+              <Text className="text-center font-sans text-xs text-muted-foreground">
+                UniKit v0.2 · Expo와 Next.js에서 같은 화면을 보고 있어요.
+              </Text>
+            </View>
+          }
+        />
+      </View>
     </SafeAreaView>
   );
 }

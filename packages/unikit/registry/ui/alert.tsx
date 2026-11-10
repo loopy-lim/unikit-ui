@@ -14,6 +14,8 @@
 //   col-start-*·min-h-4와 ［&_p］:leading-relaxed（단락 자손 스타일）은 소실.
 import { createContext, forwardRef, useContext } from "react";
 import {
+  AlertCircleIcon,
+  InfoIcon,
   Text,
   View,
   type BridgeTextRef,
@@ -107,9 +109,11 @@ const Alert = forwardRef<BridgeViewRef, AlertProps>(
         {...props}
       >
         <View aria-hidden className="mt-0.5 shrink-0">
-          <Text className={cn(alertGlyphVariants({ variant }))}>
-            {variant === "destructive" ? "⚠" : "ⓘ"}
-          </Text>
+          {variant === "destructive" ? (
+            <AlertCircleIcon className="size-4 text-destructive" />
+          ) : (
+            <InfoIcon className="size-4 text-foreground" />
+          )}
         </View>
         <View className="flex flex-col gap-0.5">{children}</View>
       </View>

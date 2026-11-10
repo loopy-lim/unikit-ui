@@ -31,6 +31,7 @@ import {
   useState,
   type ChangeEvent,
   type PointerEvent as ReactPointerEvent,
+  type ReactNode,
   type RefObject,
 } from "react";
 import { createPortal } from "react-dom";
@@ -43,6 +44,7 @@ import type {
   BridgeScrollViewRef,
   BridgeStyle,
   BridgeTextRef,
+  IconProps,
   BridgeTextInputRef,
   BridgeViewRef,
   ImageProps,
@@ -667,6 +669,116 @@ const getViewport: GetViewport = () =>
 const LoopRotate = ({ children }: LoopRotateProps) => <>{children}</>;
 const LoopPulse = ({ children }: LoopPulseProps) => <>{children}</>;
 
+// ---------------------------------------------------------------------------
+// 유니버설 벡터 아이콘 (Web JSX SVG)
+// ---------------------------------------------------------------------------
+
+function createWebIcon(children: ReactNode, defaultClassName = "size-4") {
+  return function WebIcon({
+    className,
+    size,
+    color,
+    strokeWidth = 2,
+    style,
+    "aria-hidden": ariaHidden = true,
+    ...props
+  }: IconProps) {
+    return (
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        viewBox="0 0 24 24"
+        width={size}
+        height={size}
+        fill="none"
+        stroke={color ?? "currentColor"}
+        strokeWidth={strokeWidth}
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        aria-hidden={ariaHidden ? "true" : undefined}
+        className={cn(defaultClassName, className)}
+        style={style as React.CSSProperties | undefined}
+        {...props}
+      >
+        {children}
+      </svg>
+    );
+  };
+}
+
+const CheckIcon = createWebIcon(<path d="M20 6 9 17l-5-5" />);
+const ChevronDownIcon = createWebIcon(<path d="m6 9 6 6 6-6" />);
+const ChevronUpIcon = createWebIcon(<path d="m18 15-6-6-6 6" />);
+const ChevronRightIcon = createWebIcon(<path d="m9 18 6-6-6-6" />);
+const ChevronLeftIcon = createWebIcon(<path d="m15 18-6-6 6-6" />);
+const XIcon = createWebIcon(<path d="M18 6 6 18M6 6l12 12" />);
+const SearchIcon = createWebIcon(
+  <>
+    <circle cx="11" cy="11" r="8" />
+    <path d="m21 21-4.3-4.3" />
+  </>,
+);
+const MinusIcon = createWebIcon(<path d="M5 12h14" />);
+const CircleIcon = createWebIcon(<circle cx="12" cy="12" r="10" />);
+const MoreHorizontalIcon = createWebIcon(
+  <>
+    <circle cx="12" cy="12" r="1" fill="currentColor" />
+    <circle cx="19" cy="12" r="1" fill="currentColor" />
+    <circle cx="5" cy="12" r="1" fill="currentColor" />
+  </>,
+);
+const ArrowLeftIcon = createWebIcon(
+  <>
+    <path d="m12 19-7-7 7-7" />
+    <path d="M19 12H5" />
+  </>,
+);
+const ArrowRightIcon = createWebIcon(
+  <>
+    <path d="M5 12h14" />
+    <path d="m12 5 7 7-7 7" />
+  </>,
+);
+const ArrowUpIcon = createWebIcon(
+  <>
+    <path d="m5 12 7-7 7 7" />
+    <path d="M12 19V5" />
+  </>,
+);
+const ArrowDownIcon = createWebIcon(
+  <>
+    <path d="M12 5v14" />
+    <path d="m19 12-7 7-7-7" />
+  </>,
+);
+const InfoIcon = createWebIcon(
+  <>
+    <circle cx="12" cy="12" r="10" />
+    <path d="M12 16v-4" />
+    <path d="M12 8h.01" />
+  </>,
+);
+const AlertCircleIcon = createWebIcon(
+  <>
+    <circle cx="12" cy="12" r="10" />
+    <line x1="12" x2="12" y1="8" y2="12" />
+    <line x1="12" x2="12.01" y1="16" y2="16" />
+  </>,
+);
+const CheckCircle2Icon = createWebIcon(
+  <>
+    <circle cx="12" cy="12" r="10" />
+    <path d="m9 12 2 2 4-4" />
+  </>,
+);
+const XCircleIcon = createWebIcon(
+  <>
+    <circle cx="12" cy="12" r="10" />
+    <path d="m15 9-6 6" />
+    <path d="m9 9 6 6" />
+  </>,
+);
+const Loader2Icon = createWebIcon(<path d="M21 12a9 9 0 1 1-6.219-8.56" />);
+
 export {
   View,
   Text,
@@ -687,4 +799,23 @@ export {
   useScrollLock,
   getViewport,
   applyColorScheme,
+  CheckIcon,
+  ChevronDownIcon,
+  ChevronUpIcon,
+  ChevronRightIcon,
+  ChevronLeftIcon,
+  XIcon,
+  SearchIcon,
+  MinusIcon,
+  CircleIcon,
+  MoreHorizontalIcon,
+  ArrowLeftIcon,
+  ArrowRightIcon,
+  ArrowUpIcon,
+  ArrowDownIcon,
+  InfoIcon,
+  AlertCircleIcon,
+  CheckCircle2Icon,
+  XCircleIcon,
+  Loader2Icon,
 };
