@@ -69,7 +69,9 @@ getBoundingClientRect 실측(px, 폭×높이). 모바일 카드 폭 382 / 데스
 
 스크린샷(414px: 인덱스·드로어·다크 드로어·데이터 섹션·키친싱크 / 1280px: 인덱스·button 문서·키친싱크·랜딩) — T3 프리뷰 아티팩트로 보존.
 
-### AC-7 PR 생성 — G5 이후 실행 예정(브랜치 커밋 → push → main 대상 PR)
+### AC-7 PR 생성 — 충족
+
+브랜치 `cycle-73-web-mobile-reorg` 커밋 2건(ec13dad 코드 4파일·9a4b965 문서 3건) → push → main 대상 PR: https://github.com/loopy-lim/UniKit/pull/3. 커밋에서 사용자 WIP 6건(landing.tsx·demo 디렉터리 4건·expo 변경) 제외 확인.
 
 ## 관문 판정 원장
 
