@@ -3,7 +3,7 @@
 // - radix-ui Checkbox（Root/Indicator） 제거 — 체크 상태는 React state（제어/비제어）로
 //   직접 관리하고, 원본의 data-state=checked 셀렉터는 조건부 클래스 문자열로 전개
 //   （네이티브에 data 속성이 없어 상태 셀렉터를 쓸 수 없다）.
-// - CheckIcon（lucide） 제거 — ✓ 글리프를 Text children으로 대체（새 의존성 금지）.
+// - CheckIcon·MinusIcon은 브리지 SVG 아이콘 프리미티브를 쓴다（lucide 의존 없음）.
 // - aria-invalid:* 클래스는 v0.1 API에 invalid 상태가 없어 제외.
 // - 이중 지정 원칙（§0.5）: 체크 배경·테두리는 Pressable, 글리프 색은 내부 Text에 명시.
 import { forwardRef, useState } from "react";
@@ -69,7 +69,7 @@ const Checkbox = forwardRef<BridgePressableRef, CheckboxProps>(
         hitSlop={hitSlop ?? HIT_SLOP}
         onPress={handlePress}
         className={cn(
-          "flex size-4 shrink-0 flex-row items-center justify-center rounded-sm border web:shadow-xs web:transition-shadow web:outline-none web:focus-visible:border-ring web:focus-visible:ring-2 web:focus-visible:ring-ring/50",
+          "flex size-4 shrink-0 flex-row items-center justify-center rounded-sm border web:shadow-xs web:transition-shadow web:outline-none web:focus-visible:border-ring web:focus-visible:ring-3 web:focus-visible:ring-ring/50",
           // 미체크 링은 border-input（라이트 1.27:1）이 배경에 묻혀 경계가 안
           // 보이므로 foreground/50（양 모드 ≥3:1, G4）로 조정.
           indeterminate || isChecked

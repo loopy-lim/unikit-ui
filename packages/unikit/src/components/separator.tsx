@@ -1,4 +1,4 @@
-// Separator — shadcn/ui new-york-v4 separator 포팅（/tmp/shadcn-ref/src/separator）.
+// Separator — shadcn/ui new-york-v4 separator 포팅（shadcn-ref/ui/separator.tsx）.
 // 포팅 판단:
 // - radix-ui Separator 엔진 제거 — 상호작용이 없는 장식선이므로 Pressable이 아니라
 //   View로 이식하고, 원본의 data-orientation 셀렉터（가로 h-px w-full /

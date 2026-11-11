@@ -63,7 +63,7 @@ ItemSeparator.displayName = "ItemSeparator";
 const itemVariants = cva(
   // 원본은 브라우저 flex-direction:row 기본 의존 — 브리지 flex-col 기본 대응으로
   // flex-row를 명시해 media·content·actions가 가로로 배치되게 한다.
-  "flex flex-row flex-wrap items-center rounded-md border border-transparent text-sm web:transition-colors web:duration-100 web:outline-none web:focus-visible:border-ring web:focus-visible:ring-2 web:focus-visible:ring-ring/50",
+  "flex flex-row flex-wrap items-center rounded-md border border-transparent text-sm web:transition-colors web:duration-100 web:outline-none web:focus-visible:border-ring web:focus-visible:ring-3 web:focus-visible:ring-ring/50",
   {
     variants: {
       variant: {

@@ -1,4 +1,4 @@
-// Pagination — shadcn/ui new-york-v4 pagination 포팅（/tmp/shadcn-ref/src/pagination）.
+// Pagination — shadcn/ui new-york-v4 pagination 포팅（shadcn-ref/ui/pagination.tsx）.
 // 7종 export. lucide 아이콘 제거.
 // 포팅 판단:
 // - 원본은 <a>에 buttonVariants를 얹는다 — 포팅은 Pressable role="link"에

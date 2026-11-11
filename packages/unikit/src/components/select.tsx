@@ -24,8 +24,9 @@
 //   조건부 클래스내부 Text 지정으로 전개（data 속성 부재）.
 // - aria-invalid:* 트리거 토큰은 PressableProps의 aria-invalid 전달（웹 DOM）과
 //   web:aria-invalid: 클래스로 유지.
-// - 임의값 근사: min-w-［8rem］→min-w-32（동일 8rem）, ring-［3px］→ring-2,
-//   max-h-（--radix-）→max-h-96, transition-［］→web:transition-all. dark: 제거.
+// - 임의값 근사: min-w-［8rem］→min-w-32（동일 8rem）, ring-［3px］→ring-3（비대괄호
+//   계단 — 사이클 72 원본 규격 정렬）, max-h-（--radix-）→max-h-96,
+//   transition-［］→web:transition-all. dark: 제거.
 // - 미지원（로드맵）: 화살표키타입어헤드 탐색, 등장/퇴장 애니메이션, name/required
 //   폼 제출용 숨은 input, 항목 textValue 프로퍼티, SelectValue 함수형 children.
 // - 접근성: 트리거 combobox role + popover가 부여하는 aria-expandedaria-controls
@@ -233,9 +234,9 @@ const Select = forwardRef<BridgeViewRef, SelectProps>(
 Select.displayName = "Select";
 
 // 트리거 — 원본 토큰에서 data-size/셀렉터류를 cva size조건부 클래스로 전개.
-// w-fit → self-start（tabs.tsx 관행）, focus 링 ring-［3px］ → ring-2 근사.
+// w-fit → self-start（tabs.tsx 관행）, focus 링은 원본 규격（ring-3 무오프셋） 준수.
 const selectTriggerVariants = cva(
-  "flex-row items-center justify-between gap-2 self-start rounded-md border border-input bg-transparent px-3 py-2 web:whitespace-nowrap web:shadow-xs web:transition-all web:outline-none web:focus-visible:border-ring web:focus-visible:ring-2 web:focus-visible:ring-ring/50 web:aria-invalid:border-destructive web:aria-invalid:ring-destructive/20",
+  "flex-row items-center justify-between gap-2 self-start rounded-md border border-input bg-transparent px-3 py-2 web:whitespace-nowrap web:shadow-xs web:transition-all web:outline-none web:focus-visible:border-ring web:focus-visible:ring-3 web:focus-visible:ring-ring/50 web:aria-invalid:border-destructive web:aria-invalid:ring-destructive/20",
   {
     variants: {
       size: {

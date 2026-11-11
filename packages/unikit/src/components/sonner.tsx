@@ -29,7 +29,8 @@
 // - 스와이프/드래그 dismiss: 브리지 useDrag로 근사 — 배치 방향으로 48px 이상
 //   끌면 닫는다（아래 배치는 아래로, 위 배치는 위로）. 원본의 방향 전환이동
 //   중 카드 추적속도 판정은 없다（즉시 판정）.
-// - 아이콘: lucide → 유니코드 글리프（✓ ✕ ! i, loading은 ↻ — web:animate-spin）.
+// - 아이콘: 브리지 SVG 아이콘 프리미티브（CheckCircle2Icon·XCircleIcon·
+//   AlertCircleIcon·InfoIcon, loading은 Loader2Icon web:animate-spin）.
 // - richColors: 원본 sonner 토큰（emerald-600/red-600/amber-500/sky-500 배경）
 //   을 표준 팔레트 클래스로 재현, dark: 변형은 제거（라이트 기준 단색）.
 // - closeButton은 항상 표시 근사（원본은 hover 시 노출 — group 셀렉터 불가）.

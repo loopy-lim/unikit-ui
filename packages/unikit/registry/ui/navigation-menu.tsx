@@ -16,13 +16,14 @@
 // - NavigationMenuIndicator: 활성 트리거 아래 화살표를 indicator x 이동
 //   트릭으로 배치하는데 트리거 위치 측정 계약이 없어 재현 불가 — 생략（no-op）.
 // - Trigger: hover 개방은 브리지 onHoverIn 계약 부재로 눌림 토글 근사
-//   （dropdown-menu와 동일 판단）. ▾ 글리프（ChevronDownIcon 대체）는 개방 시
-//   web:rotate-180 회전 근사（원본 300ms 전이 유지, 원본 top-［1px］ 임의값과
+//   （dropdown-menu와 동일 판단）. ChevronDownIcon（브리지 SVG 아이콘 프리미티브）는
+//   개방 시 web:rotate-180 회전 근사（원본 300ms 전이 유지, 원본 top-［1px］ 임의값과
 //   size-3은 text-xs로 근사）.
 // - navigationMenuTriggerStyle: 원본 cva 문자열을 유지하되 data-［state=open］
 //   토큰은 상태를 모르는 cva에 넣을 수 없어 Trigger에서 조건부 전개한다.
-//   transition-［color,box-shadow］→web:transition-colorsring-［3px］→ring-2
-//   outline-hidden→web:outline-none 근사（tabsdropdown 관행）, 임의값 금지.
+//   transition-［color,box-shadow］→web:transition-colorsring-［3px］→ring-3
+//   （비대괄호 계단）outline-hidden→web:outline-none, 원본 focus-visible:outline-1은
+//   outline-ring 없이 근사（G1 F-1）. 임의값 금지.
 // - Link: radix Link의 <a href>는 브리지 프리미티브 계약 밖이라 Pressable
 //   role="link" + onPress로 근사한다（라우팅은 사용처 onPress 담당）. active
 //   prop（data-［active=true］）은 유지한다. 원본 focus:text-accent-foreground
@@ -243,7 +244,7 @@ NavigationMenuItem.displayName = "NavigationMenuItem";
 
 /** 원본 cva 재현 — data-［state=open］transition 임의값은 Trigger 측 근사（머리 주석） */
 const navigationMenuTriggerStyle = cva(
-  "flex h-9 w-max flex-row items-center justify-center rounded-md bg-background px-4 py-2 active:bg-accent web:hover:bg-accent web:focus-visible:bg-accent web:focus-visible:outline-1 web:focus-visible:ring-2 web:focus-visible:ring-ring/50 web:outline-none web:transition-colors",
+  "flex h-9 w-max flex-row items-center justify-center rounded-md bg-background px-4 py-2 active:bg-accent web:hover:bg-accent web:focus-visible:bg-accent web:focus-visible:outline-1 web:focus-visible:ring-3 web:focus-visible:ring-ring/50 web:outline-none web:transition-colors",
 );
 
 export type NavigationMenuTriggerProps = PressableProps;
@@ -346,7 +347,7 @@ const NavigationMenuLink = forwardRef<
         onPress?.();
       }}
       className={cn(
-        "flex flex-col gap-1 rounded-sm p-2 active:bg-accent web:hover:bg-accent web:focus-visible:bg-accent web:focus-visible:outline-none web:focus-visible:ring-2 web:focus-visible:ring-ring/50 web:transition-colors",
+        "flex flex-col gap-1 rounded-sm p-2 active:bg-accent web:hover:bg-accent web:focus-visible:bg-accent web:focus-visible:outline-1 web:focus-visible:ring-3 web:focus-visible:ring-ring/50 web:transition-colors",
         active &&
           "bg-accent/50 active:bg-accent web:hover:bg-accent web:focus-visible:bg-accent",
         disabled && "web:pointer-events-none opacity-50",

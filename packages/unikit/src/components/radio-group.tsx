@@ -127,7 +127,7 @@ const RadioGroupItem = forwardRef<BridgePressableRef, RadioGroupItemProps>(
         className={cn(
           // 링은 border-input（라이트 1.27:1）이 배경에 묻혀 컨트롤 경계가 안
           // 보이므로 foreground/50（양 모드 ≥3:1, G4）로 조정.
-          "flex size-4 shrink-0 flex-row items-center justify-center rounded-full border border-foreground/50 web:shadow-xs web:transition-all web:outline-none web:focus-visible:border-ring web:focus-visible:ring-2 web:focus-visible:ring-ring/50",
+          "flex size-4 shrink-0 flex-row items-center justify-center rounded-full border border-foreground/50 web:shadow-xs web:transition-all web:outline-none web:focus-visible:border-ring web:focus-visible:ring-3 web:focus-visible:ring-ring/50",
           isDisabled &&
             "web:pointer-events-none web:cursor-not-allowed opacity-50",
           className,

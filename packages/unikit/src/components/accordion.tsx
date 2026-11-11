@@ -1,11 +1,13 @@
 // Accordion — shadcn/ui（new-york-v4） accordion.tsx 유니버설 포팅 （사이클 30, T-3b）.
-// 원본: shadcn-ref/src/accordion/accordion.tsx — radix Accordion 엔진을 제거하고
+// 원본: shadcn-ref/ui/accordion.tsx — radix Accordion 엔진을 제거하고
 // 전개 상태는 React state + context로 직접 관리한다（collapsible.tsx의 다중 항목
-// 확장 구조）. 원본의 data-state·셀렉터 클래스는 조건부 클래스·글리프 교체로 전개.
+// 확장 구조）. 원본의 data-state·셀렉터 클래스는 조건부 클래스·아이콘 회전으로 전개.
 //
 // 포팅 판단（원본 대비 차이）:
-// - ChevronDown 아이콘 → 글리프 Text（닫힘 ⌄ / 펼침 ⌃ 교체）. 원본의 회전 전이
-//   애니메이션은 상실（로드맵） — 글자 교체로 상태를 즉시 표시한다.
+// - ChevronDownIcon은 브리지 SVG 아이콘 프리미티브를 쓰고 open 시 rotate-180
+//   회전（원본 ［&［data-state=open］>svg］:rotate-180의 조건부 클래스 전개）.
+// - 트리거 focus 링은 원본 규격（ring-3 · ring-ring/50 · 무오프셋 ·
+//   focus-visible:border-ring）을 web: 접두로 준수한다（사이클 72）.
 // - 항목 구분선의 마지막 항목 제외（last 변형）는 위치 셀렉터라 네이티브 재현 불가
 //   — 제거. 마지막 항목 하단선 제거는 사용처 className 오버라이드로 한다.
 // - 콘텐츠 전이 애니메이션 미지원 — value 일치 시에만 마운트（즉시 전환）.
@@ -188,7 +190,7 @@ const AccordionTrigger = forwardRef<BridgePressableRef, AccordionTriggerProps>(
         }}
         className={cn(
           "flex-row items-center justify-between gap-4 rounded-md py-4 web:transition-all",
-          "web:focus-visible:ring-2 web:focus-visible:ring-ring web:focus-visible:ring-offset-2 web:focus-visible:ring-offset-background",
+          "web:focus-visible:border-ring web:focus-visible:ring-3 web:focus-visible:ring-ring/50",
           disabled && "web:pointer-events-none opacity-50",
           className,
         )}

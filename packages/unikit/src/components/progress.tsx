@@ -1,5 +1,5 @@
 // Progress — shadcn/ui（new-york-v4） progress.tsx 유니버설 포팅 （사이클 30, T-3b）.
-// 원본: shadcn-ref/src/progress/progress.tsx — radix Progress 엔진을 제거하고
+// 원본: shadcn-ref/ui/progress.tsx — radix Progress 엔진을 제거하고
 // 진행률은 BridgeStyle 동적 인라인 스타일 계약으로 표현한다.
 //
 // 포팅 판단（원본 대비 차이）:

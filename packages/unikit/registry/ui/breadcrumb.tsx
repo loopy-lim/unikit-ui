@@ -1,4 +1,4 @@
-// Breadcrumb — shadcn/ui new-york-v4 breadcrumb 포팅（/tmp/shadcn-ref/src/breadcrumb）.
+// Breadcrumb — shadcn/ui new-york-v4 breadcrumb 포팅（shadcn-ref/ui/breadcrumb.tsx）.
 // 7종 export. radix Slot·lucide 아이콘 제거.
 // 포팅 판단:
 // - 아이콘: ChevronRightIcon·MoreHorizontalIcon — 브리지 SVG 아이콘 프리미티브

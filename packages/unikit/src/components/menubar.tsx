@@ -17,10 +17,14 @@
 //   화살표키 트리거 순회타입어헤드, 등장/퇴장 애니메이션origin 변형,
 //   alignOffset=-4（AnchoredOverlay 계약 밖 — Content에서 미수용으로 제거）.
 //   ESC바깥 눌림 닫기포커스 이동은 소비하는 dropdown 계열이 제공한다.
-// - MenubarTrigger: 원본 토큰（focus/open 하이라이트 bg-accent）을 조건부
-//   클래스로 전개해 dropdown 트리거에 얹는다. 원본 font-medium은 dropdown
-//   트리거의 내부 Text가 이중 지정 고정이라 문자열 children은 보통 굵기로
-//   렌더된다 — 굵게 하려면 <Text className="font-medium"> 자식을 넣는다.
+// - MenubarTrigger: 원본 토큰（focus/open 하이라이트 bg-accent·text-accent-foreground
+//   ·font-medium）을 조건부 클래스로 전개해 dropdown 트리거에 얹는다. 문자열/숫자
+//   children은 자체 Text로 감싸 조건부 전경을 직접 준다 — 요소 자식은 그대로 전달돼
+//   dropdown 트리거의 wrapTextChildren이 통과시킨다（select 트리거 위임 패턴）.
+//   배경 하이라이트는 web:focus-visible·web:hover·active·isOpen 조건부 근사
+//   （UniKit 관행 — 네이티브 hover 부재）, 라벨 전경은 web:hover·active·isOpen로만
+//   근사한다. 라벨의 focus-visible 전환은 Pressable 포커스 계약 부재로 미구현 —
+//   한계·로드맵（input-group과 동일 계열, 사이클 72 G3 F-1）.
 // - MenubarContent: 원본 기본값（align startsideOffset 8） 유지, min-w-［12rem］
 //   → min-w-48（표준 계단 근사）. CheckboxItem rounded-xs→dropdown rounded-sm
 //   근사 등 사소한 토큰 차이는 승계（동일 역할시각 차이 미미）.
@@ -32,6 +36,7 @@
 //   트리거 aria-expandedaria-controls콘텐츠 role="menu"항목 menuitem
 //   aria-checked는 dropdown 소비로 자동 제공된다.
 import {
+  Children,
   createContext,
   forwardRef,
   useContext,
@@ -40,6 +45,7 @@ import {
   type ReactNode,
 } from "react";
 import {
+  Text,
   View,
   type BridgePressableRef,
   type BridgeTextRef,
@@ -183,7 +189,7 @@ function MenubarPortal({ children }: MenubarPortalProps) {
 export type MenubarTriggerProps = PressableProps;
 
 const MenubarTrigger = forwardRef<BridgePressableRef, MenubarTriggerProps>(
-  ({ className, ...props }, ref) => {
+  ({ className, children, ...props }, ref) => {
     const menu = useContext(MenubarMenuContext);
     return (
       <DropdownMenuTrigger
@@ -195,7 +201,26 @@ const MenubarTrigger = forwardRef<BridgePressableRef, MenubarTriggerProps>(
           className,
         )}
         {...props}
-      />
+      >
+        {/* 문자열/숫자 children은 자체 Text로 감싸 조건부 전경·원본 font-medium을
+            준다 — 요소 자식은 그대로 전달돼 dropdown 트리거의 wrapTextChildren이
+            통과시킨다（select 트리거 위임 패턴）. */}
+        {Children.map(children, (child) =>
+          typeof child === "string" || typeof child === "number" ? (
+            <Text
+              className={cn(
+                "font-sans text-sm font-medium text-foreground active:text-accent-foreground web:hover:text-accent-foreground",
+                // 원본 data-［state=open］:text-accent-foreground → 조건부 클래스
+                menu.isOpen && "text-accent-foreground",
+              )}
+            >
+              {child}
+            </Text>
+          ) : (
+            child
+          ),
+        )}
+      </DropdownMenuTrigger>
     );
   },
 );

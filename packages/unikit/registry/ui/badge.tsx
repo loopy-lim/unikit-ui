@@ -3,7 +3,8 @@
 // 미지원（로드맵）: ［a&］:hover:*（링크 래퍼 조건 — 뱃지는 Pressable이 아니어서 hover
 // 배경·전경 전환·hover 밑줄이 없다）·aria-invalid:*（invalid 상태 없음）·
 // ［&>svg］:size-3（아이콘은 글리프 Text）·dark:*（다크는 토큰 값 전환 아키텍처）.
-// focus 링은 라이브러리 규약을 유지한다（원본 ring-［3px］과 다름）.
+// focus 링은 없다 — Badge는 Pressable이 아니어서 스스로 포커스를 받지 않고, 원본의
+// focus-visible:ring-［3px］도 포커스 가능 래퍼（a/button）를 통해서만 발동한다（사이클 72 정정）.
 import { forwardRef } from "react";
 import {
   Text,

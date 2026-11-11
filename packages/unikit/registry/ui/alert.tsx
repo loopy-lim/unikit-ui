@@ -1,9 +1,10 @@
-// Alert — shadcn/ui new-york-v4 alert 포팅（/tmp/shadcn-ref/src/alert）. 3종 export.
+// Alert — shadcn/ui new-york-v4 alert 포팅（shadcn-ref/ui/alert.tsx）. 3종 export.
 // 포팅 판단:
 // - 원본은 grid + has-자손 셀렉터로 선택적 아이콘 열을 배치한다.
-//   data·자손 셀렉터는 네이티브에서 동작하지 않으므로 flex-row（글리프 + 콘텐츠 열）
-//   구조로 재작성하고, 좌측 아이콘은 글리프 Text（default ⓘ / destructive ⚠）로
-//   표시한다（아이콘 없는 배치는 미지원）. 색·여백·rounding 토큰은 유지.
+//   data·자손 셀렉터는 네이티브에서 동작하지 않으므로 flex-row（아이콘 + 콘텐츠 열）
+//   구조로 재작성하고, 좌측 아이콘은 브리지 SVG 아이콘 프리미티브（default
+//   InfoIcon / destructive AlertCircleIcon）로 표시한다（아이콘 없는 배치는 미지원）.
+//   색·여백·rounding 토큰은 유지.
 // - 원본의 텍스트 색 상속（text-card-foreground / text-destructive）은 이중 지정
 //   원칙에 따라 내부 Text로 이동. 특히 AlertDescription의 destructive 톤（원본은
 //   data-slot=alert-description 자손 셀렉터의 text-destructive/90）은 셀렉터를

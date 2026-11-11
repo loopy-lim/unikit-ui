@@ -21,7 +21,7 @@ import { cn } from "../lib/utils";
 // 컨테이너（Pressable） — 원본 base의 hover:bg-muted（기본 변형 호버）를 포함.
 // outline 변형의 hover:bg-accent는 변형 클래스가 뒤에 오므로 twMerge가 대체한다.
 const toggleVariants = cva(
-  "flex flex-row items-center justify-center gap-2 rounded-md web:whitespace-nowrap web:transition-all web:outline-none web:hover:bg-muted web:focus-visible:border-ring web:focus-visible:ring-2 web:focus-visible:ring-ring/50",
+  "flex flex-row items-center justify-center gap-2 rounded-md web:whitespace-nowrap web:transition-all web:outline-none web:hover:bg-muted web:focus-visible:border-ring web:focus-visible:ring-3 web:focus-visible:ring-ring/50",
   {
     variants: {
       variant: {

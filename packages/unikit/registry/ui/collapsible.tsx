@@ -1,5 +1,5 @@
 // Collapsible — shadcn/ui（new-york-v4） collapsible.tsx 유니버설 포팅 （사이클 30, T-3b）.
-// 원본: shadcn-ref/src/collapsible/collapsible.tsx — radix Collapsible을 그대로
+// 원본: shadcn-ref/ui/collapsible.tsx — radix Collapsible을 그대로
 // 재노출하는 무스타일 래퍼라 이식 결과에도 스타일 토큰이 없다. radix 의존 제거의
 // 가장 단순한 예로, 전개 상태（open）를 React state + context로 직접 관리한다.
 // （accordion.tsx가 같은 구조의 다중 항목 확장이다.）
