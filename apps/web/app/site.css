@@ -247,3 +247,13 @@
   outline: 2px solid hsl(var(--ring));
   outline-offset: 3px;
 }
+
+/* 가로 스크롤 칩 바(사이클 73) — 스크롤 가능 신호는 잘린 칩 자체가 담당 */
+.site-scrollbar-none {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.site-scrollbar-none::-webkit-scrollbar {
+  display: none;
+}

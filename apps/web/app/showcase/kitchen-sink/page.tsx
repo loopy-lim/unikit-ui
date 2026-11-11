@@ -18,7 +18,6 @@ import {
 } from "@unikit-bridge/ui/primitives";
 
 import {
-  useUnikitTheme,
   Badge,
   Button,
   Card,
@@ -147,34 +146,22 @@ export default function KitchenSinkPage() {
   );
 }
 
-/** 헤더: 좌 타이틀 블록(flex-1 — §1.2 v3, 좁은 뷰포트에서 서브타이틀 줄바꿈·토글 잘림 방지) · 우 테마 토글(Button outline sm 재사용 — §1.4) */
+/** 헤더: 타이틀 블록 — 테마 토글은 문서 셸 헤더가 담당(사이클 73 이원화 제거) */
 function Header() {
-  const { colorScheme, toggleColorScheme } = useUnikitTheme();
-
   return (
-    <View className="flex-row items-center justify-between mb-8">
-      <View className="flex-1">
-        <Text className="font-sans text-2xl font-bold web:tracking-tight text-foreground">
-          UniKit
-        </Text>
-        <Text className="font-sans text-sm text-muted-foreground">
-          React와 React Native에서 같은 컴포넌트, 같은 모습.
-        </Text>
-        <Link
-          href="/showcase"
-          className="site-focusable mt-2 font-sans text-xs text-muted-foreground underline-offset-2 hover:underline"
-        >
-          ← 컴포넌트 목록
-        </Link>
-      </View>
-      <Button
-        variant="outline"
-        size="sm"
-        onPress={toggleColorScheme}
-        accessibilityLabel="색 테마 전환"
+    <View className="mb-8">
+      <Text className="font-sans text-2xl font-bold web:tracking-tight text-foreground">
+        UniKit
+      </Text>
+      <Text className="font-sans text-sm text-muted-foreground">
+        React와 React Native에서 같은 컴포넌트, 같은 모습.
+      </Text>
+      <Link
+        href="/showcase"
+        className="site-focusable mt-2 font-sans text-xs text-muted-foreground underline-offset-2 hover:underline"
       >
-        {colorScheme === "light" ? "🌙 다크" : "☀️ 라이트"}
-      </Button>
+        ← 컴포넌트 목록
+      </Link>
     </View>
   );
 }

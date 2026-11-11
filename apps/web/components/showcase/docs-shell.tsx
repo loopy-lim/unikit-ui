@@ -1,11 +1,21 @@
 "use client";
 /**
  * 쇼케이스 문서 셸 — 여유 있는 패딩·사이드바 구분·Preview 스테이지.
+ * 사이클 73: 모바일(<md) 목차를 인라인 펼침 대신 패키지 Sheet 좌측 드로어로
+ * 개편(Astryx 모바일 벤치마크)하고 헤더에 GitHub 링크를 상시 노출.
  */
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState, type ReactNode } from "react";
-import { Button, Toaster } from "@unikit-bridge/ui";
+import { Menu } from "lucide-react";
+import {
+  Button,
+  Sheet,
+  SheetContent,
+  SheetTitle,
+  SheetTrigger,
+  Toaster,
+} from "@unikit-bridge/ui";
 import { Text, View } from "@unikit-bridge/ui/primitives";
 import { UnikitThemeProvider, useUnikitTheme } from "@unikit-bridge/ui";
 
@@ -26,9 +36,12 @@ export function DocsShell({ children }: { children: ReactNode }) {
   return (
     <DocsProviders>
       <View className="site-docs-canvas">
-        <DocsHeader onToggleNav={() => setNavOpen((v) => !v)} navOpen={navOpen} />
+        <DocsHeader>
+          {/* 모바일 목차 드로어 — 트리거(햄버거)는 헤더 행 안에 배치 */}
+          <DocsMobileNav open={navOpen} onOpenChange={setNavOpen} />
+        </DocsHeader>
         <View className="mx-auto flex w-full max-w-7xl flex-col px-4 sm:px-6 md:flex-row lg:px-8">
-          <DocsSidebar open={navOpen} onNavigate={() => setNavOpen(false)} />
+          <DocsSidebar />
           <DocsMain>{children}</DocsMain>
         </View>
       </View>
@@ -48,30 +61,16 @@ function DocsMain({ children }: { children: ReactNode }) {
   );
 }
 
-function DocsHeader({
-  onToggleNav,
-  navOpen,
-}: {
-  onToggleNav: () => void;
-  navOpen: boolean;
-}) {
+function DocsHeader({ children }: { children: ReactNode }) {
   const { colorScheme, toggleColorScheme } = useUnikitTheme();
   const pathname = usePathname();
   const onComponents = pathname.startsWith("/showcase");
 
   return (
     <View className="sticky top-0 z-40 border-b border-border/80 bg-background/90 backdrop-blur supports-[backdrop-filter]:bg-background/75">
-      <View className="mx-auto flex h-16 w-full max-w-7xl flex-row items-center justify-between gap-4 px-4 sm:px-6 lg:px-8">
-        <View className="flex min-w-0 flex-row items-center gap-4">
-          <Button
-            variant="ghost"
-            size="sm"
-            className="md:hidden"
-            onPress={onToggleNav}
-            accessibilityLabel={navOpen ? "목차 닫기" : "목차 열기"}
-          >
-            {navOpen ? "닫기" : "목차"}
-          </Button>
+      <View className="mx-auto flex h-16 w-full max-w-7xl flex-row items-center justify-between gap-3 px-4 sm:gap-4 sm:px-6 lg:px-8">
+        <View className="flex min-w-0 flex-row items-center gap-3 sm:gap-4">
+          {children}
           <Link href="/" className="site-focusable shrink-0">
             <Text className="site-display text-xl font-semibold tracking-tight text-foreground">
               UniKit
@@ -103,67 +102,74 @@ function DocsHeader({
             </Link>
           </View>
         </View>
-        <Button
-          variant="outline"
-          size="sm"
-          onPress={toggleColorScheme}
-          accessibilityLabel="색 테마 전환"
-        >
-          {colorScheme === "light" ? "다크" : "라이트"}
-        </Button>
+        <View className="flex flex-row items-center gap-3 sm:gap-4">
+          <a
+            href="https://github.com/loopy-lim/UniKit"
+            className="site-focusable font-sans text-sm text-muted-foreground transition-colors hover:text-foreground"
+            rel="noreferrer"
+            target="_blank"
+          >
+            GitHub
+          </a>
+          <Button
+            variant="outline"
+            size="sm"
+            onPress={toggleColorScheme}
+            accessibilityLabel="색 테마 전환"
+          >
+            {colorScheme === "light" ? "다크" : "라이트"}
+          </Button>
+        </View>
       </View>
     </View>
   );
 }
 
-function DocsSidebar({
-  open,
+/** 목차 링크 클래스 — 활성/비활성 (사이드바·드로어 공용) */
+function docsNavLinkClass(active: boolean) {
+  return active
+    ? "site-focusable site-nav-link block rounded-md bg-muted px-3 py-2 font-sans text-sm font-medium text-foreground"
+    : "site-focusable site-nav-link block rounded-md px-3 py-2 font-sans text-sm text-muted-foreground hover:bg-muted/50 hover:text-foreground";
+}
+
+/** 카탈로그 목차 본문 — 사이드바(md+)와 모바일 드로어가 같은 마크업을 공유.
+ *  드로어는 헤더 주요 링크 «Components»와 같은 행선지인 «전체 목록»을 숨긴다(중복 방지). */
+function DocsNavGroups({
+  pathname,
   onNavigate,
+  showAllLink = true,
 }: {
-  open: boolean;
-  onNavigate: () => void;
+  pathname: string;
+  onNavigate?: () => void;
+  showAllLink?: boolean;
 }) {
-  const pathname = usePathname();
   const groups = catalogByCategory();
 
   return (
-    <View
-      className={
-        open
-          ? "block w-full shrink-0 border-b border-border py-4 md:sticky md:top-16 md:block md:h-[calc(100dvh-4rem)] md:w-60 md:overflow-y-auto md:border-b-0 md:border-r md:border-border/80 md:py-8 md:pr-6 lg:w-64 lg:pr-8"
-          : "hidden w-full shrink-0 border-b border-border py-4 md:sticky md:top-16 md:block md:h-[calc(100dvh-4rem)] md:w-60 md:overflow-y-auto md:border-b-0 md:border-r md:border-border/80 md:py-8 md:pr-6 lg:w-64 lg:pr-8"
-      }
-    >
-      <Link
-        href="/showcase"
-        onClick={onNavigate}
-        className={
-          pathname === "/showcase"
-            ? "site-focusable site-nav-link mb-6 block rounded-md bg-muted px-3 py-2 font-sans text-sm font-medium text-foreground"
-            : "site-focusable site-nav-link mb-6 block rounded-md px-3 py-2 font-sans text-sm text-muted-foreground hover:bg-muted/50 hover:text-foreground"
-        }
-      >
-        전체 목록
-      </Link>
+    <>
+      {showAllLink ? (
+        <Link
+          href="/showcase"
+          onClick={onNavigate}
+          className={`mb-5 ${docsNavLinkClass(pathname === "/showcase")}`}
+        >
+          전체 목록
+        </Link>
+      ) : null}
       {groups.map((group) => (
-        <View key={group.category} className="mb-7">
+        <View key={group.category} className="mb-6">
           <Text className="mb-2.5 px-3 font-sans text-[11px] font-semibold uppercase tracking-[0.08em] text-muted-foreground">
             {group.label}
           </Text>
           <View className="space-y-0.5">
             {group.items.map((item) => {
               const href = `/showcase/${item.name}`;
-              const active = pathname === href;
               return (
                 <Link
                   key={item.name}
                   href={href}
                   onClick={onNavigate}
-                  className={
-                    active
-                      ? "site-focusable site-nav-link block rounded-md bg-muted px-3 py-2 font-sans text-sm font-medium text-foreground"
-                      : "site-focusable site-nav-link block rounded-md px-3 py-2 font-sans text-sm text-muted-foreground hover:bg-muted/50 hover:text-foreground"
-                  }
+                  className={docsNavLinkClass(pathname === href)}
                 >
                   {item.title}
                 </Link>
@@ -172,7 +178,79 @@ function DocsSidebar({
           </View>
         </View>
       ))}
+    </>
+  );
+}
+
+/** md+ 고정 사이드바 — 모바일은 DocsMobileNav 드로어가 담당 */
+function DocsSidebar() {
+  const pathname = usePathname();
+
+  return (
+    <View className="hidden w-full shrink-0 md:sticky md:top-16 md:block md:h-[calc(100dvh-4rem)] md:w-60 md:overflow-y-auto md:border-r md:border-border/80 md:py-8 md:pr-6 lg:w-64 lg:pr-8">
+      <DocsNavGroups pathname={pathname} />
     </View>
+  );
+}
+
+/** 모바일(<md) 목차 드로어 — 패키지 Sheet(side="left"). 포털·백드롭·ESC·
+ *  스크롤 잠금·포커스 복귀는 ModalOverlay가 제공한다. */
+function DocsMobileNav({
+  open,
+  onOpenChange,
+}: {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+}) {
+  const pathname = usePathname();
+
+  return (
+    <Sheet open={open} onOpenChange={onOpenChange}>
+      <SheetTrigger
+        accessibilityLabel={open ? "목차 닫기" : "목차 열기"}
+        className="site-focusable flex size-9 shrink-0 items-center justify-center rounded-md text-foreground web:hover:bg-muted md:hidden"
+      >
+        <Menu className="size-5" />
+      </SheetTrigger>
+      <SheetContent side="left" className="gap-0 overflow-y-auto p-0">
+        <View className="border-b border-border px-4 py-3.5 pr-14">
+          <SheetTitle className="text-base">목차</SheetTitle>
+        </View>
+        <View className="flex flex-col gap-1 p-3">
+          {(
+            [
+              ["/", "소개"],
+              ["/showcase", "Components"],
+              ["/showcase/kitchen-sink", "Kitchen sink"],
+            ] as const
+          ).map(([href, label]) => (
+            <Link
+              key={href}
+              href={href}
+              onClick={() => onOpenChange(false)}
+              className={docsNavLinkClass(pathname === href)}
+            >
+              {label}
+            </Link>
+          ))}
+          <a
+            href="https://github.com/loopy-lim/UniKit"
+            onClick={() => onOpenChange(false)}
+            className="site-focusable site-nav-link block rounded-md px-3 py-2 font-sans text-sm text-muted-foreground hover:bg-muted/50 hover:text-foreground"
+            rel="noreferrer"
+            target="_blank"
+          >
+            GitHub
+          </a>
+          <View className="my-3 h-px bg-border" />
+          <DocsNavGroups
+            pathname={pathname}
+            onNavigate={() => onOpenChange(false)}
+            showAllLink={false}
+          />
+        </View>
+      </SheetContent>
+    </Sheet>
   );
 }
 
