@@ -115,7 +115,7 @@ export function ComponentDoc({ name }: { name: string }) {
         {neighbors.prev ? (
           <Link
             href={`/showcase/${neighbors.prev.name}`}
-            className="site-focusable group rounded-lg border border-border/80 px-4 py-3 transition-colors hover:border-foreground/25 hover:bg-muted/30"
+            className="site-focusable group rounded-lg border border-border/80 px-4 py-3 transition-colors hover:border-foreground/25 hover:bg-accent"
           >
             <Text className="font-sans text-xs text-muted-foreground">이전</Text>
             <Text className="mt-0.5 font-sans text-sm font-medium text-foreground">
@@ -128,7 +128,7 @@ export function ComponentDoc({ name }: { name: string }) {
         {neighbors.next ? (
           <Link
             href={`/showcase/${neighbors.next.name}`}
-            className="site-focusable group ml-auto rounded-lg border border-border/80 px-4 py-3 text-right transition-colors hover:border-foreground/25 hover:bg-muted/30"
+            className="site-focusable group ml-auto rounded-lg border border-border/80 px-4 py-3 text-right transition-colors hover:border-foreground/25 hover:bg-accent"
           >
             <Text className="font-sans text-xs text-muted-foreground">다음</Text>
             <Text className="mt-0.5 font-sans text-sm font-medium text-foreground">

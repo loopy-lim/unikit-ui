@@ -253,14 +253,14 @@ export function CodeBlock({
   }
 
   return (
-    <View className="relative overflow-hidden rounded-xl border border-border bg-muted/30">
+    <View className="relative overflow-hidden rounded-xl border border-border bg-background">
       <View className="flex flex-row items-center justify-between border-b border-border/80 px-4 py-2">
         <Text className="font-sans text-xs font-medium text-muted-foreground">{label}</Text>
         <Button variant="ghost" size="sm" onPress={copy}>
           {copied ? "복사됨" : "복사"}
         </Button>
       </View>
-      <pre className="site-mono overflow-x-auto p-4 sm:p-5 text-[13px] leading-6 text-foreground">
+      <pre className="site-mono overflow-x-auto bg-muted/30 p-4 sm:p-5 text-[13px] leading-6 text-foreground">
         <code>{code}</code>
       </pre>
     </View>
@@ -294,7 +294,7 @@ export function DemoPanel({
   align?: "center" | "start";
 }) {
   return (
-    <View className="site-preview-enter overflow-hidden rounded-xl border border-border">
+    <View className="site-preview-enter overflow-hidden rounded-xl border border-border bg-background">
       <View className="flex flex-row gap-1 border-b border-border bg-muted/20 px-3 py-2">
         {(
           [

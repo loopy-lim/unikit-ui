@@ -90,7 +90,7 @@ function CatalogCard({ item }: { item: CatalogItem }) {
   const scale = THUMB_SCALE[name];
 
   return (
-    <View className="site-card group relative flex flex-col overflow-hidden rounded-xl border border-border/80 bg-background hover:border-foreground/25 hover:bg-muted/30">
+    <View className="site-card group relative flex flex-col overflow-hidden rounded-xl border border-border/80 bg-background hover:border-foreground/25 hover:bg-accent">
       {/* inert 속성이 브리지 ViewProps 계약에 없어 원시 div — 시각 전용 래핑 */}
       <div
         inert={true}

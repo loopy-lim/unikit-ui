@@ -154,13 +154,13 @@ function InstallSection() {
         <div className="mt-8 max-w-3xl space-y-4">
           <div>
             <p className="mb-2 text-sm font-medium text-foreground">npm</p>
-            <pre className="site-mono overflow-x-auto rounded-md border border-border bg-muted/40 p-4 text-xs text-foreground">
+            <pre className="site-mono overflow-x-auto rounded-md border border-border bg-muted p-4 text-xs text-foreground">
               bun add @unikit-bridge/ui class-variance-authority clsx tailwind-merge
             </pre>
           </div>
           <div>
             <p className="mb-2 text-sm font-medium text-foreground">shadcn registry</p>
-            <pre className="site-mono overflow-x-auto rounded-md border border-border bg-muted/40 p-4 text-xs text-foreground">
+            <pre className="site-mono overflow-x-auto rounded-md border border-border bg-muted p-4 text-xs text-foreground">
               bunx shadcn@latest add https://ui.unikit.ll3.kr/r/button.json -y
             </pre>
           </div>
