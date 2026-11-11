@@ -22,6 +22,7 @@ import {
   type ReactNode,
 } from "react";
 import {
+  animateLayout,
   ChevronDownIcon,
   Pressable,
   Text,
@@ -105,6 +106,7 @@ const Accordion = forwardRef<BridgeViewRef, AccordionProps>(
     );
     const openItems = value !== undefined ? toItems(value) : internalItems;
     const toggleItem = (itemValue: string) => {
+      animateLayout();
       const isOpen = openItems.includes(itemValue);
       let next: string[];
       if (isOpen) {
@@ -198,8 +200,8 @@ const AccordionTrigger = forwardRef<BridgePressableRef, AccordionTriggerProps>(
         </Text>
         <ChevronDownIcon
           className={cn(
-            "size-4 shrink-0 text-muted-foreground web:transition-transform web:duration-200",
-            item.open && "web:rotate-180",
+            "size-4 shrink-0 text-muted-foreground transition-transform duration-200",
+            item.open && "rotate-180",
           )}
         />
       </Pressable>

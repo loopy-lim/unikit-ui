@@ -174,16 +174,19 @@ const CARD_CLASSES =
 const ITEM_CLASSES =
   "relative flex-row items-center gap-2 rounded-sm px-2 py-1.5 web:cursor-default web:select-none web:outline-none";
 
-// 일반 항목 하이라이트 — radix 하이라이트（focus）를 active（네이티브 눌림）+hover/focus-visible으로.
+// 일반 항목 하이라이트 — radix 하이라이트（focus:bg-accent focus:text-accent-foreground）를
+// active（네이티브 눌림）+hover/focus-visible로. 전경색 전환도 원본과 같이 함께.
 const ITEM_HIGHLIGHT_CLASSES =
-  "active:bg-accent web:hover:bg-accent web:focus-visible:bg-accent";
+  "active:bg-accent active:text-accent-foreground web:hover:bg-accent web:hover:text-accent-foreground web:focus-visible:bg-accent web:focus-visible:text-accent-foreground";
 
 // 표시자（체크/라디오） 항목 — 왼쪽 pl-8 표시자 슬롯（원본 py-1.5 pr-2 pl-8）.
 const INDICATED_ITEM_CLASSES =
-  "relative flex-row items-center gap-2 rounded-sm py-1.5 pr-2 pl-8 active:bg-accent web:cursor-default web:select-none web:outline-none web:hover:bg-accent web:focus-visible:bg-accent";
+  "relative flex-row items-center gap-2 rounded-sm py-1.5 pr-2 pl-8 active:bg-accent active:text-accent-foreground web:cursor-default web:select-none web:outline-none web:hover:bg-accent web:hover:text-accent-foreground web:focus-visible:bg-accent web:focus-visible:text-accent-foreground";
 
-// 항목 텍스트 — 네이티브 색 상속 불가로 항목마다 명시（이중 지정）.
-const ITEM_TEXT_CLASSES = "flex-1 font-sans text-sm text-popover-foreground";
+// 항목 텍스트 — 네이티브 색 상속 불가로 항목마다 명시（이중 지정）. 하이라이트
+// 전경색도 이중 지정해야 웹에서 Text 고유 클래스가 컨테이너 전환을 덮지 않는다.
+const ITEM_TEXT_CLASSES =
+  "flex-1 font-sans text-sm text-popover-foreground active:text-accent-foreground web:hover:text-accent-foreground web:focus-visible:text-accent-foreground";
 
 // 표시자 슬롯 — 원본 span（pointer-events-none absolute left-2 size-3.5）.
 const INDICATOR_SLOT_CLASSES =
@@ -361,7 +364,12 @@ const ContextMenuItem = forwardRef<BridgePressableRef, ContextMenuItemProps>(
       >
         {wrapTextChildren(
           children,
-          cn(ITEM_TEXT_CLASSES, destructive && "text-destructive"),
+          // 파탈 항목은 하이라이트 중에도 원본처럼 destructive 전경을 유지한다.
+          cn(
+            ITEM_TEXT_CLASSES,
+            destructive &&
+              "text-destructive active:text-destructive web:hover:text-destructive web:focus-visible:text-destructive",
+          ),
         )}
       </Pressable>
     );

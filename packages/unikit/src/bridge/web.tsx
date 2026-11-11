@@ -38,6 +38,7 @@ import { createPortal } from "react-dom";
 
 import { cn } from "../lib/utils";
 import type {
+  AnimateLayoutFn,
   ApplyColorScheme,
   BridgeImageRef,
   BridgePressableRef,
@@ -671,6 +672,7 @@ const getViewport: GetViewport = () =>
 // ---------------------------------------------------------------------------
 const LoopRotate = ({ children }: LoopRotateProps) => <>{children}</>;
 const LoopPulse = ({ children }: LoopPulseProps) => <>{children}</>;
+const animateLayout: AnimateLayoutFn = () => {};
 
 // ---------------------------------------------------------------------------
 // 유니버설 벡터 아이콘 (Web JSX SVG)
@@ -794,6 +796,7 @@ export {
   SelectOption,
   LoopRotate,
   LoopPulse,
+  animateLayout,
   measureInWindow,
   useDrag,
   useOverlayFocus,

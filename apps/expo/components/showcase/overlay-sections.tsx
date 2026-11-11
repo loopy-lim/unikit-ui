@@ -86,7 +86,7 @@ function DialogDemo() {
         <DialogHeader>
           <DialogTitle>알림 설정</DialogTitle>
           <DialogDescription>
-            바깥을 누르면 닫혀요(웹은 ESC·✕도 닫기예요).
+            바깥을 누르면 닫혀요(웹은 ESC와 ✕도 닫기예요).
           </DialogDescription>
         </DialogHeader>
         <Text className="font-sans text-sm text-foreground">
@@ -122,7 +122,7 @@ function AlertDialogDemo() {
           </AlertDialogMedia>
           <AlertDialogTitle>정말 삭제할까요?</AlertDialogTitle>
           <AlertDialogDescription>
-            백드롭을 눌러도 닫히지 않아요. 취소·삭제 버튼으로만 닫혀요.
+            백드롭을 눌러도 닫히지 않아요. 취소나 삭제 버튼으로만 닫혀요.
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
@@ -145,12 +145,12 @@ function SheetDemo() {
         <SheetHeader>
           <SheetTitle>바텀 시트</SheetTitle>
           <SheetDescription>
-            화면 아래에서 올라와요. 바깥 눌림·✕로 닫혀요.
+            화면 아래에서 올라와요. 바깥 누름 또는 ✕로 닫혀요.
           </SheetDescription>
         </SheetHeader>
         <View className="gap-2 px-4">
           <Text className="font-sans text-sm text-foreground">
-            좁은 화면에서 필터·간단한 동작을 담기 좋아요.
+            좁은 화면에서 필터와 간단한 동작을 담기 좋아요.
           </Text>
         </View>
         <SheetFooter>
@@ -196,7 +196,7 @@ function PopoverDemo() {
           <PopoverDescription>3건의 새 알림이 있어요.</PopoverDescription>
         </PopoverHeader>
         <Text className="font-sans text-sm text-foreground">
-          · 저장이 완료됐어요 · 댓글 2개 · 초대 1건
+          저장이 완료됐어요 / 댓글 2개 / 초대 1건
         </Text>
       </PopoverContent>
     </Popover>
@@ -263,7 +263,7 @@ function DropdownMenuDemo() {
           <DropdownMenuItem variant="destructive">로그아웃</DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
-      <Hint>항목을 누르면 닫혀요. 서브메뉴 · 체크 · 라디오 그룹도 있어요.</Hint>
+      <Hint>항목을 누르면 닫혀요. 서브메뉴, 체크, 라디오 그룹도 있어요.</Hint>
     </View>
   );
 }
@@ -301,7 +301,7 @@ export const OVERLAY_ENTRIES: CatalogEntry[] = [
     title: "Dialog",
     subtitle: "대화 상자",
     category: "오버레이",
-    description: "화면을 덮는 대화 상자예요. 열림·닫힘은 상태로 관리돼요.",
+    description: "화면을 덮는 대화 상자예요. 열림과 닫힘은 상태로 관리돼요.",
     slides: [{ name: "기본", element: <DialogDemo /> }],
   },
   {

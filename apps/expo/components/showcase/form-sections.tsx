@@ -197,7 +197,7 @@ export const FORM_ENTRIES: CatalogEntry[] = [
     title: "InputGroup",
     subtitle: "입력 그룹",
     category: "폼",
-    description: "입력창 양옆에 안내어·버튼을 붙여요.",
+    description: "입력창 양옆에 안내어와 버튼을 붙여요.",
     slides: [{ name: "애드온 2종", element: <InputGroupDemo /> }],
   },
   {
@@ -206,7 +206,7 @@ export const FORM_ENTRIES: CatalogEntry[] = [
     subtitle: "슬라이더",
     category: "폼",
     description: "값을 끌어 정해요.",
-    slides: [{ name: "값 추적 · 비활성", element: <SliderDemo /> }],
+    slides: [{ name: "값 추적과 비활성", element: <SliderDemo /> }],
   },
   {
     slug: "calendar",
@@ -214,7 +214,7 @@ export const FORM_ENTRIES: CatalogEntry[] = [
     subtitle: "달력",
     category: "폼",
     description: "월을 옮기고 날짜를 골라요.",
-    slides: [{ name: "월 이동 · 선택일", element: <CalendarDemo /> }],
+    slides: [{ name: "월 이동과 선택일", element: <CalendarDemo /> }],
   },
   {
     slug: "form",
@@ -222,6 +222,6 @@ export const FORM_ENTRIES: CatalogEntry[] = [
     subtitle: "폼 연동",
     category: "폼",
     description: "react-hook-form과 연결되는 폼 뼈대예요.",
-    slides: [{ name: "오류 · 제출 중", element: <FormDemo /> }],
+    slides: [{ name: "오류와 제출 중", element: <FormDemo /> }],
   },
 ];

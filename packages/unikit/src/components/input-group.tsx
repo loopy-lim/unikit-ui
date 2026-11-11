@@ -145,7 +145,8 @@ const InputGroup = forwardRef<BridgeViewRef, InputGroupProps>(
             column ? "flex-col" : "flex-row items-center",
             // 원본 h-9 → has-［>textarea］/block 정렬 시 h-auto. min-h-9로 바닥 유지.
             column || derived.hasTextarea ? "min-h-9" : "h-9",
-            derived.hasInvalid && "border-destructive",
+            // 원본 aria-invalid: border-destructive + ring-destructive/20.
+            derived.hasInvalid && "border-destructive web:ring-destructive/20",
             className,
           )}
           {...props}

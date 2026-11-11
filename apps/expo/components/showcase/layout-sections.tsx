@@ -261,7 +261,7 @@ export const LAYOUT_ENTRIES: CatalogEntry[] = [
     title: "Sidebar",
     subtitle: "사이드바",
     category: "레이아웃",
-    description: "고정·시트 두 방식의 사이드바예요.",
+    description: "고정과 시트 두 방식의 사이드바예요.",
     slides: [
       { name: "고정(접힘)", element: <SidebarFixedDemo /> },
       { name: "isMobile 시트", element: <SidebarMobileDemo /> },
@@ -273,7 +273,7 @@ export const LAYOUT_ENTRIES: CatalogEntry[] = [
     subtitle: "토스트",
     category: "피드백",
     description: "짧은 알림 카드가 쌓여요.",
-    slides: [{ name: "성공 · 실패 · 중첩", element: <SonnerDemo /> }],
+    slides: [{ name: "성공, 실패, 중첩", element: <SonnerDemo /> }],
   },
   {
     slug: "spinner",

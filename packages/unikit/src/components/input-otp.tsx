@@ -124,7 +124,8 @@ const InputOTP = forwardRef<BridgeTextInputRef, InputOTPProps>(
       >
         <View
           className={cn(
-            "relative flex-row items-center",
+            // 원본 루트 flex items-center gap-2 — 구분선(Separator)과 셀 그룹 사이 간격.
+            "relative flex-row items-center gap-2",
             disabled && "opacity-50",
             containerClassName,
           )}

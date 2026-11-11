@@ -80,11 +80,12 @@ const Checkbox = forwardRef<BridgePressableRef, CheckboxProps>(
         )}
         {...props}
       >
-        {/* 아이콘 — 체크 CheckIcon / 중간 MinusIcon. 원본 Indicator처럼 상태일 때만 렌더. */}
+        {/* 아이콘 — 체크 CheckIcon / 중간 MinusIcon. 원본 Indicator처럼 상태일 때만 렌더.
+            원본 CheckIcon은 size-3.5·기본 strokeWidth(2)다. */}
         {indeterminate ? (
-          <MinusIcon className="size-3 text-primary-foreground" strokeWidth={3} />
+          <MinusIcon className="size-3.5 text-primary-foreground" />
         ) : isChecked ? (
-          <CheckIcon className="size-3 text-primary-foreground" strokeWidth={3} />
+          <CheckIcon className="size-3.5 text-primary-foreground" />
         ) : null}
       </Pressable>
     );

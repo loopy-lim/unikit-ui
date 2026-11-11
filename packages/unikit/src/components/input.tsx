@@ -11,8 +11,12 @@ import { cva } from "class-variance-authority";
 
 import { cn } from "../lib/utils";
 
+// 원본 base 값 정비（사이클 71）: h-9·px-3 py-1·min-w-0·shadow-xs·selection·md:text-sm.
+// 미지원（로드맵）: file:*（file 입력 없음）·aria-invalid:*（InputGroup 경유 처리）.
+// dark:bg-input/30은 원본 자체 클래스（다크 입력 가시성 보정 — checkbox와 같은 사례）.
+// focus 링은 라이브러리 규약（focus ring-2 + ring-offset）을 유지한다.
 const inputVariants = cva(
-  "font-sans h-10 w-full rounded-md border border-input bg-transparent px-3 py-2 text-base text-foreground placeholder:text-muted-foreground focus:border-ring focus:ring-2 focus:ring-ring focus:ring-offset-2 focus:ring-offset-background web:focus-visible:border-ring disabled:opacity-50",
+  "font-sans h-9 w-full min-w-0 rounded-md border border-input bg-transparent px-3 py-1 text-base text-foreground web:shadow-xs web:transition-all web:outline-none web:selection:bg-primary web:selection:text-primary-foreground web:md:text-sm web:disabled:cursor-not-allowed placeholder:text-muted-foreground dark:bg-input/30 focus:border-ring focus:ring-2 focus:ring-ring focus:ring-offset-2 focus:ring-offset-background web:focus-visible:border-ring disabled:opacity-50",
 );
 
 // InputProps — TextInputProps 그대로. 웹 관용 disabled의 치환 계약

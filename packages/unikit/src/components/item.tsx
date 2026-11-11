@@ -61,7 +61,9 @@ ItemSeparator.displayName = "ItemSeparator";
 // Item — 리스트 아이템 카드（원본 변형·토큰 그대로）.
 // ---------------------------------------------------------------------------
 const itemVariants = cva(
-  "flex flex-wrap items-center rounded-md border border-transparent text-sm web:transition-colors web:duration-100 web:outline-none web:focus-visible:border-ring web:focus-visible:ring-2 web:focus-visible:ring-ring/50",
+  // 원본은 브라우저 flex-direction:row 기본 의존 — 브리지 flex-col 기본 대응으로
+  // flex-row를 명시해 media·content·actions가 가로로 배치되게 한다.
+  "flex flex-row flex-wrap items-center rounded-md border border-transparent text-sm web:transition-colors web:duration-100 web:outline-none web:focus-visible:border-ring web:focus-visible:ring-2 web:focus-visible:ring-ring/50",
   {
     variants: {
       variant: {
@@ -190,7 +192,7 @@ const ItemActions = forwardRef<BridgeViewRef, ItemActionsProps>(
   ({ className, ...props }, ref) => (
     <View
       ref={ref}
-      className={cn("flex items-center gap-2", className)}
+      className={cn("flex flex-row items-center gap-2", className)}
       {...props}
     />
   ),
@@ -206,7 +208,10 @@ const ItemHeader = forwardRef<BridgeViewRef, ItemHeaderProps>(
   ({ className, ...props }, ref) => (
     <View
       ref={ref}
-      className={cn("flex basis-full items-center justify-between gap-2", className)}
+      className={cn(
+        "flex flex-row basis-full items-center justify-between gap-2",
+        className,
+      )}
       {...props}
     />
   ),
@@ -222,7 +227,10 @@ const ItemFooter = forwardRef<BridgeViewRef, ItemFooterProps>(
   ({ className, ...props }, ref) => (
     <View
       ref={ref}
-      className={cn("flex basis-full items-center justify-between gap-2", className)}
+      className={cn(
+        "flex flex-row basis-full items-center justify-between gap-2",
+        className,
+      )}
       {...props}
     />
   ),

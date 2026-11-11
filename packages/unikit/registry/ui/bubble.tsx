@@ -194,7 +194,7 @@ BubbleContent.displayName = "BubbleContent";
 // BubbleReactions — 버블에 붙는 리액션 배지（위치는 side/align 변형）.
 // ---------------------------------------------------------------------------
 const bubbleReactionsVariants = cva(
-  "absolute z-10 flex w-fit shrink-0 items-center justify-center gap-1 rounded-full bg-muted px-1.5 py-0.5 ring-3 ring-card",
+  "absolute z-10 flex w-fit shrink-0 items-center justify-center gap-1 rounded-full bg-muted px-1.5 py-0.5 text-sm ring-3 ring-card",
   {
     variants: {
       side: {

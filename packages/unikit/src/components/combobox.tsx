@@ -309,7 +309,8 @@ const ComboboxTrigger = forwardRef<BridgePressableRef, ComboboxTriggerProps>(
       {...props}
     >
       {wrapTextChildren(children, "font-sans text-sm text-foreground")}
-      <ChevronDownIcon className="size-4 shrink-0 text-muted-foreground opacity-50" />
+      {/* 원본 트리거 아이콘: size-4 text-muted-foreground — opacity-50 없음 */}
+      <ChevronDownIcon className="size-4 shrink-0 text-muted-foreground" />
     </PopoverTrigger>
   ),
 );
@@ -422,7 +423,7 @@ const ComboboxInput = forwardRef<BridgeTextInputRef, ComboboxInputProps>(
           accessibilityLabel="목록 열기"
           className={cn("mr-2", TRIGGER_RESET_CLASSES)}
         >
-          <ChevronDownIcon className="size-4 shrink-0 text-muted-foreground opacity-50" />
+          <ChevronDownIcon className="size-4 shrink-0 text-muted-foreground" />
         </PopoverTrigger>
       ) : null}
       {children}
@@ -575,13 +576,13 @@ const ComboboxItem = forwardRef<BridgePressableRef, ComboboxItemProps>(
         {...props}
       >
         {children}
-        {/* 표시자 — 원본 ItemIndicator + CheckIcon */}
+        {/* 표시자 — 원본 ItemIndicator + CheckIcon（원본 슬롯 size-4·아이콘 size-4） */}
         <View
           aria-hidden
-          className="absolute right-2 size-3.5 items-center justify-center"
+          className="absolute right-2 size-4 items-center justify-center"
         >
           {isSelected ? (
-            <CheckIcon className="size-3.5 text-foreground" />
+            <CheckIcon className="size-4 text-foreground" />
           ) : null}
         </View>
       </CommandItem>
@@ -614,7 +615,8 @@ const ComboboxChips = forwardRef<BridgeViewRef, ComboboxChipsProps>(
     <View
       ref={ref}
       className={cn(
-        "min-h-9 flex-row flex-wrap items-center gap-1.5 rounded-md border border-input px-1.5 py-1.5 web:focus-within:border-ring web:focus-within:ring-2 web:focus-within:ring-ring/50",
+        // 원본 px-2.5 py-1.5 shadow-xs（칩이 있을 때 px-1.5는 has- 셀렉터 미지원으로 고정）.
+        "min-h-9 flex-row flex-wrap items-center gap-1.5 rounded-md border border-input px-2.5 py-1.5 web:shadow-xs web:focus-within:border-ring web:focus-within:ring-2 web:focus-within:ring-ring/50",
         className,
       )}
       {...props}
@@ -651,10 +653,14 @@ const ComboboxChip = forwardRef<BridgeViewRef, ComboboxChipProps>(
           <Pressable
             accessibilityRole="button"
             accessibilityLabel="제거"
-            className={TRIGGER_RESET_CLASSES}
+            // 원본 ChipRemove Button: -ml-1 opacity-50 hover:opacity-100.
+            className={cn(
+              TRIGGER_RESET_CLASSES,
+              "-ml-1 opacity-50 web:hover:opacity-100",
+            )}
             onPress={() => combobox.removeValue(value)}
           >
-            <XIcon className="size-3.5 text-muted-foreground hover:text-foreground" />
+            <XIcon className="size-4 text-foreground" />
           </Pressable>
         ) : null}
       </View>

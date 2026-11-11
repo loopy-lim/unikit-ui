@@ -14,7 +14,8 @@ import { cva } from "class-variance-authority";
 import { cn } from "../lib/utils";
 
 const labelVariants = cva(
-  "font-sans text-sm font-medium leading-none text-foreground",
+  // 원본 select-none（라벨 드래그 선택 방지） — 네이티브 Text는 기본 비선택이라 web: 접두.
+  "font-sans text-sm font-medium leading-none text-foreground web:select-none",
 );
 
 export type LabelProps = TextProps;

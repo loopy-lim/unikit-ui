@@ -227,13 +227,15 @@ const DialogContent = forwardRef<BridgeViewRef, DialogContentProps>(
           {showCloseButton && (
             <DialogClose
               accessibilityLabel="Close"
+              // 원본 data-[state=open]:bg-accent·text-muted-foreground — 닫기 버튼은
+              // 열린 상태에서만 보이므로 상시 적용과 동일. rounded-xs·무패딩 원본값.
               className={cn(
-                "absolute top-4 right-4 rounded-sm p-1 opacity-70",
+                "absolute top-4 right-4 rounded-xs bg-accent opacity-70",
                 "web:transition-opacity web:hover:opacity-100",
                 "web:focus-visible:ring-2 web:focus-visible:ring-ring web:focus-visible:ring-offset-2 web:focus-visible:ring-offset-background",
               )}
             >
-              <XIcon className="size-4 text-foreground" />
+              <XIcon className="size-4 text-muted-foreground" />
             </DialogClose>
           )}
         </View>

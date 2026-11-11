@@ -411,18 +411,19 @@ const SelectItem = forwardRef<BridgePressableRef, SelectItemProps>(
         )}
         {...props}
       >
-        {/* 표시자 — 원본 ItemIndicator + CheckIcon */}
+        {/* 표시자 — 원본 ItemIndicator + CheckIcon（원본 슬롯 size-3.5·아이콘 size-4,
+            아이콘 색은 항목 하이라이트 전경을 따른다） */}
         <View
           aria-hidden
           className="absolute right-2 size-3.5 items-center justify-center web:pointer-events-none"
         >
           {selected ? (
-            <CheckIcon className="size-3.5 text-foreground" />
+            <CheckIcon className="size-4 text-foreground active:text-accent-foreground web:hover:text-accent-foreground web:focus-visible:text-accent-foreground" />
           ) : null}
         </View>
         {wrapTextChildren(
           children,
-          "flex-1 font-sans text-sm text-popover-foreground",
+          "flex-1 font-sans text-sm text-popover-foreground active:text-accent-foreground web:hover:text-accent-foreground web:focus-visible:text-accent-foreground",
         )}
       </Pressable>
     );

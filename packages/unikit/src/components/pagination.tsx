@@ -54,11 +54,16 @@ const paginationEllipsisTextVariants = cva(
 );
 
 // 터치 타깃 보정 — button.tsx의 HIT_SLOP과 같은 기준（44px − 시각높이）/2.
+// button 사이즈 정비（사이클 71）에 맞춰 h-9 기준으로 갱신.
 const HIT_SLOP = {
-  default: 2,
-  sm: 4,
-  lg: 0,
-  icon: 2,
+  xs: 10,
+  sm: 6,
+  default: 4,
+  lg: 2,
+  icon: 4,
+  "icon-xs": 10,
+  "icon-sm": 6,
+  "icon-lg": 2,
 } as const;
 
 export type PaginationProps = ViewProps;

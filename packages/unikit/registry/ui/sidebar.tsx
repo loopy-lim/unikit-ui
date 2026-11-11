@@ -403,8 +403,9 @@ const SidebarRail = React.forwardRef<BridgePressableRef, SidebarRailProps>(
           toggleSidebar();
         }}
         className={cn(
-          "absolute inset-y-0 z-20 w-4",
-          side === "left" ? "-right-4" : "-left-4",
+          // 원본: -translate-x-1/2 + side=left -right-4 / side=right left-0.
+          "absolute inset-y-0 z-20 w-4 -translate-x-1/2",
+          side === "left" ? "-right-4" : "left-0",
           className,
         )}
         {...props}
@@ -630,14 +631,17 @@ const SidebarMenuItem = React.forwardRef<BridgeViewRef, SidebarMenuItemProps>(
 SidebarMenuItem.displayName = "SidebarMenuItem";
 
 const sidebarMenuButtonVariants = cva(
-  "flex w-full items-center gap-2 overflow-hidden rounded-md p-2 text-left text-sm web:focus-visible:ring-2 web:focus-visible:ring-ring disabled:opacity-50 disabled:web:pointer-events-none",
+  // 원본 base의 hover·active 피드백（hover:bg-sidebar-accent hover:text-sidebar-accent-foreground
+  // active:bg-sidebar-accent active:text-sidebar-accent-foreground）를 토큰 대응(bg-accent 등)으로
+  // 복원 — hover 전경색은 RN 미상속이라 내부 Text에도 web:hover 이중 지정한다.
+  "flex w-full items-center gap-2 overflow-hidden rounded-md p-2 text-left text-sm web:hover:bg-accent active:bg-accent web:hover:text-accent-foreground active:text-accent-foreground web:focus-visible:ring-2 web:focus-visible:ring-ring disabled:opacity-50 disabled:web:pointer-events-none",
   {
     variants: {
       variant: {
         default: "",
-        // 원본 shadow-［0_0_0_1px_var（--sidebar-border）］ → border 근사
-        outline:
-          "border border-border bg-background hover:border-accent hover:bg-accent",
+        // 원본 shadow-［0_0_0_1px_var（--sidebar-border）］ → border 근사.
+        // hover 링 색 전환（shadow→sidebar-accent）은 border-accent로 대응.
+        outline: "border border-border bg-background web:hover:border-accent",
       },
       size: {
         default: "h-8 text-sm",
@@ -687,7 +691,9 @@ const SidebarMenuButton = React.forwardRef<
     const content = serializableChildren(
       children,
       cn(
-        "font-sans text-sm truncate",
+        // hover·active 전경색 이중 지정 — 컨테이너 클래스만으론 RN에서 자식이
+        // 물려받지 못하고, 웹에서는 Text 고유 클래스가 상속보다 우선한다.
+        "font-sans text-sm truncate web:hover:text-accent-foreground web:active:text-accent-foreground",
         isActive ? "text-accent-foreground" : "text-foreground",
       ),
     );
@@ -872,7 +878,8 @@ const SidebarMenuSubButton = React.forwardRef<
         // 원본이 <a> 기반이라 링크 역할로 근사（href 계약은 부재）.
         accessibilityRole="link"
         className={cn(
-          "h-7 min-w-0 w-full flex-row items-center gap-2 overflow-hidden rounded-md px-2",
+          // 원본 hover·active 피드백 복원（전경색은 내부 Text 이중 지정）.
+          "h-7 min-w-0 w-full flex-row items-center gap-2 overflow-hidden rounded-md px-2 web:hover:bg-accent active:bg-accent web:hover:text-accent-foreground active:text-accent-foreground",
           isActive && "bg-accent",
           className,
         )}
@@ -882,7 +889,7 @@ const SidebarMenuSubButton = React.forwardRef<
         {serializableChildren(
           children,
           cn(
-            "font-sans truncate",
+            "font-sans truncate web:hover:text-accent-foreground web:active:text-accent-foreground",
             size === "sm" ? "text-xs" : "text-sm",
             isActive ? "text-accent-foreground" : "text-foreground",
           ),

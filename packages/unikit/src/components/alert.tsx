@@ -34,9 +34,10 @@ const alertVariants = cva(
     variants: {
       variant: {
         default: "bg-card",
-        // 원본 destructive의 border-destructive/50 토큰 유지（사소 5 — 포팅
-        // 초판에서 누락돼 destructive가 글자색으로만 구분됐다）.
-        destructive: "bg-card border-destructive/50",
+        // 원본 destructive는 border 클래스가 없다（bg-card + text-destructive뿐）.
+        // border-destructive/50은 구버전 유물로 제거 — destructive는 글자색·
+        // 아이콘·설명 톤(/90)으로만 구분된다.
+        destructive: "bg-card",
       },
     },
     defaultVariants: {

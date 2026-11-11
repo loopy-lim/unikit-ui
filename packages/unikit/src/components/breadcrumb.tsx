@@ -31,7 +31,9 @@ import { cva } from "class-variance-authority";
 import { cn } from "../lib/utils";
 
 const breadcrumbListVariants = cva(
-  "flex-row flex-wrap items-center gap-1.5 web:break-words web:sm:gap-2.5",
+  // 원본 List 토큰（text-sm text-muted-foreground 포함）. 전경색은 내부 Text에도
+  // 이중 지정돼 있다（§0.5 — 네이티브는 컨테이너 색이 자식으로 상속되지 않는다）.
+  "flex-row flex-wrap items-center gap-1.5 text-sm text-muted-foreground web:break-words web:sm:gap-2.5",
 );
 const breadcrumbItemVariants = cva("flex-row items-center gap-1.5");
 

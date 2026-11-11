@@ -172,6 +172,9 @@ const Attachment = forwardRef<BridgeViewRef, AttachmentProps>(
               orientation: resolvedOrientation,
               state: resolvedState,
             }),
+            // 원본 has-data-[slot=attachment-content]:w-30 치환 — 콘텐츠가
+            // 마운트되면 세로형 루트가 w-24에서 w-30으로 확장한다(자식 폭 초과 방지).
+            resolvedOrientation === "vertical" && hasContent && "w-30",
             hasContent && ATTACHMENT_PADDING_CONTENT[resolvedSize],
             hasMedia && ATTACHMENT_PADDING_MEDIA[resolvedSize],
             className,
@@ -264,7 +267,7 @@ const AttachmentContent = forwardRef<BridgeViewRef, AttachmentContentProps>(
         ref={ref}
         className={cn(
           "max-w-full min-w-0 flex-1 leading-tight",
-          attachment?.orientation === "vertical" && "w-30 px-1",
+          attachment?.orientation === "vertical" && "px-1",
           className,
         )}
         {...props}
@@ -288,7 +291,7 @@ const AttachmentTitle = forwardRef<BridgeTextRef, AttachmentTitleProps>(
       <Text
         ref={ref}
         className={cn(
-          "max-w-full min-w-0 font-medium text-foreground web:truncate",
+          "max-w-full min-w-0 font-medium text-card-foreground web:truncate",
           attachment && ATTACHMENT_TITLE_TEXT[attachment.size],
           className,
         )}

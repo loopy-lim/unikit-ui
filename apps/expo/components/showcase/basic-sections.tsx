@@ -100,7 +100,7 @@ function Stack({ children }: { children: ReactNode }) {
 
 function ButtonDemoVariants() {
   return (
-    <View className="flex flex-row flex-wrap gap-3">
+    <View className="flex flex-row flex-wrap items-center justify-center gap-2 max-w-[280px]">
       <Button variant="default" size="default">
         기본
       </Button>
@@ -125,7 +125,7 @@ function ButtonDemoVariants() {
 
 function ButtonDemoSizes() {
   return (
-    <View className="flex flex-row flex-wrap items-center gap-3">
+    <View className="flex flex-row flex-wrap items-center justify-center gap-3">
       <Button variant="default" size="sm">
         작게
       </Button>
@@ -144,7 +144,7 @@ function ButtonDemoSizes() {
 
 function ButtonDemoDisabled() {
   return (
-    <View className="flex flex-row flex-wrap gap-3">
+    <View className="flex flex-row flex-wrap items-center justify-center gap-3">
       <Button variant="default" size="default" disabled>
         비활성
       </Button>
@@ -154,40 +154,23 @@ function ButtonDemoDisabled() {
 
 function CardDemo() {
   return (
-    <Stack>
-      <Card>
-        <CardHeader>
-          <CardTitle>안녕, UniKit!</CardTitle>
-          <CardDescription>복사해서 쓰는 유니버설 컴포넌트</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <Text className="font-sans text-sm text-foreground">
-            이 카드 하나가 React(웹)와 React Native 모두에서 똑같이
-            렌더링돼요. 소스를 내 프로젝트로 가져와 자유롭게 고칠 수 있어요.
-          </Text>
-        </CardContent>
-        <CardFooter>
-          <Text className="font-sans text-sm text-muted-foreground">v0.1</Text>
-          <Button variant="outline" size="sm">
-            자세히
-          </Button>
-        </CardFooter>
-      </Card>
-      <Card>
-        <CardHeader>
-          <CardTitle>다크 모드도 한 번에</CardTitle>
-          <CardDescription>
-            오른쪽 위 토글로 전체 색이 전환돼요.
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <Text className="font-sans text-sm text-foreground">
-            색·테두리·배경이 모두 CSS 변수 토큰으로 정의되어 있어, 테마를
-            바꾸면 화면 전체가 한꺼번에 바뀌어요.
-          </Text>
-        </CardContent>
-      </Card>
-    </Stack>
+    <Card className="w-full">
+      <CardHeader>
+        <CardTitle>알림 설정</CardTitle>
+        <CardDescription>새로운 활동 알림을 받습니다.</CardDescription>
+      </CardHeader>
+      <CardContent>
+        <Text className="font-sans text-sm text-foreground">
+          프로젝트 변경 사항과 피드백을 실시간으로 알려드려요.
+        </Text>
+      </CardContent>
+      <CardFooter className="flex-row items-center justify-between">
+        <Text className="font-sans text-xs text-muted-foreground">언제든 변경 가능</Text>
+        <Button variant="outline" size="sm">
+          관리
+        </Button>
+      </CardFooter>
+    </Card>
   );
 }
 
@@ -580,7 +563,7 @@ export const BASIC_ENTRIES: CatalogEntry[] = [
     title: "Card",
     subtitle: "카드",
     category: "기초",
-    description: "제목·설명·내용·하단을 조합해 정보를 담아요.",
+    description: "제목, 설명, 내용, 하단을 조합해 정보를 담아요.",
     slides: [{ name: "구성", element: <CardDemo /> }],
   },
   {
@@ -661,7 +644,7 @@ export const BASIC_ENTRIES: CatalogEntry[] = [
     subtitle: "아바타",
     category: "기초",
     description: "프로필 자리와 겹침 그룹이에요.",
-    slides: [{ name: "단일·그룹", element: <AvatarDemo /> }],
+    slides: [{ name: "단일과 그룹", element: <AvatarDemo /> }],
   },
   {
     slug: "empty",
@@ -673,8 +656,8 @@ export const BASIC_ENTRIES: CatalogEntry[] = [
   },
   {
     slug: "input-label",
-    title: "Input · Label",
-    subtitle: "입력창 · 레이블",
+    title: "Input & Label",
+    subtitle: "입력창, 레이블",
     category: "폼",
     description:
       "레이블과 입력창을 함께 써요. 입력창을 클릭하면 테두리가 강조돼요.",
@@ -685,7 +668,7 @@ export const BASIC_ENTRIES: CatalogEntry[] = [
     title: "Checkbox",
     subtitle: "체크박스",
     category: "폼",
-    description: "기본 선택·중간 상태를 보여요.",
+    description: "기본 선택과 중간 상태를 보여요.",
     slides: [{ name: "상태 2종", element: <CheckboxDemo /> }],
   },
   {
@@ -706,11 +689,11 @@ export const BASIC_ENTRIES: CatalogEntry[] = [
   },
   {
     slug: "toggle",
-    title: "Toggle · ToggleGroup",
+    title: "Toggle & ToggleGroup",
     subtitle: "토글",
     category: "폼",
     description: "눌린 상태를 유지하는 버튼과 그룹이에요.",
-    slides: [{ name: "단일 · 그룹", element: <ToggleDemo /> }],
+    slides: [{ name: "단일과 그룹", element: <ToggleDemo /> }],
   },
   {
     slug: "textarea",
@@ -804,7 +787,7 @@ export const BASIC_ENTRIES: CatalogEntry[] = [
     title: "Item",
     subtitle: "목록 항목",
     category: "데이터",
-    description: "미디어·내용·동작을 한 줄에 담아요.",
+    description: "미디어와 내용, 동작을 한 줄에 담아요.",
     slides: [{ name: "outline 변형", element: <ItemDemo /> }],
   },
   {
@@ -831,7 +814,7 @@ export const BASIC_ENTRIES: CatalogEntry[] = [
     title: "Field",
     subtitle: "필드",
     category: "폼",
-    description: "레이블·입력·설명을 한 덩어리로 묶어요.",
+    description: "레이블과 입력, 설명을 한 덩어리로 묶어요.",
     slides: [{ name: "기본", element: <FieldDemo /> }],
   },
 ];

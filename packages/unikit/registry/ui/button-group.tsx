@@ -120,7 +120,8 @@ const ButtonGroupText = forwardRef<BridgeViewRef, ButtonGroupTextProps>(
     <View
       ref={ref}
       className={cn(
-        "flex items-center gap-2 rounded-md border border-border bg-muted px-4 web:shadow-xs",
+        // 원본 flex items-center gap-2 — 브리지 flex-col 기본이라 flex-row 명시.
+        "flex flex-row items-center gap-2 rounded-md border border-border bg-muted px-4 web:shadow-xs",
         className,
       )}
       {...props}
@@ -149,7 +150,8 @@ const ButtonGroupSeparator = forwardRef<
   <View
     ref={ref}
     className={cn(
-      "self-stretch bg-border",
+      // 원본 구분선 색은 bg-input.
+      "self-stretch bg-input",
       orientation === "vertical" ? "w-px" : "h-px w-full",
       className,
     )}

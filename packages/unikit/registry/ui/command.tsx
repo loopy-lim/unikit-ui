@@ -340,11 +340,14 @@ const CommandInput = forwardRef<BridgeTextInputRef, CommandInputProps>(
         accessibilityRole="combobox"
         {...comboboxAria}
         className={cn(
-          "flex-none flex-row items-center gap-2 border-b border-border px-3 web:h-9",
+          // 원본 flex h-9 items-center gap-2 border-b px-3 — 높이는 양 플랫폼 공통이라
+          // web: 접두 없이 원본값을 그대로 쓴다.
+          "flex-none flex-row items-center gap-2 border-b border-border px-3 h-9",
           className,
         )}
       >
-        <SearchIcon className="size-4 shrink-0 text-muted-foreground opacity-50" />
+        {/* 원본 아이콘: size-4 shrink-0 opacity-50 — 색은 루트 text-popover-foreground 상속 */}
+        <SearchIcon className="size-4 shrink-0 text-popover-foreground opacity-50" />
         <TextInput
           {...props}
           ref={ref}
@@ -405,8 +408,8 @@ const CommandEmpty = forwardRef<BridgeViewRef, CommandEmptyProps>(
     if (hasMatch || command.version === 0) return null;
     return (
       <View ref={ref} className={cn("py-6", className)} {...props}>
-        {/* 문자열 children 권장（원본 그대로 text-center text-sm） */}
-        <Text className="text-center font-sans text-sm text-muted-foreground">
+        {/* 문자열 children 권장（원본 그대로 text-center text-sm, 색은 루트 상속） */}
+        <Text className="text-center font-sans text-sm text-popover-foreground">
           {children}
         </Text>
       </View>

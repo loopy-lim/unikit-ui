@@ -67,7 +67,7 @@ function Hero() {
         </h1>
         <p className="mt-5 max-w-2xl text-base leading-relaxed text-muted-foreground sm:text-lg">
           React와 React Native에서 같은 컴포넌트, 같은 모습.
-          shadcn 형태·zinc 토큰·브리지 프리미티브를 제공합니다.
+          shadcn 형태와 zinc 토큰, 브리지 프리미티브를 제공합니다.
         </p>
         <div className="mt-8 flex flex-wrap items-center gap-3">
           <Link
@@ -99,7 +99,7 @@ function ValueSection() {
           <code className="site-mono text-[0.95em]">
             import {"{ Button }"} from &quot;@unikit-bridge/ui&quot;
           </code>{" "}
-          한 줄이면 Expo와 Next가 같은 className·같은 CSS 변수 토큰으로 렌더합니다.
+          한 줄이면 Expo와 Next가 같은 className과 같은 CSS 변수 토큰으로 렌더합니다.
           플랫폼 분기 파일 없이 브리지가 자동으로 연결합니다.
         </p>
       </div>
@@ -169,7 +169,7 @@ function Footer() {
   return (
     <footer className="border-t border-border/60 py-10">
       <div className="mx-auto max-w-7xl px-4 text-center text-xs text-muted-foreground sm:px-6 lg:px-8">
-        UniKit v0.2 · React · React Native · shadcn-shaped
+        UniKit v0.2 — React, React Native, shadcn-shaped
       </div>
     </footer>
   );

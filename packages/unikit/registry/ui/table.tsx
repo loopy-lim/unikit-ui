@@ -43,11 +43,13 @@ const tableFooterVariants = cva("flex-col border-t bg-muted/50");
 const tableRowVariants = cva(
   "flex-row border-b web:transition-colors web:hover:bg-muted/50",
 );
-const tableHeadVariants = cva("h-10 flex-1 items-center px-2 text-left");
+// 셀 세로 중앙（원본 align-middle）은 flex-col 셀에서 justify-center로 표현 —
+// items-center는 브리지 flex-col 기본과 만나 가로 중앙 정렬로 해석되어 결함.
+const tableHeadVariants = cva("h-10 flex-1 justify-center px-2 text-left");
 const tableHeadTextVariants = cva(
   "font-sans text-sm font-medium text-foreground web:whitespace-nowrap",
 );
-const tableCellVariants = cva("flex-1 items-center p-2 text-left");
+const tableCellVariants = cva("flex-1 justify-center p-2 text-left");
 const tableCellTextVariants = cva(
   "font-sans text-sm text-foreground web:whitespace-nowrap",
 );

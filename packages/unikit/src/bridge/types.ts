@@ -435,3 +435,9 @@ export type IconProps = {
 
 export type IconComponent = (props: IconProps) => ReactElement | null;
 
+/**
+ * 레이아웃 전이 애니메이션 함수 — 네이티브는 LayoutAnimation을 구동해
+ * 토글/확장/탭 변경 시 부드러운 전이를 제공하고, 웹은 CSS transition이 처리해 no-op.
+ */
+export type AnimateLayoutFn = () => void;
+

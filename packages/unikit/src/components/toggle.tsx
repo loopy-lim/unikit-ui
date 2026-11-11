@@ -5,6 +5,8 @@
 // - ［&_svg］:* 규칙은 아이콘 없는 글리프 구조（내부 Text）에서 대상이 없어 제외.
 // - 이중 지정 원칙（§0.5）: 눌림 배경은 Pressable, 전경색（hover 포함）은 내부 Text에
 //   명시（네이티브는 컨테이너 색이 자식 Text로 상속되지 않는다）.
+// - 원본 base의 aria-invalid:border-destructive·ring-destructive/20은 v0.1 API에
+//   invalid 상태가 없어 미지원 — 로드맵.
 import { forwardRef, useState, type ReactNode } from "react";
 import {
   Pressable,

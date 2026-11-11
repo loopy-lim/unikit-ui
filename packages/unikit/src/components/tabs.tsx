@@ -26,6 +26,7 @@ import {
   type ReactNode,
 } from "react";
 import {
+  animateLayout,
   Pressable,
   Text,
   View,
@@ -77,6 +78,7 @@ const Tabs = forwardRef<BridgeViewRef, TabsProps>(
     const [internalValue, setInternalValue] = useState(defaultValue ?? "");
     const current = value ?? internalValue;
     const setValue = (next: string) => {
+      animateLayout();
       if (value === undefined) setInternalValue(next);
       if (next !== current) onValueChange?.(next);
     };

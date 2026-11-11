@@ -169,7 +169,9 @@ const ResizablePanelGroup = forwardRef<BridgeViewRef, ResizablePanelGroupProps>(
           ref={combinedRef}
           className={cn(
             "flex h-full w-full",
-            direction === "vertical" && "flex-col",
+            // 원본은 브라우저 flex-direction:row 기본에 의존(vertical만 flex-col 지정) —
+            // 브리지 View는 양 플랫폼 모두 flex-col 기본이라 수평 flex-row를 명시해야 한다.
+            direction === "vertical" ? "flex-col" : "flex-row",
             className,
           )}
           {...props}
@@ -270,7 +272,7 @@ const ResizableHandle = forwardRef<BridgeViewRef, ResizableHandleProps>(
           <View
             aria-hidden
             className={cn(
-              "z-10 flex h-4 w-3 items-center justify-center rounded-xs border border-border bg-background",
+              "z-10 flex h-4 w-3 items-center justify-center rounded-xs border border-border bg-border",
               horizontal ? "flex-col" : "flex-row",
             )}
           >

@@ -38,13 +38,16 @@ import {
   Dimensions,
   Easing,
   Image as RNImage,
+  LayoutAnimation,
   Modal as RNModal,
   PanResponder,
+  Platform,
   Pressable as RNPressable,
   ScrollView as RNScrollView,
   StyleSheet,
   Text as RNText,
   TextInput as RNTextInput,
+  UIManager,
   View as RNView,
   type ImageInstance,
   type ImageStyle,
@@ -66,6 +69,7 @@ import {
 
 import { cn } from "../lib/utils";
 import type {
+  AnimateLayoutFn,
   ApplyColorScheme,
   BridgeImageRef,
   BridgePressableRef,
@@ -719,6 +723,21 @@ const LoopPulse = ({ children, durationMs = 2000 }: LoopPulseProps) => {
   return <Animated.View style={{ opacity }}>{children}</Animated.View>;
 };
 
+if (
+  Platform.OS === "android" &&
+  UIManager.setLayoutAnimationEnabledExperimental
+) {
+  UIManager.setLayoutAnimationEnabledExperimental(true);
+}
+
+const animateLayout: AnimateLayoutFn = () => {
+  try {
+    LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
+  } catch {
+    // safe fallback
+  }
+};
+
 // ---------------------------------------------------------------------------
 // measureInWindow — RN ref.measure（x, y, w, h, pageX, pageY）. 창（뷰포트）
 // 기준 좌표로 웹 getBoundingClientRect와 동일 시맨틱（lib/overlay 소비）.
@@ -813,22 +832,29 @@ function createNativeIcon(
     style,
     "aria-hidden": ariaHidden = true,
   }: IconProps) {
+    const isRotated180 = className?.includes("rotate-180");
+    const mergedStyle = isRotated180
+      ? [style, { transform: [{ rotate: "180deg" }] }]
+      : style;
     return (
-      <Svg
-        width={size}
-        height={size}
-        viewBox="0 0 24 24"
-        fill="none"
-        stroke={color}
-        strokeWidth={strokeWidth}
-        strokeLinecap="round"
-        strokeLinejoin="round"
+      <RNView
         aria-hidden={ariaHidden ? true : undefined}
-        style={style as any}
-        {...({ className: cn(defaultClassName, className) } as Record<string, unknown>)}
+        style={mergedStyle as ViewStyle}
+        {...({ className: cn("items-center justify-center", defaultClassName, className) } as Record<string, unknown>)}
       >
-        {renderPaths(color, strokeWidth)}
-      </Svg>
+        <Svg
+          width={size}
+          height={size}
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke={color}
+          strokeWidth={strokeWidth}
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        >
+          {renderPaths(color, strokeWidth)}
+        </Svg>
+      </RNView>
     );
   };
 }
@@ -921,6 +947,7 @@ export {
   SelectOption,
   LoopRotate,
   LoopPulse,
+  animateLayout,
   measureInWindow,
   useDrag,
   useOverlayFocus,

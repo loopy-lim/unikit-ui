@@ -56,113 +56,116 @@ export default function ComponentScreen() {
         <ScrollView
           style={{ flex: 1 }}
           className="w-full flex-1"
-          contentContainerClassName="w-full max-w-[640px] mx-auto px-4 pt-5 pb-16 space-y-8"
+          contentContainerClassName="w-full max-w-[640px] mx-auto px-4 pt-4 pb-16"
           keyboardShouldPersistTaps="handled"
         >
           {/* 헤더 */}
-          <View>
-            <Button
-              variant="ghost"
-              size="sm"
+          <View className="mb-4">
+            <Pressable
               onPress={() => router.back()}
               accessibilityLabel="목록으로"
-              className="self-start -ml-2.5 flex-row items-center gap-1.5 text-muted-foreground"
+              className="flex-row items-center gap-1 py-1 self-start active:opacity-70"
+              hitSlop={8}
             >
-              <ChevronLeft size={16} color={iconColor} />
-              <Text className="font-sans text-sm font-medium text-foreground">
-                목록
+              <ChevronLeft size={16} color={mutedIconColor} />
+              <Text className="font-sans text-xs font-medium text-muted-foreground">
+                컴포넌트
               </Text>
-            </Button>
-            <View className="mt-3 flex-row items-center gap-2">
+            </Pressable>
+            <View className="mt-2 flex-row items-baseline gap-2">
               <Text className="font-sans text-2xl font-bold tracking-tight text-foreground">
                 {entry.title}
               </Text>
-              {entry.webOnly ? <Badge variant="outline">웹 전용</Badge> : null}
+              <Text className="font-sans text-sm text-muted-foreground">
+                {entry.subtitle}
+              </Text>
+              {entry.webOnly ? (
+                <Badge variant="outline" className="px-1.5 py-0 text-[10px]">
+                  웹 전용
+                </Badge>
+              ) : null}
             </View>
-            <Text className="mt-1.5 font-sans text-sm leading-6 text-muted-foreground">
+            <Text className="mt-1 font-sans text-xs leading-relaxed text-muted-foreground">
               {entry.description}
             </Text>
           </View>
 
           {/* 대표 미리보기 (Preview) — 주 무대 */}
           {primarySlide ? (
-            <View className="space-y-2.5">
-              <Text className="font-sans text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                {primarySlide.name}
-              </Text>
-              {entry.webOnly ? (
-                primarySlide.element
+            <View className="mb-7">
+              {entry.webOnly || ["card", "table"].includes(entry.slug) ? (
+                <View className="py-2 items-center justify-center">
+                  {primarySlide.element}
+                </View>
               ) : (
-                <View className="min-h-36 items-center justify-center rounded-2xl border border-border/80 bg-card p-6 shadow-xs">
+                <View className="min-h-36 items-center justify-center rounded-2xl border border-border/50 bg-card/60 p-6">
                   {primarySlide.element}
                 </View>
               )}
             </View>
           ) : null}
 
-          {/* 변형 예시 목록 (Examples) — 박스 중첩(Containeritis) 완화 */}
+          {/* 변형 예시 목록 (Examples) — 불필요한 중첩 박스 제거 */}
           {exampleSlides.length > 0 ? (
-            <View className="space-y-6 border-t border-border/60 pt-7">
-              <Text className="font-sans text-lg font-semibold tracking-tight text-foreground">
+            <View className="mb-7 pt-5 border-t border-border/40">
+              <Text className="font-sans text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-1">
                 Examples
               </Text>
-              {exampleSlides.map((slide) => (
-                <View key={slide.name} className="space-y-2">
-                  <Text className="font-sans text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                    {slide.name}
-                  </Text>
-                  <View className="items-center justify-center rounded-xl bg-muted/40 p-5">
-                    {slide.element}
+              <View className="divide-y divide-border/30">
+                {exampleSlides.map((slide) => (
+                  <View key={slide.name} className="py-4 space-y-2.5">
+                    <Text className="font-sans text-xs font-medium text-muted-foreground">
+                      {slide.name}
+                    </Text>
+                    <View className="items-center justify-center py-2">
+                      {slide.element}
+                    </View>
                   </View>
-                </View>
-              ))}
+                ))}
+              </View>
             </View>
           ) : null}
 
           {/* 이전 / 다음 컴포넌트 이동 */}
-          <View className="flex-row items-center justify-between gap-4 border-t border-border/60 pt-8">
+          <View className="flex-row items-center gap-3 border-t border-border/40 pt-5">
             {neighbors.prev ? (
               <Pressable
                 onPress={() =>
                   router.replace(`/component/${neighbors.prev!.slug}`)
                 }
-                className="flex-1 rounded-xl border border-border/70 bg-card p-4 active:bg-muted/40"
+                className="flex-1 rounded-xl border border-border/50 bg-card/60 p-3.5 active:bg-muted/40 active:opacity-85"
                 accessibilityLabel={`이전 컴포넌트: ${neighbors.prev.title}`}
               >
-                <Text className="font-sans text-xs text-muted-foreground">
+                <Text className="font-sans text-[11px] text-muted-foreground">
                   이전
                 </Text>
-                <View className="mt-1 flex-row items-center gap-1.5">
-                  <ChevronLeft size={14} color={iconColor} />
+                <View className="mt-0.5 flex-row items-center gap-1">
+                  <ChevronLeft size={13} color={iconColor} />
                   <Text className="font-sans text-sm font-medium text-foreground">
                     {neighbors.prev.title}
                   </Text>
                 </View>
               </Pressable>
-            ) : (
-              <View className="flex-1" />
-            )}
+            ) : null}
             {neighbors.next ? (
               <Pressable
                 onPress={() =>
                   router.replace(`/component/${neighbors.next!.slug}`)
                 }
-                className="flex-1 rounded-xl border border-border/70 bg-card p-4 active:bg-muted/40"
+                className="flex-1 rounded-xl border border-border/50 bg-card/60 p-3.5 active:bg-muted/40 active:opacity-85"
                 accessibilityLabel={`다음 컴포넌트: ${neighbors.next.title}`}
               >
-                <Text className="font-sans text-xs text-muted-foreground text-right">
+                <Text className="font-sans text-[11px] text-muted-foreground text-right">
                   다음
                 </Text>
-                <View className="mt-1 flex-row items-center justify-end gap-1.5">
+                <View className="mt-0.5 flex-row items-center justify-end gap-1">
                   <Text className="font-sans text-sm font-medium text-foreground">
                     {neighbors.next.title}
                   </Text>
-                  <ChevronRight size={14} color={iconColor} />
+                  <ChevronRight size={13} color={iconColor} />
                 </View>
               </Pressable>
-            ) : (
-              <View className="flex-1" />
-            )}
+            ) : null}
           </View>
         </ScrollView>
       </View>

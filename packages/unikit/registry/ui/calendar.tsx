@@ -215,7 +215,7 @@ const Calendar = forwardRef<BridgeViewRef, CalendarProps>(
                   <View
                     key={cell.date.toISOString()}
                     accessibilityRole="gridcell"
-                    className="flex-1"
+                    className="flex-1 items-center justify-center"
                   >
                     <Pressable
                       accessibilityRole="button"
@@ -224,8 +224,10 @@ const Calendar = forwardRef<BridgeViewRef, CalendarProps>(
                       disabled={isDisabled}
                       onPress={() => handleSelect(cell)}
                       className={cn(
-                        // 원본 Button（ghost） 토큰의 실질 인라인（머리주석 판단）
-                        "flex-row items-center justify-center rounded-md active:bg-accent web:select-none web:focus-visible:ring-2 web:focus-visible:ring-ring web:focus-visible:ring-offset-2 web:focus-visible:ring-offset-background",
+                        // 원본 Button（ghost） 토큰의 실질 인라인（머리주석 판단）.
+                        // 원본 day 셀은 aspect-square·day_button size-8 — 셀을
+                        // size-8로 고정해 격자 높이가 콘텐츠로 수축하지 않게 한다.
+                        "size-8 flex-row items-center justify-center rounded-md active:bg-accent web:select-none web:focus-visible:ring-2 web:focus-visible:ring-ring web:focus-visible:ring-offset-2 web:focus-visible:ring-offset-background",
                         isSelected
                           ? "bg-primary web:hover:bg-primary/90 active:bg-primary/90"
                           : "web:hover:bg-accent",

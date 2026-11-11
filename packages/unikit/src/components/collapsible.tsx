@@ -19,6 +19,7 @@ import {
   type ReactNode,
 } from "react";
 import {
+  animateLayout,
   Pressable,
   Text,
   View,
@@ -55,6 +56,7 @@ const Collapsible = forwardRef<BridgeViewRef, CollapsibleProps>(
     const [internalOpen, setInternalOpen] = useState(defaultOpen);
     const isOpen = open ?? internalOpen;
     const setOpen = (next: boolean) => {
+      animateLayout();
       if (open === undefined) setInternalOpen(next);
       if (next !== isOpen) onOpenChange?.(next);
     };

@@ -9,6 +9,7 @@
 // - 이중 지정 원칙（§0.5）: 트랙 배경은 Pressable, 썸 배경은 내부 View에 명시.
 import { forwardRef, useState } from "react";
 import {
+  animateLayout,
   Pressable,
   View,
   type BridgePressableRef,
@@ -81,6 +82,7 @@ const Switch = forwardRef<BridgePressableRef, SwitchProps>(
     const resolvedSize = size ?? "default";
 
     const handlePress = () => {
+      animateLayout();
       const next = !isChecked;
       if (!isControlled) setUncontrolled(next);
       onCheckedChange?.(next);
@@ -98,11 +100,11 @@ const Switch = forwardRef<BridgePressableRef, SwitchProps>(
         className={cn(
           switchTrackVariants({ size }),
           // 원본 상태 셀렉터（checked→bg-primary / unchecked→bg-input） 전개 —
-          // 썸 이동도 같은 조건의 justify-start/end로 표현.
+          // 썸 이동도 같은 조건의 justify-start/end 및 웹 translate-x 전이로 표현.
           // 꺼짐 트랙은 bg-input（라이트 1.27:1·다크 1.2:1）이 배경에 묻혀
           // "꺼짐" 상태를 오독시켜 foreground/50（양 모드 ≥3:1, G4）로 조정.
           isChecked
-            ? "justify-end bg-primary"
+            ? "justify-end bg-primary web:justify-start"
             : "justify-start bg-foreground/50",
           disabled && "web:pointer-events-none web:cursor-not-allowed opacity-50",
           className,
@@ -114,9 +116,12 @@ const Switch = forwardRef<BridgePressableRef, SwitchProps>(
           aria-hidden
           className={cn(
             switchThumbVariants({ size }),
+            "web:transition-transform web:duration-200",
             isChecked
-              ? "bg-background dark:bg-primary-foreground"
-              : "bg-background dark:bg-foreground",
+              ? resolvedSize === "sm"
+                ? "bg-background dark:bg-primary-foreground web:translate-x-2.5"
+                : "bg-background dark:bg-primary-foreground web:translate-x-3.5"
+              : "bg-background dark:bg-foreground web:translate-x-0",
           )}
         />
       </Pressable>

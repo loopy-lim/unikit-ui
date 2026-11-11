@@ -172,16 +172,19 @@ const CARD_CLASSES =
 const ITEM_CLASSES =
   "relative flex-row items-center gap-2 rounded-sm px-2 py-1.5 web:cursor-default web:select-none web:outline-none";
 
-// 일반 항목 하이라이트 — radix 하이라이트（focus）를 active（네이티브 눌림）+hover/focus-visible으로.
+// 일반 항목 하이라이트 — radix 하이라이트（focus:bg-accent focus:text-accent-foreground）를
+// active（네이티브 눌림）+hover/focus-visible로. 전경색 전환도 원본과 같이 함께.
 const ITEM_HIGHLIGHT_CLASSES =
-  "active:bg-accent web:hover:bg-accent web:focus-visible:bg-accent";
+  "active:bg-accent active:text-accent-foreground web:hover:bg-accent web:hover:text-accent-foreground web:focus-visible:bg-accent web:focus-visible:text-accent-foreground";
 
 // 표시자（체크/라디오） 항목 — 왼쪽 pl-8 표시자 슬롯（원본 py-1.5 pr-2 pl-8）.
 const INDICATED_ITEM_CLASSES =
-  "relative flex-row items-center gap-2 rounded-sm py-1.5 pr-2 pl-8 active:bg-accent web:cursor-default web:select-none web:outline-none web:hover:bg-accent web:focus-visible:bg-accent";
+  "relative flex-row items-center gap-2 rounded-sm py-1.5 pr-2 pl-8 active:bg-accent active:text-accent-foreground web:cursor-default web:select-none web:outline-none web:hover:bg-accent web:hover:text-accent-foreground web:focus-visible:bg-accent web:focus-visible:text-accent-foreground";
 
-// 항목 텍스트 — 네이티브 색 상속 불가로 항목마다 명시（이중 지정）.
-const ITEM_TEXT_CLASSES = "flex-1 font-sans text-sm text-popover-foreground";
+// 항목 텍스트 — 네이티브 색 상속 불가로 항목마다 명시（이중 지정）. 하이라이트
+// 전경색도 이중 지정해야 웹에서 Text 고유 클래스가 컨테이너 전환을 덮지 않는다.
+const ITEM_TEXT_CLASSES =
+  "flex-1 font-sans text-sm text-popover-foreground active:text-accent-foreground web:hover:text-accent-foreground web:focus-visible:text-accent-foreground";
 
 // 표시자 슬롯 — 원본 span（pointer-events-none absolute left-2 size-3.5）.
 const INDICATOR_SLOT_CLASSES =
@@ -371,7 +374,12 @@ const DropdownMenuItem = forwardRef<BridgePressableRef, DropdownMenuItemProps>(
       >
         {wrapTextChildren(
           children,
-          cn(ITEM_TEXT_CLASSES, destructive && "text-destructive"),
+          // 파탈 항목은 하이라이트 중에도 원본처럼 destructive 전경을 유지한다.
+          cn(
+            ITEM_TEXT_CLASSES,
+            destructive &&
+              "text-destructive active:text-destructive web:hover:text-destructive web:focus-visible:text-destructive",
+          ),
         )}
       </Pressable>
     );
@@ -432,10 +440,10 @@ const DropdownMenuCheckboxItem = forwardRef<
         )}
         {...props}
       >
-        {/* 표시자 — 원본 ItemIndicator + CheckIcon */}
+        {/* 표시자 — 원본 ItemIndicator + CheckIcon（원본: 슬롯 size-3.5 안의 size-4 아이콘） */}
         <View aria-hidden className={INDICATOR_SLOT_CLASSES}>
           {isChecked ? (
-            <CheckIcon className="size-3.5 text-foreground" />
+            <CheckIcon className="size-4 text-foreground" />
           ) : null}
         </View>
         {wrapTextChildren(children, ITEM_TEXT_CLASSES)}
@@ -688,7 +696,11 @@ const DropdownMenuSubContent = forwardRef<
         <View
           ref={ref}
           nativeID={`${sub.baseId}-dropdown-menu-sub-content`}
-          className={cn(CARD_CLASSES, "web:shadow-lg", className)}
+          // 원본 서브 콘텐츠: overflow-hidden·shadow-lg（본체는 overflow-y-auto·shadow-md와 구별）
+          className={cn(
+            "pointer-events-auto z-50 min-w-32 overflow-hidden rounded-md border border-border bg-popover p-1 text-popover-foreground web:shadow-lg",
+            className,
+          )}
           {...props}
         >
           {children}

@@ -57,7 +57,7 @@ function MessageDemo() {
           </Avatar>
         </MessageAvatar>
         <MessageContent>
-          <MessageHeader>홍길동 · 오전 10:02</MessageHeader>
+          <MessageHeader>홍길동  오전 10:02</MessageHeader>
           <Bubble variant="outline">
             <BubbleContent>이 메시지는 상대방 쪽(start)이에요.</BubbleContent>
           </Bubble>
@@ -72,7 +72,7 @@ function MessageDemo() {
               <Text className="font-sans text-xs text-muted-foreground">👍 3</Text>
             </BubbleReactions>
           </Bubble>
-          <MessageFooter>오후 12:30 · 읽음</MessageFooter>
+          <MessageFooter>오후 12:30 읽음</MessageFooter>
         </MessageContent>
       </Message>
     </MessageGroup>
@@ -93,7 +93,7 @@ function BubbleDemo() {
         <BubbleContent>tinted — 주색 물들임</BubbleContent>
       </Bubble>
       <Bubble variant="destructive" align="end">
-        <BubbleContent>destructive — 오류·경고</BubbleContent>
+        <BubbleContent>destructive — 오류와 경고</BubbleContent>
       </Bubble>
     </BubbleGroup>
   );
@@ -212,7 +212,7 @@ export const MESSAGE_ENTRIES: CatalogEntry[] = [
     title: "Message",
     subtitle: "메시지",
     category: "메시지",
-    description: "보낸 사람·정렬·시간을 갖춘 메시지 행이에요.",
+    description: "보낸 사람과 정렬, 시간을 갖춘 메시지 행이에요.",
     slides: [{ name: "양방향 대화", element: <MessageDemo /> }],
   },
   {
@@ -228,7 +228,7 @@ export const MESSAGE_ENTRIES: CatalogEntry[] = [
     title: "Attachment",
     subtitle: "첨부",
     category: "메시지",
-    description: "첨부 파일 상태(완료·업로드 중·오류) 카드예요.",
+    description: "첨부 파일 상태(완료, 업로드 중, 오류) 카드예요.",
     slides: [{ name: "상태 3종", element: <AttachmentDemo /> }],
   },
   {
@@ -236,8 +236,8 @@ export const MESSAGE_ENTRIES: CatalogEntry[] = [
     title: "Marker",
     subtitle: "마커",
     category: "메시지",
-    description: "대화 흐름의 구분선·안내 표식이에요.",
-    slides: [{ name: "구분선 · 읽음 표시", element: <MarkerDemo /> }],
+    description: "대화 흐름의 구분선과 안내 표식이에요.",
+    slides: [{ name: "구분선과 읽음 표시", element: <MarkerDemo /> }],
   },
   {
     slug: "message-scroller",

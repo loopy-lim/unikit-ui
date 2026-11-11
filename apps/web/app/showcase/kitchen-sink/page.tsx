@@ -140,7 +140,7 @@ export default function KitchenSinkPage() {
       <ChartSection />
       <View className="pt-6">
         <Text className="text-center font-sans text-xs text-muted-foreground">
-          UniKit · 전체 스크롤 데모(Expo 쇼케이스와 같은 구성)
+          UniKit — 전체 스크롤 데모(Expo 쇼케이스와 같은 구성)
         </Text>
       </View>
     </View>
@@ -206,7 +206,7 @@ function Section({
 function ButtonSection() {
   return (
     <Section
-      title="Button · 버튼"
+      title="Button — 버튼"
       description="여섯 가지 스타일과 네 가지 크기예요. 버튼을 꾹 눌러보세요."
     >
       <View className="space-y-4">
@@ -242,8 +242,8 @@ function ButtonSection() {
 function CardSection() {
   return (
     <Section
-      title="Card · 카드"
-      description="제목·설명·내용·하단을 조합해 정보를 담아요."
+      title="Card — 카드"
+      description="제목과 설명, 내용, 하단을 조합해 정보를 담아요."
     >
       <View className="space-y-4">
         {/* 카드 1: Header / Content / Footer(텍스트 + Button outline sm) */}
@@ -275,7 +275,7 @@ function CardSection() {
           </CardHeader>
           <CardContent>
             <Text className="font-sans text-sm text-foreground">
-              색·테두리·배경이 모두 CSS 변수 토큰으로 정의되어 있어, 테마를
+              색, 테두리, 배경이 모두 CSS 변수 토큰으로 정의되어 있어, 테마를
               바꾸면 화면 전체가 한꺼번에 바뀌어요.
             </Text>
           </CardContent>
@@ -293,7 +293,7 @@ function InputSection() {
 
   return (
     <Section
-      title="Input · Label — 입력창"
+      title="Input & Label — 입력창"
       description="레이블과 입력창을 함께 써요. 입력창을 클릭하면 테두리가 강조돼요."
     >
       <View className="space-y-4">
@@ -348,7 +348,7 @@ function InputSection() {
 /** Section: Badge — 변형 4종 */
 function BadgeSection() {
   return (
-    <Section title="Badge · 배지" description="네 가지 스타일의 배지예요.">
+    <Section title="Badge — 배지" description="네 가지 스타일의 배지예요.">
       <View className="flex flex-row flex-wrap gap-2">
         <Badge variant="default">기본</Badge>
         <Badge variant="secondary">보조</Badge>
@@ -364,8 +364,8 @@ function BadgeSection() {
 function FormControlsSection() {
   return (
     <Section
-      title="폼 컨트롤 — Checkbox · Radio · Switch · Toggle"
-      description="눌러 보세요. 체크·선택·전환이 모두 한 벌 소스로 동작해요."
+      title="폼 컨트롤 — Checkbox, Radio, Switch, Toggle"
+      description="눌러 보세요. 체크와 선택, 전환이 모두 한 벌 소스로 동작해요."
     >
       <View className="space-y-4">
         {/* Checkbox — 기본 선택 + 중간 상태(− 글리프) */}
@@ -429,7 +429,7 @@ function FormControlsSection() {
 function DisclosureSection() {
   return (
     <Section
-      title="Tabs · Accordion · Collapsible"
+      title="Tabs, Accordion, Collapsible"
       description="탭과 접기를 열고 닫아 보세요."
     >
       <View className="space-y-4">
@@ -494,7 +494,7 @@ function DisclosureSection() {
 function FeedbackSection() {
   return (
     <Section
-      title="Alert · Progress · Avatar · Empty"
+      title="Alert, Progress, Avatar, Empty"
       description="상태와 정보를 알려주는 표시 요소예요."
     >
       <View className="space-y-4">
@@ -565,7 +565,7 @@ function FeedbackSection() {
 function DataLayoutSection() {
   return (
     <Section
-      title="Table · Breadcrumb · Pagination · 레이아웃"
+      title="Table, Breadcrumb, Pagination, 레이아웃"
       description="데이터를 담고 위치를 안내하는 컴포넌트예요."
     >
       <View className="space-y-4">
