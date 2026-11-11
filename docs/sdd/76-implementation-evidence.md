@@ -51,6 +51,19 @@
 
 - 수정 파일 목록에 WIP 구역(src/bridge 3종·accordion·collapsible·switch·tabs·expo showcase 8종·kitchen-sink page·landing) 없음 — 라이브러리 수정이 WIP 파일을 건드리지 않았고 커밋 대상에서도 제외된다.
 
+### G3 지적 P3 5건 후속 수정 (같은 커밋 범위, 양 트리 동기 적용)
+
+| G3 지적 | 수정 | 사유(원본 근거) |
+|---|---|---|
+| context-menu CheckboxItem CheckIcon size-3.5 | size-4 | 원본 context-menu 154행 size-4 — dropdown과 통일 |
+| skeleton `dark:bg-muted-foreground/60` | 제거(bg-accent만) | 원본 skeleton은 dark: 클래스가 없다 — dark: 금지 아키텍처, 다크는 accent 토큰 값 전환 |
+| combobox 칩 제거 X 아이콘 size-4 | size-3 | 원본은 아이콘 크기 클래스 없음 — 부모 icon-xs의 [&_svg]:size-3 규칙 재현(셀렉터 미지원이라 직접 명시) |
+| sidebar 696·892행 Text 전경 `web:active:` | 무접두 `active:` | dropdown·context·select·button 텍스트와 통일 — 네이티브 눌림 라벨 색 전환 복원 |
+| sheet 닫기 아이콘 text-secondary-foreground | text-foreground | 원본은 전경 클래스 없음(상속 foreground) — 이중 지정 원칙으로 명시 |
+
+- 부수 기록: input `web:md:text-sm`의 네이티브 상시 text-base 제한을 머리 주석에 명시(G3 리뷰 반영).
+- 수정 후 재검증: 루트 typecheck 3패키지 exit 0, audit:design 8/8 PASS, apps/web build 67/67 재통과.
+
 ## 잔여 한계·기록 사항
 
 1. focus 링 규약: 라이브러리 공통 규약 `ring-2 + ring-offset`을 유지(원본 ring-[3px] 무오프셋과 다름). 교차 컴포넌트 일괄 변경은 별도 사이클 과제로 기록 — 이번에 단독 바꾸면 라이브러리 전체 링 두께가 섞인다.
@@ -63,6 +76,6 @@
 
 ## 관문 판정 기록
 
-- G3(독립 Staff Code Reviewer): (판정 대기)
+- G3(독립 Staff Code Reviewer): **PASS** — P1·P2 잔여 결함 0건. 28종 변경 파일을 shadcn-ref 원본과 클래스 단위 대조, AC-1~6 독립 재확인, typecheck·audit 재실행. 잔여 P3 5건(위 표)은 즉시 수정해 재검증 통과. 후속 과제 지적: T-4 미실시분(stale 머리 주석·site.css 아이템화)·커밋 전 렌더 재관찰 권고.
 - G4(UX/Design Auditor 관점 렌더 실측): 위 AC-5 실측 5종 관찰 — 수정 항목이 화면에 반영됨 확인. PASS.
-- G5(독립 Release Gatekeeper): (판정 대기)
+- G5(독립 Release Gatekeeper): **PASS** — AC-1~6 전부 통과(AC-2는 표집 대조). G3 P3 후속 수정 5건 반영을 src·registry 양 트리에서 표집 확인, typecheck·audit 재실행으로 독립 재확인. 잔여 한계 7건 수용 가능(6번 T-4 미실시분은 다음 사이클 과제로 명시). 참고: G5 확인 시점에 커밋 2cf4342에 사용자 WIP 성격 변경(애니메이션) 일부가 이미 포함돼 있었음 — 판정 제외 범위로만 확인, 커밋 행위는 이번 작업이 아니다.
