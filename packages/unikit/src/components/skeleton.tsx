@@ -17,7 +17,7 @@ import { cva } from "class-variance-authority";
 import { cn } from "../lib/utils";
 
 // dark: 변형 금지 원칙 — 다크 배경은 accent 토큰 값 전환으로 처리한다.
-// （사이클 71 G3: dark:bg-muted-foreground/60 제거 — 원본 skeleton은 dark: 클래스가 없다）
+// （사이클 71 G3: 다크 한정 배경 변형 제거 — 원본 skeleton은 dark: 클래스가 없다）
 const skeletonVariants = cva(
   "rounded-md bg-accent web:animate-pulse",
 );
