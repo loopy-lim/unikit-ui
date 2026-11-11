@@ -1,5 +1,5 @@
 // Tabs — shadcn/ui（new-york-v4） tabs.tsx 유니버설 포팅 （사이클 30, T-3b）.
-// 원본: shadcn-ref/src/tabs/tabs.tsx — radix Tabs 엔진을 제거하고 선택 상태는
+// 원본: shadcn-ref/ui/tabs.tsx — radix Tabs 엔진을 제거하고 선택 상태는
 // React state + context로 직접 관리한다. 원본의 data-state·그룹 셀렉터 클래스는
 // 네이티브에 data 속성이 없어 재현 불가하므로, 활성 여부에 따른 조건부 클래스
 // 문자열로 전개한다（aria-selected는 접근성용으로 계속 지정）.
@@ -7,9 +7,13 @@
 // 포팅 판단（원본 대비 차이）:
 // - orientation（vertical） 미지원 — 세로축 스타일은 전부 그룹 셀렉터 의존이라
 //   수평 전용으로 단순화. 루트의 flex·flex-col은 브리지 View 기본 클래스가 제공.
-// - 임의값 클래스 금지（디자인 감사 （c））에 따라 원본의 calc 높이·3px 링·3px 리스트
-//   패딩을 표준 계단으로 근사한다（링 ring-2, 패딩 p-1）. 트리거 높이는 명시하지
-//   않고 리스트 고정 높이 h-9와 패딩이 대신 결정한다.
+// - 임의값 클래스 금지（디자인 감사 （c））에 따라 원본의 calc 높이·3px 리스트
+//   패딩을 표준 계단으로 근사한다（패딩 p-1）. 트리거 높이는 명시하지
+//   않고 리스트 고정 높이 h-9와 패딩이 대신 결정한다. focus 링은 원본 규격
+//   （ring-3 · ring-ring/50 · 무오프셋）을 web: 접두로 준수하고（사이클 72）,
+//   원본 focus-visible:outline-1 focus-visible:outline-ring은
+//   web:focus-visible:outline-1 web:outline-ring 근사（G1 F-1 — outline 색은
+//   무접두 치환, outline-1 적용 시에만 발동하므로 시각 등가）.
 // - line 변형 인디케이터는 원본 가상요소（after） 대신 absolute 인디케이터 View로
 //   재현 — 렌더 여부는 리스트 변형 컨텍스트로, 표시는 활성 조건부 opacity로
 //   전개한다. 원본은 트리거 바깥 음수 오프셋에 바를 뒀지만 포팅은 트리거
@@ -155,7 +159,7 @@ const TabsTrigger = forwardRef<BridgePressableRef, TabsTriggerProps>(
         }}
         className={cn(
           "relative flex-row flex-1 items-center justify-center gap-1.5 rounded-md border border-transparent px-2 py-1 web:transition-all",
-          "web:focus-visible:border-ring web:focus-visible:ring-2 web:focus-visible:ring-ring web:focus-visible:ring-offset-2 web:focus-visible:ring-offset-background",
+          "web:focus-visible:border-ring web:focus-visible:ring-3 web:focus-visible:ring-ring/50 web:focus-visible:outline-1 web:outline-ring",
           // 원본 활성 토큰（bg-background·shadow-sm） — line 변형은 활성 시 배경
           // 없이 인디케이터 바만（원본 line 활성 토큰이 bg-transparent）.
           active && list.variant !== "line" && "bg-background web:shadow-sm",

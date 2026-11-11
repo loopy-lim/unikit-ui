@@ -8,7 +8,7 @@
 //   다중 선택범위 선택（range_*）은 미지원 — 로드맵 기록. 원본의 matcher 기반
 //   disabled（matchers 체계）는 판정 함수 disabled?（date） 하나로 단순화했다.
 // - 로케일은 한국어 고정（요일 "일월화수목금토", 캡션 "2026년 11월"） — i18n
-//   prop은 로드맵. 원본의 RTL 화살표 회전 규칙（rtl:）은 제거（글리프 고정）.
+//   prop은 로드맵. 원본의 RTL 화살표 회전 규칙（rtl:）은 제거（SVG 아이콘 고정）.
 // - 접근성: 루트 role="grid", 요일 헤더 role="columnheader", 주 role="row",
 //   날짜 칸 role="gridcell" — 전부 bridge role 계약（types.ts）에 포함돼 있다.
 //   날짜의 aria-selectedaria-current="date"는 원본과 같이 gridcell이 아니라
@@ -19,8 +19,8 @@
 //   size-8（32px）로 고정（임의값변수 금지）. 요일 텍스트 text-［0.8rem］은
 //   text-xs에 근사. dark: 변형 토큰은 관행대로 제거.
 // - 이전/다음 월 버튼은 ./button의 Button（variant="ghost"） 재사용 — 원본이
-//   buttonVariants를 쓴 것과 동일한 관계（방향 아이콘은 ChevronLeft/Right 대신
-//   글리프 ‹ › — pagination 이식 관행）. 날짜 셀은 상태별 전경색을 내부 Text에
+//   buttonVariants를 쓴 것과 동일한 관계（방향 아이콘은 브리지 SVG
+//   ChevronLeftIcon/ChevronRightIcon 프리미티브）. 날짜 셀은 상태별 전경색을 내부 Text에
 //   줘야 해서（이중 지정 원칙） Button을 못 쓰고 Pressable에 ghost 토큰의 실질
 //   （hover/active/focus-visible정렬）을 인라인 재현했다 — buttonVariants의
 //   size 기본값（h-10 px-4 py-2）이 셀 형태（aspect-square w-full）와 경합해서
@@ -227,7 +227,8 @@ const Calendar = forwardRef<BridgeViewRef, CalendarProps>(
                         // 원본 Button（ghost） 토큰의 실질 인라인（머리주석 판단）.
                         // 원본 day 셀은 aspect-square·day_button size-8 — 셀을
                         // size-8로 고정해 격자 높이가 콘텐츠로 수축하지 않게 한다.
-                        "size-8 flex-row items-center justify-center rounded-md active:bg-accent web:select-none web:focus-visible:ring-2 web:focus-visible:ring-ring web:focus-visible:ring-offset-2 web:focus-visible:ring-offset-background",
+                        // focus 링은 button 원본 규격（ring-3 무오프셋, 사이클 72）.
+                        "size-8 flex-row items-center justify-center rounded-md active:bg-accent web:select-none web:focus-visible:border-ring web:focus-visible:ring-3 web:focus-visible:ring-ring/50",
                         isSelected
                           ? "bg-primary web:hover:bg-primary/90 active:bg-primary/90"
                           : "web:hover:bg-accent",

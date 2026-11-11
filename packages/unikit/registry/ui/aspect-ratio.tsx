@@ -1,5 +1,5 @@
 // AspectRatio — shadcn/ui（new-york-v4） aspect-ratio.tsx 유니버설 포팅 （사이클 30, T-3b）.
-// 원본: shadcn-ref/src/aspect-ratio/aspect-ratio.tsx — radix AspectRatio 엔진을
+// 원본: shadcn-ref/ui/aspect-ratio.tsx — radix AspectRatio 엔진을
 // 제거하고 비율은 BridgeStyle 동적 인라인 스타일 계약으로 표현한다.
 //
 // 포팅 판단（원본 대비 차이）:

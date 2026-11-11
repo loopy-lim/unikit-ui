@@ -1,4 +1,4 @@
-// Table — shadcn/ui new-york-v4 table 포팅（/tmp/shadcn-ref/src/table）. 8종 export.
+// Table — shadcn/ui new-york-v4 table 포팅（shadcn-ref/ui/table.tsx）. 8종 export.
 // 포팅 판단:
 // - 원본은 <table>/<thead>/<tr>/<th> 등 표 요소 + 자손 셀렉터（［&_tr］:border-b,
 //   ［&_tr:last-child］:border-0, has-aria-expanded:）로 스타일링한다. 브리지에는

@@ -1,4 +1,4 @@
-// Skeleton — shadcn/ui new-york-v4 skeleton 포팅（/tmp/shadcn-ref/src/skeleton）.
+// Skeleton — shadcn/ui new-york-v4 skeleton 포팅（shadcn-ref/ui/skeleton.tsx）.
 // 포팅 판단:
 // - 원본은 단일 <div className="animate-pulse rounded-md bg-accent"> — 브리지 View
 //   하나로 대응되며 자식 텍스트가 없어 이중 지정 대상도 없다（className 병합만）.

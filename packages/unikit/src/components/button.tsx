@@ -3,7 +3,8 @@
 // （DOM 브리지에서도 span은 부모 상속이 막히므로 전경색 명시가 양쪽에 필요）
 // 미지원（로드맵）: aria-invalid:*（invalid 상태 없음）·has-［>svg］:*·［&_svg］:*（자식
 // 셀렉터 — 아이콘은 글리프 Text）·dark:*（다크는 토큰 값 전환 아키텍처로 처리）.
-// focus 링은 라이브러리 규약（ring-2 + ring-offset）을 유지한다（원본 ring-［3px］과 다름）.
+// focus 링은 원본 규격을 준수한다（사이클 72）: ring-3（비대괄호 계단）·ring-ring/50
+// ·무오프셋·focus-visible:border-ring — destructive는 ring-destructive/20.
 // link 변형의 밑줄은 원본대로 hover에서만 — 네이티브는 hover가 없어 밑줄이 없다
 // （상시 밑줄이 필요하면 소비자가 className="underline"을 더한다）.
 import { forwardRef, type ReactNode } from "react";
@@ -18,9 +19,10 @@ import { cva, type VariantProps } from "class-variance-authority";
 import { cn } from "../lib/utils";
 
 // Pressable（컨테이너） — 원본 base의 shrink-0·transition-all을 포함하고, hover는
-// web: 접두, active（눌림 어포던스 근사）는 양쪽에서 동작한다. focus 링은 규약 유지.
+// web: 접두, active（눌림 어포던스 근사）는 양쪽에서 동작한다. focus 링은 원본 규격
+// （ring-3 무오프셋）을 web: 접두로 준수한다.
 const buttonVariants = cva(
-  "flex flex-row shrink-0 items-center justify-center gap-2 rounded-md web:select-none web:transition-all web:outline-none web:focus-visible:ring-2 web:focus-visible:ring-ring web:focus-visible:ring-offset-2 web:focus-visible:ring-offset-background",
+  "flex flex-row shrink-0 items-center justify-center gap-2 rounded-md web:select-none web:transition-all web:outline-none web:focus-visible:border-ring web:focus-visible:ring-3 web:focus-visible:ring-ring/50",
   {
     variants: {
       variant: {

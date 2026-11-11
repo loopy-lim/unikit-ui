@@ -22,8 +22,10 @@
 //   첫/마지막 셀이라는 성질（input-otp 슬롯 인덱스는 전역 연속）로 조건부 클래스
 //   전개（rounded-l-md border-l / rounded-r-md）.
 // - aria-invalid:* 셀렉터 스타일은 invalid?: boolean prop（textarea.tsx 관행）으로
-//   받아 context 전파 + 조건부 클래스로 치환. ring-［3px］→ring-2, dark: 제거.
-// - MinusIcon → − 글리프 Text. autoComplete="one-time-code"（SMS 자동입력 힌트）는
+//   받아 context 전파 + 조건부 클래스로 치환. ring-［3px］→ring-3（비대괄호 계단 —
+//   사이클 72 원본 규격 정렬）, dark: 제거.
+// - 구분선 아이콘은 브리지 SVG MinusIcon 프리미티브를 그대로 쓴다.
+//   autoComplete="one-time-code"（SMS 자동입력 힌트）는
 //   브리지 계약에 없어 미지원（로드맵）.
 // - 데이터 규칙: 입력 문자를 걸러내지 않는다（원본 기본 동일）, value는
 //   maxLength로 절단된 문자열을 유지한다.
@@ -193,7 +195,7 @@ const InputOTPSlot = forwardRef<BridgeViewRef, InputOTPSlotProps>(
           // first:/last: 근사 — 인덱스로 전개（머리 주석）.
           index === 0 && "rounded-l-md border-l",
           cellCount > 0 && index === cellCount - 1 && "rounded-r-md",
-          isActive && "z-10 border-ring ring-2 ring-ring/50",
+          isActive && "z-10 border-ring ring-3 ring-ring/50",
           otp?.invalid && "border-destructive",
           isActive && otp?.invalid && "ring-destructive/20",
           className,

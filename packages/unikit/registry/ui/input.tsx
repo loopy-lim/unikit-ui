@@ -16,9 +16,10 @@ import { cn } from "../lib/utils";
 // dark:bg-input/30은 원본 자체 클래스（다크 입력 가시성 보정 — checkbox와 같은 사례）.
 // web:md:text-sm은 웹 한정 — 네이티브는 상시 text-base（브리지 텍스트 스케일 규약）.
 //   제한은 위 라인 외에 별도 분기 없음（G3 리뷰 지적 반영 기록）.
-// focus 링은 라이브러리 규약（focus ring-2 + ring-offset）을 유지한다.
+// focus 링은 원본 규격（ring-3 · ring-ring/50 · 무오프셋）을 준수한다（사이클 72）
+// — 무접두 유지: uniwind가 ring을 네이티브 box-shadow로 구동해 네이티브 링이 보존된다.
 const inputVariants = cva(
-  "font-sans h-9 w-full min-w-0 rounded-md border border-input bg-transparent px-3 py-1 text-base text-foreground web:shadow-xs web:transition-all web:outline-none web:selection:bg-primary web:selection:text-primary-foreground web:md:text-sm web:disabled:cursor-not-allowed placeholder:text-muted-foreground dark:bg-input/30 focus:border-ring focus:ring-2 focus:ring-ring focus:ring-offset-2 focus:ring-offset-background web:focus-visible:border-ring disabled:opacity-50",
+  "font-sans h-9 w-full min-w-0 rounded-md border border-input bg-transparent px-3 py-1 text-base text-foreground web:shadow-xs web:transition-all web:outline-none web:selection:bg-primary web:selection:text-primary-foreground web:md:text-sm web:disabled:cursor-not-allowed placeholder:text-muted-foreground dark:bg-input/30 focus:border-ring focus:ring-3 focus:ring-ring/50 web:focus-visible:border-ring disabled:opacity-50",
 );
 
 // InputProps — TextInputProps 그대로. 웹 관용 disabled의 치환 계약

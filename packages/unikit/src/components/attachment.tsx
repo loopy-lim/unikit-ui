@@ -3,8 +3,9 @@
 //
 // 포팅 판단（원본 대비 차이이유）:
 // - div/span → 브리지 View/Text. AttachmentAction은 기존 Button（"./button"）을
-//   재사용한다（원본 의존과 동일 구성）. 원본 기본 size "icon-xs"는 UniKit
-//   Button 스펙（default/sm/lg/icon）에 없어 소비자 지정으로 남긴다.
+//   재사용한다（원본 의존과 동일 구성）. 원본 기본 size "icon-xs"는 사이클 71에
+//   UniKit Button 스펙에 신설됐다 — 포팅은 기본값을 물리지 않아 소비자가
+//   size="icon-xs"를 지정하는 계약 그대로 둔다.
 // - data-state/data-size/data-orientation + group-data- 셀렉터는 네이티브에
 //   data 속성이 없어 AttachmentContext { size, orientation, state, hasContent,
 //   hasMedia } + 조회 테이블로 재현 — 자식（Media/Content/Title/）이 context를

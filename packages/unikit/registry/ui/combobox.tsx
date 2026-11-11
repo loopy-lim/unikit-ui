@@ -38,7 +38,8 @@
 //   ring-1 ring-foreground/10에서 border border-border로 의도적 이탈 — 사유:
 //   select·dropdown·popover와 내부 형제 일관성,
 //   max-h-［calc（--spacing（96））］→web:max-h-96, h-［calc（--spacing（5.5））］→h-5,
-//   focus-within:ring-［3px］→web:focus-within:ring-2（tabs 관행）, min-w-［］→
+//   focus-within:ring-［3px］→web:focus-within:ring-3（비대괄호 계단 — 사이클 72
+//   원본 규격 정렬）, min-w-［］→
 //   표준 계단, 애니메이션CSS 변수 임의값dark:pointer-coarse: 토큰 제거,
 //   radix data-* 속성은 조건부 클래스로 전개.
 // - 접근성: 트리거 aria-expandedaria-controls와 카드 role="dialog"는 소비하는
@@ -616,7 +617,7 @@ const ComboboxChips = forwardRef<BridgeViewRef, ComboboxChipsProps>(
       ref={ref}
       className={cn(
         // 원본 px-2.5 py-1.5 shadow-xs（칩이 있을 때 px-1.5는 has- 셀렉터 미지원으로 고정）.
-        "min-h-9 flex-row flex-wrap items-center gap-1.5 rounded-md border border-input px-2.5 py-1.5 web:shadow-xs web:focus-within:border-ring web:focus-within:ring-2 web:focus-within:ring-ring/50",
+        "min-h-9 flex-row flex-wrap items-center gap-1.5 rounded-md border border-input px-2.5 py-1.5 web:shadow-xs web:focus-within:border-ring web:focus-within:ring-3 web:focus-within:ring-ring/50",
         className,
       )}
       {...props}

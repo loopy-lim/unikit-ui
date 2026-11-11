@@ -14,8 +14,8 @@
 //   않으므로 textarea.tsx 관행대로 invalid?: boolean prop + 조건부 클래스로 치환.
 // - disabled 포인터/커서 토큰은 web: 접두, 래퍼 불투명화（원본 has-［select:disabled］
 //   :opacity-50）는 disabled prop 조건부 클래스로 근사.
-// - focus-visible 링은 원본 ring-［3px］ 임의값을 표준 계단 ring-2로 근사（tabs.tsx
-//   관행）하고 web: 접두. transition-［color,box-shadow］ 임의값은 web:transition-all,
+// - focus-visible 링은 원본 규격（ring-3 · ring-ring/50 · 무오프셋）을 web: 접두로
+//   준수한다（사이클 72）. transition-［color,box-shadow］ 임의값은 web:transition-all,
 //   selection:*/appearance-none은 웹 전용 개념이라 web: 접두.
 // - w-fit은 uniwind 미지원 — tabs.tsx 관행의 self-start（교차축 시작 정렬）로 치환.
 // - dark: 변형 토큰은 프로젝트 관행（미사용）대로 제거.
@@ -59,7 +59,7 @@ function flattenOptions(children: ReactNode): ReactNode[] {
 
 // 트리거 — 원본 select 토큰에서 속성 셀렉터를 조건부 클래스로 전개.
 const nativeSelectVariants = cva(
-  "w-full min-w-0 web:appearance-none rounded-md border border-input bg-transparent px-3 text-sm text-foreground web:shadow-xs web:transition-all web:outline-none web:selection:bg-primary web:selection:text-primary-foreground web:focus-visible:border-ring web:focus-visible:ring-2 web:focus-visible:ring-ring/50",
+  "w-full min-w-0 web:appearance-none rounded-md border border-input bg-transparent px-3 text-sm text-foreground web:shadow-xs web:transition-all web:outline-none web:selection:bg-primary web:selection:text-primary-foreground web:focus-visible:border-ring web:focus-visible:ring-3 web:focus-visible:ring-ring/50",
 );
 
 export type NativeSelectProps = ViewProps & {

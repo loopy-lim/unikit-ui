@@ -1,4 +1,4 @@
-// Kbd — shadcn/ui new-york-v4 kbd 포팅（/tmp/shadcn-ref/src/kbd）. Kbd·KbdGroup 2종.
+// Kbd — shadcn/ui new-york-v4 kbd 포팅（shadcn-ref/ui/kbd.tsx）. Kbd·KbdGroup 2종.
 // 포팅 판단:
 // - <kbd> 요소는 브리지 계약에 없어 View（배경·크기） + 내부 Text（글자）의
 //   이중 지정으로 재현한다. children은 문자열（"⌘", "Ctrl", "K" 등）을 권장한다.

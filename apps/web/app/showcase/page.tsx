@@ -15,15 +15,17 @@ import {
 } from "../../components/showcase/catalog";
 import { demos } from "../../components/showcase/demos";
 
-/** 썸네일 스트립(h-40, p-4 → 가용 128px)에 들어가기 큰 데모 — 축소 배율 */
+/** 썸네일 스트립(h-44 sm:h-40)보다 큰 데모 — 축소 배율.
+ *  모바일(1열 넓은 카드) 기준값 + sm:(2~3열 좁은 카드) 오버라이드.
+ *  세로는 calendar·card가 스트립 높이(176/160)를 넘지 않도록 맞춘 값. */
 const THUMB_SCALE: Record<string, string> = {
-  calendar: "scale-[0.5]",
-  card: "scale-[0.4]",
-  chart: "scale-[0.6]",
-  command: "scale-[0.9]",
-  empty: "scale-[0.45]",
-  "message-scroller": "scale-[0.6]",
-  sidebar: "scale-[0.75]",
+  calendar: "scale-[0.53] sm:scale-[0.48]",
+  card: "scale-[0.57] sm:scale-[0.4]",
+  chart: "scale-[0.8] sm:scale-[0.6]",
+  command: "sm:scale-[0.9]",
+  empty: "scale-[0.55] sm:scale-[0.45]",
+  "message-scroller": "scale-[0.85] sm:scale-[0.6]",
+  sidebar: "scale-[0.9] sm:scale-[0.75]",
 };
 
 export default function ShowcaseIndexPage() {
@@ -45,24 +47,33 @@ export default function ShowcaseIndexPage() {
           <Badge variant="secondary">{groups.length}개 카테고리</Badge>
           <Badge variant="secondary">웹 · React Native 동일 소스</Badge>
         </View>
-        <View className="flex flex-row flex-wrap items-center gap-x-5 gap-y-2 pt-1">
+      </View>
+
+      {/* 카테고리 칩 바 — 가로 스크롤, 헤더 바로 아래 sticky. 최상위 블록 바로
+          아래에 둬야 페이지 끝까지 따라다닌다. <md 풀블리드(음수 마진),
+          md+는 본문 열 시작에 정렬. */}
+      <nav
+        aria-label="컴포넌트 카테고리"
+        className="sticky top-16 z-30 -mx-4 border-b border-border/60 bg-background/90 px-4 py-2 backdrop-blur supports-[backdrop-filter]:bg-background/75 sm:-mx-6 sm:px-6 md:mx-0 md:px-0"
+      >
+        <View className="site-scrollbar-none flex flex-row gap-2 overflow-x-auto">
           {groups.map((group) => (
             <a
               key={group.category}
               href={`#${group.category}`}
-              className="site-focusable font-sans text-sm text-muted-foreground underline-offset-4 transition-colors hover:text-foreground hover:underline"
+              className="site-focusable shrink-0 rounded-full border border-border px-3 py-1.5 font-sans text-sm text-muted-foreground transition-colors hover:border-foreground/25 hover:text-foreground"
             >
               {group.label}
             </a>
           ))}
         </View>
-      </View>
+      </nav>
 
       {groups.map((group) => (
         <section
           key={group.category}
           id={group.category}
-          className="scroll-mt-24 space-y-5"
+          className="scroll-mt-32 space-y-5"
         >
           <View className="flex flex-row items-baseline gap-2.5">
             <Text className="font-sans text-xl font-semibold tracking-tight text-foreground">
@@ -94,7 +105,7 @@ function CatalogCard({ item }: { item: CatalogItem }) {
       {/* inert 속성이 브리지 ViewProps 계약에 없어 원시 div — 시각 전용 래핑 */}
       <div
         inert={true}
-        className="pointer-events-none flex h-40 items-center justify-center overflow-hidden border-b border-border/60 bg-muted/25 p-4"
+        className="pointer-events-none flex h-44 items-center justify-center overflow-hidden border-b border-border/60 bg-muted/25 p-4 sm:h-40"
       >
         {Thumb ? (
           <View className={scale ? `w-full ${scale}` : "w-full"}>
@@ -109,7 +120,7 @@ function CatalogCard({ item }: { item: CatalogItem }) {
           </Text>
           <Text
             aria-hidden
-            className="font-sans text-sm text-muted-foreground opacity-0 transition-opacity group-hover:opacity-100"
+            className="font-sans text-sm text-muted-foreground opacity-100 transition-opacity md:opacity-0 md:group-hover:opacity-100"
           >
             →
           </Text>
