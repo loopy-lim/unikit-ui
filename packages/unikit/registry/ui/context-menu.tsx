@@ -433,7 +433,7 @@ const ContextMenuCheckboxItem = forwardRef<
         {/* 표시자 — 원본 ItemIndicator + CheckIcon */}
         <View aria-hidden className={INDICATOR_SLOT_CLASSES}>
           {isChecked ? (
-            <CheckIcon className="size-3.5 text-foreground" />
+            <CheckIcon className="size-4 text-foreground" />
           ) : null}
         </View>
         {wrapTextChildren(children, ITEM_TEXT_CLASSES)}

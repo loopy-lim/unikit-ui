@@ -660,7 +660,9 @@ const ComboboxChip = forwardRef<BridgeViewRef, ComboboxChipProps>(
             )}
             onPress={() => combobox.removeValue(value)}
           >
-            <XIcon className="size-4 text-foreground" />
+            {/* 원본은 아이콘 크기 클래스가 없다 — 부모 icon-xs 버튼의
+                ［&_svg］:size-3 규칙이 자식 셀렉터라 미지원, 직접 size-3 명시（G3）. */}
+            <XIcon className="size-3 text-foreground" />
           </Pressable>
         ) : null}
       </View>

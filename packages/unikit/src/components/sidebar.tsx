@@ -693,7 +693,7 @@ const SidebarMenuButton = React.forwardRef<
       cn(
         // hover·active 전경색 이중 지정 — 컨테이너 클래스만으론 RN에서 자식이
         // 물려받지 못하고, 웹에서는 Text 고유 클래스가 상속보다 우선한다.
-        "font-sans text-sm truncate web:hover:text-accent-foreground web:active:text-accent-foreground",
+        "font-sans text-sm truncate web:hover:text-accent-foreground active:text-accent-foreground",
         isActive ? "text-accent-foreground" : "text-foreground",
       ),
     );
@@ -889,7 +889,7 @@ const SidebarMenuSubButton = React.forwardRef<
         {serializableChildren(
           children,
           cn(
-            "font-sans truncate web:hover:text-accent-foreground web:active:text-accent-foreground",
+            "font-sans truncate web:hover:text-accent-foreground active:text-accent-foreground",
             size === "sm" ? "text-xs" : "text-sm",
             isActive ? "text-accent-foreground" : "text-foreground",
           ),

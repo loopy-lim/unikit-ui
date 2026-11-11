@@ -248,7 +248,9 @@ const SheetContent = forwardRef<BridgeViewRef, SheetContentProps>(
                 "web:focus-visible:ring-2 web:focus-visible:ring-ring web:focus-visible:ring-offset-2 web:focus-visible:ring-offset-background",
               )}
             >
-              <XIcon className="size-4 text-secondary-foreground" />
+              {/* 원본은 전경 클래스가 없어（부모 상속 foreground） — 이중 지정
+                  원칙으로 내부 아이콘에 text-foreground를 명시한다. */}
+              <XIcon className="size-4 text-foreground" />
             </SheetClose>
           )}
         </View>

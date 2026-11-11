@@ -16,10 +16,10 @@ import { cva } from "class-variance-authority";
 
 import { cn } from "../lib/utils";
 
-// 다크 bg-accent（zinc-800）는 배경 대비 1.34:1로 블록이 거의 안 보인다（G4） —
-// 다크 한정 muted-foreground/60（≥3:1）으로 올린다. 라이트는 감사 통과값 유지.
+// dark: 변형 금지 원칙 — 다크 배경은 accent 토큰 값 전환으로 처리한다.
+// （사이클 71 G3: dark:bg-muted-foreground/60 제거 — 원본 skeleton은 dark: 클래스가 없다）
 const skeletonVariants = cva(
-  "rounded-md bg-accent dark:bg-muted-foreground/60 web:animate-pulse",
+  "rounded-md bg-accent web:animate-pulse",
 );
 
 export type SkeletonProps = ViewProps;
