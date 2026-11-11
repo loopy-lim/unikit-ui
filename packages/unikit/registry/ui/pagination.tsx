@@ -8,11 +8,12 @@
 // - 원본의 data-active·aria-current="page" → isActive?: boolean prop 조건부
 //   클래스（ghost↔outline 변형 전환）로 재현하고, aria-current="page"는 사이클 40
 //   브리지 확장（§2.1）으로 소급 지정한다（웹 전용 — RN 계약 없음, 시각 강조가 담당）.
-// - ChevronLeft/Right → "‹"/"›" 글리프 Text. Previous/Next 라벨은 원본의
+// - 아이콘: ChevronLeftIcon·ChevronRightIcon·MoreHorizontalIcon — 브리지 SVG
+//   아이콘 프리미티브（lucide 의존 제거）. Previous/Next 라벨은 원본의
 //   sm 미만 숨김（hidden sm:block）을 web:hidden web:sm:inline으로 재현 —
 //   네이티브에서는 항상 표시된다（터치 가독성）.
 // - PaginationLink의 children이 문자열（숫자 포함）이면 이중 지정 원칙대로 내부
-//   Text로 감싸고, ReactNode면 그대로 렌더한다（Previous/Next는 글리프+라벨
+//   Text로 감싸고, ReactNode면 그대로 렌더한다（Previous/Next는 아이콘+라벨
 //   두 Text를 flex 간격으로 배치하기 위해 노드를 직접 넘긴다）.
 // - 원본 <nav>의 role="navigation"은 BridgeRole에 없어 미지원 — 라벨만 유지.
 //   sr-only 보조 텍스트는 웹 전용 클래스라 생략（Ellipsis는 어차피 aria-hidden）.
@@ -38,7 +39,8 @@ import { buttonVariants, buttonTextVariants } from "./button";
 const paginationVariants = cva("mx-auto w-full flex-row justify-center");
 const paginationContentVariants = cva("flex-row items-center gap-1");
 
-// 방향 글리프（‹ ›） — 원본 ChevronIcon 대체.
+// 방향 아이콘 전경색 cva — export API 호환용（이름 유지; 본문 ChevronIcon은
+// 브리지 SVG 아이콘 프리미티브로 대체되어 있다）.
 const paginationGlyphVariants = cva("text-base leading-none text-foreground");
 // Previous/Next 라벨 — 웹에서는 sm 미만 숨김（원본 hidden sm:block 재현）.
 const paginationLabelVariants = cva(

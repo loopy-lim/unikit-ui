@@ -13,7 +13,7 @@
 //   닿지 않게 한다. grid gap-4 → 브리지 View 기본 flex-col + gap-4로 동등 재현.
 // - data-［state］ 기반 등장/퇴장 애니메이션（fadezoomduration）은 data 속성이 없어
 //   재현 불가 — 마운트/언마운트 즉시 전환（로드맵: 웹 전용 애니메이션 클래스）.
-// - XIcon（lucide） → ✕ 글리프 Text（alertaccordion 관행）, sr-only "Close"는
+// - XIcon — 브리지 SVG 아이콘 프리미티브（lucide 의존 제거）. sr-only "Close"는
 //   accessibilityLabel로 대체（유니버설 sr-only 유틸 부재 — 디자인 계획 §3）.
 // - 트리거닫기는 radix asChild 대신 Pressable 직렬화 — 문자열 children은 내부
 //   Text로 감싸고（pagination 관행） ReactNode는 그대로 둔다（사용처가 직접 스타일링）.

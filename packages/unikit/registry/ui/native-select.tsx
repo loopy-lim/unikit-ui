@@ -6,7 +6,8 @@
 // 포팅 판단（원본 대비 차이）:
 // - 웹은 브리지 Select가 <select>를 렌더해 원본과 동등하다. 네이티브는 프리미티브의
 //   Pressable 트리거（combobox role）+Modal 옵션 목록 폴백으로 대체된다 — 래퍼에
-//   겹친 ⌄ 글리프（ChevronDownIcon 근사, absolute 오버레이）는 양측 동일하게 붙는다.
+//   겹친 ChevronDownIcon（브리지 SVG 아이콘, absolute 오버레이）는 양측 동일하게
+//   붙는다.
 // - size（"sm"|"default"）는 브리지 SelectProps가 data-size 전달을 지원하지 않아
 //   조건부 클래스（h-8 py-1 / h-9 py-2）로 전개한다.
 // - aria-invalid: 속성 셀렉터 스타일은 브리지가 aria-invalid를 select에 넘기지

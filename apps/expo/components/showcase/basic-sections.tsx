@@ -529,7 +529,7 @@ function ItemDemo() {
   return (
     <Item variant="outline">
       <ItemMedia variant="icon">
-        <Star size={18} className="text-muted-foreground" />
+        <Star size={16} className="text-muted-foreground" />
       </ItemMedia>
       <ItemContent>
         <ItemTitle>즐겨찾는 프로젝트</ItemTitle>

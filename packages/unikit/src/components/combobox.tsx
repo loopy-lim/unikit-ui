@@ -15,7 +15,8 @@
 //   암묵 오버로드인데 유니버설 타이핑을 위해 명시 분리가 안전하다. multiple
 //   지정 시 항목 선택은 values 토글（팝업 유지）, 미지정 시 확정 후 팝업 닫기.
 //   지우기（Clear/×）의 "값 없음" 표현은 onValueChange（""） 관례（radio-group의
-//   "" 기본값과 정합）를 쓴다.
+//   "" 기본값과 정합）를 쓴다. ComboboxValue도 빈 문자열을 미선택으로 판정해
+//   플레이스홀더를 렌더한다（value != null && value !== ""）.
 // - 선택값 표시: 팝업이 닫히면 브리지 Portal이 children을 언마운트해（webnative
 //   동일 계약） 항목이 사라지므로, 라벨 레지스트리는 항목 언마운트 시 삭제하지
 //   않는다（한 번 열린 목록의 value→label은 유지 — 목록이 동적으로 바뀌면 stale
@@ -31,9 +32,11 @@
 //   넣는 조합으로, 팝업 폭은 w-72 고정（원본 w-（--anchor-width） 대체）.
 // - Chips 계열: 다중 선택 칩. ChipRemove는 원본 export 목록에 없어 내부 구현
 //   （× Pressable）하며 ComboboxChip의 showRemove로 노출한다.
-// - 아이콘: CheckIcon ✓ChevronDownIcon ▾XIcon × 유니코드 글리프로 대체
-//   （checkboxdropdown-menu 관행 — 새 의존성 금지）.
-// - 클래스 근사: ring-1 ring-foreground/10 유지（attachment 선례）,
+// - 아이콘: CheckIcon·ChevronDownIcon·XIcon — 브리지 SVG 아이콘 프리미티브
+//   （@unikit-bridge/ui/primitives）를 사용한다（dropdown-menu 관행）.
+// - 클래스 근사: 팝업 테두리는 원본（shadcn-ref/ui/combobox.tsx:119）의
+//   ring-1 ring-foreground/10에서 border border-border로 의도적 이탈 — 사유:
+//   select·dropdown·popover와 내부 형제 일관성,
 //   max-h-［calc（--spacing（96））］→web:max-h-96, h-［calc（--spacing（5.5））］→h-5,
 //   focus-within:ring-［3px］→web:focus-within:ring-2（tabs 관행）, min-w-［］→
 //   표준 계단, 애니메이션CSS 변수 임의값dark:pointer-coarse: 토큰 제거,
@@ -325,7 +328,7 @@ const ComboboxValue = forwardRef<BridgeViewRef, ComboboxValueProps>(
     const combobox = useComboboxContext("ComboboxValue");
     const selected = combobox.multiple
       ? combobox.values
-      : combobox.value != null
+      : combobox.value != null && combobox.value !== ""
         ? [combobox.value]
         : [];
     const joined =
@@ -417,7 +420,7 @@ const ComboboxInput = forwardRef<BridgeTextInputRef, ComboboxInputProps>(
       {showTrigger ? (
         <PopoverTrigger
           accessibilityLabel="목록 열기"
-          className={cn("mr-3", TRIGGER_RESET_CLASSES)}
+          className={cn("mr-2", TRIGGER_RESET_CLASSES)}
         >
           <ChevronDownIcon className="size-4 shrink-0 text-muted-foreground opacity-50" />
         </PopoverTrigger>
@@ -454,13 +457,15 @@ const ComboboxContent = forwardRef<BridgeViewRef, ComboboxContentProps>(
     ref,
   ) => (
     // PopoverContent 기본 카드（w-72p-4border）를 원본 팝업 토큰으로 오버라이드.
+    // 테두리는 popover 기본 border border-border를 통과시킨다 — select·dropdown
+    // 과 형제 일관성（원본 ring 대비 의도적 이탈 — 머리 주석 참조）.
     <PopoverContent
       ref={ref}
       side={side}
       align={align}
       sideOffset={sideOffset}
       className={cn(
-        "border-0 p-0 ring-1 ring-foreground/10 web:max-h-96 web:overflow-y-auto web:shadow-md",
+        "p-0 web:max-h-96 web:overflow-y-auto web:shadow-md",
         className,
       )}
       {...props}
@@ -573,7 +578,7 @@ const ComboboxItem = forwardRef<BridgePressableRef, ComboboxItemProps>(
         {/* 표시자 — 원본 ItemIndicator + CheckIcon */}
         <View
           aria-hidden
-          className="absolute right-2 size-4 items-center justify-center"
+          className="absolute right-2 size-3.5 items-center justify-center"
         >
           {isSelected ? (
             <CheckIcon className="size-3.5 text-foreground" />
@@ -649,7 +654,7 @@ const ComboboxChip = forwardRef<BridgeViewRef, ComboboxChipProps>(
             className={TRIGGER_RESET_CLASSES}
             onPress={() => combobox.removeValue(value)}
           >
-            <XIcon className="size-3 text-muted-foreground hover:text-foreground" />
+            <XIcon className="size-3.5 text-muted-foreground hover:text-foreground" />
           </Pressable>
         ) : null}
       </View>

@@ -19,8 +19,8 @@
 //   변환 불가 키（IME 조합 등）는 발화되지 않고 preventDefault가 no-op다 —
 //   터치 선택（onPress → onSelect）이 네이티브 기본 경로.
 // - 선택 항목 자동 스크롤（cmdk scrollIntoView）은 항목 측정 계약이 없어 미지원.
-// - SearchIcon（lucide） 제거 — ⌕ 글리프 Text（새 의존성 금지 관행, checkbox
-//   pagination과 동일）.
+// - SearchIcon — 브리지 SVG 아이콘 프리미티브（lucide 의존 제거, 새 의존성
+//   금지 관행）.
 // - 원본 data-selected/data-disabled［cmdk-group-heading］ 그룹 셀렉터 클래스는
 //   네이티브에 data 속성이 없어 조건부 클래스heading Text 직접 지정으로 전개.
 // - 그룹 숨김: 소속 항목이 전부 비매칭이면 그룹 컨테이너에 hidden 클래스 —

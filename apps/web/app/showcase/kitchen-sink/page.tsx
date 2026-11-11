@@ -410,7 +410,7 @@ function FormControlsSection() {
         {/* Toggle + ToggleGroup(single) */}
         <View className="flex flex-row flex-wrap items-center gap-3">
           <Toggle defaultPressed accessibilityLabel="즐겨찾기">
-            ★ 즐겨찾기
+            <Star className="size-4" />
           </Toggle>
           <ToggleGroup type="single" defaultValue="list">
             <ToggleGroupItem value="list">목록</ToggleGroupItem>
@@ -545,7 +545,7 @@ function FeedbackSection() {
         <Empty>
           <EmptyHeader>
             <EmptyMedia variant="icon">
-              <Inbox className="size-7 text-muted-foreground" />
+              <Inbox className="size-6 text-muted-foreground" />
             </EmptyMedia>
             <EmptyTitle>아직 항목이 없어요</EmptyTitle>
             <EmptyDescription>

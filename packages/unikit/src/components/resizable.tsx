@@ -194,7 +194,20 @@ export type ResizablePanelProps = ViewProps & {
 };
 
 const ResizablePanel = forwardRef<BridgeViewRef, ResizablePanelProps>(
-  ({ index = -1, className, style, ...props }, ref) => {
+  (
+    {
+      // 제약 prop은 그룹이 children 순회 시 읽는다 — Panel 본체는 소비하지
+      // 않으므로 구조분해로 버려 View(DOM)에 전개되지 않게 한다.
+      defaultSize: _defaultSize,
+      minSize: _minSize,
+      maxSize: _maxSize,
+      index = -1,
+      className,
+      style,
+      ...props
+    },
+    ref,
+  ) => {
     const ctx = useResizableContext("ResizablePanel");
     const size = index >= 0 ? (ctx.sizes[index] ?? null) : null;
     // 마지막 패널（null）은 잔여 폭 차지 — 나머지는 동적 basis %로 고정.

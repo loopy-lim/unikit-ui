@@ -25,8 +25,8 @@
 //   → min-w-48（표준 계단 근사）. CheckboxItem rounded-xs→dropdown rounded-sm
 //   근사 등 사소한 토큰 차이는 승계（동일 역할시각 차이 미미）.
 // - MenubarPortal은 API 호환 투명 래퍼 — 포털은 AnchoredOverlay 골격이 대체.
-// - 아이콘: CheckIcon ✓CircleIcon 점ChevronRightIcon › — 소비하는
-//   dropdown-menu가 이미 같은 글리프 관행으로 처리한다.
+// - 아이콘: CheckIcon·ChevronRightIcon은 브리지 SVG 아이콘, CircleIcon은 점 View —
+//   소비하는 dropdown-menu가 브리지 SVG 아이콘 관행으로 처리한다.
 // - 접근성: 루트 role="menubar"（브리지 BridgeRole 카탈로그에 있음 — RN은 이
 //   role을 무시하고 웹 스크린리더만 이득, bridge/types.ts 문서화 방침）.
 //   트리거 aria-expandedaria-controls콘텐츠 role="menu"항목 menuitem

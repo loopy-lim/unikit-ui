@@ -14,9 +14,9 @@
 //   방식이 터치에서도 동일하게 동작한다. Sub 열림 상태는 Sub 내부 state（비제어）
 //   로만 관리（원본의 open/onOpenChange 제어 변형 미지원）. ESC는 서브루트가 동시에
 //   닫힌다（useDismiss가 document 단위라 개별 소멸 불가 — 근사）.
-// - 아이콘: lucide 금지 → checkbox.tsxradio-group.tsx 관행에 따라 CheckIcon은 ✓
-//   글리프 Text, CircleIcon은 점 View（size-2 rounded-full）, ChevronRightIcon은 ›
-//   글리프 Text로 대체.
+// - 아이콘: CheckIcon·ChevronRightIcon — 브리지 SVG 아이콘 프리미티브
+//   （checkbox.tsxradio-group.tsx 관행, lucide 의존 제거）. CircleIcon은 점 View
+//   （size-2 rounded-full）로 근사.
 // - 트리거: radix asChild 미지원 — 트리거 자체가 브리지 Pressable（웹 <button>）이라
 //   UA 기본 버튼 스타일만 리셋하고 외관은 사용처 className에 맡긴다（Button 등
 //   컴포넌트를 자식으로 넣으면 웹에서 button 중첩이 되니 문자열/텍스트 계열 권장）.

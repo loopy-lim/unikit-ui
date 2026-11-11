@@ -153,6 +153,9 @@ Text.displayName = "Text";
 // onKeyDown은 표준 DOM 속성이라 rest 스프레드로 그대로 전달된다.
 // （onKeyDown 계약 BridgeKeyEvent은 DOM KeyboardEvent의 구조적 상위 타입 —
 //  핸들러가 keypreventDefault만 읽으므로 호환된다.）
+// 기본 클래스 `flex flex-col text-left`: RN View 계열의 기본 display:flex·
+// column을 재현하고(위 View와 동일 규칙), <button> 브라우저 기본
+// text-align:center를 RN 시작 정렬로 되돌린다. 호출자 클래스가 이긴다.
 // ---------------------------------------------------------------------------
 const Pressable = forwardRef<BridgePressableRef, PressableProps>(
   (
@@ -178,7 +181,7 @@ const Pressable = forwardRef<BridgePressableRef, PressableProps>(
       type="button"
       id={nativeID}
       data-testid={testID}
-      className={className}
+      className={cn("flex flex-col text-left", className)}
       style={style as React.CSSProperties}
       onClick={onPress}
       disabled={disabled}

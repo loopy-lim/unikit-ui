@@ -66,7 +66,7 @@ export const comboboxDemo: ShowcaseDemo = {
     const [value, setValue] = useState("");
     return (
       <Combobox value={value} onValueChange={setValue}>
-        <ComboboxTrigger className={cn(outlineTriggerClass, "w-40 justify-between")}>
+        <ComboboxTrigger className={cn(outlineTriggerClass, "h-9 w-40 justify-between")}>
           <ComboboxValue placeholder="과일" />
         </ComboboxTrigger>
         <ComboboxContent>

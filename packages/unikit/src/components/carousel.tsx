@@ -22,8 +22,9 @@
 //   ViewProps에 onKeyDown 계약이 없어 캐스팅 전개（drawer dragHandlers 관행）로
 //   웹 div에만 도달시키고 네이티브에서는 no-op다. ArrowUp/Down（세로）Home/End
 //   등은 미지원.
-// - lucide ArrowLeft/ArrowRight → ←/→ 글리프（수평）, 세로 orientation은 원본의
-//   rotate-90 토큰 대신 ↑/↓ 글리프 교체로 근사（텍스트 회전은 플랫폼 편차）.
+// - 아이콘: ArrowLeftIcon·ArrowRightIcon·ArrowUpIcon·ArrowDownIcon — 브리지 SVG
+//   아이콘 프리미티브（lucide 의존 제거）. 세로 orientation은 원본의 rotate-90
+//   토큰 대신 위/아래 아이콘 교체로 근사（텍스트 회전은 플랫폼 편차）.
 //   sr-only 라벨은 accessibilityLabel로 대체（dialogsheet 관행）. 원본
 //   role="region"aria-roledescription（carousel/slide）은 BridgeRole에 해당
 //   역할이 없어 accessibilityLabel（"carousel"/"slide"）로만 근사한다.

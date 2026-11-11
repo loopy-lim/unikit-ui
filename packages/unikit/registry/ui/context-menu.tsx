@@ -20,9 +20,9 @@
 //   근사가 아님）. 복잡도 판단 — SubTrigger 눌림으로 열고 닫는다（hover 열기는
 //   브리지 계약 밖）, Sub 열림은 비제어 내부 state, ESC는 서브루트가 동시에
 //   닫힌다（document 단위 useDismiss — 근사）.
-// - 아이콘: lucide 금지 → CheckIcon ✓ 글리프 Text, CircleIcon 점 View（size-2
-//   rounded-full）, ChevronRightIcon › 글리프 Text（checkboxradio-groupaccordion
-//   관행）.
+// - 아이콘: CheckIcon·ChevronRightIcon — 브리지 SVG 아이콘 프리미티브
+//   （checkboxradio-groupaccordion 관행, lucide 의존 제거）. CircleIcon은 점 View
+//   （size-2 rounded-full）로 근사.
 // - 항목 onSelect는 무인자 콜백으로 단순화（preventDefault 닫기 방지 미지원）,
 //   선택 시 항상 메뉴가 닫힌다.
 // - 미지원（로드맵）: 등장/퇴장 애니메이션, 화살표키타입어헤드루프 탐색,

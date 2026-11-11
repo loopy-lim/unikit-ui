@@ -94,7 +94,7 @@ function ComboboxDemo() {
   return (
     <View className="flex flex-row flex-wrap items-center gap-3">
       <Combobox value={fruit} onValueChange={setFruit}>
-        <ComboboxTrigger className={cn(outlineTriggerClass, "w-44 justify-between")}>
+        <ComboboxTrigger className={cn(outlineTriggerClass, "h-9 w-44 justify-between")}>
           <ComboboxValue placeholder="과일 선택" />
         </ComboboxTrigger>
         <ComboboxContent>

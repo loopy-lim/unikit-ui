@@ -36,6 +36,7 @@ import {
   Spinner,
 } from "@unikit-bridge/ui";
 import { Text, View } from "@unikit-bridge/ui/primitives";
+import { ArrowDown } from "lucide-react";
 
 import { DemoLabel, Hint, Section } from "./section";
 
@@ -147,7 +148,7 @@ export function MessageUISection() {
         </Marker>
         <Marker variant="border">
           <MarkerIcon>
-            <Text className="font-sans text-xs text-muted-foreground">↓</Text>
+            <ArrowDown size={12} className="text-muted-foreground" />
           </MarkerIcon>
           <MarkerContent>여기까지 읽었어요</MarkerContent>
         </Marker>

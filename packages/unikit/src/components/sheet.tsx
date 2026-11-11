@@ -11,8 +11,8 @@
 //   （높이 h-full폭 w-3/4 sm:max-w-sm테두리 border-l/r/t/b）만 유지한다.
 // - 등장/퇴장 애니메이션（slide-in/outtransitionease-in-outduration）은
 //   data-［state］ 의존이라 소실 — 마운트/언마운트 즉시 전환（로드맵）.
-// - XIcon → ✕ 글리프 Text, sr-only "Close"는 accessibilityLabel로 대체
-//   （dialog 포팅과 동일）.
+// - XIcon — 브리지 SVG 아이콘 프리미티브（lucide 의존 제거）. sr-only "Close"는
+//   accessibilityLabel로 대체（dialog 포팅과 동일）.
 // - 트리거닫기는 asChild 대신 Pressable 직렬화（문자열 children → 내부 Text）.
 // - 접근성 연결（dialog 포팅과 동일）: role="dialog"aria-modal은 ModalOverlay,
 //   트리거 aria-expandedaria-controls ↔ 카드 nativeID（useId 토대）, 카드
