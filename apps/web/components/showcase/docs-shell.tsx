@@ -25,7 +25,7 @@ export function DocsShell({ children }: { children: ReactNode }) {
 
   return (
     <DocsProviders>
-      <View className="min-h-screen bg-background">
+      <View className="site-docs-canvas">
         <DocsHeader onToggleNav={() => setNavOpen((v) => !v)} navOpen={navOpen} />
         <View className="mx-auto flex w-full max-w-7xl flex-col px-4 sm:px-6 md:flex-row lg:px-8">
           <DocsSidebar open={navOpen} onNavigate={() => setNavOpen(false)} />

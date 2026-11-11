@@ -1,8 +1,8 @@
 /* UniKit 소개 사이트 — generate:design 마커 밖. 마케팅 전용 표면. */
 
 :root {
-  --site-grid: rgba(24, 24, 27, 0.045);
-  --site-wash: rgba(24, 24, 27, 0.035);
+  --site-grid: rgba(24, 24, 27, 0.065);
+  --site-wash: rgba(24, 24, 27, 0.05);
   --site-grid-size: 56px;
 
   /*
@@ -19,8 +19,8 @@
 }
 
 .dark {
-  --site-grid: rgba(250, 250, 250, 0.04);
-  --site-wash: rgba(250, 250, 250, 0.03);
+  --site-grid: rgba(250, 250, 250, 0.055);
+  --site-wash: rgba(250, 250, 250, 0.04);
 
   /* 차트 다크 팔레트 — shadcn 표준 값(위 라이트 블록 주석 참조) */
   --chart-1: oklch(0.488 0.243 264.376);
@@ -44,10 +44,33 @@
   font-family: var(--font-site-mono), ui-monospace, monospace;
 }
 
-.site-canvas {
+/* 랜딩(.site-canvas)·쇼케이스 문서(.site-docs-canvas) 공통 캔버스 배경.
+ * 이전 배경 디자인 복원(8d4c8e0에서 제거 — 2026-11-11 재도입, 문서 셸로 확장).
+ * 격자만 유지. 섹션 border와 겹치지 않게 셀을 키우고 끝줄에만 그림(이중선 방지).
+ * 카드·프리뷰 스테이지는 불투명 배경이라 콘텐츠 가독성을 해치지 않는다. */
+.site-canvas,
+.site-docs-canvas {
   position: relative;
+  isolation: isolate;
   min-height: 100dvh;
   background-color: hsl(var(--background));
+  background-image:
+    radial-gradient(ellipse 90% 50% at 50% -8%, var(--site-wash), transparent 68%),
+    linear-gradient(
+      to right,
+      transparent calc(var(--site-grid-size) - 1px),
+      var(--site-grid) calc(var(--site-grid-size) - 1px),
+      var(--site-grid) var(--site-grid-size)
+    ),
+    linear-gradient(
+      to bottom,
+      transparent calc(var(--site-grid-size) - 1px),
+      var(--site-grid) calc(var(--site-grid-size) - 1px),
+      var(--site-grid) var(--site-grid-size)
+    );
+  background-size: auto, var(--site-grid-size) var(--site-grid-size),
+    var(--site-grid-size) var(--site-grid-size);
+  background-position: 0 0, 0 0, 0 0;
 }
 
 .site-fade-up {
