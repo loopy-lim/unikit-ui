@@ -1,8 +1,6 @@
 "use client";
 /**
- * 쇼케이스 문서 셸 — 여유 있는 패딩·사이드바 구분·Preview 스테이지.
- * 사이클 73: 모바일(<md) 목차를 인라인 펼침 대신 패키지 Sheet 좌측 드로어로
- * 개편(Astryx 모바일 벤치마크)하고 헤더에 GitHub 링크를 상시 노출.
+ * 쇼케이스 문서 셸 — 헤더·목차(md+ 사이드바 / 모바일 드로어)·Preview 스테이지.
  */
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -37,7 +35,6 @@ export function DocsShell({ children }: { children: ReactNode }) {
     <DocsProviders>
       <View className="site-docs-canvas">
         <DocsHeader>
-          {/* 모바일 목차 드로어 — 트리거(햄버거)는 헤더 행 안에 배치 */}
           <DocsMobileNav open={navOpen} onOpenChange={setNavOpen} />
         </DocsHeader>
         <View className="mx-auto flex w-full max-w-7xl flex-col px-4 sm:px-6 md:flex-row lg:px-8">
@@ -126,15 +123,13 @@ function DocsHeader({ children }: { children: ReactNode }) {
   );
 }
 
-/** 목차 링크 클래스 — 활성/비활성 (사이드바·드로어 공용) */
 function docsNavLinkClass(active: boolean) {
   return active
     ? "site-focusable site-nav-link block rounded-md bg-muted px-3 py-2 font-sans text-sm font-medium text-foreground"
     : "site-focusable site-nav-link block rounded-md px-3 py-2 font-sans text-sm text-muted-foreground hover:bg-muted/50 hover:text-foreground";
 }
 
-/** 카탈로그 목차 본문 — 사이드바(md+)와 모바일 드로어가 같은 마크업을 공유.
- *  드로어는 헤더 주요 링크 «Components»와 같은 행선지인 «전체 목록»을 숨긴다(중복 방지). */
+/** 카탈로그 목차 본문 — 사이드바(md+)·드로어 공용 마크업 */
 function DocsNavGroups({
   pathname,
   onNavigate,
@@ -194,10 +189,9 @@ function DocsSidebar() {
   );
 }
 
-/** 모바일(<md) 목차 드로어 — 패키지 Sheet(side="left"). 포털·백드롭·ESC·
- *  스크롤 잠금·포커스 복귀는 ModalOverlay가 제공한다.
- *  구조: 제목 행(고정) + 목록(내부 스크롤) — 카드 전체가 아닌 목록만 스크롤해야
- *  내장 X 닫기 버튼(카드 우상단 absolute)이 스크롤에 함께 따라가지 않는다. */
+/** 모바일(<md) 목차 드로어 — 패키지 Sheet(side="left"). 포털·백드롭·ESC·스크롤
+ *  잠금·포커스 복귀는 ModalOverlay가 제공. 제목 행은 고정하고 목록만 스크롤해야
+ *  내장 X 닫기 버튼(카드 우상단 absolute)이 스크롤에 따라가지 않는다. */
 function DocsMobileNav({
   open,
   onOpenChange,
@@ -207,7 +201,7 @@ function DocsMobileNav({
 }) {
   const pathname = usePathname();
 
-  // 드로어를 열면 활성 링크(현재 문서)가 목차 어디에 있든 보이게 끌어온다.
+  // 열림 시 현재 문서 링크를 목록 가운데로 끌어온다.
   useEffect(() => {
     if (!open) return;
     const raf = window.requestAnimationFrame(() => {
@@ -219,13 +213,11 @@ function DocsMobileNav({
   }, [open, pathname]);
 
   return (
-    // Sheet 루트는 항상 View 래퍼를 렌더한다 — md+에서 트리거만 숨기면 빈
-    // 플렉스 아이템이 남아 헤더 gap이 한 칸 더 적용된다(로고 16px 우측 밀림).
-    // 래퍼째 md:hidden하면 아이템 자체가 사라진다. 본문은 포털(body)이라 영향 없음.
+    // Sheet 루트는 항상 View 래퍼를 렌더 — 트리거만 숨기면 빈 플렉스 아이템이
+    // 남아 간격이 밀린다. 래퍼째 md:hidden(드로어 본문은 포털이라 영향 없음).
     <Sheet open={open} onOpenChange={onOpenChange} className="md:hidden">
       <SheetTrigger
-        /* 제어형이라 트리거는 열기만 가능 — 라벨은 상시 "목차 열기"로 고정하고
-           상태는 aria-expanded가 전달한다. */
+        /* 제어형 — 트리거는 열기만 가능. 라벨은 고정, 상태는 aria-expanded */
         accessibilityLabel="목차 열기"
         className="site-focusable flex size-9 shrink-0 items-center justify-center rounded-md text-foreground web:hover:bg-muted md:hidden"
       >
@@ -348,7 +340,6 @@ export function CodeBlock({
       setCopied(true);
       window.setTimeout(() => setCopied(false), 1500);
     } catch {
-      // 클립보드 거부(권한·비보안 컨텍스트) — 실패도 버튼 문구로 알린다.
       setCopied(false);
       setFailed(true);
       window.setTimeout(() => setFailed(false), 1500);

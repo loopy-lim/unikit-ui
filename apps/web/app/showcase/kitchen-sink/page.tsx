@@ -1,5 +1,5 @@
 "use client";
-// Next.js 쇼케이스 페이지 — /showcase (사이클 50: 랜딩 `/`와 분리).
+// Next.js 쇼케이스 페이지 — /showcase.
 // Expo 쇼케이스(apps/expo/app/index.tsx)와 같은 섹션 순서·문구·클래스·간격을 렌더링한다.
 //
 // - "use client" 유지(테마 상태·이벤트 사용 — DOM 브리지 렌더링).
@@ -100,9 +100,7 @@ import {
   ToggleGroupItem,
 } from "@unikit-bridge/ui";
 
-// 사이클 40(T-4.6) 신규 이식 33종 대표 데모 섹션 — 페이지가 길어져 섹션
-// 컴포넌트로 분리(components/showcase/). 아래 기존 8개 섹션은 사이클 50 산출물
-// 그대로 보존하고, 신규 섹션을 뒤에 이어 붙인다.
+// 대표 데모 섹션 — 페이지가 길어져 components/showcase/ 섹션 컴포넌트로 분리.
 import { ChartSection } from "../../../components/showcase/chart-section";
 import {
   CommandNavigationSection,
@@ -146,7 +144,7 @@ export default function KitchenSinkPage() {
   );
 }
 
-/** 헤더: 타이틀 블록 — 테마 토글은 문서 셸 헤더가 담당(사이클 73 이원화 제거) */
+/** 헤더: 타이틀 블록 — 테마 토글은 문서 셸 헤더가 담당 */
 function Header() {
   return (
     <View className="mb-8">

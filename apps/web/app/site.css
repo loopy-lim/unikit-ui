@@ -6,7 +6,7 @@
   --site-grid-size: 56px;
 
   /*
-   * shadcn 차트 표준 팔레트(chart-1..5, oklch) — chart 컴포넌트(사이클 40)가
+   * shadcn 차트 표준 팔레트(chart-1..5, oklch) — chart 컴포넌트가
    * config 색 "var(--chart-N)"으로 소비한다. 값의 소유자는 소비자 앱(차트 컴포넌트
    * 머리주석 방침)이며 globals.css의 토큰 블록은 generate:design 관리 영역
    * (수동 수정 금지 마커)이라 여기 마케팅 표면에 정의한다.
@@ -248,7 +248,7 @@
   outline-offset: 3px;
 }
 
-/* 가로 스크롤 칩 바(사이클 73) — 스크롤 가능 신호는 잘린 칩 자체가 담당 */
+/* 가로 스크롤 유틸 — 스크롤 가능 신호는 잘린 칩 자체가 담당 */
 .site-scrollbar-none {
   scrollbar-width: none;
   -ms-overflow-style: none;

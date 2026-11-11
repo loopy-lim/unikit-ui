@@ -15,13 +15,10 @@ import {
 } from "../../components/showcase/catalog";
 import { demos } from "../../components/showcase/demos";
 
-/** 썸네일 스트립(h-44 sm:h-40, p-4)에 들어가기 큰 데모 — 축소 배율.
- *  값은 모바일(1열 넓은 카드) 기준 + sm: 오버라이드(2~3열 좁은 카드).
- *  사이클 73: 모바일 배율 신설 — 이전 단일 값은 데스크톱 카드 폭 기준이라
- *  모바일 카드(382px)에서 데모가 지나치게 작게 렌더됐다. */
+/** 썸네일 스트립(h-44 sm:h-40)보다 큰 데모 — 축소 배율.
+ *  모바일(1열 넓은 카드) 기준값 + sm:(2~3열 좁은 카드) 오버라이드.
+ *  세로는 calendar·card가 스트립 높이(176/160)를 넘지 않도록 맞춘 값. */
 const THUMB_SCALE: Record<string, string> = {
-  // calendar 248×328·card 높이 약 307(자연) — 0.55/0.6은 세로가 스트립(h-44=176)을
-  // 4~8px 넘어 잘렸다(추가 평가 시각 렌즈). 176·160 안쪽으로 내린 값.
   calendar: "scale-[0.53] sm:scale-[0.48]",
   card: "scale-[0.57] sm:scale-[0.4]",
   chart: "scale-[0.8] sm:scale-[0.6]",
@@ -52,9 +49,9 @@ export default function ShowcaseIndexPage() {
         </View>
       </View>
 
-      {/* 카테고리 칩 바 — 가로 스크롤(스크롤바 숨김), 헤더 바로 아래 고정.
-          루트 블록 바로 아래에 둬야 페이지 끝까지 붙어 다닌다(사이클 73).
-          <md 풀블리드(음수 마진), md+는 본문 열 시작에 정렬(사이드바 경계 관통 방지). */}
+      {/* 카테고리 칩 바 — 가로 스크롤, 헤더 바로 아래 sticky. 최상위 블록 바로
+          아래에 둬야 페이지 끝까지 따라다닌다. <md 풀블리드(음수 마진),
+          md+는 본문 열 시작에 정렬. */}
       <nav
         aria-label="컴포넌트 카테고리"
         className="sticky top-16 z-30 -mx-4 border-b border-border/60 bg-background/90 px-4 py-2 backdrop-blur supports-[backdrop-filter]:bg-background/75 sm:-mx-6 sm:px-6 md:mx-0 md:px-0"
@@ -123,8 +120,6 @@ function CatalogCard({ item }: { item: CatalogItem }) {
           </Text>
           <Text
             aria-hidden
-            /* 터치 기기엔 hover가 없어 화살표가 아예 안 보였다 — <md 상시 노출,
-               md+는 기존 hover 표시 유지. */
             className="font-sans text-sm text-muted-foreground opacity-100 transition-opacity md:opacity-0 md:group-hover:opacity-100"
           >
             →

@@ -1,7 +1,6 @@
 import Link from "next/link";
 
-/** /showcase/[name]에서 catalog에 없는 이름으로 notFound()가 발생했을 때
- *  보여지는 404 화면 — 셸 레이아웃(showcase/layout.tsx) 안에 렌더된다. */
+/** /showcase/[name] 404 — catalog에 없는 이름(notFound())일 때 셸 레이아웃 안에 렌더 */
 export default function NotFound() {
   return (
     <div className="flex min-h-[50dvh] flex-col items-start justify-center gap-3 py-16">
