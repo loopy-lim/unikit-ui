@@ -52,6 +52,8 @@ Add the token mapping + values to your global CSS (or install them via the shadc
 
 On web, put this in the app that compiles your Tailwind CSS (e.g. `app/globals.css` in Next.js, added to `transpilePackages: ["@unikit-bridge/ui"]`). On native, put it in the `global.css` referenced by uniwind's `cssEntryFile`.
 
+Web overlay entry animations (`unikit-backdrop-in`, `unikit-dialog-in`, sheet/popover variants — 7 classes, 6 keyframes, `prefers-reduced-motion` guard) are distributed as a registry style item: `bunx shadcn add <registry>/r/animations.json` merges them into the same global CSS, and `dialog`, `sheet`, `popover`, `drawer` and `alert-dialog` pull it in automatically.
+
 ## Usage
 
 Wrap your app in the theme provider, then use the components — identical JSX on both platforms:
