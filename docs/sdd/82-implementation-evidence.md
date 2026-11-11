@@ -71,7 +71,7 @@ getBoundingClientRect 실측(px, 폭×높이). 모바일 카드 폭 382 / 데스
 
 ### AC-7 PR 생성 — 충족
 
-브랜치 `cycle-73-web-mobile-reorg` 커밋 2건(ec13dad 코드 4파일·9a4b965 문서 3건) → push → main 대상 PR: https://github.com/loopy-lim/UniKit/pull/3. 커밋에서 사용자 WIP 6건(landing.tsx·demo 디렉터리 4건·expo 변경) 제외 확인.
+브랜치 `cycle-73-web-mobile-reorg` → push → main 대상 PR: https://github.com/loopy-lim/UniKit/pull/3. 커밋에서 사용자 WIP 6건(landing.tsx·demo 디렉터리 4건·expo 변경) 제외 확인. 최초 기록은 «커밋 2건(ec13dad·9a4b965)»으로 적었으나 정정(추가 평가 CR-F2) — 브랜치 기점이 로컬 main이고 사이클 72 커밋 3건(9bfca8a·ac1632c·7af9a2b)이 origin/main에 아직 푸시되지 않은 상태라 PR에는 사이클 73분 3건을 포함해 총 6커밋이 올라가 있다(스택 구조). 사이클 72분 병합 순서는 사용자 결정 사항.
 
 ## 관문 판정 원장
 
@@ -96,6 +96,46 @@ AC-1~5 전부 실측 충족 판정. 주요 재검증: 닫힘 4경로(백드롭 x
 - **F-4(P3) 설계 문서 scroll-mt 부정확** → 81호 T-3 문구 정정(`scroll-mt-32` 상향 사유 기록).
 - **F-5(P3) 리사이즈 엣지 케이스** → 미수정·한계로 수용: 모바일에서 드로어 연 채 ≥768px로 리사이즈하면 트리거 없는 드로어가 남으나 ESC·X·백드롭·링크 4경로로 닫을 수 있어 기능 손실 없음(리뷰어 판정 동일). JS 미디어쿼리 훅 추가는 이 규모에서 과잉.
 
+## 추가 평가(2026-11-11, PR #3 머지 전 재평가)
+
+사용자 요청으로 독립 에이전트 4개(Staff Code Reviewer /review-changes + UX/Design Auditor 3렌즈: 과업 흐름·접근성·시각 위계)를 병렬 스폰해 PR 변경분을 재평가했다. 결과: 앱측 수정 11건 반영, 패키지 소유 관찰 3건 기록, 지적 1건 기각. 수정 후 전 항목 실화면 재검증 + 격리 워크트리 정적 검증 재실행.
+
+### 수정 11건(전부 apps/web, 반영 후 실측)
+
+1. **드로어 스크롤 구조(CR-F1)** — `overflow-y-auto`를 SheetContent에서 안쪽 목록 View로 이동, 제목 행은 `shrink-0` 고정 헤더로. 실측: 목록 scrollHeight 2946/client 843로 내부 스크롤, 바닥 스크롴 시 제목 top 0·내장 X top 16 유지(스크롤에 따라가지 않음), 마지막 링크 Attachment 노출.
+2. **calendar 배율(시각 렌즈)** — `scale-[0.55] sm:scale-[0.5]` → `scale-[0.53] sm:scale-[0.48]`. 414px 세로 174 ≤ 스트립 176(상 1·하 2 여백), sm 스트립 160 이내.
+3. **card 배율(시각 렌즈)** — `scale-[0.6]` → `scale-[0.57]`. 414px 세로 174 ≤ 176(카드 하단 버튼 행까지 온전).
+4. **md+ 로고 16px 우측 밀림(V-F3)** — 원인: Sheet 루트가 항상 View 래퍼를 렌더해 트리거(`md:hidden`)가 화면에서 숨겨진 뒤에도 빈 플렉스 아이템으로 남아 헤더 gap이 한 칸 더 적용됨. 래퍼에 `md:hidden` 부여로 해결. 실측: 768px 로고 x 24 = 사이드바 24(수정 전 40 대 24), 1024px 32 = 32(수정 전 48 대 32).
+5. **트리거 라벨 고정** — 제어형이라 트리거는 열기만 가능해 «목차 닫기»는 유령 라벨이었다. 상시 «목차 열기» + `aria-expanded`로 상태 전달(닫힘/열림 실측 false→true).
+6. **드로어 GitHub 앵커 클래스 중복(CR-F4)** — 인라인 클래스를 `docsNavLinkClass(false)`로 치환.
+7. **GitHub 링크 aria-label(A-F3)** — 헤더·드로어 2곳에 «GitHub (새 창에서 열림)» 추가(접근성 트리에 새 창 힌트 노출 확인).
+8. **showcase 404(TF-F3)** — `app/showcase/not-found.tsx` 신규. catalog에 없는 이름(`/showcase/does-not-exist`)에서 셸 레이아웃 안에 «문서를 찾을 수 없어요» + «← 전체 목록»(/showcase) 링크 렌더 실측. 이전은 Next 기본 404가 셸 밖에 떴다.
+9. **복사 실패 피드백(TF-F4)** — CodeBlock `catch`가 조용히 실패했던 것을 «복사 실패» 버튼 문구(1.5초 후 복귀)로 변경. clipboard.writeText 거부 주입 실측: «복사»→«복사 실패»→«복사».
+10. **드로어 활성 링크 스크롤** — 열림 시 활성(현재 문서) 링크를 `scrollIntoView`로 끌어오기. `/showcase/chart`에서 열면 «Chart» 링크 top 582(뷰포트 896, 수동 스크롤 없이) 노출 실측.
+11. **카드 화살표 터치 가시(시각 렌즈)** — hover 전용 `opacity-0 group-hover:opacity-100`을 <md 상시 노출(`opacity-100 md:opacity-0 md:group-hover:opacity-100`)로.
+
+### 패키지 소유 관찰 3건(범위 밖 기록 — 이번 사이클 apps/web 무변경·shadcn 원본 방침 유지)
+
+- Sheet 내장 X 닫기 버튼 히트 에어리어 16×16(size-4 아이콘·패딩 없음) — 터치 타깃 권장(≥24) 미달. 패키지 변경 과제.
+- 같은 버튼 `accessibilityLabel="Close"` 영문 — 기존 잔여 관찰과 동일 항목(현지화).
+- 테마 선택 미영속 — 새로고침 시 기본으로 복귀. 패키지 Provider 과제(localStorage 등).
+
+### 기각 1건
+
+- 칩 바 활성 추적(스크롤스파이) — 81호에 «활성 추적 없음(단순 앵커 — 제외 범위)»로 명시된 설계 제외 항목. 근거 없는 확장 요구로 기각.
+
+### 접근성 렌즈 정상 관찰(참고 기록)
+
+- 썸네일 61카드 inert 적용 — 내부 포커서블 107개가 탭 순서에서 배제(칩 → 카드 링크 직결).
+- 실측 타깃 크기(414px): 햄버거 36×36, 칩 높이 34, 드로어 링크 36×286, 드로어 폭 311.
+- 확대: 320px(WCAG reflow 기준) 문서 가로 넘침 없음·헤더 1행(65px) 유지. 240px(200% 근사, 도구 최소폭)에서 드로어 폭 180·링크 잘림 0건·제목/X 겹침 없음.
+
+### 수정 후 정적 검증(격리 시행)
+
+사용자 WIP `apps/web/app/demo/layout.tsx`를 병행 편집 중이라 공유 트리 typecheck가 해당 파일 오류로 오염됨 — HEAD+변경분만 담은 격리 워크트리에서 재검증: `bun run typecheck` 3패키지 exit 0, `cd apps/web && bun run build` 67페이지 성공, `bun run audit:design` 8/8 PASS.
+
 ## 잔여 관찰(로드맵 성격, 차단 아님)
 
 - Sheet 내장 X 닫기 버튼의 `aria-label="Close"`가 영문 — 패키지 기본값. 현지화는 패키지 변경 과제(이번 사이클 범위 밖, apps/web 무변경 전제 유지).
+- Sheet 내장 X 닫기 버튼 히트 에어리어 16×16 — 터치 타깃 권장 미달(추가 평가, 패키지 변경 과제).
+- 테마 선택 미영속(새로고침 시 복귀) — 패키지 Provider 과제(추가 평가).

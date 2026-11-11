@@ -20,8 +20,10 @@ import { demos } from "../../components/showcase/demos";
  *  사이클 73: 모바일 배율 신설 — 이전 단일 값은 데스크톱 카드 폭 기준이라
  *  모바일 카드(382px)에서 데모가 지나치게 작게 렌더됐다. */
 const THUMB_SCALE: Record<string, string> = {
-  calendar: "scale-[0.55] sm:scale-[0.5]",
-  card: "scale-[0.6] sm:scale-[0.4]",
+  // calendar 248×328·card 높이 약 307(자연) — 0.55/0.6은 세로가 스트립(h-44=176)을
+  // 4~8px 넘어 잘렸다(추가 평가 시각 렌즈). 176·160 안쪽으로 내린 값.
+  calendar: "scale-[0.53] sm:scale-[0.48]",
+  card: "scale-[0.57] sm:scale-[0.4]",
   chart: "scale-[0.8] sm:scale-[0.6]",
   command: "sm:scale-[0.9]",
   empty: "scale-[0.55] sm:scale-[0.45]",
@@ -121,7 +123,9 @@ function CatalogCard({ item }: { item: CatalogItem }) {
           </Text>
           <Text
             aria-hidden
-            className="font-sans text-sm text-muted-foreground opacity-0 transition-opacity group-hover:opacity-100"
+            /* 터치 기기엔 hover가 없어 화살표가 아예 안 보였다 — <md 상시 노출,
+               md+는 기존 hover 표시 유지. */
+            className="font-sans text-sm text-muted-foreground opacity-100 transition-opacity md:opacity-0 md:group-hover:opacity-100"
           >
             →
           </Text>

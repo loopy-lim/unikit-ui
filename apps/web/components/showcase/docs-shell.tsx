@@ -6,7 +6,7 @@
  */
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useState, type ReactNode } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import { Menu } from "lucide-react";
 import {
   Button,
@@ -105,6 +105,7 @@ function DocsHeader({ children }: { children: ReactNode }) {
         <View className="flex flex-row items-center gap-3 sm:gap-4">
           <a
             href="https://github.com/loopy-lim/UniKit"
+            aria-label="GitHub (새 창에서 열림)"
             className="site-focusable font-sans text-sm text-muted-foreground transition-colors hover:text-foreground"
             rel="noreferrer"
             target="_blank"
@@ -194,7 +195,9 @@ function DocsSidebar() {
 }
 
 /** 모바일(<md) 목차 드로어 — 패키지 Sheet(side="left"). 포털·백드롭·ESC·
- *  스크롤 잠금·포커스 복귀는 ModalOverlay가 제공한다. */
+ *  스크롤 잠금·포커스 복귀는 ModalOverlay가 제공한다.
+ *  구조: 제목 행(고정) + 목록(내부 스크롤) — 카드 전체가 아닌 목록만 스크롤해야
+ *  내장 X 닫기 버튼(카드 우상단 absolute)이 스크롤에 함께 따라가지 않는다. */
 function DocsMobileNav({
   open,
   onOpenChange,
@@ -204,19 +207,35 @@ function DocsMobileNav({
 }) {
   const pathname = usePathname();
 
+  // 드로어를 열면 활성 링크(현재 문서)가 목차 어디에 있든 보이게 끌어온다.
+  useEffect(() => {
+    if (!open) return;
+    const raf = window.requestAnimationFrame(() => {
+      document
+        .querySelector('div[role="dialog"] a.bg-muted')
+        ?.scrollIntoView({ block: "center" });
+    });
+    return () => window.cancelAnimationFrame(raf);
+  }, [open, pathname]);
+
   return (
-    <Sheet open={open} onOpenChange={onOpenChange}>
+    // Sheet 루트는 항상 View 래퍼를 렌더한다 — md+에서 트리거만 숨기면 빈
+    // 플렉스 아이템이 남아 헤더 gap이 한 칸 더 적용된다(로고 16px 우측 밀림).
+    // 래퍼째 md:hidden하면 아이템 자체가 사라진다. 본문은 포털(body)이라 영향 없음.
+    <Sheet open={open} onOpenChange={onOpenChange} className="md:hidden">
       <SheetTrigger
-        accessibilityLabel={open ? "목차 닫기" : "목차 열기"}
+        /* 제어형이라 트리거는 열기만 가능 — 라벨은 상시 "목차 열기"로 고정하고
+           상태는 aria-expanded가 전달한다. */
+        accessibilityLabel="목차 열기"
         className="site-focusable flex size-9 shrink-0 items-center justify-center rounded-md text-foreground web:hover:bg-muted md:hidden"
       >
         <Menu className="size-5" />
       </SheetTrigger>
-      <SheetContent side="left" className="gap-0 overflow-y-auto p-0">
-        <View className="border-b border-border px-4 py-3.5 pr-14">
+      <SheetContent side="left" className="gap-0 p-0">
+        <View className="shrink-0 border-b border-border px-4 py-3.5 pr-14">
           <SheetTitle className="text-base">목차</SheetTitle>
         </View>
-        <View className="flex flex-col gap-1 p-3">
+        <View className="flex flex-1 flex-col gap-1 overflow-y-auto p-3">
           {(
             [
               ["/", "소개"],
@@ -235,8 +254,9 @@ function DocsMobileNav({
           ))}
           <a
             href="https://github.com/loopy-lim/UniKit"
+            aria-label="GitHub (새 창에서 열림)"
             onClick={() => onOpenChange(false)}
-            className="site-focusable site-nav-link block rounded-md px-3 py-2 font-sans text-sm text-muted-foreground hover:bg-muted/50 hover:text-foreground"
+            className={docsNavLinkClass(false)}
             rel="noreferrer"
             target="_blank"
           >
@@ -319,14 +339,19 @@ export function CodeBlock({
   label?: string;
 }) {
   const [copied, setCopied] = useState(false);
+  const [failed, setFailed] = useState(false);
 
   async function copy() {
     try {
       await navigator.clipboard.writeText(code);
+      setFailed(false);
       setCopied(true);
       window.setTimeout(() => setCopied(false), 1500);
     } catch {
+      // 클립보드 거부(권한·비보안 컨텍스트) — 실패도 버튼 문구로 알린다.
       setCopied(false);
+      setFailed(true);
+      window.setTimeout(() => setFailed(false), 1500);
     }
   }
 
@@ -335,7 +360,7 @@ export function CodeBlock({
       <View className="flex flex-row items-center justify-between border-b border-border/80 px-4 py-2">
         <Text className="font-sans text-xs font-medium text-muted-foreground">{label}</Text>
         <Button variant="ghost" size="sm" onPress={copy}>
-          {copied ? "복사됨" : "복사"}
+          {failed ? "복사 실패" : copied ? "복사됨" : "복사"}
         </Button>
       </View>
       <pre className="site-mono overflow-x-auto bg-muted/30 p-4 sm:p-5 text-[13px] leading-6 text-foreground">
