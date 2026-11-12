@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" width="1024" height="1024">
+  <!-- Soft U tile. Wordmark/mark typeface: Syne (site --font-site-display). -->
+  <rect width="1024" height="1024" rx="220" ry="220" fill="#18181B"/>
+  <text x="512" y="560" text-anchor="middle" font-family="Syne, system-ui, sans-serif"
+        font-size="620" font-weight="700" fill="#FAFAFA">U</text>
+</svg>
