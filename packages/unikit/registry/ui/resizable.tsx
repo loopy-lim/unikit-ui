@@ -18,8 +18,8 @@
 //   리사이즈（화살표）는 포커서블 계약（tabIndex）이 없어 미지원 — 로드맵 항목.
 // - 원본 핸들의 after: 가상요소 히트 영역（웹 전용） 대신 핸들 자체를 w-1（수직
 //   h-1）로 잡고 시각 바（w-px）를 내부 View로 분리해 양 플랫폼 동일 히트 영역.
-// - GripVerticalIcon（lucide） 제거 — 점 2개 View로 근사（새 의존성 금지, checkbox
-//   ✓ 글리프 관행）. 수직 방향은 점을 가로로 늘어놓는다（원본 rotate-90 근사）.
+// - GripVerticalIcon은 브리지 primitives 경유（lucide）. 수직 방향（horizontal
+//   false）은 rotate-90로 원본과 같이 가로 그립으로 근사.
 import {
   Children,
   cloneElement,
@@ -35,6 +35,7 @@ import {
   type ReactNode,
 } from "react";
 import {
+  GripVerticalIcon,
   View,
   measureInWindow,
   useDrag,
@@ -43,7 +44,7 @@ import {
   type ViewProps,
 } from "@unikit-bridge/ui/primitives";
 
-import { cn } from "../lib/utils";
+import { cn } from "@/lib/utils";
 
 // 패널 기본 제약（%） — 원본 라이브러리 기본 minSize 10 준수.
 const DEFAULT_MIN_SIZE = 10;
@@ -271,14 +272,14 @@ const ResizableHandle = forwardRef<BridgeViewRef, ResizableHandleProps>(
         {withHandle && (
           <View
             aria-hidden
-            className={cn(
-              "z-10 flex h-4 w-3 items-center justify-center rounded-xs border border-border bg-border",
-              horizontal ? "flex-col" : "flex-row",
-            )}
+            className="z-10 flex h-4 w-3 items-center justify-center rounded-xs border border-border bg-border"
           >
-            {/* 그립 점 2개 — 원본 GripVerticalIcon（lucide） 근사 */}
-            <View className="size-0.5 rounded-full bg-muted-foreground" />
-            <View className="size-0.5 rounded-full bg-muted-foreground" />
+            <GripVerticalIcon
+              className={cn(
+                "size-2.5 text-muted-foreground",
+                !horizontal && "rotate-90",
+              )}
+            />
           </View>
         )}
       </View>

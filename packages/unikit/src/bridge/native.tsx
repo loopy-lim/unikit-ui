@@ -61,11 +61,29 @@ import {
 } from "react-native";
 import { Uniwind } from "uniwind";
 import {
-  Circle as SvgCircle,
-  Line as SvgLine,
-  Path as SvgPath,
-  Svg,
-} from "react-native-svg";
+  AlertCircleIcon as LucideAlertCircleIcon,
+  ArrowDownIcon as LucideArrowDownIcon,
+  ArrowLeftIcon as LucideArrowLeftIcon,
+  ArrowRightIcon as LucideArrowRightIcon,
+  ArrowUpIcon as LucideArrowUpIcon,
+  CheckCircle2Icon as LucideCheckCircle2Icon,
+  CheckIcon as LucideCheckIcon,
+  ChevronDownIcon as LucideChevronDownIcon,
+  ChevronLeftIcon as LucideChevronLeftIcon,
+  ChevronRightIcon as LucideChevronRightIcon,
+  ChevronUpIcon as LucideChevronUpIcon,
+  CircleIcon as LucideCircleIcon,
+  GripVerticalIcon as LucideGripVerticalIcon,
+  InfoIcon as LucideInfoIcon,
+  Loader2Icon as LucideLoader2Icon,
+  MinusIcon as LucideMinusIcon,
+  MoreHorizontalIcon as LucideMoreHorizontalIcon,
+  PanelLeftIcon as LucidePanelLeftIcon,
+  SearchIcon as LucideSearchIcon,
+  XCircleIcon as LucideXCircleIcon,
+  XIcon as LucideXIcon,
+  type LucideIcon,
+} from "lucide-react-native";
 
 import { cn } from "../lib/utils";
 import type {
@@ -723,8 +741,17 @@ const LoopPulse = ({ children, durationMs = 2000 }: LoopPulseProps) => {
   return <Animated.View style={{ opacity }}>{children}</Animated.View>;
 };
 
+// 구식 브리지(Old Architecture) 안드로이드에서만 실험 스위치를 켠다.
+// 새 아키텍처(Fabric)에서는 이 호출이 no-op인데 WARN 로그를 뿜어
+// LogBox 배너가 앱 하단을 가리기 때문이다. Fabric 런타임 판별은
+// Fabric 환경에서만 존재하는 전역 UI 매니저 객체로 한다.
+const isNewArchitecture =
+  (globalThis as { nativeFabricUIManager?: unknown }).nativeFabricUIManager !=
+  null;
+
 if (
   Platform.OS === "android" &&
+  !isNewArchitecture &&
   UIManager.setLayoutAnimationEnabledExperimental
 ) {
   UIManager.setLayoutAnimationEnabledExperimental(true);
@@ -817,13 +844,10 @@ const getViewport: GetViewport = () => {
 };
 
 // ---------------------------------------------------------------------------
-// 유니버설 벡터 아이콘 (Native react-native-svg)
+// 유니버설 벡터 아이콘 — lucide-react-native 래핑（컴포넌트는 primitives의 *Icon만 소비）
 // ---------------------------------------------------------------------------
 
-function createNativeIcon(
-  renderPaths: (color: string, strokeWidth: number) => ReactElement,
-  defaultClassName = "size-4",
-) {
+function wrapNativeLucide(Icon: LucideIcon, defaultClassName = "size-4") {
   return function NativeIcon({
     className,
     size = 16,
@@ -832,108 +856,60 @@ function createNativeIcon(
     style,
     "aria-hidden": ariaHidden = true,
   }: IconProps) {
-    const isRotated180 = className?.includes("rotate-180");
-    const mergedStyle = isRotated180
-      ? [style, { transform: [{ rotate: "180deg" }] }]
+    const numericSize =
+      typeof size === "string" ? Number(size) || 16 : size;
+    const rotate = className?.includes("rotate-180")
+      ? "180deg"
+      : className?.includes("rotate-90")
+        ? "90deg"
+        : null;
+    const mergedStyle = rotate
+      ? [style, { transform: [{ rotate }] }]
       : style;
+    // className의 text-* 색은 lucide Svg에 넘겨 uniwind가 color로 바인딩하게 한다.
+    // rotate-* 는 래퍼 View transform으로 처리（Svg 자체 rotate 클래스 의존 회피）.
     return (
       <RNView
         aria-hidden={ariaHidden ? true : undefined}
         style={mergedStyle as ViewStyle}
-        {...({ className: cn("items-center justify-center", defaultClassName, className) } as Record<string, unknown>)}
+        {...({
+          className: cn("items-center justify-center", defaultClassName),
+        } as Record<string, unknown>)}
       >
-        <Svg
-          width={size}
-          height={size}
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke={color}
+        <Icon
+          size={numericSize}
+          color={color}
           strokeWidth={strokeWidth}
-          strokeLinecap="round"
-          strokeLinejoin="round"
-        >
-          {renderPaths(color, strokeWidth)}
-        </Svg>
+          {...({
+            className: cn(defaultClassName, className),
+          } as Record<string, unknown>)}
+        />
       </RNView>
     );
   };
 }
 
-const CheckIcon = createNativeIcon((_c, _w) => <SvgPath d="M20 6 9 17l-5-5" />);
-const ChevronDownIcon = createNativeIcon((_c, _w) => <SvgPath d="m6 9 6 6 6-6" />);
-const ChevronUpIcon = createNativeIcon((_c, _w) => <SvgPath d="m18 15-6-6-6 6" />);
-const ChevronRightIcon = createNativeIcon((_c, _w) => <SvgPath d="m9 18 6-6-6-6" />);
-const ChevronLeftIcon = createNativeIcon((_c, _w) => <SvgPath d="m15 18-6-6 6-6" />);
-const XIcon = createNativeIcon((_c, _w) => <SvgPath d="M18 6 6 18M6 6l12 12" />);
-const SearchIcon = createNativeIcon((_c, _w) => (
-  <>
-    <SvgCircle cx={11} cy={11} r={8} />
-    <SvgPath d="m21 21-4.3-4.3" />
-  </>
-));
-const MinusIcon = createNativeIcon((_c, _w) => <SvgPath d="M5 12h14" />);
-const CircleIcon = createNativeIcon((_c, _w) => <SvgCircle cx={12} cy={12} r={10} />);
-const MoreHorizontalIcon = createNativeIcon((c, _w) => (
-  <>
-    <SvgCircle cx={12} cy={12} r={1} fill={c} />
-    <SvgCircle cx={19} cy={12} r={1} fill={c} />
-    <SvgCircle cx={5} cy={12} r={1} fill={c} />
-  </>
-));
-const ArrowLeftIcon = createNativeIcon((_c, _w) => (
-  <>
-    <SvgPath d="m12 19-7-7 7-7" />
-    <SvgPath d="M19 12H5" />
-  </>
-));
-const ArrowRightIcon = createNativeIcon((_c, _w) => (
-  <>
-    <SvgPath d="M5 12h14" />
-    <SvgPath d="m12 5 7 7-7 7" />
-  </>
-));
-const ArrowUpIcon = createNativeIcon((_c, _w) => (
-  <>
-    <SvgPath d="m5 12 7-7 7 7" />
-    <SvgPath d="M12 19V5" />
-  </>
-));
-const ArrowDownIcon = createNativeIcon((_c, _w) => (
-  <>
-    <SvgPath d="M12 5v14" />
-    <SvgPath d="m19 12-7 7-7-7" />
-  </>
-));
-const InfoIcon = createNativeIcon((_c, _w) => (
-  <>
-    <SvgCircle cx={12} cy={12} r={10} />
-    <SvgPath d="M12 16v-4" />
-    <SvgPath d="M12 8h.01" />
-  </>
-));
-const AlertCircleIcon = createNativeIcon((_c, _w) => (
-  <>
-    <SvgCircle cx={12} cy={12} r={10} />
-    <SvgLine x1={12} x2={12} y1={8} y2={12} />
-    <SvgLine x1={12} x2={12.01} y1={16} y2={16} />
-  </>
-));
-const CheckCircle2Icon = createNativeIcon((_c, _w) => (
-  <>
-    <SvgCircle cx={12} cy={12} r={10} />
-    <SvgPath d="m9 12 2 2 4-4" />
-  </>
-));
-const XCircleIcon = createNativeIcon((_c, _w) => (
-  <>
-    <SvgCircle cx={12} cy={12} r={10} />
-    <SvgPath d="m15 9-6 6" />
-    <SvgPath d="m9 9 6 6" />
-  </>
-));
-const Loader2Icon = createNativeIcon((_c, _w) => (
-  <SvgPath d="M21 12a9 9 0 1 1-6.219-8.56" />
-));
+const CheckIcon = wrapNativeLucide(LucideCheckIcon);
+const ChevronDownIcon = wrapNativeLucide(LucideChevronDownIcon);
+const ChevronUpIcon = wrapNativeLucide(LucideChevronUpIcon);
+const ChevronRightIcon = wrapNativeLucide(LucideChevronRightIcon);
+const ChevronLeftIcon = wrapNativeLucide(LucideChevronLeftIcon);
+const XIcon = wrapNativeLucide(LucideXIcon);
+const SearchIcon = wrapNativeLucide(LucideSearchIcon);
+const MinusIcon = wrapNativeLucide(LucideMinusIcon);
+const CircleIcon = wrapNativeLucide(LucideCircleIcon);
+const MoreHorizontalIcon = wrapNativeLucide(LucideMoreHorizontalIcon);
+const ArrowLeftIcon = wrapNativeLucide(LucideArrowLeftIcon);
+const ArrowRightIcon = wrapNativeLucide(LucideArrowRightIcon);
+const ArrowUpIcon = wrapNativeLucide(LucideArrowUpIcon);
+const ArrowDownIcon = wrapNativeLucide(LucideArrowDownIcon);
+const InfoIcon = wrapNativeLucide(LucideInfoIcon);
+const AlertCircleIcon = wrapNativeLucide(LucideAlertCircleIcon);
+const CheckCircle2Icon = wrapNativeLucide(LucideCheckCircle2Icon);
+const XCircleIcon = wrapNativeLucide(LucideXCircleIcon);
+const Loader2Icon = wrapNativeLucide(LucideLoader2Icon);
+const PanelLeftIcon = wrapNativeLucide(LucidePanelLeftIcon);
+const GripVerticalIcon = wrapNativeLucide(LucideGripVerticalIcon);
 
 export {
   View,
@@ -975,4 +951,6 @@ export {
   CheckCircle2Icon,
   XCircleIcon,
   Loader2Icon,
+  PanelLeftIcon,
+  GripVerticalIcon,
 };

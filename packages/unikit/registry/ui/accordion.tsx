@@ -4,7 +4,7 @@
 // 확장 구조）. 원본의 data-state·셀렉터 클래스는 조건부 클래스·아이콘 회전으로 전개.
 //
 // 포팅 판단（원본 대비 차이）:
-// - ChevronDownIcon은 브리지 SVG 아이콘 프리미티브를 쓰고 open 시 rotate-180
+// - ChevronDownIcon은 브리지 lucide 아이콘 프리미티브를 쓰고 open 시 rotate-180
 //   회전（원본 ［&［data-state=open］>svg］:rotate-180의 조건부 클래스 전개）.
 // - 트리거 focus 링은 원본 규격（ring-3 · ring-ring/50 · 무오프셋 ·
 //   focus-visible:border-ring）을 web: 접두로 준수한다（사이클 72）.

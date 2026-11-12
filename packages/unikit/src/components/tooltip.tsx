@@ -24,9 +24,9 @@
 // - 원본 Content의 sidesideOffset 프로퍼티명을 유지하되 내부적으로
 //   AnchoredOverlay의 placementoffset로 매핑（기본 side "top"sideOffset 0은
 //   원본 기본값, align "center"는 radix popper 기본값）.
-// - 화살표: 원본은 rotate-45 사각형 + 임의값 translate — 임의값 클래스 금지와
-//   네이티브 transform 의존 제거 위해 글리프 ◆（accordion 관행）로 근사하되,
-//   배치가 성립하는 side "top"（기본）일 때만 카드 하단에 렌더한다.
+// - 화살표: 원본은 rotate-45 사각형 + 임의값 translate — 임의값 클래스 금지
+//   때문에 View 도형（size-2 rotate-45）으로 근사하되, 배치가 성립하는
+//   side "top"（기본）일 때만 카드 하단에 렌더한다（lucide 아이콘 아님）.
 // - 애니메이션（animate-in/outfadezoomdata-［side］ 슬라이드）과 origin 변형은
 //   즉시 전환으로 근사 — 토큰 전부 제거.
 // - 카드 className에 pointer-events-auto 기본 포함（웹 box-none 상속 회피）.
@@ -319,14 +319,14 @@ const TooltipContent = forwardRef<BridgeViewRef, TooltipContentProps>(
           {...props}
         >
           <Text className={tooltipContentTextVariants()}>{children}</Text>
-          {/* 원본 rotate-45 사각형 화살표 → 글리프 근사（accordion 관행）.
+          {/* 원본 rotate-45 사각형 화살표 → View 도형 근사.
               카드가 앵커 위에 있는 side "top"일 때만 하단 배치가 성립한다. */}
           {side === "top" && (
             <View
               aria-hidden
               className="absolute inset-x-0 -bottom-1 flex-row justify-center"
             >
-              <Text className="text-xs leading-none text-foreground">◆</Text>
+              <View className="size-2 rotate-45 bg-foreground" />
             </View>
           )}
         </View>

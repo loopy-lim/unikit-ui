@@ -1,8 +1,8 @@
 // Breadcrumb — shadcn/ui new-york-v4 breadcrumb 포팅（shadcn-ref/ui/breadcrumb.tsx）.
 // 7종 export. radix Slot·lucide 아이콘 제거.
 // 포팅 판단:
-// - 아이콘: ChevronRightIcon·MoreHorizontalIcon — 브리지 SVG 아이콘 프리미티브
-//   （lucide 의존 제거）.
+// - 아이콘: ChevronRightIcon·MoreHorizontalIcon — 브리지 lucide 아이콘 프리미티브
+//   （lucide — primitives 경유）.
 // - BreadcrumbLink는 Pressable role="link" + onPress（무인자）. radix Slot（asChild）은
 //   미지원 — 사용처 라우팅은 onPress에서 호출한다.
 // - BreadcrumbPage의 aria-current는 브리지 계약에 없어 현재 페이지를 시각（색·

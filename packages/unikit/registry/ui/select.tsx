@@ -19,7 +19,7 @@
 //   radix의 오버플로우 감지 자동 표시는 불가해 SelectContent가 기본 렌더하지
 //   않는다（목록은 ScrollView로 터치/휠 스크롤）.
 // - 아이콘: ChevronDownIcon（트리거）CheckIcon（항목 표시자）ChevronUpIcon/
-//   DownIcon（스크롤 버튼） — 브리지 SVG 아이콘 프리미티브（dropdown-menu 관행）.
+//   DownIcon（스크롤 버튼） — 브리지 lucide 아이콘 프리미티브（dropdown-menu 관행）.
 // - 원본의 data-［state］data-［placeholder］*:data-［slot=］［&_svg］ 셀렉터 클래스는
 //   조건부 클래스내부 Text 지정으로 전개（data 속성 부재）.
 // - aria-invalid:* 트리거 토큰은 PressableProps의 aria-invalid 전달（웹 DOM）과

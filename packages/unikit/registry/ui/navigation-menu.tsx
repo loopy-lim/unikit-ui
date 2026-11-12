@@ -16,7 +16,7 @@
 // - NavigationMenuIndicator: 활성 트리거 아래 화살표를 indicator x 이동
 //   트릭으로 배치하는데 트리거 위치 측정 계약이 없어 재현 불가 — 생략（no-op）.
 // - Trigger: hover 개방은 브리지 onHoverIn 계약 부재로 눌림 토글 근사
-//   （dropdown-menu와 동일 판단）. ChevronDownIcon（브리지 SVG 아이콘 프리미티브）는
+//   （dropdown-menu와 동일 판단）. ChevronDownIcon（브리지 lucide 아이콘 프리미티브）는
 //   개방 시 web:rotate-180 회전 근사（원본 300ms 전이 유지, 원본 top-［1px］ 임의값과
 //   size-3은 text-xs로 근사）.
 // - navigationMenuTriggerStyle: 원본 cva 문자열을 유지하되 data-［state=open］

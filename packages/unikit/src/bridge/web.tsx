@@ -31,10 +31,33 @@ import {
   useState,
   type ChangeEvent,
   type PointerEvent as ReactPointerEvent,
-  type ReactNode,
   type RefObject,
 } from "react";
 import { createPortal } from "react-dom";
+import {
+  AlertCircleIcon as LucideAlertCircleIcon,
+  ArrowDownIcon as LucideArrowDownIcon,
+  ArrowLeftIcon as LucideArrowLeftIcon,
+  ArrowRightIcon as LucideArrowRightIcon,
+  ArrowUpIcon as LucideArrowUpIcon,
+  CheckCircle2Icon as LucideCheckCircle2Icon,
+  CheckIcon as LucideCheckIcon,
+  ChevronDownIcon as LucideChevronDownIcon,
+  ChevronLeftIcon as LucideChevronLeftIcon,
+  ChevronRightIcon as LucideChevronRightIcon,
+  ChevronUpIcon as LucideChevronUpIcon,
+  CircleIcon as LucideCircleIcon,
+  GripVerticalIcon as LucideGripVerticalIcon,
+  InfoIcon as LucideInfoIcon,
+  Loader2Icon as LucideLoader2Icon,
+  MinusIcon as LucideMinusIcon,
+  MoreHorizontalIcon as LucideMoreHorizontalIcon,
+  PanelLeftIcon as LucidePanelLeftIcon,
+  SearchIcon as LucideSearchIcon,
+  XCircleIcon as LucideXCircleIcon,
+  XIcon as LucideXIcon,
+  type LucideIcon,
+} from "lucide-react";
 
 import { cn } from "../lib/utils";
 import type {
@@ -223,6 +246,7 @@ const TextInput = forwardRef<BridgeTextInputRef, TextInputProps>(
       onChangeText,
       nativeID,
       testID,
+      accessibilityLabel,
       accessibilityLabelledBy,
       autoFocus,
       secureTextEntry,
@@ -244,6 +268,7 @@ const TextInput = forwardRef<BridgeTextInputRef, TextInputProps>(
           ref={ref as React.Ref<HTMLTextAreaElement>}
           id={nativeID}
           data-testid={testID}
+          aria-label={accessibilityLabel}
           aria-labelledby={accessibilityLabelledBy}
           className={className}
           style={style as React.CSSProperties}
@@ -264,6 +289,7 @@ const TextInput = forwardRef<BridgeTextInputRef, TextInputProps>(
         ref={ref as React.Ref<HTMLInputElement>}
         id={nativeID}
         data-testid={testID}
+        aria-label={accessibilityLabel}
         aria-labelledby={accessibilityLabelledBy}
         className={className}
         style={style as React.CSSProperties}
@@ -675,10 +701,10 @@ const LoopPulse = ({ children }: LoopPulseProps) => <>{children}</>;
 const animateLayout: AnimateLayoutFn = () => {};
 
 // ---------------------------------------------------------------------------
-// 유니버설 벡터 아이콘 (Web JSX SVG)
+// 유니버설 벡터 아이콘 — lucide-react 래핑（컴포넌트는 primitives의 *Icon만 소비）
 // ---------------------------------------------------------------------------
 
-function createWebIcon(children: ReactNode, defaultClassName = "size-4") {
+function wrapWebLucide(Icon: LucideIcon, defaultClassName = "size-4") {
   return function WebIcon({
     className,
     size,
@@ -686,103 +712,41 @@ function createWebIcon(children: ReactNode, defaultClassName = "size-4") {
     strokeWidth = 2,
     style,
     "aria-hidden": ariaHidden = true,
-    ...props
   }: IconProps) {
     return (
-      <svg
-        xmlns="http://www.w3.org/2000/svg"
-        viewBox="0 0 24 24"
-        width={size}
-        height={size}
-        fill="none"
-        stroke={color ?? "currentColor"}
-        strokeWidth={strokeWidth}
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        aria-hidden={ariaHidden ? "true" : undefined}
+      <Icon
         className={cn(defaultClassName, className)}
+        {...(size != null ? { size } : {})}
+        color={color}
+        strokeWidth={strokeWidth}
+        aria-hidden={ariaHidden ? true : undefined}
         style={style as React.CSSProperties | undefined}
-        {...props}
-      >
-        {children}
-      </svg>
+      />
     );
   };
 }
 
-const CheckIcon = createWebIcon(<path d="M20 6 9 17l-5-5" />);
-const ChevronDownIcon = createWebIcon(<path d="m6 9 6 6 6-6" />);
-const ChevronUpIcon = createWebIcon(<path d="m18 15-6-6-6 6" />);
-const ChevronRightIcon = createWebIcon(<path d="m9 18 6-6-6-6" />);
-const ChevronLeftIcon = createWebIcon(<path d="m15 18-6-6 6-6" />);
-const XIcon = createWebIcon(<path d="M18 6 6 18M6 6l12 12" />);
-const SearchIcon = createWebIcon(
-  <>
-    <circle cx="11" cy="11" r="8" />
-    <path d="m21 21-4.3-4.3" />
-  </>,
-);
-const MinusIcon = createWebIcon(<path d="M5 12h14" />);
-const CircleIcon = createWebIcon(<circle cx="12" cy="12" r="10" />);
-const MoreHorizontalIcon = createWebIcon(
-  <>
-    <circle cx="12" cy="12" r="1" fill="currentColor" />
-    <circle cx="19" cy="12" r="1" fill="currentColor" />
-    <circle cx="5" cy="12" r="1" fill="currentColor" />
-  </>,
-);
-const ArrowLeftIcon = createWebIcon(
-  <>
-    <path d="m12 19-7-7 7-7" />
-    <path d="M19 12H5" />
-  </>,
-);
-const ArrowRightIcon = createWebIcon(
-  <>
-    <path d="M5 12h14" />
-    <path d="m12 5 7 7-7 7" />
-  </>,
-);
-const ArrowUpIcon = createWebIcon(
-  <>
-    <path d="m5 12 7-7 7 7" />
-    <path d="M12 19V5" />
-  </>,
-);
-const ArrowDownIcon = createWebIcon(
-  <>
-    <path d="M12 5v14" />
-    <path d="m19 12-7 7-7-7" />
-  </>,
-);
-const InfoIcon = createWebIcon(
-  <>
-    <circle cx="12" cy="12" r="10" />
-    <path d="M12 16v-4" />
-    <path d="M12 8h.01" />
-  </>,
-);
-const AlertCircleIcon = createWebIcon(
-  <>
-    <circle cx="12" cy="12" r="10" />
-    <line x1="12" x2="12" y1="8" y2="12" />
-    <line x1="12" x2="12.01" y1="16" y2="16" />
-  </>,
-);
-const CheckCircle2Icon = createWebIcon(
-  <>
-    <circle cx="12" cy="12" r="10" />
-    <path d="m9 12 2 2 4-4" />
-  </>,
-);
-const XCircleIcon = createWebIcon(
-  <>
-    <circle cx="12" cy="12" r="10" />
-    <path d="m15 9-6 6" />
-    <path d="m9 9 6 6" />
-  </>,
-);
-const Loader2Icon = createWebIcon(<path d="M21 12a9 9 0 1 1-6.219-8.56" />);
+const CheckIcon = wrapWebLucide(LucideCheckIcon);
+const ChevronDownIcon = wrapWebLucide(LucideChevronDownIcon);
+const ChevronUpIcon = wrapWebLucide(LucideChevronUpIcon);
+const ChevronRightIcon = wrapWebLucide(LucideChevronRightIcon);
+const ChevronLeftIcon = wrapWebLucide(LucideChevronLeftIcon);
+const XIcon = wrapWebLucide(LucideXIcon);
+const SearchIcon = wrapWebLucide(LucideSearchIcon);
+const MinusIcon = wrapWebLucide(LucideMinusIcon);
+const CircleIcon = wrapWebLucide(LucideCircleIcon);
+const MoreHorizontalIcon = wrapWebLucide(LucideMoreHorizontalIcon);
+const ArrowLeftIcon = wrapWebLucide(LucideArrowLeftIcon);
+const ArrowRightIcon = wrapWebLucide(LucideArrowRightIcon);
+const ArrowUpIcon = wrapWebLucide(LucideArrowUpIcon);
+const ArrowDownIcon = wrapWebLucide(LucideArrowDownIcon);
+const InfoIcon = wrapWebLucide(LucideInfoIcon);
+const AlertCircleIcon = wrapWebLucide(LucideAlertCircleIcon);
+const CheckCircle2Icon = wrapWebLucide(LucideCheckCircle2Icon);
+const XCircleIcon = wrapWebLucide(LucideXCircleIcon);
+const Loader2Icon = wrapWebLucide(LucideLoader2Icon);
+const PanelLeftIcon = wrapWebLucide(LucidePanelLeftIcon);
+const GripVerticalIcon = wrapWebLucide(LucideGripVerticalIcon);
 
 export {
   View,
@@ -824,4 +788,6 @@ export {
   CheckCircle2Icon,
   XCircleIcon,
   Loader2Icon,
+  PanelLeftIcon,
+  GripVerticalIcon,
 };

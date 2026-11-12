@@ -3,7 +3,7 @@
 // - radix-ui Checkbox（Root/Indicator） 제거 — 체크 상태는 React state（제어/비제어）로
 //   직접 관리하고, 원본의 data-state=checked 셀렉터는 조건부 클래스 문자열로 전개
 //   （네이티브에 data 속성이 없어 상태 셀렉터를 쓸 수 없다）.
-// - CheckIcon·MinusIcon은 브리지 SVG 아이콘 프리미티브를 쓴다（lucide 의존 없음）.
+// - CheckIcon·MinusIcon은 브리지 lucide 아이콘 프리미티브를 쓴다（lucide — primitives 경유）.
 // - aria-invalid:* 클래스는 v0.1 API에 invalid 상태가 없어 제외.
 // - 이중 지정 원칙（§0.5）: 체크 배경·테두리는 Pressable, 글리프 색은 내부 Text에 명시.
 import { forwardRef, useState } from "react";

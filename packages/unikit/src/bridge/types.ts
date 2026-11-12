@@ -421,7 +421,7 @@ export type LoopPulseProps = {
 export type ApplyColorScheme = (colorScheme: BridgeColorScheme) => void;
 
 // ---------------------------------------------------------------------------
-// 유니버설 벡터 아이콘 타입 (Web SVG / React Native Svg)
+// 유니버설 벡터 아이콘 타입 — lucide（웹 lucide-react / 네이티브 lucide-react-native）
 // ---------------------------------------------------------------------------
 
 export type IconProps = {

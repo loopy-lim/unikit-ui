@@ -32,7 +32,7 @@
 //   넣는 조합으로, 팝업 폭은 w-72 고정（원본 w-（--anchor-width） 대체）.
 // - Chips 계열: 다중 선택 칩. ChipRemove는 원본 export 목록에 없어 내부 구현
 //   （× Pressable）하며 ComboboxChip의 showRemove로 노출한다.
-// - 아이콘: CheckIcon·ChevronDownIcon·XIcon — 브리지 SVG 아이콘 프리미티브
+// - 아이콘: CheckIcon·ChevronDownIcon·XIcon — 브리지 lucide 아이콘 프리미티브
 //   （@unikit-bridge/ui/primitives）를 사용한다（dropdown-menu 관행）.
 // - 클래스 근사: 팝업 테두리는 원본（shadcn-ref/ui/combobox.tsx:119）의
 //   ring-1 ring-foreground/10에서 border border-border로 의도적 이탈 — 사유:

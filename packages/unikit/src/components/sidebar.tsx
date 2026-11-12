@@ -31,9 +31,10 @@
 //   hidden 제어하지만, 우리 툴팁은 press-to-toggle 방식이라 "아이콘 접힘
 //   상태에서만" TooltipTrigger로 전환한다（expanded에선 라벨이 이미 보이므로
 //   원본 hidden과 동일 효과 — 판단 기록）.
-// - lucide PanelLeftIcon → ▤ 글리프, sr-only는 accessibilityLabel로 대체
-//   （dialogsheet 관행）. 모바일 시트의 sr-only 헤더는 시각 숨김 근사
-//   （absolute opacity-0）로 렌더해 스크린리더 이름은 유지한다.
+// - lucide PanelLeftIcon은 브리지 primitives 경유（직접 lucide import 금지）.
+//   sr-only는 accessibilityLabel로 대체（dialogsheet 관행）. 모바일 시트의
+//   sr-only 헤더는 시각 숨김 근사（absolute opacity-0）로 렌더해 스크린리더
+//   이름은 유지한다.
 // - 원본 임의값가상요소 토큰 근사: after:w-［2px］ 레일 바 제거（커서
 //   w/e-resize와 함께 — 웹 전용 셀렉터）, shadow-［0_0_0_1px_var（）］ outline
 //   변형은 border border-border로, skeleton 랜덤 폭은 style maxWidth 직접 값으로.
@@ -44,6 +45,7 @@
 //   배경 전환만 근사했다.
 import * as React from "react";
 import {
+  PanelLeftIcon,
   Pressable,
   ScrollView,
   Text,
@@ -380,8 +382,7 @@ const SidebarTrigger = React.forwardRef<
       }}
       {...props}
     >
-      {/* PanelLeftIcon → ▤ 글리프 근사 */}
-      ▤
+      <PanelLeftIcon className="size-4" />
     </Button>
   );
 });

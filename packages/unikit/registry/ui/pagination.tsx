@@ -9,7 +9,7 @@
 //   클래스（ghost↔outline 변형 전환）로 재현하고, aria-current="page"는 사이클 40
 //   브리지 확장（§2.1）으로 소급 지정한다（웹 전용 — RN 계약 없음, 시각 강조가 담당）.
 // - 아이콘: ChevronLeftIcon·ChevronRightIcon·MoreHorizontalIcon — 브리지 SVG
-//   아이콘 프리미티브（lucide 의존 제거）. Previous/Next 라벨은 원본의
+//   아이콘 프리미티브（lucide — primitives 경유）. Previous/Next 라벨은 원본의
 //   sm 미만 숨김（hidden sm:block）을 web:hidden web:sm:inline으로 재현 —
 //   네이티브에서는 항상 표시된다（터치 가독성）.
 // - PaginationLink의 children이 문자열（숫자 포함）이면 이중 지정 원칙대로 내부
@@ -40,7 +40,7 @@ const paginationVariants = cva("mx-auto w-full flex-row justify-center");
 const paginationContentVariants = cva("flex-row items-center gap-1");
 
 // 방향 아이콘 전경색 cva — export API 호환용（이름 유지; 본문 ChevronIcon은
-// 브리지 SVG 아이콘 프리미티브로 대체되어 있다）.
+// 브리지 lucide 아이콘 프리미티브로 대체되어 있다）.
 const paginationGlyphVariants = cva("text-base leading-none text-foreground");
 // Previous/Next 라벨 — 웹에서는 sm 미만 숨김（원본 hidden sm:block 재현）.
 const paginationLabelVariants = cva(

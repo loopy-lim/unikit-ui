@@ -17,10 +17,10 @@
 //   판단갱신하는 구조로 순화. 기본값은 채팅 관례（맨 아래） atEnd=true.
 // - useMessageScrollerScrollable（콘텐츠가 뷰포트보다 큰지）은 콘텐츠 크기
 //   측정 계약이 없어 항상 true를 반환하는 스텝이다（원본 API 유지）.
-// - MessageScrollerButton: lucide 아이콘 대신 "↓"/"↑" 글리프 문자 기본값,
-//   sr-only 대신 accessibilityLabel 사용. 원본 icon-sm 사이즈render prop은
-//   없어 Button（secondary） + size-8 토큰으로 근사. 커스텀 이징（임의값）은
-//   제거 — 표준 transition만（네이티브은 즉시 전환）.
+// - MessageScrollerButton: 기본 children은 브리지 ArrowDownIcon/ArrowUpIcon
+//   （lucide 경유）. sr-only 대신 accessibilityLabel 사용. 원본 icon-sm
+//   사이즈render prop은 없어 Button（secondary） + size-8 토큰으로 근사.
+//   커스텀 이징（임의값）은 제거 — 표준 transition만（네이티브은 즉시 전환）.
 // - MessageScrollerItem의 scrollAnchorcontent-visibility（임의값성능
 //   최적화）은 계약 밖이라 제거 — 순수 레이아웃 토큰만 유지.
 // - scroll-fade-bscrollbar-thin 등 커스텀 유틸과 data-autoscrolling:*
@@ -38,6 +38,8 @@ import {
   type ReactNode,
 } from "react";
 import {
+  ArrowDownIcon,
+  ArrowUpIcon,
   ScrollView,
   View,
   type BridgePressableRef,
@@ -47,7 +49,7 @@ import {
   type ViewProps,
 } from "@unikit-bridge/ui/primitives";
 
-import { cn } from "../lib/utils";
+import { cn } from "@/lib/utils";
 import { Button, type ButtonProps } from "./button";
 
 /** scrollTo "끝" 근사 — 양 플랫폼 모두 콘텐츠 끝까지 클램프되는 충분히 큰 값 */
@@ -306,7 +308,12 @@ const MessageScrollerButton = forwardRef<
         }}
         {...props}
       >
-        {children ?? (direction === "end" ? "↓" : "↑")}
+        {children ??
+          (direction === "end" ? (
+            <ArrowDownIcon className="size-4" />
+          ) : (
+            <ArrowUpIcon className="size-4" />
+          ))}
       </Button>
     );
   },
