@@ -41,6 +41,7 @@ import {
   UnikitThemeProvider,
   useUnikitTheme,
 } from "@unikit-bridge/ui";
+import { SiteBrand, UnikitMark } from "./brand";
 
 /** Hero·TeaserSection 공통 CTA 링크 클래스 — 문자열이 같아 상수로 공유(한쪽만 고치면 외관이 갈라진다) */
 const CTA_PRIMARY_CLASS =
@@ -67,12 +68,7 @@ function SiteNav() {
   return (
     <header className="border-b border-border/80">
       <div className="mx-auto flex h-16 w-full max-w-7xl items-center justify-between gap-4 px-4 sm:px-6 lg:px-8">
-        <Link
-          href="/"
-          className="site-display site-focusable text-lg font-semibold tracking-tight text-foreground"
-        >
-          UniKit
-        </Link>
+        <SiteBrand />
         <nav className="flex items-center gap-3 text-sm">
           <Link
             href="/blocks"
@@ -105,9 +101,15 @@ function Hero() {
   return (
     <section className="border-b border-border/60 py-14 sm:py-16 lg:py-20">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-        <p className="site-display text-5xl font-semibold tracking-tight text-foreground sm:text-6xl md:text-7xl">
-          UniKit
-        </p>
+        <div className="flex items-center gap-4 sm:gap-5">
+          <UnikitMark
+            size={96}
+            className="size-16 sm:size-20 md:size-24"
+          />
+          <p className="site-display text-5xl font-semibold tracking-tight text-foreground sm:text-6xl md:text-7xl">
+            UniKit
+          </p>
+        </div>
         <h1 className="mt-4 max-w-3xl text-xl font-medium leading-snug tracking-tight text-foreground sm:text-2xl md:text-3xl">
           한 import로, 웹과 네이티브가 같은 화면.
         </h1>

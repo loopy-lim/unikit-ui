@@ -24,7 +24,7 @@ import {
   EmptyTitle,
   Input,
 } from "@unikit-bridge/ui";
-import { Pressable, SectionList, Text, View } from "@unikit-bridge/ui/primitives";
+import { Image, Pressable, SectionList, Text, View } from "@unikit-bridge/ui/primitives";
 
 import {
   CATALOG,
@@ -33,6 +33,8 @@ import {
 } from "../components/showcase/catalog";
 import { ThemeToggleButton } from "../components/theme-toggle";
 import { useIconColors } from "../lib/token-colors";
+
+const brandMark = require("../assets/images/icon.png");
 
 /** 카탈로그 항목 — 미니멀 인셋 리스트 행 */
 function CatalogRow({
@@ -131,13 +133,21 @@ export default function Index() {
           ListHeaderComponent={
             <View className="pb-2">
               <View className="mb-5 flex-row items-center justify-between pt-4">
-                <View>
-                  <Text className="font-sans text-2xl font-bold tracking-tight text-foreground">
-                    UniKit
-                  </Text>
-                  <Text className="mt-1 font-sans text-xs text-muted-foreground">
-                    React와 React Native에서 같은 컴포넌트, 같은 모습
-                  </Text>
+                <View className="min-w-0 flex-1 flex-row items-center gap-3 pr-2">
+                  <Image
+                    source={brandMark}
+                    accessibilityLabel="UniKit"
+                    className="size-11 rounded-[22%]"
+                    style={{ width: 44, height: 44, borderRadius: 10 }}
+                  />
+                  <View className="min-w-0 flex-1">
+                    <Text className="font-sans text-2xl font-bold tracking-tight text-foreground">
+                      UniKit
+                    </Text>
+                    <Text className="mt-1 font-sans text-xs text-muted-foreground">
+                      React와 React Native에서 같은 컴포넌트, 같은 모습
+                    </Text>
+                  </View>
                 </View>
                 <ThemeToggleButton />
               </View>

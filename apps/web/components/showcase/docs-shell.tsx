@@ -17,6 +17,7 @@ import {
 import { Text, View } from "@unikit-bridge/ui/primitives";
 import { UnikitThemeProvider, useUnikitTheme } from "@unikit-bridge/ui";
 
+import { SiteBrand } from "../site/brand";
 import { catalogByCategory } from "./catalog";
 
 export function DocsProviders({ children }: { children: ReactNode }) {
@@ -75,11 +76,11 @@ function DocsHeader({ children }: { children: ReactNode }) {
       <View className="mx-auto flex h-16 w-full max-w-7xl flex-row items-center justify-between gap-3 px-4 sm:gap-4 sm:px-6 lg:px-8">
         <View className="flex min-w-0 flex-row items-center gap-3 sm:gap-4">
           {children}
-          <Link href="/" className="site-focusable shrink-0">
-            <Text className="site-display text-xl font-semibold tracking-tight text-foreground">
-              UniKit
-            </Text>
-          </Link>
+          <SiteBrand
+            className="shrink-0"
+            wordmarkClassName="text-xl"
+            markSize={30}
+          />
           <View className="hidden h-4 w-px bg-border sm:flex" />
           <View className="hidden flex-row items-center gap-4 sm:flex">
             <Link href="/" className={navLinkClass(pathname === "/")}>
@@ -405,7 +406,7 @@ export function DemoPanel({
               onClick={() => onChange(id)}
               className={
                 active
-                  ? "site-focusable rounded-md bg-background px-3 py-1.5 font-sans text-xs font-medium text-foreground shadow-sm"
+                  ? "site-focusable rounded-md bg-background px-3 py-1.5 font-sans text-xs font-medium text-foreground"
                   : "site-focusable rounded-md px-3 py-1.5 font-sans text-xs text-muted-foreground transition-colors hover:text-foreground"
               }
             >
