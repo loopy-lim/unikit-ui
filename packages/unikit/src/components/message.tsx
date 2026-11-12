@@ -15,6 +15,9 @@
 // - MessageHeader/Footer의 group-has-data-［variant=ghost］/message:px-0
 //   （내부 버블이 ghost면 패딩 제거）은 감지 수단이 없어 제거 — 항상 px-3.
 // - wrap-break-word는 웹 전용（Tailwind v4 유틸） → web: 접두. RN Text는 기본 줄바꿈.
+// - MessageContent에 shrink（flex-shrink:1）추가（사이클 74）: 원본은 웹 전용이라
+//   flex-shrink 기본값 1로 아바타 옆에서 저절로 수축하지만, RN(Yoga)은 기본값 0이라
+//   w-full 본문이 아바타 폭만큼 행을 넘어 화면 끝까지 흘렀다. 웹 동작과 정합.
 // - data-slot 속성은 브리지 props 계약에 없어 전면 제거（토큰은 유지）.
 import {
   createContext,
@@ -138,7 +141,7 @@ const MessageContent = forwardRef<BridgeViewRef, MessageContentProps>(
       <View
         ref={ref}
         className={cn(
-          "flex w-full min-w-0 flex-col gap-2.5 web:wrap-break-word",
+          "flex w-full shrink min-w-0 flex-col gap-2.5 web:wrap-break-word",
           message?.align === "end" && "items-end",
           className,
         )}
