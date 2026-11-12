@@ -34,7 +34,7 @@ import { cva, type VariantProps } from "class-variance-authority";
 import { cn } from "../lib/utils";
 
 const markerVariants = cva(
-  "relative flex min-h-4 w-full items-center gap-2",
+  "relative flex flex-row min-h-4 w-full items-center gap-2",
   {
     variants: {
       variant: {

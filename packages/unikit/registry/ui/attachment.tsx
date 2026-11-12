@@ -344,7 +344,7 @@ const AttachmentActions = forwardRef<BridgeViewRef, AttachmentActionsProps>(
       <View
         ref={ref}
         className={cn(
-          "relative z-20 flex shrink-0 items-center",
+          "relative z-20 flex flex-row shrink-0 items-center",
           attachment?.orientation === "vertical" &&
             "absolute top-3 right-3 gap-1",
           className,

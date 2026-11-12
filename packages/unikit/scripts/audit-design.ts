@@ -1,7 +1,7 @@
 /**
  * audit:design — 디자인 일관성 자동 감사 (T-14, AC-10·AC-12(f) / 3차 T-18, AC-13·AC-15 확장).
  *
- * 요구 기준 7종 (a)~(g) / 내부 검사 8건((a1)(a2) 분해). 위반 1건 이상이면 exit 1.
+ * 요구 기준 8종 (a)~(h) / 내부 검사 9건((a1)(a2) 분해). 위반 1건 이상이면 exit 1.
  * 생성 기준 포맷터·THEME_ITEMS·VALUE_SOURCES·대비 산수는 generate-design.ts와 공유한다
  * (설계 원칙: 검사는 생성의 역). (a2)는 type 기반으로 theme 항목 전수(기본+프리셋 3)를
  * 값·형식·WCAG 대비(라이트 ≥4.5:1)로 검사한다.
@@ -267,5 +267,40 @@ function scanPattern(files: string[], pattern: RegExp, label: string): Violation
   );
 }
 
-console.log(failures.length === 0 ? "\naudit:design PASS — 8/8 검사 통과" : `\naudit:design FAIL — 위반: ${failures.join(", ")}`);
+// ── (h) 브리지 flex 방향 명시 — Pressable/View 기본이 flex-col이라
+// 가로 배치(items-center+gap · justify-between/end/start)에 flex-row|flex-col
+// 이 없으면 웹에서 세로로 깨진다（SidebarMenuButton 사고 2026-11-12）.
+{
+  const files = [
+    ...walk(path.join(PKG, "src", "components"), [".tsx"]),
+    ...walk(path.join(PKG, "registry"), [".tsx"]),
+  ];
+  const FLEX = /(?<![\w-])flex(?![\w-])/;
+  const DIR = /\bflex-(?:row|col)\b/;
+  const CROSS =
+    /\bjustify-(?:between|end|start)\b|\bitems-center\b[\s\S]{0,80}\bgap-|\bgap-[\s\S]{0,80}\bitems-center\b/;
+  const vs: Violation[] = [];
+  for (const f of files) {
+    const { rows } = lines(f);
+    rows.forEach((row, i) => {
+      const t = row.trim();
+      if (t.startsWith("//") || t.startsWith("*") || t.startsWith("/*") || t.includes("{/*")) return;
+      if (!FLEX.test(row) || DIR.test(row)) return;
+      if (!CROSS.test(row)) return;
+      vs.push({
+        file: rel(f),
+        line: i + 1,
+        detail: `가로 의도 flex에 flex-row/flex-col 없음: ${row.trim().slice(0, 90)}`,
+      });
+    });
+  }
+  report(
+    "h",
+    vs.length === 0,
+    `브리지 flex 방향 명시(대상 ${files.length}파일, 위반 ${vs.length}건)`,
+    vs,
+  );
+}
+
+console.log(failures.length === 0 ? "\naudit:design PASS — 9/9 검사 통과" : `\naudit:design FAIL — 위반: ${failures.join(", ")}`);
 process.exit(failures.length === 0 ? 0 : 1);

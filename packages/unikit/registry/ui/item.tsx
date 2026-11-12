@@ -100,7 +100,7 @@ Item.displayName = "Item";
 // ItemMedia — 미디어 영역（글리프 Text 또는 Image를 소비자가 선택）.
 // ---------------------------------------------------------------------------
 const itemMediaVariants = cva(
-  "flex shrink-0 items-center justify-center gap-2",
+  "flex flex-row shrink-0 items-center justify-center gap-2",
   {
     variants: {
       variant: {

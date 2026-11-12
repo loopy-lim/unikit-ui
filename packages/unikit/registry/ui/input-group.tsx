@@ -141,7 +141,7 @@ const InputGroup = forwardRef<BridgeViewRef, InputGroupProps>(
           ref={ref}
           accessibilityRole="group"
           className={cn(
-            "relative w-full min-w-0 rounded-md border border-input web:shadow-xs web:transition-all web:outline-none",
+            "relative w-full min-w-0 rounded-md border border-input web:transition-all web:outline-none",
             column ? "flex-col" : "flex-row items-center",
             // 원본 h-9 → has-［>textarea］/block 정렬 시 h-auto. min-h-9로 바닥 유지.
             column || derived.hasTextarea ? "min-h-9" : "h-9",
@@ -160,7 +160,7 @@ const InputGroup = forwardRef<BridgeViewRef, InputGroupProps>(
 InputGroup.displayName = "InputGroup";
 
 const inputGroupAddonVariants = cva(
-  "flex h-auto items-center justify-center gap-2 py-1.5 web:cursor-text web:select-none",
+  "flex flex-row h-auto items-center justify-center gap-2 py-1.5 web:cursor-text web:select-none",
   {
     variants: {
       align: {

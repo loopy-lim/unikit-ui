@@ -107,25 +107,22 @@ Message.displayName = "Message";
 
 // ---------------------------------------------------------------------------
 // MessageAvatar — 아바타 슬롯（Avatar 컴포넌트를 넣는 컨테이너）.
-// 푸터가 있으면 -translate-y-8로 수직 중앙에 맞춘다（원본 group-has 근사）.
+// ---------------------------------------------------------------------------
+// MessageAvatar — 아바타 래퍼. 상단 정렬(self-start)로 헤더·버블과 자연스럽게 정렬.
 // ---------------------------------------------------------------------------
 export type MessageAvatarProps = ViewProps;
 
 const MessageAvatar = forwardRef<BridgeViewRef, MessageAvatarProps>(
-  ({ className, ...props }, ref) => {
-    const message = useContext(MessageContext);
-    return (
-      <View
-        ref={ref}
-        className={cn(
-          "flex w-fit min-w-8 shrink-0 items-center justify-center self-end overflow-hidden rounded-full bg-muted",
-          message?.hasFooter && "-translate-y-8",
-          className,
-        )}
-        {...props}
-      />
-    );
-  },
+  ({ className, ...props }, ref) => (
+    <View
+      ref={ref}
+      className={cn(
+        "flex w-fit min-w-8 shrink-0 items-center justify-center self-start overflow-hidden rounded-full bg-muted",
+        className,
+      )}
+      {...props}
+    />
+  ),
 );
 MessageAvatar.displayName = "MessageAvatar";
 
@@ -163,7 +160,10 @@ const MessageHeader = forwardRef<BridgeViewRef, MessageHeaderProps>(
   ({ className, children, ...props }, ref) => (
     <View
       ref={ref}
-      className={cn("flex max-w-full min-w-0 items-center px-3", className)}
+      className={cn(
+        "flex flex-row max-w-full min-w-0 items-center px-3",
+        className,
+      )}
       {...props}
     >
       {/* 이중 지정 원칙: 텍스트 색크기는 내부 Text에 */}
@@ -195,7 +195,7 @@ const MessageFooter = forwardRef<BridgeViewRef, MessageFooterProps>(
       <View
         ref={ref}
         className={cn(
-          "flex max-w-full min-w-0 items-center px-3",
+          "flex flex-row max-w-full min-w-0 items-center px-3",
           message?.align === "end" && "justify-end",
           className,
         )}

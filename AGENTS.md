@@ -32,7 +32,7 @@ UniKit/  (bun 워크스페이스: apps/*, packages/*)
 ```bash
 bun install                        # 최초 1회 (패키지 매니저는 bun만 — pnpm 금지)
 bun run typecheck                  # 워크스페이스 3패키지 tsc --noEmit (루트에서)
-bun run audit:design               # 디자인 일관성 검사 8종(임의값 클래스·registry files 실재·WCAG 대비 등)
+bun run audit:design               # 디자인 일관성 검사 9종(임의값 클래스·registry files 실재·WCAG 대비·브리지 flex 방향 등)
 bun run generate:design            # 토큰 변경 시에만: globals.css·registry theme·tokens.md 재생성
 ```
 
