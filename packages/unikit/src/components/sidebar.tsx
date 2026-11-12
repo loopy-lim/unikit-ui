@@ -11,6 +11,10 @@
 //   transition）는 문서 흐름 참여형 단일 View（폭 토큰 전환）로 근사 — 즉시
 //   전환 관행（다른 오버레이 계열과 동일）, offcanvas 접힘은 w-0 + 경계 제거로
 //   표현한다. md: 미디어쿼리 토큰은 isMobile prop 분기가 대체했다.
+//   높이는 웹에서 web:sticky top-0 + web:h-svh（원본 fixed inset-y-0의 근사 —
+//   스크롤 문서에서도 뷰포트 높이를 유지）, 네이티브는 Provider flex-row의
+//   교차축 stretch. h-full은 Provider（min-h, 높이 부정） 안에서 콘텐츠 높이로
+//   붕괴해 제거했다（2026-11-12 블록 검증에서 발견）.
 // - 폭 CSS 변수（--sidebar-width 16rem 등）는 표준 계단 토큰으로 치환:
 //   w-64（16rem）w-72（18rem 모바일）w-12（3rem 아이콘）w-14（아이콘+패딩 3.5rem,
 //   원본 calc（3rem+1rem）의 임의값 근사）.
@@ -275,7 +279,10 @@ const Sidebar = React.forwardRef<BridgeViewRef, SidebarProps>(
           <View
             ref={ref}
             className={cn(
-              "h-full flex-col bg-background text-foreground",
+              // h-full 제거 — Provider(높이 부정 min-h) 안에서 100%가 콘텐츠
+              // 높이로 붕괴한다. 네이티브는 flex-row 교차축 stretch, 웹은
+              // sticky+h-svh(원본 fixed inset-y-0의 흐름 참여형 근사)로 채운다.
+              "web:sticky web:top-0 web:h-svh flex-col bg-background text-foreground",
               SIDEBAR_WIDTH,
               className,
             )}
@@ -334,7 +341,10 @@ const Sidebar = React.forwardRef<BridgeViewRef, SidebarProps>(
         <View
           ref={ref}
           className={cn(
-            "relative h-full overflow-hidden",
+            // h-full 제거 근거는 collapsible=none 분기 주석과 동일 —
+            // 웹은 sticky+h-svh로 뷰포트 높이 고정(스크롤 문서에서도 잔류),
+            // 네이티브는 교차축 stretch로 부모를 채운다.
+            "relative web:sticky web:top-0 web:h-svh overflow-hidden",
             widthClass,
             variant === "sidebar" &&
               !collapsed &&
