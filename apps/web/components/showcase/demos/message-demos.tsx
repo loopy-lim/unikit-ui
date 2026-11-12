@@ -34,7 +34,7 @@ import type { ShowcaseDemo } from "./types";
 export const messageDemo: ShowcaseDemo = {
   Demo: function MessageDemo() {
     return (
-      <MessageGroup>
+      <MessageGroup className="w-full max-w-sm">
         <Message align="start">
           <MessageAvatar>
             <Avatar>
@@ -108,7 +108,7 @@ export const messageScrollerDemo: ShowcaseDemo = {
   Demo: function MessageScrollerDemo() {
     const [chat, setChat] = useState(INITIAL);
     return (
-      <View className="gap-2">
+      <View className="w-full max-w-sm gap-2">
         <MessageScrollerProvider>
           <MessageScroller className="h-40 rounded-md border">
             <MessageScrollerViewport>

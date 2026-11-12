@@ -166,7 +166,7 @@ export const badgeDemo: ShowcaseDemo = {
 export const cardDemo: ShowcaseDemo = {
   Demo: function CardDemo() {
     return (
-      <Card className="w-full shadow-sm">
+      <Card className="w-full">
         <CardHeader>
           <CardTitle>프로젝트 만들기</CardTitle>
           <CardDescription>
@@ -316,7 +316,7 @@ export const progressDemo: ShowcaseDemo = {
 export const separatorDemo: ShowcaseDemo = {
   Demo: function SeparatorDemo() {
     return (
-      <View className="gap-2">
+      <View className="w-full max-w-xs gap-2">
         <Text className="font-sans text-sm text-foreground">위</Text>
         <Separator />
         <Text className="font-sans text-sm text-foreground">아래</Text>
@@ -331,7 +331,7 @@ export const separatorDemo: ShowcaseDemo = {
 export const skeletonDemo: ShowcaseDemo = {
   Demo: function SkeletonDemo() {
     return (
-      <View className="flex flex-row items-center gap-4">
+      <View className="flex w-full max-w-sm flex-row items-center gap-4">
         <Skeleton className="size-10 rounded-full" />
         <View className="flex flex-1 flex-col gap-2">
           <Skeleton className="h-4 w-2/3" />

@@ -20,7 +20,7 @@ import type { ShowcaseDemo } from "./types";
 export const tabsDemo: ShowcaseDemo = {
   Demo: function TabsDemo() {
     return (
-      <Tabs defaultValue="account">
+      <Tabs defaultValue="account" className="w-full max-w-sm">
         <TabsList variant="line">
           <TabsTrigger value="account">계정</TabsTrigger>
           <TabsTrigger value="security">보안</TabsTrigger>
@@ -42,7 +42,7 @@ export const tabsDemo: ShowcaseDemo = {
 export const accordionDemo: ShowcaseDemo = {
   Demo: function AccordionDemo() {
     return (
-      <Accordion defaultValue="what">
+      <Accordion defaultValue="what" className="w-full max-w-sm">
         <AccordionItem value="what">
           <AccordionTrigger>UniKit이 뭔가요?</AccordionTrigger>
           <AccordionContent>
@@ -62,7 +62,7 @@ export const accordionDemo: ShowcaseDemo = {
 export const collapsibleDemo: ShowcaseDemo = {
   Demo: function CollapsibleDemo() {
     return (
-      <Collapsible defaultOpen>
+      <Collapsible defaultOpen className="w-full max-w-sm">
         <CollapsibleTrigger>자세히 보기</CollapsibleTrigger>
         <CollapsibleContent className="mt-2">
           <Text className="font-sans text-sm text-muted-foreground">

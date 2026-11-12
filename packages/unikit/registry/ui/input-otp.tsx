@@ -191,7 +191,7 @@ const InputOTPSlot = forwardRef<BridgeViewRef, InputOTPSlotProps>(
       <View
         ref={ref}
         className={cn(
-          "relative flex h-9 w-9 items-center justify-center border-y border-r border-input web:shadow-xs web:transition-all web:outline-none",
+          "relative flex h-9 w-9 items-center justify-center border-y border-r border-input web:transition-all web:outline-none",
           // first:/last: 근사 — 인덱스로 전개（머리 주석）.
           index === 0 && "rounded-l-md border-l",
           cellCount > 0 && index === cellCount - 1 && "rounded-r-md",

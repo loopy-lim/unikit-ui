@@ -49,7 +49,7 @@ const INITIAL_CHAT = [
 /** Message — 그룹·정렬(start 상대방/end 나)·헤더·푸터 */
 function MessageDemo() {
   return (
-    <MessageGroup>
+    <MessageGroup className="w-full">
       <Message align="start">
         <MessageAvatar>
           <Avatar>
@@ -161,7 +161,7 @@ function MarkerDemo() {
 function MessageScrollerDemo() {
   const [chat, setChat] = useState(INITIAL_CHAT);
   return (
-    <View className="gap-2">
+    <View className="w-full gap-2">
       <MessageScrollerProvider>
         <MessageScroller className="h-56 rounded-md border">
           <MessageScrollerViewport>

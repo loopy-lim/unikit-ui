@@ -42,7 +42,7 @@ import type { ShowcaseDemo } from "./types";
 export const commandDemo: ShowcaseDemo = {
   Demo: function CommandDemo() {
     return (
-      <View className="rounded-md border">
+      <View className="w-full max-w-sm rounded-md border">
         <Command>
           <CommandInput placeholder="검색…" />
           <CommandList>

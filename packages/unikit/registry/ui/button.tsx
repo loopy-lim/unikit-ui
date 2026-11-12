@@ -33,7 +33,7 @@ const buttonVariants = cva(
         // 원본 outline: border bg-background shadow-xs hover:bg-accent
         // hover:text-accent-foreground — text 스위치는 내부 Text 변형에 이중 지정.
         outline:
-          "border border-border bg-background web:shadow-xs web:hover:bg-accent active:bg-accent",
+          "border border-border bg-background web:hover:bg-accent active:bg-accent",
         ghost: "web:hover:bg-accent active:bg-accent",
         link: "",
       },

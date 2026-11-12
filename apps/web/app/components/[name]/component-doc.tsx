@@ -55,6 +55,18 @@ export function ComponentDoc({ name }: { name: string }) {
     "slider",
     "input-group",
     "input-otp",
+    "message",
+    "message-scroller",
+    "scroll-area",
+    "resizable",
+    "sidebar",
+    "carousel",
+    "accordion",
+    "collapsible",
+    "tabs",
+    "command",
+    "separator",
+    "skeleton",
   ].includes(name);
 
   return (

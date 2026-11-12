@@ -26,7 +26,7 @@ import { cn } from "../lib/utils";
 // 원본의 min-h-16. 색은 TextInput 자체가 글자 요소이므로 text-foreground를 여기에
 // 명시（이중 지정 원칙）.
 const textareaVariants = cva(
-  "font-sans min-h-16 w-full rounded-md border border-input bg-transparent px-3 py-2 text-base text-foreground placeholder:text-muted-foreground focus:border-ring focus:ring-3 focus:ring-ring/50 web:focus-visible:border-ring web:field-sizing-content web:shadow-xs web:transition-all web:outline-none web:md:text-sm",
+  "font-sans min-h-16 w-full rounded-md border border-input bg-transparent px-3 py-2 text-base text-foreground placeholder:text-muted-foreground focus:border-ring focus:ring-3 focus:ring-ring/50 web:focus-visible:border-ring web:field-sizing-content web:transition-all web:outline-none web:md:text-sm",
 );
 
 // invalid=true일 때 덧씌우는 조건부 클래스 — 원본 aria-invalid:* 치환.

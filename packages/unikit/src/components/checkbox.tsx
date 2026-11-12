@@ -69,7 +69,7 @@ const Checkbox = forwardRef<BridgePressableRef, CheckboxProps>(
         hitSlop={hitSlop ?? HIT_SLOP}
         onPress={handlePress}
         className={cn(
-          "flex size-4 shrink-0 flex-row items-center justify-center rounded-sm border web:shadow-xs web:transition-shadow web:outline-none web:focus-visible:border-ring web:focus-visible:ring-3 web:focus-visible:ring-ring/50",
+          "flex size-4 shrink-0 flex-row items-center justify-center rounded-sm border web:transition-colors web:outline-none web:focus-visible:border-ring web:focus-visible:ring-3 web:focus-visible:ring-ring/50",
           // 미체크 링은 border-input（라이트 1.27:1）이 배경에 묻혀 경계가 안
           // 보이므로 foreground/50（양 모드 ≥3:1, G4）로 조정.
           indeterminate || isChecked

@@ -162,7 +162,7 @@ const TabsTrigger = forwardRef<BridgePressableRef, TabsTriggerProps>(
           "web:focus-visible:border-ring web:focus-visible:ring-3 web:focus-visible:ring-ring/50 web:focus-visible:outline-1 web:outline-ring",
           // 원본 활성 토큰（bg-background·shadow-sm） — line 변형은 활성 시 배경
           // 없이 인디케이터 바만（원본 line 활성 토큰이 bg-transparent）.
-          active && list.variant !== "line" && "bg-background web:shadow-sm",
+          active && list.variant !== "line" && "bg-background",
           disabled && "web:pointer-events-none opacity-50",
           className,
         )}
