@@ -645,7 +645,9 @@ const sidebarMenuButtonVariants = cva(
   // 원본 base의 hover·active 피드백（hover:bg-sidebar-accent hover:text-sidebar-accent-foreground
   // active:bg-sidebar-accent active:text-sidebar-accent-foreground）를 토큰 대응(bg-accent 등)으로
   // 복원 — hover 전경색은 RN 미상속이라 내부 Text에도 web:hover 이중 지정한다.
-  "flex w-full items-center gap-2 overflow-hidden rounded-md p-2 text-left text-sm web:hover:bg-accent active:bg-accent web:hover:text-accent-foreground active:text-accent-foreground web:focus-visible:ring-2 web:focus-visible:ring-ring disabled:opacity-50 disabled:web:pointer-events-none",
+  // flex-row 필수: 브리지 Pressable 기본이 flex-col이라(아이콘+라벨이 세로로
+  // 쌓이며 h-8에서 라벨이 밀려 보임) 여기서 방향을 덮어쓴다.
+  "flex flex-row w-full items-center gap-2 overflow-hidden rounded-md p-2 text-left text-sm web:hover:bg-accent active:bg-accent web:hover:text-accent-foreground active:text-accent-foreground web:focus-visible:ring-2 web:focus-visible:ring-ring disabled:opacity-50 disabled:web:pointer-events-none",
   {
     variants: {
       variant: {
