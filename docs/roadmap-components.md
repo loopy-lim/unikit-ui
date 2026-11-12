@@ -110,18 +110,18 @@ shadcn/ui(new-york-v4)의 `registry:ui` 61종을 UniKit 유니버설(한 벌 소
 |---|---|---|---|---|
 | 카탈로그 | 61종(ui 디렉터리)·66(문서) | 코어 122 디렉터리 | 32종(+인증 폼 14) | **61종 — 전량 유니버설** |
 | 플랫폼 범위 | 웹(3엔진) | 웹 안정 + SwiftUI 실험(canary) | RN 중심 | **웹+RN 단일 소스** |
-| 레지스트리 | 커뮤니티 디렉터리 548 | npm+CLI | 공개 r/ 2엔진(nativewind·uniwind) | 비공개(localhost) — 공개 호스팅이 과제 |
+| 레지스트리 | 커뮤니티 디렉터리 548 | npm+CLI | 공개 r/ 2엔진(nativewind·uniwind) | 공개 호스팅 <https://ui.unikit.ll3.kr/r/registry.json>（shadcn 디렉터리 등재는 과제） |
 | AI 계층 | MCP 7도구·skills/ | "agent ready"·AGENTS.md | — | llms.txt·AGENTS.md(이번 사이클) → MCP 과제 |
 
 - **shadcn/ui** — 2026-10 Trace·Code Block 추가, AI Elements 21 패턴. RN 공식 지원은 여전히 없어요.
 - **Astryx**(Meta) — ★20,252·주간 다운로드 약 66만. `@astryxdesign/native` v0.1.0(canary)은 SwiftUI 네이티브 뷰 + JS 코어(JSON 브리지) 실험 — "React Native and Android bindings are not built yet". UniKit(React 단일 소스 + RN 브리지)과는 접근 자체가 달라요.
 - **react-native-reusables** — ★8,720, 마지막 푸시 2026-09-27(약 6주 공백). nativewind·uniwind 이중 발행, 인증 폼 패턴 14항목이 컴포넌트와 혼재.
 - **@aniui·@tetra-ui**(신규 확인) — shadcn 커뮤니티 디렉터리에 등재된 RN 전용 경쟁자예요. @aniui는 93종(uniwind/NativeWind)이지만 현재 디렉터리 헬스 unavailable(30일 가용성 3%)·숨김 처리, @tetra-ui는 45종 healthy예요. 둘 다 RN 전용이라 웹+RN 단일 소스 포지션엔 영향이 없어요(2026-11-10 실측 — docs/sdd/51-research.md §4.6).
-- **UniKit 위치** — "shadcn 카탈로그 전량 + 웹·네이티브 단일 소스" 주장이 카탈로그 규모(61/61)에서 실제로 성립하는 시점이 됐어요. 남은 갭은 레지스트리 공개 호스팅·AI 계층·게시 물량이에요.
+- **UniKit 위치** — "shadcn 카탈로그 전량 + 웹·네이티브 단일 소스" 주장이 카탈로그 규모(61/61)에서 실제로 성립하는 시점이 됐어요. 레지스트리 공개 호스팅은 <https://ui.unikit.ll3.kr>에 올라가 있어요. 남은 갭은 shadcn 디렉터리 등재·AI 계층·게시 물량(npm 0.2.0은 1차 28종)이에요.
 
 ## 다음 사이클 제안
 
-1. **패키지 게시 + 레지스트리 공개 호스팅** — npm 0.2.0 게시분은 1차 28종 시점이에요. 61종 반영 게시와 함께 `registry.json`의 homepage(현재 localhost) 갱신·공개 호스팅.
+1. **패키지 재게시(61종)** — npm 0.2.0 게시분은 1차 28종 시점이에요. 레지스트리 공개 호스팅·`homepage`(`https://ui.unikit.ll3.kr/r/registry.json`)는 반영됨. 다음 게시에 61종 상태를 npm에 맞추면 돼요.
 2. **쇼케이스 전시 확장** — 웹 `/showcase`는 61종 카탈로그·사이드바 TOC·컴포넌트별 Preview/Code/설치 스니펫(`/showcase/[name]`)으로 전환했어요. Expo는 기존 전체 스크롤 데모를 유지하고, 웹 kitchen-sink(`/showcase/kitchen-sink`)가 그와 같은 구성을 보존해요.
 3. **AI 계층** — llms.txt·AGENTS.md는 이번 사이클에 정비됐어요. shadcn MCP(7도구) 대응 MCP 서버 착수 여부 결정.
 4. **미지원 기능 중 수요 상위** — 오버레이 애니메이션(웹 한정 `web:` 클래스), select·메뉴 키보드 탐색, chart 반응형 크기.

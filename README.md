@@ -2,6 +2,10 @@
 
 **한국어** · [English](README.en.md)
 
+<p align="center">
+  <img src="branding/banner-readme.png" alt="UniKit — One import. Web and native." width="800" />
+</p>
+
 > "HeroUI처럼 한개의 import로 react, react-native에서 두개 같이 보이게 만들고 싶어.
 > 형태는 shad/cn 처럼 이루어지게 하면 좋을꺼 같아." — 이 프로젝트의 원 요청
 
@@ -43,7 +47,7 @@ cd apps/web && bun run dev -p 3000
 | <http://localhost:3000/blocks> | 블록(조합 화면) |
 | <http://localhost:3000/r/registry.json> | shadcn 레지스트리 |
 
-공개 호스팅(예정): <https://ui.unikit.ll3.jp> — 배포는 [apps/web/DEPLOY.md](apps/web/DEPLOY.md)
+데모·레지스트리: <https://ui.unikit.ll3.kr> — 재배포는 [apps/web/DEPLOY.md](apps/web/DEPLOY.md)
 
 ### Expo 데모
 
@@ -91,11 +95,11 @@ export default function Home() {
 
 **방법 2 — 소스 복사 (요약)**
 
-1. UniKit에서 레지스트리 서버: `cd apps/web && bun x next dev -p 3000`
-2. 소비자 프로젝트: `bunx shadcn@latest add http://localhost:3000/r/button.json -y`
-3. `transpilePackages` · `web:`/`@source` · `theme.json` 설정은 [docs/install.md](docs/install.md) 3단계
+```bash
+bunx shadcn@latest add https://ui.unikit.ll3.kr/r/button.json -y
+```
 
-레지스트리 아이템 67종 = UI 61 + utils 1 + theme 4 + animations 1.
+`transpilePackages` · `web:`/`@source` · `theme.json` 설정은 [docs/install.md](docs/install.md). 레지스트리 아이템 67종 = UI 61 + utils 1 + theme 4 + animations 1.
 
 ## 기여 (저장소에 컴포넌트 추가)
 
