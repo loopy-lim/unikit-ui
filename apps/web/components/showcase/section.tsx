@@ -1,5 +1,5 @@
 "use client";
-// 사이클 40 신규 섹션 공용 골격 — app/showcase/page.tsx의 Section과 같은 토큰
+// 사이클 40 신규 섹션 공용 골격 — app/components/page.tsx의 Section과 같은 토큰
 // (제목 text-lg semibold / 설명 text-sm muted / 본문 mt-4). 기존 8개 섹션은
 // page.tsx 안에 그대로 보존하고, 신규 6개 티어 섹션만 이 골격을 공유한다.
 import type { ReactNode } from "react";

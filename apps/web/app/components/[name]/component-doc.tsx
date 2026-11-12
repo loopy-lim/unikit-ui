@@ -62,7 +62,7 @@ export function ComponentDoc({ name }: { name: string }) {
       <View className="space-y-3">
         <View className="flex flex-row items-center gap-1.5">
           <Link
-            href="/showcase"
+            href="/components"
             className="site-focusable font-sans text-sm text-muted-foreground transition-colors hover:text-foreground hover:underline"
           >
             Components
@@ -114,11 +114,15 @@ export function ComponentDoc({ name }: { name: string }) {
       <View className="flex flex-row flex-wrap items-center justify-between gap-4 border-t border-border/80 pt-8">
         {neighbors.prev ? (
           <Link
-            href={`/showcase/${neighbors.prev.name}`}
+            href={`/components/${neighbors.prev.name}`}
             className="site-focusable group rounded-lg border border-border/80 px-4 py-3 transition-colors hover:border-foreground/25 hover:bg-accent"
           >
-            <Text className="font-sans text-xs text-muted-foreground">이전</Text>
-            <Text className="mt-0.5 font-sans text-sm font-medium text-foreground">
+            {/* Text는 웹에서 <span>(inline)이라 block 지정 없으면 라벨과
+                제목이 한 줄에 붙고 mt-0.5도 무시된다 — 세로 쌓기 필수 */}
+            <Text className="block font-sans text-xs text-muted-foreground">
+              이전
+            </Text>
+            <Text className="mt-0.5 block font-sans text-sm font-medium text-foreground">
               ← {neighbors.prev.title}
             </Text>
           </Link>
@@ -127,11 +131,13 @@ export function ComponentDoc({ name }: { name: string }) {
         )}
         {neighbors.next ? (
           <Link
-            href={`/showcase/${neighbors.next.name}`}
+            href={`/components/${neighbors.next.name}`}
             className="site-focusable group ml-auto rounded-lg border border-border/80 px-4 py-3 text-right transition-colors hover:border-foreground/25 hover:bg-accent"
           >
-            <Text className="font-sans text-xs text-muted-foreground">다음</Text>
-            <Text className="mt-0.5 font-sans text-sm font-medium text-foreground">
+            <Text className="block font-sans text-xs text-muted-foreground">
+              다음
+            </Text>
+            <Text className="mt-0.5 block font-sans text-sm font-medium text-foreground">
               {neighbors.next.title} →
             </Text>
           </Link>

@@ -61,7 +61,14 @@ function DocsMain({ children }: { children: ReactNode }) {
 function DocsHeader({ children }: { children: ReactNode }) {
   const { colorScheme, toggleColorScheme } = useUnikitTheme();
   const pathname = usePathname();
-  const onComponents = pathname.startsWith("/showcase");
+  const onComponents = pathname.startsWith("/components");
+  const onBlocks = pathname.startsWith("/blocks");
+
+  function navLinkClass(active: boolean) {
+    return active
+      ? "site-focusable font-sans text-sm font-medium text-foreground"
+      : "site-focusable font-sans text-sm text-muted-foreground transition-colors hover:text-foreground";
+  }
 
   return (
     <View className="sticky top-0 z-40 border-b border-border/80 bg-background/90 backdrop-blur supports-[backdrop-filter]:bg-background/75">
@@ -75,25 +82,18 @@ function DocsHeader({ children }: { children: ReactNode }) {
           </Link>
           <View className="hidden h-4 w-px bg-border sm:flex" />
           <View className="hidden flex-row items-center gap-4 sm:flex">
-            <Link
-              href="/"
-              className="site-focusable font-sans text-sm text-muted-foreground transition-colors hover:text-foreground"
-            >
+            <Link href="/" className={navLinkClass(pathname === "/")}>
               소개
             </Link>
-            <Link
-              href="/showcase"
-              className={
-                onComponents
-                  ? "site-focusable font-sans text-sm font-medium text-foreground"
-                  : "site-focusable font-sans text-sm text-muted-foreground transition-colors hover:text-foreground"
-              }
-            >
+            <Link href="/components" className={navLinkClass(onComponents)}>
               Components
             </Link>
+            <Link href="/blocks" className={navLinkClass(onBlocks)}>
+              Blocks
+            </Link>
             <Link
-              href="/showcase/kitchen-sink"
-              className="site-focusable font-sans text-sm text-muted-foreground transition-colors hover:text-foreground"
+              href="/components/kitchen-sink"
+              className={navLinkClass(pathname === "/components/kitchen-sink")}
             >
               Kitchen sink
             </Link>
@@ -145,9 +145,9 @@ function DocsNavGroups({
     <>
       {showAllLink ? (
         <Link
-          href="/showcase"
+          href="/components"
           onClick={onNavigate}
-          className={`mb-5 ${docsNavLinkClass(pathname === "/showcase")}`}
+          className={`mb-5 ${docsNavLinkClass(pathname === "/components")}`}
         >
           전체 목록
         </Link>
@@ -159,7 +159,7 @@ function DocsNavGroups({
           </Text>
           <View className="space-y-0.5">
             {group.items.map((item) => {
-              const href = `/showcase/${item.name}`;
+              const href = `/components/${item.name}`;
               return (
                 <Link
                   key={item.name}
@@ -231,8 +231,9 @@ function DocsMobileNav({
           {(
             [
               ["/", "소개"],
-              ["/showcase", "Components"],
-              ["/showcase/kitchen-sink", "Kitchen sink"],
+              ["/components", "Components"],
+              ["/blocks", "Blocks"],
+              ["/components/kitchen-sink", "Kitchen sink"],
             ] as const
           ).map(([href, label]) => (
             <Link

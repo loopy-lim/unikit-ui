@@ -1,5 +1,5 @@
 "use client";
-// Next.js 쇼케이스 페이지 — /showcase.
+// Next.js 쇼케이스 페이지 — /components.
 // Expo 쇼케이스(apps/expo/app/index.tsx)와 같은 섹션 순서·문구·클래스·간격을 렌더링한다.
 //
 // - "use client" 유지(테마 상태·이벤트 사용 — DOM 브리지 렌더링).
@@ -155,7 +155,7 @@ function Header() {
         React와 React Native에서 같은 컴포넌트, 같은 모습.
       </Text>
       <Link
-        href="/showcase"
+        href="/components"
         className="site-focusable mt-2 font-sans text-xs text-muted-foreground underline-offset-2 hover:underline"
       >
         ← 컴포넌트 목록

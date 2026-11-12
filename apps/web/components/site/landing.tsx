@@ -75,10 +75,16 @@ function SiteNav() {
         </Link>
         <nav className="flex items-center gap-3 text-sm">
           <Link
-            href="/showcase"
+            href="/blocks"
             className="site-focusable text-muted-foreground transition-colors hover:text-foreground"
           >
-            Showcase
+            Blocks
+          </Link>
+          <Link
+            href="/components"
+            className="site-focusable text-muted-foreground transition-colors hover:text-foreground"
+          >
+            Components
           </Link>
           <a
             href="https://github.com/loopy-lim/UniKit"
@@ -110,8 +116,8 @@ function Hero() {
           shadcn 형태와 zinc 토큰, 브리지 프리미티브를 제공합니다.
         </p>
         <div className="mt-8 flex flex-wrap items-center gap-3">
-          <Link href="/showcase" className={CTA_PRIMARY_CLASS}>
-            쇼케이스 보기
+          <Link href="/components" className={CTA_PRIMARY_CLASS}>
+            컴포넌트 보기
           </Link>
           <a href="#install" className={CTA_SECONDARY_CLASS}>
             설치 방법
@@ -297,10 +303,13 @@ function TeaserSection() {
           </PreviewScene>
         </div>
         <div className="mt-8 flex flex-wrap items-center gap-3">
-          <Link href="/showcase" className={CTA_PRIMARY_CLASS}>
-            전체 쇼케이스 보기
+          <Link href="/components" className={CTA_PRIMARY_CLASS}>
+            전체 컴포넌트 보기
           </Link>
-          <Link href="/showcase/kitchen-sink" className={CTA_SECONDARY_CLASS}>
+          <Link href="/blocks" className={CTA_SECONDARY_CLASS}>
+            블록 데모 보기
+          </Link>
+          <Link href="/components/kitchen-sink" className={CTA_SECONDARY_CLASS}>
             한 페이지 전체 데모
           </Link>
         </div>

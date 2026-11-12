@@ -25,7 +25,7 @@ const ibmPlexMono = IBM_Plex_Mono({
 export const metadata: Metadata = {
   title: "UniKit",
   description:
-    "한 import로 React(웹)와 React Native에서 같은 UI — UniKit 소개와 쇼케이스",
+    "한 import로 React(웹)와 React Native에서 같은 UI — UniKit 소개와 컴포넌트 카탈로그",
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {

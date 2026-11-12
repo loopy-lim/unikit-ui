@@ -130,7 +130,7 @@ function CatalogCard({ item }: { item: CatalogItem }) {
         </Text>
       </View>
       <Link
-        href={`/showcase/${name}`}
+        href={`/components/${name}`}
         className="site-focusable absolute inset-0"
         aria-label={`${title} 문서 보기`}
       />
