@@ -3,7 +3,7 @@
 // 목록→상세 구조). 데모 JSX는 기존 것을 그대로 옮기고 Section/DemoLabel
 // 포장만 벗겼다(문구·구성 유지).
 import { useRef, type ReactNode } from "react";
-import { Text, View, type TextInputInstance } from "react-native";
+import { Text, View, type BridgeTextInputRef } from "@unikit-bridge/ui/primitives";
 import { Inbox, Plus, Star } from "lucide-react-native";
 import {
   Accordion,
@@ -176,9 +176,9 @@ function CardDemo() {
 
 /** Input · Label — nativeID ↔ accessibilityLabelledBy 연결 + 클릭 포커스 */
 function InputLabelDemo() {
-  const nameInputRef = useRef<TextInputInstance>(null);
-  const emailInputRef = useRef<TextInputInstance>(null);
-  const disabledInputRef = useRef<TextInputInstance>(null);
+  const nameInputRef = useRef<BridgeTextInputRef>(null);
+  const emailInputRef = useRef<BridgeTextInputRef>(null);
+  const disabledInputRef = useRef<BridgeTextInputRef>(null);
   return (
     <Stack>
       <View className="flex flex-col gap-2">

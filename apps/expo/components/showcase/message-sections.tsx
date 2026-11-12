@@ -2,7 +2,7 @@
 // Marker·MessageScroller(자동 하단 이동). 채팅 화면 구성 요소 모음.
 // 카탈로그 재구성: 컴포넌트별 CatalogEntry로 분리.
 import { useState } from "react";
-import { Text, View } from "react-native";
+import { Text, View } from "@unikit-bridge/ui/primitives";
 import { ArrowDown } from "lucide-react-native";
 import {
   Attachment,

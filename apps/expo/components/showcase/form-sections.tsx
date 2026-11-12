@@ -3,8 +3,8 @@
 // 오류(FormMessage+aria-invalid)·제출 중 spinner). 카탈로그 재구성:
 // 컴포넌트별 CatalogEntry로 분리.
 import { useState, type ReactNode } from "react";
-import { Text, View } from "react-native";
 import { toast } from "@unikit-bridge/ui";
+import { Text, View } from "@unikit-bridge/ui/primitives";
 import {
   Button,
   Form,

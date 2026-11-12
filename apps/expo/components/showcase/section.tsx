@@ -1,10 +1,10 @@
 // 쇼케이스 공용 조각(엑스포) — 데모 안내 문구(Hint)·트리거 공용 스타일·
 // 슬라이드 라벨·웹 전용 안내. 카탈로그 재구성 전의 Section 골격은 목록·
 // 상세 화면이 구조를 나눠 가지며 쓰는 곳이 없어져 제거했다(2026-11-10).
-// 레이아웃 텍스트는 RN Text/View(uniwind className)를, 컴포넌트는
-// @unikit-bridge/ui에서 가져온다(기존 쇼케이스 관행).
+// 레이아웃 텍스트는 브리지 프리미티브(@unikit-bridge/ui/primitives — 네이티브에서
+// RN Text/View + uniwind className), 컴포넌트는 @unikit-bridge/ui에서 가져온다.
 import type { ReactNode } from "react";
-import { Text } from "react-native";
+import { Text } from "@unikit-bridge/ui/primitives";
 import { ExternalLink } from "lucide-react-native";
 import {
   buttonVariants,

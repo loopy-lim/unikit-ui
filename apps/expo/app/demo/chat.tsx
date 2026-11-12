@@ -7,14 +7,6 @@
 // lib/token-colors 헬퍼가 테마 토큰에서 유도한다(재타이핑 금지, 사이클 74).
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useCallback, useEffect, useRef, useState } from "react";
-import {
-  KeyboardAvoidingView,
-  Platform,
-  Pressable,
-  Share,
-  Text,
-  View,
-} from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import {
   ArrowUp,
@@ -82,6 +74,14 @@ import {
   Textarea,
   toast,
 } from "@unikit-bridge/ui";
+import {
+  KeyboardAvoidingView,
+  Platform,
+  Pressable,
+  Share,
+  Text,
+  View,
+} from "@unikit-bridge/ui/primitives";
 
 import {
   DEMO_FILES,

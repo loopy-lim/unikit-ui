@@ -1,7 +1,7 @@
 // 데모 앱 홈(엑스포) — "UniKit 도우미" 앱의 대문. 웹 사본(apps/web/app/blocks/
 // assistant/page.tsx)과 같은 구성: 인사 · 빠른 질문 · 이어서 하기. 질문을 고르면
 // /demo/chat으로 q를 실어 보내 바로 대화가 시작된다. 컴포넌트 import는 오직
-// @unikit-bridge/ui(AC-1).
+// @unikit-bridge/ui, 프리미티브는 @unikit-bridge/ui/primitives(AC-1).
 import { Link } from "expo-router";
 import {
   ChevronRight,
@@ -12,7 +12,6 @@ import {
   Smartphone,
   type LucideIcon,
 } from "lucide-react-native";
-import { Pressable, ScrollView, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import {
   Badge,
@@ -29,6 +28,7 @@ import {
   ItemMedia,
   ItemTitle,
 } from "@unikit-bridge/ui";
+import { Pressable, ScrollView, Text, View } from "@unikit-bridge/ui/primitives";
 
 import { DEMO_RECENTS, DEMO_SUGGESTIONS } from "../../components/demo/script";
 import { ThemeToggleButton } from "../../components/theme-toggle";

@@ -3,7 +3,7 @@
 // 재구성: 컴포넌트별 CatalogEntry로 분리. Spinner는 웹 CSS 회전 · 네이티브
 // RN Animated 회전(UI 스레드) 브리지 계약의 실물 증명 지점이기도 하다.
 import { type ReactNode } from "react";
-import { Text, View } from "react-native";
+import { Text, View } from "@unikit-bridge/ui/primitives";
 import {
   Badge,
   Button,

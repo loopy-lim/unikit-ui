@@ -18,6 +18,19 @@ One typed component set that **renders React Native views on native and plain DO
 
 Components import from that one entry point; each bundler picks its side. RN-specific props (`hitSlop`, …) are ignored on web, and web-idiom props (`disabled`, `onChangeText`, …) are translated on native.
 
+Besides renderer primitives (`View`, `Text`, `Pressable`, `TextInput`, `Image`, `ScrollView`, `SectionList`, `Select`, `Portal`, …), the same entry exposes app-level APIs with web fallbacks so screen code never imports `react-native` directly — one source renders on web (including Tauri's WebView) and native:
+
+```tsx
+import {
+  KeyboardAvoidingView, // web: transparent View (browser viewport handles the keyboard)
+  Platform,             // web: { OS: "web" }
+  Dimensions,           // web: window/screen size + resize subscription
+  Share,                // web: navigator.share (resolves "dismissed" when unsupported)
+} from "@unikit-bridge/ui/primitives";
+```
+
+On native these re-export the RN implementations; `SectionList` accepts the RN subset (`sections`, `renderItem`, `renderSectionHeader`, `keyExtractor`, `List{Header,Empty,Footer}Component`, `stickySectionHeadersEnabled` — sticky via `position: sticky` on web).
+
 ## Installation
 
 ```bash

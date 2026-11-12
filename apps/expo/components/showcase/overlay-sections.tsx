@@ -2,8 +2,8 @@
 // Drawer·Popover·Tooltip·DropdownMenu·ContextMenu(길게 누르기). HoverCard는
 // 웹 전용 표시. 카탈로그 재구성: 컴포넌트별 CatalogEntry로 분리(데모 JSX는
 // 사이클 40 것을 유지 — 트리거 문자열은 Text로 감싼 2026-11-10 수정 포함).
-import { Text, View } from "react-native";
 import { cn } from "@unikit-bridge/ui";
+import { Text, View } from "@unikit-bridge/ui/primitives";
 import {
   ContextMenu,
   ContextMenuContent,

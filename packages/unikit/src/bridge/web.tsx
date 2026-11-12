@@ -22,15 +22,25 @@
  * 네이티브 대응은 no-op, RN Modal이 OS 수준에서 처리）.
  * 루프 애니메이션 래퍼 LoopRotate/LoopPulse — 웹은 투명（컴포넌트의
  * web:animate-* 클래스가 CSS keyframes로 담당, native.tsx가 RN Animated 구현）.
+ *
+ * 단일 import 원칙(AC-1) 확장: SectionList（overflow div + 섹션 순회 렌더,
+ * sticky 헤더）와 앱 API 폴백 Platform{OS:"web"}·Dimensions{window 치수,
+ * resize 구독}·Share{navigator.share}·KeyboardAvoidingView{투명 View} —
+ * 소비 화면 코드가 react-native를 직접 import하지 않아도 양 플랫폼에서
+ * 동작하게 한다. native.tsx는 같은 이름으로 RN 것을 재노출한다.
  */
 import {
+  Fragment,
   forwardRef,
+  isValidElement,
   useEffect,
   useImperativeHandle,
   useRef,
   useState,
   type ChangeEvent,
+  type ComponentType,
   type PointerEvent as ReactPointerEvent,
+  type ReactNode,
   type RefObject,
 } from "react";
 import { createPortal } from "react-dom";
@@ -63,21 +73,28 @@ import { cn } from "../lib/utils";
 import type {
   AnimateLayoutFn,
   ApplyColorScheme,
+  BridgeDimensions,
   BridgeImageRef,
+  BridgePlatformStatic,
   BridgePressableRef,
   BridgeScrollViewRef,
+  BridgeShare,
   BridgeStyle,
   BridgeTextRef,
   IconProps,
   BridgeTextInputRef,
   BridgeViewRef,
   ImageProps,
+  KeyboardAvoidingViewProps,
   LoopPulseProps,
   LoopRotateProps,
   MeasureInWindow,
   PortalProps,
   PressableProps,
   ScrollViewProps,
+  SectionListComponent,
+  SectionListNode,
+  SectionListProps,
   SelectOptionProps,
   SelectProps,
   TextProps,
@@ -149,7 +166,7 @@ View.displayName = "View";
 // ---------------------------------------------------------------------------
 const Text = forwardRef<BridgeTextRef, TextProps>(
   (
-    { className, style, children, nativeID, testID, onPress, accessibilityLabel, accessibilityRole, ...rest },
+    { className, style, children, nativeID, testID, onPress, accessibilityLabel, accessibilityRole, numberOfLines, ...rest },
     ref,
   ) => (
     <span
@@ -159,7 +176,20 @@ const Text = forwardRef<BridgeTextRef, TextProps>(
       role={accessibilityRole}
       aria-label={accessibilityLabel}
       className={className}
-      style={style as React.CSSProperties}
+      // numberOfLines → line-clamp(동적 값이라 동적 style 계약으로 — 임의값 클래스 금지)
+      style={{
+        ...(style as React.CSSProperties),
+        ...(numberOfLines
+          ? numberOfLines === 1
+            ? { display: "block", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }
+            : {
+                display: "-webkit-box",
+                WebkitBoxOrient: "vertical",
+                WebkitLineClamp: numberOfLines,
+                overflow: "hidden",
+              }
+          : {}),
+      }}
       onClick={onPress}
       {...rest}
     >
@@ -402,6 +432,8 @@ const ScrollView = forwardRef<BridgeScrollViewRef, ScrollViewProps>(
       horizontal,
       pagingEnabled,
       onScroll,
+      keyboardShouldPersistTaps: _keyboardShouldPersistTaps,
+      keyboardDismissMode: _keyboardDismissMode,
       ...rest
     },
     ref,
@@ -449,6 +481,138 @@ const ScrollView = forwardRef<BridgeScrollViewRef, ScrollViewProps>(
   },
 );
 ScrollView.displayName = "ScrollView";
+
+// ---------------------------------------------------------------------------
+// SectionList → overflow div + 섹션 순회 렌더. RN 하위 집합 계약
+// （sections·renderItem·renderSectionHeader·keyExtractor·List* 슬롯）.
+// stickySectionHeadersEnabled(기본 true) → position:sticky. RN 관용
+// keyboardShouldPersistTaps·keyboardDismissMode는 받아 두고 폐기한다（웹은
+// 표준 키보드-스크롤 상호작용을 따른다）. ListEmptyComponent는 전 섹션 항목
+// 수가 0일 때 본문 대신 나온다（RN 관행）. 스크롤 위치 제어(scrollToLocation
+// 등)는 아직 계약에 없다 — 필요해지면 BridgeScrollViewRef와 같은 방식으로 확장.
+// ---------------------------------------------------------------------------
+const renderListNode = (node: SectionListNode | undefined): ReactNode => {
+  if (!node) return null;
+  if (isValidElement(node)) return node;
+  const Comp = node as ComponentType; // 관용 — 요소 또는 프로퍼티 없는 컴포넌트
+  return <Comp />;
+};
+
+const SectionList: SectionListComponent = ({
+  className,
+  style,
+  nativeID,
+  testID,
+  accessibilityLabel,
+  accessibilityRole,
+  contentContainerClassName,
+  sections,
+  renderItem,
+  keyExtractor,
+  renderSectionHeader,
+  stickySectionHeadersEnabled = true,
+  ListHeaderComponent,
+  ListEmptyComponent,
+  ListFooterComponent,
+  keyboardShouldPersistTaps: _keyboardShouldPersistTaps,
+  keyboardDismissMode: _keyboardDismissMode,
+  ...rest
+}) => {
+  const totalItems = sections.reduce((count, section) => count + section.data.length, 0);
+  return (
+    <div
+      id={nativeID}
+      data-testid={testID}
+      role={accessibilityRole}
+      aria-label={accessibilityLabel}
+      className={cn("overflow-y-auto overflow-x-hidden", className)}
+      style={style as React.CSSProperties}
+      {...rest}
+    >
+      <div className={cn("flex min-w-full flex-col", contentContainerClassName)}>
+        {renderListNode(ListHeaderComponent)}
+        {totalItems === 0
+          ? renderListNode(ListEmptyComponent)
+          : sections.map((section, sectionIndex) => (
+              <Fragment key={section.title ?? sectionIndex}>
+                {renderSectionHeader ? (
+                  <div
+                    className={cn(
+                      stickySectionHeadersEnabled && "sticky top-0 z-10",
+                    )}
+                  >
+                    {renderSectionHeader({ section })}
+                  </div>
+                ) : null}
+                {section.data.map((item, index) => (
+                  <Fragment key={keyExtractor?.(item, index) ?? index}>
+                    {renderItem({ item, index, section })}
+                  </Fragment>
+                ))}
+              </Fragment>
+            ))}
+        {renderListNode(ListFooterComponent)}
+      </div>
+    </div>
+  );
+};
+
+// ---------------------------------------------------------------------------
+// 앱 API 폴백（웹） — Platform·Dimensions·Share·KeyboardAvoidingView.
+// 소비 화면 코드가 react-native를 직접 import하지 않아도 양 플랫폼에서
+// 동작하게 하는 단일 import 원칙(AC-1) 확장. 웹 키보드 회피는 브라우저 가상
+// 키보드-뷰포트가 담당하므로 KeyboardAvoidingView는 투명 View로 둔다.
+// navigator.share 미지원 환경은 조용히 dismissed로 해소한다（사용측 try/catch
+// 관행과 정합 — 웹 전용 공유 UI가 필요하면 소비자가 직접 구성）.
+// ---------------------------------------------------------------------------
+const Platform: BridgePlatformStatic = {
+  OS: "web",
+  select: (spec) => spec.web ?? spec.default,
+};
+
+const windowSnapshot = () => ({
+  width: window.innerWidth,
+  height: window.innerHeight,
+  scale: window.devicePixelRatio || 1,
+  fontScale: 1,
+});
+
+const screenSnapshot = () => ({
+  width: window.screen.width,
+  height: window.screen.height,
+  scale: window.devicePixelRatio || 1,
+  fontScale: 1,
+});
+
+const Dimensions: BridgeDimensions = {
+  get: (dim) => (dim === "screen" ? screenSnapshot() : windowSnapshot()),
+  addEventListener: (type, handler) => {
+    if (type !== "change") return { remove: () => {} };
+    const listener = () => handler({ window: windowSnapshot(), screen: screenSnapshot() });
+    window.addEventListener("resize", listener);
+    return { remove: () => window.removeEventListener("resize", listener) };
+  },
+};
+
+const Share: BridgeShare = {
+  share: async (content) => {
+    if (typeof navigator !== "undefined" && navigator.share) {
+      await navigator.share({
+        text: content.message,
+        url: content.url,
+        title: content.title,
+      });
+      return { action: "shared" };
+    }
+    return { action: "dismissed" };
+  },
+};
+
+const KeyboardAvoidingView = ({
+  behavior: _behavior,
+  keyboardVerticalOffset: _keyboardVerticalOffset,
+  ...rest
+}: KeyboardAvoidingViewProps) => <View {...rest} />;
 
 // ---------------------------------------------------------------------------
 // Select/SelectOption → <select>/<option>. 네이티브 폼 셀렉트（native-select）가
@@ -756,8 +920,13 @@ export {
   Image,
   Portal,
   ScrollView,
+  SectionList,
   Select,
   SelectOption,
+  KeyboardAvoidingView,
+  Platform,
+  Dimensions,
+  Share,
   LoopRotate,
   LoopPulse,
   animateLayout,

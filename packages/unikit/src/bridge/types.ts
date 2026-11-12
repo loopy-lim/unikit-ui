@@ -17,7 +17,7 @@
  * measureInWindowuseDrag오버레이 훈 4종（useOverlayFocususeDismiss
  * useRepositionuseScrollLock）.
  */
-import type { ReactElement, ReactNode } from "react";
+import type { ComponentType, ReactElement, ReactNode } from "react";
 
 export type BridgeColorScheme = "light" | "dark";
 
@@ -132,6 +132,8 @@ export type TextProps = {
    *  accessibilityElementsHidden（T-2a 제기 — dropdown 글리프 등이 스크린리더에
    *  읽히는 것을 방지） */
   "aria-hidden"?: boolean;
+  /** 줄 바꿈 제한(초과 줄 말줄임) — 웹 -webkit-line-clamp / 네이티브 RN 관용 */
+  numberOfLines?: number;
 };
 
 export type PressableProps = {
@@ -292,6 +294,10 @@ export type ScrollViewProps = ViewProps & {
   pagingEnabled?: boolean;
   /** 스크롤 이벤트（무인자 — 페이징 감지 등） */
   onScroll?: () => void;
+  /** RN 관용 — 웹 구현은 받아 두고 폐기（웹은 표준 키보드-스크롤 상호작용） */
+  keyboardShouldPersistTaps?: "always" | "never" | "handled";
+  /** 〃 */
+  keyboardDismissMode?: "none" | "on-drag" | "interactive";
 };
 
 export interface BridgeScrollViewRef {
@@ -440,4 +446,94 @@ export type IconComponent = (props: IconProps) => ReactElement | null;
  * 토글/확장/탭 변경 시 부드러운 전이를 제공하고, 웹은 CSS transition이 처리해 no-op.
  */
 export type AnimateLayoutFn = () => void;
+
+// ---------------------------------------------------------------------------
+// 단일 import 원칙(AC-1) 확장 — 소비 화면 코드가 react-native를 직접 import하지
+// 않고 그룹 목록·앱 API를 쓰게 하는 계약. SectionList는 렌더 프리미티브
+// （웹 DOM 구현 / 네이티브 RN 재노출）, Platform·Dimensions·Share·
+// KeyboardAvoidingView는 앱 API（웹 폴백 / 네이티브 RN 재노출）.
+// ---------------------------------------------------------------------------
+
+/** SectionList 섹션 — 최소 계약. 항목 key는 keyExtractor, 섹션 key는 title 폴백. */
+export type SectionListSection<T = unknown> = {
+  title?: string;
+  data: readonly T[];
+};
+
+/** renderItem 정보 — RN SectionList 하위 집합. index는 섹션 내 위치. */
+export type SectionListRenderItemInfo<T> = {
+  item: T;
+  index: number;
+  section: SectionListSection<T>;
+};
+
+/** List 계열 슬롯 — 요소 또는 프로퍼티 없는 컴포넌트(RN 관용의 실용 부분집합). */
+export type SectionListNode = ReactElement | ComponentType<Record<string, never>> | null;
+
+/** 그룹 목록 — 웹은 overflow div + 섹션 순회 렌더 / 네이티브 RN SectionList 재노출. */
+export type SectionListProps<T = unknown> = Omit<
+  ScrollViewProps,
+  "children" | "horizontal" | "pagingEnabled" | "onScroll"
+> & {
+  sections: ReadonlyArray<SectionListSection<T>>;
+  renderItem: (info: SectionListRenderItemInfo<T>) => ReactNode;
+  /** 항목 key — 미지정 시 index 폴백 */
+  keyExtractor?: (item: T, index: number) => string;
+  renderSectionHeader?: (info: { section: SectionListSection<T> }) => ReactNode;
+  /** 섹션 헤더 고정(기본 true) — 웹 position:sticky / RN 관용 그대로 */
+  stickySectionHeadersEnabled?: boolean;
+  ListHeaderComponent?: SectionListNode;
+  ListEmptyComponent?: SectionListNode;
+  ListFooterComponent?: SectionListNode;
+};
+
+export type SectionListComponent = <T>(
+  props: SectionListProps<T>,
+) => ReactElement | null;
+
+/** Platform — 웹 {OS:"web"} / 네이티브 RN Platform 재노출. select는 OS 키 → default 순. */
+export type BridgePlatformOS = "ios" | "android" | "macos" | "windows" | "web";
+export type BridgePlatformSelectSpec<T> = Partial<
+  Record<BridgePlatformOS | "native" | "default", T>
+>;
+export type BridgePlatformStatic = {
+  readonly OS: BridgePlatformOS;
+  select<T>(spec: BridgePlatformSelectSpec<T>): T | undefined;
+};
+
+/** Dimensions — 웹 window/screen 치수 + resize 구독 / 네이티브 RN Dimensions 재노출. */
+export type BridgeDimensionsSnapshot = {
+  width: number;
+  height: number;
+  scale: number;
+  fontScale: number;
+};
+export type BridgeDimensions = {
+  get(dim: "window" | "screen"): BridgeDimensionsSnapshot;
+  addEventListener(
+    type: "change",
+    handler: (dims: {
+      window: BridgeDimensionsSnapshot;
+      screen: BridgeDimensionsSnapshot;
+    }) => void,
+  ): { remove(): void };
+};
+
+/** Share — 웹 navigator.share(미지원 환경은 dismissed로 해소) / 네이티브 RN Share 재노출. */
+export type BridgeShare = {
+  share(
+    content: { message?: string; url?: string; title?: string },
+    options?: { dialogTitle?: string },
+  ): Promise<{ action: "shared" | "dismissed" }>;
+};
+
+/** 키보드 회피 — 웹은 투명 View(브라우저 가상 키보드-뷰포트가 회피를 담당) /
+ *  네이티브 RN KeyboardAvoidingView 재노출. */
+export type KeyboardAvoidingViewProps = ViewProps & {
+  behavior?: "height" | "position" | "padding";
+  keyboardVerticalOffset?: number;
+};
+export type KeyboardAvoidingViewComponent = (
+  props: KeyboardAvoidingViewProps,
+) => ReactElement | null;
 

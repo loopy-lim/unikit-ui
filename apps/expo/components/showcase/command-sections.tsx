@@ -2,8 +2,8 @@
 // 전환)·Combobox(단일 선택)·Menubar·NavigationMenu·Select(선택 전/선택됨)·
 // NativeSelect. 카탈로그 재구성: 컴포넌트별 CatalogEntry로 분리.
 import { useState, type ReactNode } from "react";
-import { Text, View } from "react-native";
 import { cn } from "@unikit-bridge/ui";
+import { Text, View } from "@unikit-bridge/ui/primitives";
 import {
   Command,
   CommandEmpty,

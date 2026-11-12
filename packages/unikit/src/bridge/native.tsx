@@ -17,6 +17,11 @@
  * 루프 애니메이션 래퍼 LoopRotate/LoopPulse — RN Animated useNativeDriver
  * （UI 스레드）로 web:animate-spin/pulse와 같은 효과를 구동（웹은 투명）.
  *
+ * 단일 import 원칙(AC-1) 확장: SectionList·KeyboardAvoidingView·Platform·
+ * Dimensions·Share를 RN에서 재노출한다 — 소비 화면 코드가 react-native를
+ * 직접 import하지 않아도 양 플랫폼에서 동작한다. web.tsx는 같은 이름의
+ * DOM 폴백을 제공한다.
+ *
  * 웹 전용 계약의 네이티브 한계（컴포넌트 머리 주석에 기록됨）:
  *   aria-currentaria-invalidaria-describedby → RN 계약 없음, 폐기
  *   Pressable onKeyDown → 폐기（웹 키보드 탐색 전용）
@@ -38,12 +43,15 @@ import {
   Dimensions,
   Easing,
   Image as RNImage,
+  KeyboardAvoidingView as RNKeyboardAvoidingView,
   LayoutAnimation,
   Modal as RNModal,
   PanResponder,
   Platform,
   Pressable as RNPressable,
   ScrollView as RNScrollView,
+  SectionList as RNSectionList,
+  Share,
   StyleSheet,
   Text as RNText,
   TextInput as RNTextInput,
@@ -104,6 +112,8 @@ import type {
   PortalProps,
   PressableProps,
   ScrollViewProps,
+  SectionListComponent,
+  KeyboardAvoidingViewComponent,
   SelectOptionProps,
   SelectProps,
   TextProps,
@@ -577,6 +587,17 @@ const ScrollView = forwardRef<BridgeScrollViewRef, ScrollViewProps>(
 ScrollView.displayName = "ScrollView";
 
 // ---------------------------------------------------------------------------
+// 단일 import 원칙(AC-1) 확장 — SectionList·KeyboardAvoidingView·Platform·
+// Dimensions·Share는 RN 것을 그대로 재노출한다（타입만 브리지 계약으로 좁힌다.
+// Platform·Dimensions·Share는 네이티브 타입이 계약의 상위 집합이라 무표현으로
+// 재수출）. 웹 구현(web.tsx)은 같은 이름으로 DOM 폴백을 제공한다 — 소비 화면
+// 코드가 react-native를 직접 import하지 않아도 양 플랫폼에서 동작한다.
+// ---------------------------------------------------------------------------
+const SectionList = RNSectionList as unknown as SectionListComponent;
+const KeyboardAvoidingView =
+  RNKeyboardAvoidingView as unknown as KeyboardAvoidingViewComponent;
+
+// ---------------------------------------------------------------------------
 // Select/SelectOption — 네이티브 <select> 폴백. 웹 <select>/<option> 대응
 // 프리미티브（native-select이 소비）: Pressable 트리거（combobox） + Modal
 // 옵션 목록（option role선택 상태）. 커스텀 셀렉트（shadcn select）는
@@ -919,8 +940,13 @@ export {
   Image,
   Portal,
   ScrollView,
+  SectionList,
   Select,
   SelectOption,
+  KeyboardAvoidingView,
+  Platform,
+  Dimensions,
+  Share,
   LoopRotate,
   LoopPulse,
   animateLayout,

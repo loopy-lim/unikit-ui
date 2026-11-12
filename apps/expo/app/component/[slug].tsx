@@ -6,10 +6,10 @@
 // - 하단 내비게이션: 이전 / 다음 컴포넌트 이동
 import { useMemo } from "react";
 import { useLocalSearchParams, useRouter } from "expo-router";
-import { Pressable, ScrollView, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { ChevronLeft, ChevronRight } from "lucide-react-native";
 import { Badge, Button } from "@unikit-bridge/ui";
+import { Pressable, ScrollView, Text, View } from "@unikit-bridge/ui/primitives";
 
 import { CATALOG, findEntry } from "../../components/showcase/catalog";
 import { useIconColors } from "../../lib/token-colors";

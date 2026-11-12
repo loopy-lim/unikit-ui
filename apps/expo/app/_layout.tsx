@@ -2,9 +2,9 @@ import "../global.css";
 
 import { StatusBar } from "expo-status-bar";
 import { Stack } from "expo-router";
-import { Dimensions, View } from "react-native";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import { Toaster, UnikitThemeProvider, useUnikitTheme } from "@unikit-bridge/ui";
+import { Dimensions, View } from "@unikit-bridge/ui/primitives";
 
 const windowDim = Dimensions.get("window");
 const INITIAL_METRICS = {

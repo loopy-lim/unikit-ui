@@ -4,12 +4,13 @@
 // components/showcase/*-sections.tsx의 CatalogEntry로 옮겼고, 이 화면은
 // 목록(카테고리 그룹 + 검색)만 담는다.
 //
-// - 컴포넌트 import는 오직 @unikit-bridge/ui(AC-1 단일 import 원칙).
-//   react-native는 인프라 import다. SafeArea/Toaster는 _layout이 담당.
+// - 컴포넌트 import는 오직 @unikit-bridge/ui, 프리미티브는
+//   @unikit-bridge/ui/primitives(AC-1 단일 import 원칙 — react-native 직접
+//   import 폐지, 이 화면 소스가 웹/Tauri 번들에서도 그대로 해석된다).
+//   SafeArea/Toaster는 _layout이 담당.
 // - 헤더 카피는 기존(02-design §1.2·§5)을 그대로 유지한다(문구 수정 금지).
 import { useMemo, useState } from "react";
 import { Link } from "expo-router";
-import { Pressable, SectionList, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { ChevronRight, Search, SearchX } from "lucide-react-native";
 import {
@@ -23,6 +24,7 @@ import {
   EmptyTitle,
   Input,
 } from "@unikit-bridge/ui";
+import { Pressable, SectionList, Text, View } from "@unikit-bridge/ui/primitives";
 
 import {
   CATALOG,
