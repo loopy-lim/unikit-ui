@@ -10,7 +10,7 @@ UniKit의 컴포넌트 61종(기초 5종 Button·Card·Input·Label·Badge + sha
 import { Button, Card, Input, Label, Badge } from "@unikit-bridge/ui";
 ```
 
-**shadcn CLI로 복사한 내 프로젝트에서** (복사 절차는 [README](../README.md) 참고):
+**shadcn CLI로 복사한 내 프로젝트에서** (복사 절차는 [install.md](install.md) 참고):
 
 ```tsx
 import { Button } from "@/components/unikit/button";
@@ -307,7 +307,7 @@ shadcn/ui(new-york-v4)의 컴포넌트를 UniKit 유니버설(한 벌 소스 →
 공통 사항(아래 표의 컴포넌트 전부):
 
 - **API는 shadcn 원본을 따라요.** 단, Radix UI 엔진이 하던 열림·선택 상태 관리는 내부 React state·context로 옮겨졌어요. 그래서 `defaultChecked`·`onCheckedChange`·`defaultValue` 같은 shadcn prop 이름은 그대로 쓰면서도 별도 패키지 의존이 없어요.
-- **아이콘은 글리프 문자로 대체돼요.** 화살표 ⌄⌃‹›·구분자 ›·생략 ⋯·안내 ⓘ·경고 ⚠ 등이에요(lucide 아이콘 의존 없음).
+- **아이콘은 lucide예요.** 컴포넌트는 `@unikit-bridge/ui/primitives`의 `*Icon`(CheckIcon·ChevronDownIcon·XIcon 등)만 쓰고, 브리지가 웹 `lucide-react` / 네이티브 `lucide-react-native`로 연결해요. 소비자는 플랫폼에 맞는 lucide peer를 설치해요.
 - **웹 전용 효과는 `web:` 접두가 붙은 클래스로만** 들어가요(호버·전환 애니메이션·펄스 등). 네이티브에서는 정적으로 보여요.
 - 파일 단위 import는 모노레포면 `@unikit-bridge/ui`, 복사본이면 `@/components/unikit/<이름>`이에요(아래 표의 "이름" 열 참고).
 
@@ -315,7 +315,7 @@ shadcn/ui(new-york-v4)의 컴포넌트를 UniKit 유니버설(한 벌 소스 →
 
 | 이름 | 컴포넌트 | 요점 |
 |---|---|---|
-| `checkbox` | `Checkbox` | `checked`·`defaultChecked`·`onCheckedChange`. 중간 상태 `indeterminate`(− 글리프 + `aria-checked="mixed"`). `role="checkbox"`, 터치 타깃 44px 보정 |
+| `checkbox` | `Checkbox` | `checked`·`defaultChecked`·`onCheckedChange`. 중간 상태 `indeterminate`(MinusIcon + `aria-checked="mixed"`). `role="checkbox"`, 터치 타깃 44px 보정 |
 | `radio-group` | `RadioGroup`·`RadioGroupItem` | 그룹 `value`/`onValueChange` 단일 선택, 항목 `role="radio"`, 선택 점은 원형 View |
 | `switch` | `Switch` | `checked`·`onCheckedChange`, `role="switch"`. 크기 `default`/`sm`, 썸 이동은 트랙 정렬 전환으로 재현 |
 | `toggle` | `Toggle` | 눌림 유지 버튼. `pressed`·`onPressedChange` + `aria-pressed`. 변형 `default`/`outline` × 크기 3종 |
@@ -327,10 +327,10 @@ shadcn/ui(new-york-v4)의 컴포넌트를 UniKit 유니버설(한 벌 소스 →
 | 이름 | 컴포넌트 | 요점 |
 |---|---|---|
 | `tabs` | `Tabs`·`TabsList`·`TabsTrigger`·`TabsContent` | `defaultValue`·`value`·`onValueChange`. `TabsList` 변형 `default`/`line`(하단 인디케이터 바). 내용은 선택된 탭만 마운트 |
-| `accordion` | `Accordion`·`AccordionItem`·`AccordionTrigger`·`AccordionContent` | `type="single"|"multiple"`. ⌄/⌃ 글리프 전환, `aria-expanded` |
+| `accordion` | `Accordion`·`AccordionItem`·`AccordionTrigger`·`AccordionContent` | `type="single"|"multiple"`. ChevronDownIcon(open 시 rotate-180), `aria-expanded` |
 | `collapsible` | `Collapsible`·`CollapsibleTrigger`·`CollapsibleContent` | `open`·`onOpenChange`. Trigger는 문자열 라벨을 내부 Text로 감싸 렌더(네이티브 안전) |
 | `breadcrumb` | `Breadcrumb` 외 6종 | 경로 표시. `BreadcrumbLink`(눌림)·`BreadcrumbPage`(현재)·`BreadcrumbSeparator`(›)·`BreadcrumbEllipsis`(⋯) |
-| `pagination` | `Pagination` 외 6종 | 페이지 매김. `‹`·`›` 글리프, `isActive` 현재 페이지 강조, Button 변형 재사용. `Previous`/`Next`의 라벨은 `label` prop으로 교체(기본 영문) |
+| `pagination` | `Pagination` 외 6종 | 페이지 매김. ChevronLeft/Right·MoreHorizontal 아이콘, `isActive` 현재 페이지 강조, Button 변형 재사용. `Previous`/`Next`의 라벨은 `label` prop으로 교체(기본 영문) |
 | `progress` | `Progress` | `value`(0~100)·`max`. `role="progressbar"`, 인디케이터 폭은 동적 style로(임의값 클래스 금지 규칙) |
 | `separator` | `Separator` | `orientation="horizontal"|"vertical"`. `decorative`(기본 true·장식)와 의미 구분 선 |
 
@@ -338,9 +338,9 @@ shadcn/ui(new-york-v4)의 컴포넌트를 UniKit 유니버설(한 벌 소스 →
 
 | 이름 | 컴포넌트 | 요점 |
 |---|---|---|
-| `alert` | `Alert`·`AlertTitle`·`AlertDescription` | 변형 `default`/`destructive`, 글리프 ⓘ/⚠, `role="alert"` |
+| `alert` | `Alert`·`AlertTitle`·`AlertDescription` | 변형 `default`/`destructive`, InfoIcon/AlertCircleIcon, `role="alert"` |
 | `avatar` | `Avatar`·`AvatarImage`·`AvatarFallback`·`AvatarBadge`·`AvatarGroup`·`AvatarGroupCount` | 이미지 로드 실패 시 `onError`로 Fallback 자동 전환. 크기 `sm`/`default`/`lg` |
-| `empty` | `Empty`·`EmptyHeader`·`EmptyTitle`·`EmptyDescription`·`EmptyContent`·`EmptyMedia` | 빈 상태 안내 레이아웃. `EmptyMedia`에 큰 글리프 문자 |
+| `empty` | `Empty`·`EmptyHeader`·`EmptyTitle`·`EmptyDescription`·`EmptyContent`·`EmptyMedia` | 빈 상태 안내 레이아웃. `EmptyMedia`에 소비자 아이콘·미디어 |
 | `skeleton` | `Skeleton` | 로딩 자리표시. `web:animate-pulse`(웹 전용 펄스) |
 | `table` | `Table` 외 7종 | 표 레이아웃(View+flex 이식 — 표 시맨틱 role은 브리지 계약상 아직 없어요). `TableCaption` 포함 |
 
@@ -376,7 +376,7 @@ import { Checkbox, Switch, Tabs, Accordion, Progress, Alert } from "@unikit-brid
 
 ## shadcn 카탈로그 2차 — 33종 추가 컴포넌트 (사이클 40, 2026-11-10 완료)
 
-shadcn 카탈로그 잔여 33종을 전량 이식해 UniKit은 61종 전부를 갖추게 됐어요(61/61). 1차와 같은 규칙(shadcn API 유지·Radix 제거 후 React state+context·글리프 아이콘)에 더해, 이번 배치의 공통 사항:
+shadcn 카탈로그 잔여 33종을 전량 이식해 UniKit은 61종 전부를 갖추게 됐어요(61/61). 1차와 같은 규칙(shadcn API 유지·Radix 제거 후 React state+context·브리지 아이콘)에 더해, 이번 배치의 공통 사항:
 
 - **오버레이 계열은 `src/lib/overlay.tsx`가 떠받쳐요.** 포털(웹 createPortal / 네이티브 Modal), 백드롭, 바깥 눌림·ESC 닫기, 포커스 이동·트랩·복귀, 앵커 위치 계산(measure 기반 side/align 배치 + 뷰포트 클램프)을 통합 오버레이 훈이 담당해요. dialog 계열(중앙 모달)은 포털+백드롭만, popover 계열은 앵커 위치 계산까지 소비해요.
 - **등장/퇴장 애니메이션은 마운트/언마운트 즉시 전환**이에요(`data-[state]` 셀렉터가 없는 네이티브에서 재현 불가 — 로드맵). 웹 전용 효과는 역시 `web:` 접두 클래스예요.
@@ -426,7 +426,7 @@ shadcn 카탈로그 잔여 33종을 전량 이식해 UniKit은 61종 전부를 �
 | 이름 | 컴포넌트 | 요점 |
 |---|---|---|
 | `chart` | `ChartContainer` 외 12종 | 선언형 차트(막대·선·영역 시리즈 + 축·그리드·툴팁·범례). recharts 제거, 렌더러는 `@unikit-bridge/ui/chart` 진입점, 시리즈 색은 `--chart-1..5` 토큰(소비자 소유) |
-| `carousel` | `Carousel` 외 4종 | 캐러셀. 네이티브 ScrollView paging / 웹 scroll-snap, ←/→ 글리프 버튼 |
+| `carousel` | `Carousel` 외 4종 | 캐러셀. 네이티브 ScrollView paging / 웹 scroll-snap, ArrowLeft/Right 아이콘 버튼 |
 | `sidebar` | `Sidebar` 외 22종 | 사이드바 블록. sheet+collapsible 조립, 원본의 쿠키·컨테이너 쿼리는 제거 |
 | `sonner` | `Toaster`·`toast()` | 토스트. 모듈 저장소 큐 + 전역 `toast()` 함수, Portal + role=status 라이브 영역 |
 | `spinner` | `Spinner` | 로딩 스피너. View 원호 조형, 웹 `web:animate-spin`(네이티브는 정적) |

@@ -10,8 +10,8 @@ shadcn/ui(new-york-v4)의 `registry:ui` 61종을 UniKit 유니버설(한 벌 소
 | 1차 배치 (사이클 30) | 23 | accordion, alert, aspect-ratio, avatar, breadcrumb, button-group, checkbox, collapsible, empty, field, item, kbd, pagination, progress, radio-group, separator, skeleton, switch, table, tabs, textarea, toggle, toggle-group | 완료 |
 | 2차 배치 (사이클 40) | 33 | 아래 티어 표 전체 | **완료 (2026-11-10)** |
 
-- `packages/unikit/src/components/` 61종 · `packages/unikit/registry/ui/` 61종 · `registry.json` 66 아이템(UI 61 + utils 1 + theme 4).
-- `chart`는 index.ts 배럴에서 제외되고 `@unikit-bridge/ui/chart` 단독 진입점이에요(react-native-svg 선택 peer — 웹 번들 오염 방지). `form`은 react-hook-form 선택 peer.
+- `packages/unikit/src/components/` 61종 · `packages/unikit/registry/ui/` 61종 · `registry.json` 67 아이템(UI 61 + utils 1 + theme 4 + animations 1).
+- `chart`는 index.ts 배럴에서 제외되고 `@unikit-bridge/ui/chart` 단독 진입점이에요(react-native-svg 선택 peer — 웹 번들 오염 방지). `form`은 react-hook-form 선택 peer. 아이콘은 브리지 primitives가 lucide(`lucide-react` / `lucide-react-native`)를 감싸요.
 
 ## 완료 이력 — 티어별 구현 방식
 

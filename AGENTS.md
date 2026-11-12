@@ -6,8 +6,8 @@ UniKit 저장소에서 작업하는 코딩 에이전트(Claude Code 등)를 위�
 
 ```text
 UniKit/  (bun 워크스페이스: apps/*, packages/*)
-├── apps/expo/                  # Expo 데모 앱(쇼케이스, uniwind 엔진)
-├── apps/web/                   # Next.js 데모 앱(랜딩 /, 쇼케이스 /showcase, 레지스트리 서빙 /r/)
+├── apps/expo/                  # Expo 데모 앱(쇼케이스·블록, uniwind 엔진)
+├── apps/web/                   # Next.js 데모 앱(랜딩 /, /components, /blocks, 레지스트리 /r/)
 ├── packages/unikit/            # @unikit-bridge/ui — 본체
 │   ├── src/bridge/             # 브리지 — web.tsx(default 조건)·native.tsx(react-native 조건)·types.ts(공통 계약)
 │   ├── src/components/         # 컴포넌트 61종(배럴 진입 대상 60종 + chart)
@@ -17,11 +17,11 @@ UniKit/  (bun 워크스페이스: apps/*, packages/*)
 │   ├── src/theme/              # tokens.ts(디자인 토큰 단일 출처)·Provider
 │   ├── src/index.ts            # npm 배럴(chart는 제외)
 │   ├── registry/ui/            # 소비자 복사용 소스 트리 — 본문은 src와 동일, import만 @/lib/utils 기준
-│   ├── registry.json           # shadcn 규격 레지스트리(66 아이템 = UI 61 + utils 1 + theme 4)
+│   ├── registry.json           # shadcn 규격 레지스트리(67 아이템 = UI 61 + utils 1 + theme 4 + animations 1)
 │   ├── scripts/                # generate:design·audit:design·check:consumer
 │   └── docs/tokens.md          # 생성된 토큰 카탈로그(직접 편집 금지)
 ├── shadcn-ref/                 # shadcn 원본 참조(이식 원본 — 수정 금지)
-└── docs/                       # components.md·roadmap-components.md·expo-go.md·sdd/(과정 문서)
+└── docs/                       # install.md·components.md·roadmap-components.md·expo-go.md·sdd/
 ```
 
 - **브리지 분기 원칙**: 플랫폼 분기는 컴포넌트 코드가 아니라 패키지 exports 조건(`react-native` → native.tsx, `default` → web.tsx)이 담당해요. 컴포넌트·문서에서 `.web.tsx`·`Platform.select`를 쓰지 않아요.
@@ -57,8 +57,8 @@ shadcn 컴포넌트를 이식·수정할 때 지키는 공통 규칙이에요. �
 
 - **임의값 클래스 금지** — `w-[340px]`·`max-w-[calc(...)]` 등 `[...]` 값은 audit (c) 실패. 동적 값은 `style` prop(동적 style 계약)으로.
 - **`dark:` 변형 금지** — 다크 모드는 토큰 값 전환으로만(사이클 40 이식분부터 전면 제거 관행).
-- **아이콘은 글리프 문자** — lucide 등 아이콘 라이브러리 의존을 추가하지 않아요(✓ › ⌄ ⋯ ⚠ ✕ ←/→).
-- **새 의존·peer는 최소화** — registry `dependencies`는 실제 import하는 것만, 선택 연동은 `peerDependencies`(form→react-hook-form, chart→react-native-svg).
+- **아이콘은 lucide（브리지 경유）** — 컴포넌트는 `@unikit-bridge/ui/primitives`의 `*Icon`만 써요. 웹은 `lucide-react`, 네이티브는 `lucide-react-native`를 브리지가 감싸요. 컴포넌트·registry에서 lucide를 직접 import하지 않아요.
+- **새 의존·peer는 최소화** — registry `dependencies`는 실제 import하는 것만, 선택 연동은 `peerDependencies`(form→react-hook-form, chart→react-native-svg, 아이콘→lucide-react / lucide-react-native).
 
 ## 컴포넌트 추가 절차 (요약)
 
@@ -67,7 +67,7 @@ shadcn 컴포넌트를 이식·수정할 때 지키는 공통 규칙이에요. �
 3. `registry.json`에 등록(name·type·registryDependencies·dependencies·files) — `scripts/audit-design.ts`의 대상 목록도 갱신.
 4. 토큰 건드렸으면 `bun run generate:design` → `bun run typecheck` + `bun run audit:design`.
 
-상세 절차·소비자 프로젝트 설정은 README.md의 "UniKit에 새 컴포넌트 추가하기" 절을 보세요.
+기여 요약은 [README.md](README.md) «기여» 절, 소비자 설치는 [docs/install.md](docs/install.md)를 보세요.
 
 ## 금지 사항
 
@@ -81,4 +81,5 @@ shadcn 컴포넌트를 이식·수정할 때 지키는 공통 규칙이에요. �
 
 - 모든 문서는 한국어(단, packages/unikit/README.md는 영어 — 기존 문서 언어 유지). 문체는 기존 문서(해요체 설명체)를 따라요.
 - 기존 문서를 고칠 때는 내용을 지우지 말고 병합해요(보존 원칙). 수치·날짜는 저장소에서 재검증 후 기입해요.
-- 컴포넌트 수·상태 표기의 기준: `src/components`(61종)·`registry/ui`(61종)·`registry.json`(66 아이템). 미지원 기능은 각 컴포넌트 머리 주석의 "로드맵" 기록이 근거예요.
+- 컴포넌트 수·상태 표기의 기준: `src/components`(61종)·`registry/ui`(61종)·`registry.json`(67 아이템 = UI 61 + utils 1 + theme 4 + animations 1). 미지원 기능은 각 컴포넌트 머리 주석의 "로드맵" 기록이 근거예요.
+- 사람용 설치·소비 상세는 [docs/install.md](docs/install.md), 루트 [README.md](README.md)는 빠른 시작·요약만 담아요.

@@ -26,8 +26,10 @@ bun add @unikit-bridge/ui class-variance-authority clsx tailwind-merge
 
 Then add the engine side you need:
 
-- **Native**: `bun add uniwind react-native` (Tailwind v4 comes with uniwind's toolchain) — see the [uniwind setup](https://docs.uniwind.dev) (Metro `withUniwindConfig` + `global.css`).
-- **Web**: `bun add tailwindcss` (v4) and make sure your global CSS scans this package, e.g. `@source '../node_modules/@unikit-bridge/ui/src';`.
+- **Native**: `bun add uniwind react-native lucide-react-native` (Tailwind v4 comes with uniwind's toolchain) — see the [uniwind setup](https://docs.uniwind.dev) (Metro `withUniwindConfig` + `global.css`).
+- **Web**: `bun add tailwindcss lucide-react` (v4) and make sure your global CSS scans this package, e.g. `@source '../node_modules/@unikit-bridge/ui/src';`.
+
+Icons come from Lucide via `@unikit-bridge/ui/primitives` (`CheckIcon`, `ChevronDownIcon`, …). Components never import Lucide directly — the bridge picks `lucide-react` or `lucide-react-native` through package export conditions.
 
 ### Required CSS (both platforms)
 
@@ -118,7 +120,11 @@ The declarative component itself (`ChartContainer`, `ChartBarSeries`, `ChartTool
 
 ### Optional peer dependencies
 
-Only two components add optional peers: `Form` → `react-hook-form`, `Chart` → `react-native-svg`. Everything else works with the base install.
+- **Icons (platform)**: web → `lucide-react`, native → `lucide-react-native` (bridged through `/primitives`).
+- **Form** → `react-hook-form`
+- **Chart** → `react-native-svg`
+
+Install only the peers your platform / features need.
 
 ## License
 
