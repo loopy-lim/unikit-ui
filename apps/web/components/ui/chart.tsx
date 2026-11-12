@@ -57,10 +57,13 @@ import {
   forwardRef,
   isValidElement,
   useContext,
+  useEffect,
   useMemo,
+  useRef,
   useState,
   type ComponentType,
   type ReactNode,
+  type RefObject,
 } from "react";
 import {
   Text,
@@ -174,7 +177,7 @@ function resolveSeriesColor(
 // 스케일 계산
 // ---------------------------------------------------------------------------
 
-const CHART_PADDING = { top: 8, right: 8, bottom: 24, left: 40 } as const;
+const CHART_PADDING = { top: 8, right: 8, bottom: 24, left: 48 } as const;
 const INITIAL_DIMENSION = { width: 320, height: 200 } as const;
 /** 툴팁 카드 추정 폭(min-w-32=128px) — 위치 클램프 계산용 동적 상수 */
 const TOOLTIP_WIDTH = 128;
@@ -774,6 +777,30 @@ function ChartStyle(_props: { id?: string; config?: ChartConfig }) {
   return null;
 }
 
+/**
+ * fluid 캔버스 폭 측정 — width="fluid"면 컨테이너 자체 폭(ResizeObserver)을
+ * 캔버스 폭으로 쓴다. 첫 측정 전엔 기본 320으로 렌더해 전환한다. 네이티브는
+ * ResizeObserver 계약이 없어 기본값으로 폴백한다(고정 폭 사용 권장).
+ */
+function useFluidWidth(
+  ref: RefObject<HTMLElement | null>,
+  width: number | "fluid",
+): number {
+  const [measured, setMeasured] = useState(0);
+  useEffect(() => {
+    if (width !== "fluid") return;
+    const el = ref.current;
+    if (!el || typeof ResizeObserver !== "function") return;
+    const observer = new ResizeObserver((entries) => {
+      const next = Math.round(entries[0]?.contentRect.width ?? 0);
+      setMeasured((prev) => (Math.abs(prev - next) >= 1 ? next : prev));
+    });
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, [ref, width]);
+  return width === "fluid" ? measured || INITIAL_DIMENSION.width : width;
+}
+
 // ---------------------------------------------------------------------------
 // 컨테이너 — context 제공·children 분류·포인터 이벤트
 // ---------------------------------------------------------------------------
@@ -783,8 +810,9 @@ export type ChartContainerProps = Omit<ViewProps, "children"> & {
   data?: ChartDatum[];
   /** x축(범주) 데이터 키 — 미지정 시 첫 행의 첫 문자열 값 키 */
   xKey?: string;
-  /** 캔버스 폭(px) — 기본 320(원본 INITIAL_DIMENSION) */
-  width?: number;
+  /** 캔버스 폭(px) — 기본 320(원본 INITIAL_DIMENSION). "fluid"면 컨테이너
+   *  폭에 맞춘다(웹 전용 — ResizeObserver, 네이티브는 기본값 폴백) */
+  width?: number | "fluid";
   /** 캔버스 높이(px) — 기본 200 */
   height?: number;
   /** 시리즈 요약 accessibilityLabel 덮어쓰기 */
@@ -808,6 +836,16 @@ const ChartContainer = forwardRef<BridgeViewRef, ChartContainerProps>(
     ref,
   ) => {
     const [activeIndex, setActiveIndex] = useState<number | null>(null);
+
+    // fluid 캔버스 측정 ref — forwardRef 노출과 겸한다(브리지 ref 인스턴스는
+    // 웹에서 div라 HTMLElement로 캐스팅해 쓴다).
+    const containerRef = useRef<HTMLElement | null>(null);
+    const canvasWidth = useFluidWidth(containerRef, width);
+    const setContainerRef = (instance: BridgeViewRef | null) => {
+      containerRef.current = instance as HTMLElement | null;
+      if (typeof ref === "function") ref(instance);
+      else if (ref) (ref as { current: BridgeViewRef | null }).current = instance;
+    };
 
     // children 분류 — SVG 조각(시리즈·축·격자), 오버레이(ChartTooltip),
     // 흐름(ChartLegend). 시리즈는 색 인덱스 순서 확보를 위해 dataKey를 수집한다.
@@ -839,9 +877,9 @@ const ChartContainer = forwardRef<BridgeViewRef, ChartContainerProps>(
 
     const resolvedXKey = xKey ?? firstCategoryKey(data);
     const scale = useMemo(
-      () => buildScale(data, seriesKeys, width, height),
+      () => buildScale(data, seriesKeys, canvasWidth, height),
       // eslint-disable-next-line react-hooks/exhaustive-deps -- seriesKeys는 children에서 유도
-      [children, data, width, height],
+      [children, data, canvasWidth, height],
     );
 
     /** SVG x좌표 → 가장 가까운 데이터 행 인덱스 */
@@ -856,12 +894,29 @@ const ChartContainer = forwardRef<BridgeViewRef, ChartContainerProps>(
 
     return (
       <ChartContext.Provider
-        value={{ config, data, xKey: resolvedXKey, scale, seriesKeys, activeIndex, width, height }}
+        value={{
+          config,
+          data,
+          xKey: resolvedXKey,
+          scale,
+          seriesKeys,
+          activeIndex,
+          width: canvasWidth,
+          height,
+        }}
       >
-        <View ref={ref} className={cn("relative flex-col items-center", className)} {...props}>
+        <View
+          ref={setContainerRef}
+          className={cn(
+            "relative flex-col items-center",
+            width === "fluid" && "w-full",
+            className,
+          )}
+          {...props}
+        >
           <View className="relative">
             <ChartSurface
-              width={width}
+              width={canvasWidth}
               height={height}
               accessibilityLabel={summary}
               onPointMove={(point) => setActiveIndex(nearestIndex(point.x))}
@@ -872,7 +927,7 @@ const ChartContainer = forwardRef<BridgeViewRef, ChartContainerProps>(
               <ChartRect
                 x={0}
                 y={0}
-                width={width}
+                width={canvasWidth}
                 height={height}
                 fill="transparent"
                 onPress={(point) => {

@@ -267,16 +267,14 @@ export function DashboardBlock() {
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                {/** 차트는 고정 캔버스(640×280) — 좁은 화면에서는 가로 스크롤.
-                    items-center 기본값은 캔버스가 부모보다 넓을 때 좌측(y축)을
-                    스크롤 불가 영역으로 밀어내므로 items-start로 왼쪽 정렬한다 */}
+                {/** 차트는 fluid 캔버스 — 카드 내부 폭에 맞춘다(웹 ResizeObserver).
+                    캔버스가 폭을 따라가므로 가로 스크롤·우측 빈 공간이 없다 */}
                 <View className="w-full web:overflow-x-auto">
                   <ChartContainer
                     config={chartConfig}
                     data={monthlyVisits}
-                    width={640}
+                    width="fluid"
                     height={280}
-                    className="items-start"
                     accessibilityLabel="월별 방문자 막대 차트"
                   >
                     <ChartGrid />

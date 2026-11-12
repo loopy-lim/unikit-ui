@@ -47,7 +47,8 @@ export default function DemoLayout({ children }: { children: ReactNode }) {
         </View>
         {/** 데스크톱 좌측 내비 */}
         <View className="hidden w-56 shrink-0 flex-col border-r border-border bg-card md:flex">
-          <View className="flex h-16 items-center px-4">
+          {/** flex-row 필수 — 브리지 View는 flex-col을 기본 접두으로 붙인다 */}
+          <View className="flex h-16 flex-row items-center px-4">
             <Link href="/blocks/assistant">
               <BrandMark label="UniKit 도우미" />
             </Link>
