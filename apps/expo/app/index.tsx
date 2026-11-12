@@ -11,13 +11,7 @@ import { useMemo, useState } from "react";
 import { Link } from "expo-router";
 import { Pressable, SectionList, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import {
-  ChevronRight,
-  Moon,
-  Search,
-  SearchX,
-  Sun,
-} from "lucide-react-native";
+import { ChevronRight, Search, SearchX } from "lucide-react-native";
 import {
   Badge,
   Button,
@@ -28,7 +22,6 @@ import {
   EmptyMedia,
   EmptyTitle,
   Input,
-  useUnikitTheme,
 } from "@unikit-bridge/ui";
 
 import {
@@ -36,6 +29,8 @@ import {
   CATEGORIES,
   type CatalogEntry,
 } from "../components/showcase/catalog";
+import { ThemeToggleButton } from "../components/theme-toggle";
+import { useIconColors } from "../lib/token-colors";
 
 /** 카탈로그 항목 — 미니멀 인셋 리스트 행 */
 function CatalogRow({
@@ -71,7 +66,7 @@ function CatalogRow({
             {entry.subtitle}
           </Text>
           {entry.webOnly ? (
-            <Badge variant="outline" className="px-1.5 py-0 text-[10px]">
+            <Badge variant="outline" className="px-1.5 py-0 text-xs">
               웹 전용
             </Badge>
           ) : null}
@@ -83,15 +78,8 @@ function CatalogRow({
 }
 
 export default function Index() {
-  const { colorScheme, toggleColorScheme } = useUnikitTheme();
+  const icons = useIconColors();
   const [query, setQuery] = useState("");
-
-  const iconColor =
-    colorScheme === "dark" ? "hsl(240 5% 96%)" : "hsl(240 10% 3.9%)";
-  const mutedIconColor =
-    colorScheme === "dark" ? "hsl(240 5% 65%)" : "hsl(240 3.8% 46.1%)";
-  const subtleIconColor =
-    colorScheme === "dark" ? "hsl(240 5% 45%)" : "hsl(240 5% 75%)";
 
   const sections = useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -114,7 +102,7 @@ export default function Index() {
         <SectionList
           style={{ flex: 1 }}
           className="w-full flex-1"
-          contentContainerClassName="w-full max-w-[640px] mx-auto px-4 pb-12"
+          contentContainerClassName="w-full max-w-2xl mx-auto px-4 pb-12"
           keyboardShouldPersistTaps="handled"
           keyboardDismissMode="on-drag"
           stickySectionHeadersEnabled={false}
@@ -125,7 +113,7 @@ export default function Index() {
               entry={item}
               isFirst={index === 0}
               isLast={index === section.data.length - 1}
-              chevronColor={subtleIconColor}
+              chevronColor={icons.muted}
             />
           )}
           renderSectionHeader={({ section }) => (
@@ -149,23 +137,11 @@ export default function Index() {
                     React와 React Native에서 같은 컴포넌트, 같은 모습
                   </Text>
                 </View>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onPress={toggleColorScheme}
-                  accessibilityLabel="색 테마 전환"
-                  className="h-9 w-9 rounded-full border border-border/60 bg-card active:bg-muted/50"
-                >
-                  {colorScheme === "light" ? (
-                    <Moon size={16} color={iconColor} />
-                  ) : (
-                    <Sun size={16} color={iconColor} />
-                  )}
-                </Button>
+                <ThemeToggleButton />
               </View>
               <View className="relative justify-center">
                 <View className="absolute left-3.5 z-10 pointer-events-none">
-                  <Search size={15} color={mutedIconColor} />
+                  <Search size={15} color={icons.muted} />
                 </View>
                 <Input
                   className="pl-9 h-10 rounded-xl bg-muted/40 border-border/40 text-sm"
@@ -175,13 +151,41 @@ export default function Index() {
                   accessibilityLabel="컴포넌트 검색"
                 />
               </View>
+              {/** 데모 앱 진입 — 실제 앱 화면처럼 쓰는 구성(사이클 73) */}
+              <Link href="/demo" asChild>
+                <Pressable
+                  className="mt-4 flex-row items-center gap-3 rounded-2xl border border-border/60 bg-card p-4 active:bg-muted/50 active:opacity-85"
+                  accessibilityLabel="데모 앱 UniKit 도우미 열기"
+                >
+                  <View className="flex size-10 items-center justify-center rounded-xl bg-primary/10">
+                    <Text className="font-sans text-lg text-foreground">✦</Text>
+                  </View>
+                  <View className="min-w-0 flex-1 gap-0.5">
+                    <View className="flex-row items-center gap-2">
+                      <Text className="font-sans text-sm font-semibold tracking-tight text-foreground">
+                        데모 앱 — UniKit 도우미
+                      </Text>
+                      <Badge variant="outline" className="px-1.5 py-0 text-xs">
+                        새
+                      </Badge>
+                    </View>
+                    <Text
+                      className="font-sans text-xs text-muted-foreground"
+                      numberOfLines={1}
+                    >
+                      컴포넌트를 실제 앱 화면처럼 조합한 AI 어시스턴트 데모
+                    </Text>
+                  </View>
+                  <ChevronRight size={15} color={icons.muted} />
+                </Pressable>
+              </Link>
             </View>
           }
           ListEmptyComponent={
             <Empty className="py-12">
               <EmptyHeader>
                 <EmptyMedia variant="icon">
-                  <SearchX size={32} color={mutedIconColor} />
+                  <SearchX size={32} color={icons.muted} />
                 </EmptyMedia>
                 <EmptyTitle>검색 결과가 없어요</EmptyTitle>
                 <EmptyDescription>다른 이름으로 찾아 보세요.</EmptyDescription>

@@ -100,7 +100,7 @@ function Stack({ children }: { children: ReactNode }) {
 
 function ButtonDemoVariants() {
   return (
-    <View className="flex flex-row flex-wrap items-center justify-center gap-2 max-w-[280px]">
+    <View className="flex flex-row flex-wrap items-center justify-center gap-2 max-w-70">
       <Button variant="default" size="default">
         기본
       </Button>

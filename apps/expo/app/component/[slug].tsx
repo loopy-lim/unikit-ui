@@ -9,16 +9,13 @@ import { useLocalSearchParams, useRouter } from "expo-router";
 import { Pressable, ScrollView, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { ChevronLeft, ChevronRight } from "lucide-react-native";
-import { Badge, Button, useUnikitTheme } from "@unikit-bridge/ui";
+import { Badge, Button } from "@unikit-bridge/ui";
 
 import { CATALOG, findEntry } from "../../components/showcase/catalog";
+import { useIconColors } from "../../lib/token-colors";
 
 export default function ComponentScreen() {
-  const { colorScheme } = useUnikitTheme();
-  const iconColor =
-    colorScheme === "dark" ? "hsl(240 5% 96%)" : "hsl(240 10% 3.9%)";
-  const mutedIconColor =
-    colorScheme === "dark" ? "hsl(240 5% 65%)" : "hsl(240 3.8% 46.1%)";
+  const icons = useIconColors();
 
   const { slug } = useLocalSearchParams<{ slug: string }>();
   const router = useRouter();
@@ -56,7 +53,7 @@ export default function ComponentScreen() {
         <ScrollView
           style={{ flex: 1 }}
           className="w-full flex-1"
-          contentContainerClassName="w-full max-w-[640px] mx-auto px-4 pt-4 pb-16"
+          contentContainerClassName="w-full max-w-2xl mx-auto px-4 pt-4 pb-16"
           keyboardShouldPersistTaps="handled"
         >
           {/* 헤더 */}
@@ -67,7 +64,7 @@ export default function ComponentScreen() {
               className="flex-row items-center gap-1 py-1 self-start active:opacity-70"
               hitSlop={8}
             >
-              <ChevronLeft size={16} color={mutedIconColor} />
+              <ChevronLeft size={16} color={icons.muted} />
               <Text className="font-sans text-xs font-medium text-muted-foreground">
                 컴포넌트
               </Text>
@@ -80,7 +77,7 @@ export default function ComponentScreen() {
                 {entry.subtitle}
               </Text>
               {entry.webOnly ? (
-                <Badge variant="outline" className="px-1.5 py-0 text-[10px]">
+                <Badge variant="outline" className="px-1.5 py-0 text-xs">
                   웹 전용
                 </Badge>
               ) : null}
@@ -136,11 +133,11 @@ export default function ComponentScreen() {
                 className="flex-1 rounded-xl border border-border/50 bg-card/60 p-3.5 active:bg-muted/40 active:opacity-85"
                 accessibilityLabel={`이전 컴포넌트: ${neighbors.prev.title}`}
               >
-                <Text className="font-sans text-[11px] text-muted-foreground">
+                <Text className="font-sans text-xs text-muted-foreground">
                   이전
                 </Text>
                 <View className="mt-0.5 flex-row items-center gap-1">
-                  <ChevronLeft size={13} color={iconColor} />
+                  <ChevronLeft size={13} color={icons.fg} />
                   <Text className="font-sans text-sm font-medium text-foreground">
                     {neighbors.prev.title}
                   </Text>
@@ -155,14 +152,14 @@ export default function ComponentScreen() {
                 className="flex-1 rounded-xl border border-border/50 bg-card/60 p-3.5 active:bg-muted/40 active:opacity-85"
                 accessibilityLabel={`다음 컴포넌트: ${neighbors.next.title}`}
               >
-                <Text className="font-sans text-[11px] text-muted-foreground text-right">
+                <Text className="font-sans text-xs text-muted-foreground text-right">
                   다음
                 </Text>
                 <View className="mt-0.5 flex-row items-center justify-end gap-1">
                   <Text className="font-sans text-sm font-medium text-foreground">
                     {neighbors.next.title}
                   </Text>
-                  <ChevronRight size={13} color={iconColor} />
+                  <ChevronRight size={13} color={icons.fg} />
                 </View>
               </Pressable>
             ) : null}
