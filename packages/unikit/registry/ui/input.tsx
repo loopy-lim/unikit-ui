@@ -19,7 +19,7 @@ import { cn } from "../lib/utils";
 // focus 링은 원본 규격（ring-3 · ring-ring/50 · 무오프셋）을 준수한다（사이클 72）
 // — 무접두 유지: uniwind가 ring을 네이티브 box-shadow로 구동해 네이티브 링이 보존된다.
 const inputVariants = cva(
-  "font-sans h-9 w-full min-w-0 rounded-md border border-input bg-transparent px-3 py-1 text-base text-foreground web:shadow-xs web:transition-all web:outline-none web:selection:bg-primary web:selection:text-primary-foreground web:md:text-sm web:disabled:cursor-not-allowed placeholder:text-muted-foreground dark:bg-input/30 focus:border-ring focus:ring-3 focus:ring-ring/50 web:focus-visible:border-ring disabled:opacity-50",
+  "font-sans h-9 w-full min-w-0 rounded-md border border-input bg-transparent px-3 py-1 text-base text-foreground web:transition-all web:outline-none web:selection:bg-primary web:selection:text-primary-foreground web:md:text-sm web:disabled:cursor-not-allowed placeholder:text-muted-foreground dark:bg-input/30 focus:border-ring focus:ring-3 focus:ring-ring/50 web:focus-visible:border-ring disabled:opacity-50",
 );
 
 // InputProps — TextInputProps 그대로. 웹 관용 disabled의 치환 계약

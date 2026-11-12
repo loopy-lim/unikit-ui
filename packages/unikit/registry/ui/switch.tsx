@@ -21,7 +21,7 @@ import { cn } from "../lib/utils";
 
 // 트랙（Pressable） — 원본 크기 토큰: default 18.4px（h-4.5 근사）·w-8, sm h-3.5·w-6.
 const switchTrackVariants = cva(
-  "flex shrink-0 flex-row items-center rounded-full border border-transparent px-0.5 web:shadow-xs web:transition-all web:outline-none web:focus-visible:border-ring web:focus-visible:ring-3 web:focus-visible:ring-ring/50",
+  "flex shrink-0 flex-row items-center rounded-full border border-transparent px-0.5 web:transition-all web:outline-none web:focus-visible:border-ring web:focus-visible:ring-3 web:focus-visible:ring-ring/50",
   {
     variants: {
       size: {

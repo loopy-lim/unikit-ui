@@ -59,7 +59,7 @@ function flattenOptions(children: ReactNode): ReactNode[] {
 
 // 트리거 — 원본 select 토큰에서 속성 셀렉터를 조건부 클래스로 전개.
 const nativeSelectVariants = cva(
-  "w-full min-w-0 web:appearance-none rounded-md border border-input bg-transparent px-3 text-sm text-foreground web:shadow-xs web:transition-all web:outline-none web:selection:bg-primary web:selection:text-primary-foreground web:focus-visible:border-ring web:focus-visible:ring-3 web:focus-visible:ring-ring/50",
+  "w-full min-w-0 web:appearance-none rounded-md border border-input bg-transparent px-3 text-sm text-foreground web:transition-all web:outline-none web:selection:bg-primary web:selection:text-primary-foreground web:focus-visible:border-ring web:focus-visible:ring-3 web:focus-visible:ring-ring/50",
 );
 
 export type NativeSelectProps = ViewProps & {

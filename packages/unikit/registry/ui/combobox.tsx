@@ -617,7 +617,7 @@ const ComboboxChips = forwardRef<BridgeViewRef, ComboboxChipsProps>(
       ref={ref}
       className={cn(
         // 원본 px-2.5 py-1.5 shadow-xs（칩이 있을 때 px-1.5는 has- 셀렉터 미지원으로 고정）.
-        "min-h-9 flex-row flex-wrap items-center gap-1.5 rounded-md border border-input px-2.5 py-1.5 web:shadow-xs web:focus-within:border-ring web:focus-within:ring-3 web:focus-within:ring-ring/50",
+        "min-h-9 flex-row flex-wrap items-center gap-1.5 rounded-md border border-input px-2.5 py-1.5 web:focus-within:border-ring web:focus-within:ring-3 web:focus-within:ring-ring/50",
         className,
       )}
       {...props}

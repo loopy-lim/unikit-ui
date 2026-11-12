@@ -230,7 +230,7 @@ const Slider = forwardRef<BridgePressableRef, SliderProps>(
             className={cn(
               // 원본 썸: shadow-sm + ring-ring/50 상시·hover/focus-visible ring-4.
               // 장식 썸은 포커스 불가라 hover로 근사하고, 드래그 링은 기존 어포던스 유지.
-              "absolute top-1/2 -mt-2 -ml-2 size-4 rounded-full border border-primary bg-white shadow-sm web:ring-ring/50 web:hover:ring-4",
+              "absolute top-1/2 -mt-2 -ml-2 size-4 rounded-full border border-primary bg-white web:ring-ring/50 web:hover:ring-4",
               dragging &&
                 index === (activeIndex ?? activeRef.current) &&
                 "web:ring-4",

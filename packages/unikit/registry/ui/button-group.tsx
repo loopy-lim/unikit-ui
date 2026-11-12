@@ -121,7 +121,7 @@ const ButtonGroupText = forwardRef<BridgeViewRef, ButtonGroupTextProps>(
       ref={ref}
       className={cn(
         // 원본 flex items-center gap-2 — 브리지 flex-col 기본이라 flex-row 명시.
-        "flex flex-row items-center gap-2 rounded-md border border-border bg-muted px-4 web:shadow-xs",
+        "flex flex-row items-center gap-2 rounded-md border border-border bg-muted px-4",
         className,
       )}
       {...props}
