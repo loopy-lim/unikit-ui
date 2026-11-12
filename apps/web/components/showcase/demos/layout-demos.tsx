@@ -31,7 +31,7 @@ import type { ShowcaseDemo } from "./types";
 export const scrollAreaDemo: ShowcaseDemo = {
   Demo: function ScrollAreaDemo() {
     return (
-      <ScrollArea className="h-32 rounded-md border">
+      <ScrollArea className="h-32 w-full max-w-sm rounded-md border">
         <View className="gap-2 p-3">
           {Array.from({ length: 8 }, (_, i) => (
             <Text key={i} className="font-sans text-sm text-foreground">
@@ -50,7 +50,7 @@ export const scrollAreaDemo: ShowcaseDemo = {
 export const resizableDemo: ShowcaseDemo = {
   Demo: function ResizableDemo() {
     return (
-      <ResizablePanelGroup direction="horizontal" className="min-h-24 rounded-md border">
+      <ResizablePanelGroup direction="horizontal" className="min-h-24 w-full max-w-md rounded-md border">
         <ResizablePanel defaultSize={50}>
           <View className="flex h-full items-center justify-center">
             <Text className="font-sans text-sm text-muted-foreground">A</Text>
@@ -73,7 +73,7 @@ export const resizableDemo: ShowcaseDemo = {
 export const carouselDemo: ShowcaseDemo = {
   Demo: function CarouselDemo() {
     return (
-      <View className="px-10">
+      <View className="w-full max-w-xs px-10">
         <Carousel>
           <CarouselContent>
             {["1", "2", "3"].map((n) => (
@@ -98,7 +98,7 @@ export const carouselDemo: ShowcaseDemo = {
 export const sidebarDemo: ShowcaseDemo = {
   Demo: function SidebarDemo() {
     return (
-      <SidebarProvider className="h-40 rounded-md border web:min-h-0">
+      <SidebarProvider className="h-40 w-full max-w-md rounded-md border web:min-h-0">
         <Sidebar collapsible="offcanvas">
           <SidebarContent>
             <SidebarGroup>
