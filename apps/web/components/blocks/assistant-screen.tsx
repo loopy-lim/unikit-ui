@@ -380,7 +380,7 @@ export function AssistantScreen() {
         <MessageScrollerProvider>
           <MessageScroller className="min-h-0 w-full flex-1">
             <MessageScrollerViewport>
-              <MessageScrollerContent className="mx-auto w-full max-w-2xl px-2 py-6">
+              <MessageScrollerContent className="mx-auto w-full max-w-2xl px-4 py-6">
                 {messages.map((m) => (
                   <MessageScrollerItem key={m.id}>
                     <Message align={m.role === "user" ? "end" : "start"}>

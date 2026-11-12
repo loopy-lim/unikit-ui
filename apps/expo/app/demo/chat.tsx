@@ -301,7 +301,7 @@ export default function DemoChat() {
       >
         <View className="flex-1 bg-background">
           {/** 헤더 — 뒤로 · 제목 · 모델 선택 · ⋯ 오버플로우(새 대화·설정) */}
-          <View className="flex-row items-center gap-1 border-b border-border px-2 py-2">
+          <View className="flex-row items-center gap-1 border-b border-border px-4 py-2">
             <Button
               variant="ghost"
               size="icon"
@@ -407,7 +407,7 @@ export default function DemoChat() {
             <MessageScrollerProvider>
               <MessageScroller className="w-full flex-1">
                 <MessageScrollerViewport>
-                  <MessageScrollerContent className="w-full px-1 py-6">
+                  <MessageScrollerContent className="w-full px-4 py-6">
                     {messages.map((m) => (
                       <MessageScrollerItem key={m.id}>
                         <Message align={m.role === "user" ? "end" : "start"}>
@@ -497,7 +497,7 @@ export default function DemoChat() {
           )}
 
           {/** 작성 줄 — 첨부 미리보기 + 통합 입력 상자 */}
-          <View className="border-t border-border px-3 py-2.5">
+          <View className="border-t border-border px-4 py-2.5">
             {pendingFiles.length > 0 ? (
               <AttachmentGroup className="mb-2">
                 {pendingFiles.map((f) => (
