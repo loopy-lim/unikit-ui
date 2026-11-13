@@ -10,7 +10,7 @@ Cloudflare 시크릿은 이 저장소(`unikit-ui`)에 이미 있습니다.
 
 ## 1. Cloudflare
 
-1. Pages 프로젝트 `rustra-site` (production branch = `main`). 없으면 첫 deploy 때 생성됩니다.
+1. Pages 프로젝트 `rustra-site` (production branch = `main`). CI의 Ensure 스텝이 없으면 API로 생성합니다.
 2. 커스텀 도메인 `rustra.ll3.kr` 연결.
 3. GitHub Secrets (이미 존재): `CLOUDFLARE_ACCOUNT_ID`, `CLOUDFLARE_API_TOKEN`
 
