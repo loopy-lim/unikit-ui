@@ -1,7 +1,7 @@
 {
   "$schema": "https://ui.shadcn.com/schema/registry.json",
   "name": "unikit",
-  "homepage": "https://ui.unikit.ll3.kr/r/registry.json",
+  "homepage": "https://ui.ll3.kr/r/registry.json",
   "items": [
     {
       "name": "utils",

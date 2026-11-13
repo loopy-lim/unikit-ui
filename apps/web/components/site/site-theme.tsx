@@ -249,7 +249,7 @@ export function ThemeCustomizer() {
   const [copiedCli, setCopiedCli] = useState(false);
 
   const activeMeta = PRESET_META[preset];
-  const cliCommand = `bunx shadcn@latest add https://ui.unikit.ll3.kr/r/${activeMeta.registryName}.json -y`;
+  const cliCommand = `bunx shadcn@latest add https://ui.ll3.kr/r/${activeMeta.registryName}.json -y`;
 
   const copyThemeCli = useCallback(async () => {
     try {

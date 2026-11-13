@@ -60,7 +60,7 @@ export default function Home() {
 
 ## Option 2 — copy sources with shadcn CLI
 
-Public registry base: <https://ui.unikit.ll3.kr/r/> (catalog: [registry.json](https://ui.unikit.ll3.kr/r/registry.json)). While hacking UniKit itself, swap in `http://localhost:3000/r/`.
+Public registry base: <https://ui.ll3.kr/r/> (catalog: [registry.json](https://ui.ll3.kr/r/registry.json)). While hacking UniKit itself, swap in `http://localhost:3000/r/`.
 
 What you get: one component file (`components/unikit/<name>.tsx`) plus auto-installed deps. Deps stay minimal — shared `@unikit-bridge/ui`, plus only what that component imports (cva · clsx · tailwind-merge · tailwindcss). `form` optionally peers `react-hook-form`; `chart` peers `react-native-svg`. Copied `cn` imports resolve to `@/lib/utils`; bridge primitives resolve to `@unikit-bridge/ui/primitives`.
 
@@ -81,16 +81,16 @@ bunx shadcn@latest init -b base -p nova -y
 In the consumer project:
 
 ```bash
-bunx shadcn@latest add https://ui.unikit.ll3.kr/r/button.json -y
+bunx shadcn@latest add https://ui.ll3.kr/r/button.json -y
 ```
 
 Or several at once:
 
 ```bash
-bunx shadcn@latest add https://ui.unikit.ll3.kr/r/button.json https://ui.unikit.ll3.kr/r/card.json https://ui.unikit.ll3.kr/r/checkbox.json https://ui.unikit.ll3.kr/r/tabs.json https://ui.unikit.ll3.kr/r/avatar.json -y
+bunx shadcn@latest add https://ui.ll3.kr/r/button.json https://ui.ll3.kr/r/card.json https://ui.ll3.kr/r/checkbox.json https://ui.ll3.kr/r/tabs.json https://ui.ll3.kr/r/avatar.json -y
 ```
 
-67 registry items (UI 61 + utils 1 + theme 4 + animations 1): <https://ui.unikit.ll3.kr/r/registry.json>. Sources land under `components/unikit/`.
+67 registry items (UI 61 + utils 1 + theme 4 + animations 1): <https://ui.ll3.kr/r/registry.json>. Sources land under `components/unikit/`.
 
 > **Local registry** — while editing UniKit, run `cd apps/web && bun x next dev -p 3000` and use `http://localhost:3000/r/...` instead.
 
@@ -127,7 +127,7 @@ export default nextConfig;
 **(c) Install tokens**
 
 ```bash
-bunx shadcn@latest add https://ui.unikit.ll3.kr/r/theme.json -y
+bunx shadcn@latest add https://ui.ll3.kr/r/theme.json -y
 ```
 
 That injects 20 UniKit tokens into `:root` / `.dark`. Details: [packages/unikit/docs/tokens.md](../packages/unikit/docs/tokens.md).
@@ -135,17 +135,17 @@ That injects 20 UniKit tokens into `:root` / `.dark`. Details: [packages/unikit/
 Web overlay entry animations (optional; pulled in by dialog/sheet/popover/drawer/alert-dialog):
 
 ```bash
-bunx shadcn@latest add https://ui.unikit.ll3.kr/r/animations.json -y
+bunx shadcn@latest add https://ui.ll3.kr/r/animations.json -y
 ```
 
 **Theme presets**
 
 | Theme | Feel | Install |
 |---|---|---|
-| `theme` (default zinc) | Neutral | `bunx shadcn@latest add https://ui.unikit.ll3.kr/r/theme.json -y` |
-| `theme-blue` | Blue primary + slate | `bunx shadcn@latest add https://ui.unikit.ll3.kr/r/theme-blue.json -y` |
-| `theme-emerald` | Green primary + zinc | `bunx shadcn@latest add https://ui.unikit.ll3.kr/r/theme-emerald.json -y` |
-| `theme-amber` | Amber primary + stone | `bunx shadcn@latest add https://ui.unikit.ll3.kr/r/theme-amber.json -y` |
+| `theme` (default zinc) | Neutral | `bunx shadcn@latest add https://ui.ll3.kr/r/theme.json -y` |
+| `theme-blue` | Blue primary + slate | `bunx shadcn@latest add https://ui.ll3.kr/r/theme-blue.json -y` |
+| `theme-emerald` | Green primary + zinc | `bunx shadcn@latest add https://ui.ll3.kr/r/theme-emerald.json -y` |
+| `theme-amber` | Amber primary + stone | `bunx shadcn@latest add https://ui.ll3.kr/r/theme-amber.json -y` |
 
 Re-adding a preset **replaces** the 20 values in place (verified). Re-running the same preset is idempotent when unchanged.
 

@@ -172,7 +172,7 @@ function InstallSection() {
           <div>
             <p className="mb-2 text-sm font-medium text-foreground">shadcn registry</p>
             <pre className="site-mono overflow-x-auto rounded-md border border-border bg-muted p-4 text-xs text-foreground">
-              bunx shadcn@latest add https://ui.unikit.ll3.kr/r/button.json -y
+              bunx shadcn@latest add https://ui.ll3.kr/r/button.json -y
             </pre>
           </div>
         </div>

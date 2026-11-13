@@ -60,7 +60,7 @@ export default function Home() {
 
 ## 방법 2 — shadcn CLI로 소스 복사
 
-공개 레지스트리 기준 URL은 <https://ui.unikit.ll3.kr/r/> 예요(카탈로그: [registry.json](https://ui.unikit.ll3.kr/r/registry.json)). UniKit을 고치면서 로컬 서버를 쓸 때는 `http://localhost:3000/r/`로 바꾸면 돼요.
+공개 레지스트리 기준 URL은 <https://ui.ll3.kr/r/> 예요(카탈로그: [registry.json](https://ui.ll3.kr/r/registry.json)). UniKit을 고치면서 로컬 서버를 쓸 때는 `http://localhost:3000/r/`로 바꾸면 돼요.
 
 복사되는 것: 컴포넌트 소스 1개(`components/unikit/<이름>.tsx`)와 자동 설치되는 의존성이에요. 의존성은 컴포넌트마다 최소화되어 있어요 — 공통 `@unikit-bridge/ui`, 필요한 것만 추가(cva·clsx·tailwind-merge·tailwindcss — button은 5종 전부, dialog는 패키지뿐). `form`은 선택 의존 `react-hook-form`, `chart`는 `react-native-svg`를 peer로 안내해요. 복사본의 `cn` import는 내 프로젝트 경로(`@/lib/utils`)로, 브리지 프리미티브 import는 npm 패키지(`@unikit-bridge/ui/primitives`)로 해석돼요.
 
@@ -83,16 +83,16 @@ bunx shadcn@latest init -b base -p nova -y
 소비자 프로젝트에서 컴포넌트를 추가해요. 하나씩:
 
 ```bash
-bunx shadcn@latest add https://ui.unikit.ll3.kr/r/button.json -y
+bunx shadcn@latest add https://ui.ll3.kr/r/button.json -y
 ```
 
 한 번에 여러 종:
 
 ```bash
-bunx shadcn@latest add https://ui.unikit.ll3.kr/r/button.json https://ui.unikit.ll3.kr/r/card.json https://ui.unikit.ll3.kr/r/checkbox.json https://ui.unikit.ll3.kr/r/tabs.json https://ui.unikit.ll3.kr/r/avatar.json -y
+bunx shadcn@latest add https://ui.ll3.kr/r/button.json https://ui.ll3.kr/r/card.json https://ui.ll3.kr/r/checkbox.json https://ui.ll3.kr/r/tabs.json https://ui.ll3.kr/r/avatar.json -y
 ```
 
-등록된 아이템 67종(UI 61 + utils 1 + theme 4 + animations 1) 전체 목록은 <https://ui.unikit.ll3.kr/r/registry.json> 에서 확인할 수 있어요. `components/unikit/`에 소스가 복사되고 의존성이 자동으로 설치돼요.
+등록된 아이템 67종(UI 61 + utils 1 + theme 4 + animations 1) 전체 목록은 <https://ui.ll3.kr/r/registry.json> 에서 확인할 수 있어요. `components/unikit/`에 소스가 복사되고 의존성이 자동으로 설치돼요.
 
 > **로컬 레지스트리** — UniKit 저장소를 고치는 중이면 `cd apps/web && bun x next dev -p 3000` 후 URL만 `http://localhost:3000/r/...`로 바꿔요.
 
@@ -133,7 +133,7 @@ export default nextConfig;
 **(c) 토큰 받기** — 복사·붙여넣기 대신 레지스트리에서 **한 줄**로 받아요:
 
 ```bash
-bunx shadcn@latest add https://ui.unikit.ll3.kr/r/theme.json -y
+bunx shadcn@latest add https://ui.ll3.kr/r/theme.json -y
 ```
 
 `app/globals.css`의 `:root`(라이트)와 `.dark`(다크) 블록에 UniKit 디자인 토큰 20종(색 19 + radius)이 자동으로 주입돼요. 이때 CLI가 값을 `hsl(...)` 함수 형태로 감싸 넣기도 하는데, 값 자체는 UniKit 토큰과 동일해요. 토큰별 값이 궁금하면 [packages/unikit/docs/tokens.md](../packages/unikit/docs/tokens.md)를 보세요. `<html>` 등 조상 요소에 `dark` 클래스를 붙이면 전체 토큰이 다크 값으로 전환돼요.
@@ -141,17 +141,17 @@ bunx shadcn@latest add https://ui.unikit.ll3.kr/r/theme.json -y
 오버레이 등장 애니메이션(웹)이 필요하면 같은 방식으로 `animations` 항목도 받을 수 있어요. `dialog`·`sheet`·`popover`·`drawer`·`alert-dialog`는 레지스트리 의존으로 자동 포함돼요:
 
 ```bash
-bunx shadcn@latest add https://ui.unikit.ll3.kr/r/animations.json -y
+bunx shadcn@latest add https://ui.ll3.kr/r/animations.json -y
 ```
 
 **프리셋 테마 선택** — 기본(zinc) 대신 미리 준비된 색 조합을 쓰고 싶으면, 같은 방식으로 해당 항목을 add하면 돼요(주색과 중립 계열이 바뀌고, 나머지 구조·토큰 이름은 동일):
 
 | 테마 | 인상 | 설치(한 줄) |
 |---|---|---|
-| `theme` (기본 zinc) | 무채색·차분 | `bunx shadcn@latest add https://ui.unikit.ll3.kr/r/theme.json -y` |
-| `theme-blue` | 파란 주색 + slate 중립 | `bunx shadcn@latest add https://ui.unikit.ll3.kr/r/theme-blue.json -y` |
-| `theme-emerald` | 초록 주색 + zinc 중립 | `bunx shadcn@latest add https://ui.unikit.ll3.kr/r/theme-emerald.json -y` |
-| `theme-amber` | 주황 주색 + stone 중립 | `bunx shadcn@latest add https://ui.unikit.ll3.kr/r/theme-amber.json -y` |
+| `theme` (기본 zinc) | 무채색·차분 | `bunx shadcn@latest add https://ui.ll3.kr/r/theme.json -y` |
+| `theme-blue` | 파란 주색 + slate 중립 | `bunx shadcn@latest add https://ui.ll3.kr/r/theme-blue.json -y` |
+| `theme-emerald` | 초록 주색 + zinc 중립 | `bunx shadcn@latest add https://ui.ll3.kr/r/theme-emerald.json -y` |
+| `theme-amber` | 주황 주색 + stone 중립 | `bunx shadcn@latest add https://ui.ll3.kr/r/theme-amber.json -y` |
 
 **재적용·교체** — 이미 토큰을 받은 프로젝트에서:
 

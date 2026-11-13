@@ -30,12 +30,12 @@ export const metadata: Metadata = {
   title: "UniKit",
   description:
     "한 import로 React(웹)와 React Native에서 같은 UI — UniKit 소개와 컴포넌트 카탈로그",
-  metadataBase: new URL("https://ui.unikit.ll3.kr"),
+  metadataBase: new URL("https://ui.ll3.kr"),
   openGraph: {
     title: "UniKit",
     description:
       "한 import로 React(웹)와 React Native에서 같은 UI — UniKit 소개와 컴포넌트 카탈로그",
-    url: "https://ui.unikit.ll3.kr",
+    url: "https://ui.ll3.kr",
     siteName: "UniKit",
     images: [{ url: "/brand/og.png", width: 2400, height: 1350, alt: "UniKit" }],
     locale: "ko_KR",

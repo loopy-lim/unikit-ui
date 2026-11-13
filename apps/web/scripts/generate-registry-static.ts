@@ -5,7 +5,7 @@
  *
  * 환경변수:
  *   SITE_ORIGIN — 레지스트리 homepage 에 쓸 오리진
- *                 (기본: https://ui.unikit.ll3.kr)
+ *                 (기본: https://ui.ll3.kr)
  */
 import { mkdir, rm, writeFile } from "node:fs/promises";
 import path from "node:path";
@@ -16,7 +16,7 @@ import { loadRegistry, loadRegistryItem } from "../lib/registry";
 const SCRIPT_DIR = path.dirname(fileURLToPath(import.meta.url));
 const OUT_DIR = path.resolve(SCRIPT_DIR, "..", "public", "r");
 const SITE_ORIGIN = (
-  process.env.SITE_ORIGIN ?? "https://ui.unikit.ll3.kr"
+  process.env.SITE_ORIGIN ?? "https://ui.ll3.kr"
 ).replace(/\/$/, "");
 
 async function main() {

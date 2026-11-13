@@ -3,13 +3,13 @@
 소개 사이트·쇼케이스·shadcn 레지스트리(`/r/*.json`)를 **정적 export**로 Cloudflare Pages에 올립니다.
 
 - 프로젝트명: `unikit-ui`
-- 권장 커스텀 도메인: `ui.unikit.ll3.kr`
+- 권장 커스텀 도메인: `ui.ll3.kr`
 - 산출물: `apps/web/out/` (`output: "export"`)
 
 ## 1. Cloudflare / GitHub 시크릿 (사람)
 
 1. Cloudflare에서 Pages 프로젝트 `unikit-ui` 생성(production branch = `main`). 없으면 첫 `wrangler pages deploy` 때 생성해도 됩니다.
-2. 커스텀 도메인 `ui.unikit.ll3.kr` 연결(DNS는 Cloudflare가 안내하는 CNAME).
+2. 커스텀 도메인 `ui.ll3.kr` 연결(DNS는 Cloudflare가 안내하는 CNAME).
 3. GitHub 저장소 Secrets:
    - `CLOUDFLARE_ACCOUNT_ID`
    - `CLOUDFLARE_API_TOKEN` (Account → Cloudflare Pages → Edit)

@@ -47,7 +47,7 @@ cd apps/web && bun run dev -p 3000
 | <http://localhost:3000/blocks> | 블록(조합 화면) |
 | <http://localhost:3000/r/registry.json> | shadcn 레지스트리 |
 
-데모·레지스트리: <https://ui.unikit.ll3.kr> — 재배포는 [apps/web/DEPLOY.md](apps/web/DEPLOY.md)
+데모·레지스트리: <https://ui.ll3.kr> — 재배포는 [apps/web/DEPLOY.md](apps/web/DEPLOY.md)
 
 ### Expo 데모
 
@@ -96,7 +96,7 @@ export default function Home() {
 **방법 2 — 소스 복사 (요약)**
 
 ```bash
-bunx shadcn@latest add https://ui.unikit.ll3.kr/r/button.json -y
+bunx shadcn@latest add https://ui.ll3.kr/r/button.json -y
 ```
 
 `transpilePackages` · `web:`/`@source` · `theme.json` 설정은 [docs/install.md](docs/install.md). 레지스트리 아이템 67종 = UI 61 + utils 1 + theme 4 + animations 1.

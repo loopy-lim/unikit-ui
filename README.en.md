@@ -47,7 +47,7 @@ cd apps/web && bun run dev -p 3000
 | <http://localhost:3000/blocks> | Blocks (composed screens) |
 | <http://localhost:3000/r/registry.json> | shadcn registry |
 
-Demo & registry: <https://ui.unikit.ll3.kr> — redeploy notes in [apps/web/DEPLOY.md](apps/web/DEPLOY.md)
+Demo & registry: <https://ui.ll3.kr> — redeploy notes in [apps/web/DEPLOY.md](apps/web/DEPLOY.md)
 
 ### Expo demo
 
@@ -96,7 +96,7 @@ export default function Home() {
 **Option 2 — source copy (summary)**
 
 ```bash
-bunx shadcn@latest add https://ui.unikit.ll3.kr/r/button.json -y
+bunx shadcn@latest add https://ui.ll3.kr/r/button.json -y
 ```
 
 `transpilePackages` · `web:` / `@source` · `theme.json` — see [docs/install.en.md](docs/install.en.md). Registry items: 67 = UI 61 + utils 1 + theme 4 + animations 1.

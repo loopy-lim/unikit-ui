@@ -365,7 +365,7 @@ export function InstallSnippet({ name }: { name: string }) {
 
   const runner =
     pm === "bun" ? "bunx --bun" : pm === "pnpm" ? "pnpm dlx" : "npx";
-  const cmd = `${runner} shadcn@latest add https://ui.unikit.ll3.kr/r/${name}.json -y`;
+  const cmd = `${runner} shadcn@latest add https://ui.ll3.kr/r/${name}.json -y`;
 
   async function copy() {
     try {

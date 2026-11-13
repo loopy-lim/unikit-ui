@@ -1,0 +1,8 @@
+name = "unikit-hub"
+main = "src/index.js"
+compatibility_date = "2026-11-13"
+workers_dev = true
+
+[[routes]]
+pattern = "unikit.ll3.kr/*"
+zone_name = "ll3.kr"
