@@ -28,6 +28,10 @@ jobs:
         working-directory: apps/web
         run: bun run build
 
+      - name: rustra 소개 사이트 빌드 (Next.js)
+        working-directory: apps/rustra
+        run: bun run build
+
       - name: 네이티브 번들 컴파일 (Expo export — Android/Hermes)
         working-directory: apps/expo
         run: bun x expo export --platform android
