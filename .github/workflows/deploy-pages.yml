@@ -33,7 +33,7 @@ jobs:
       - name: Build static site
         working-directory: apps/web
         env:
-          SITE_ORIGIN: https://ui.unikit.ll3.kr
+          SITE_ORIGIN: https://ui.ll3.kr
         run: bun run build
 
       - name: Deploy to Cloudflare Pages
@@ -45,14 +45,16 @@ jobs:
           workingDirectory: apps/web
           command: pages deploy out --project-name=unikit-ui --branch=main
 
-      - name: Attach custom domain
+      - name: Attach custom domains
         if: github.event_name == 'workflow_dispatch' || (github.event_name == 'push' && github.ref == 'refs/heads/main')
         run: |
-          echo "Attaching custom domain ui.unikit.ll3.kr to Pages..."
-          curl -s -X POST "https://api.cloudflare.com/client/v4/accounts/${{ secrets.CLOUDFLARE_ACCOUNT_ID }}/pages/projects/unikit-ui/domains" \
-            -H "Authorization: Bearer ${{ secrets.CLOUDFLARE_API_TOKEN }}" \
-            -H "Content-Type: application/json" \
-            --data '{"name":"ui.unikit.ll3.kr"}' | jq . || true
+          for domain in ui.ll3.kr ui.unikit.ll3.kr; do
+            echo "Attaching custom domain ${domain} to Pages..."
+            curl -s -X POST "https://api.cloudflare.com/client/v4/accounts/${{ secrets.CLOUDFLARE_ACCOUNT_ID }}/pages/projects/unikit-ui/domains" \
+              -H "Authorization: Bearer ${{ secrets.CLOUDFLARE_API_TOKEN }}" \
+              -H "Content-Type: application/json" \
+              --data "{\"name\":\"${domain}\"}" | jq . || true
+          done
 
           echo "Querying Pages domains status..."
           curl -s -X GET "https://api.cloudflare.com/client/v4/accounts/${{ secrets.CLOUDFLARE_ACCOUNT_ID }}/pages/projects/unikit-ui/domains" \
