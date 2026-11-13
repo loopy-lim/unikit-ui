@@ -16,7 +16,7 @@ import {
 } from "@unikit-bridge/ui/primitives";
 import { cva, type VariantProps } from "class-variance-authority";
 
-import { cn } from "../lib/utils";
+import { cn } from "@/lib/utils";
 
 // Pressable（컨테이너） — 원본 base의 shrink-0·transition-all을 포함하고, hover는
 // web: 접두, active（눌림 어포던스 근사）는 양쪽에서 동작한다. focus 링은 원본 규격

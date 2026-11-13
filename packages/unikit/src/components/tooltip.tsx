@@ -40,6 +40,7 @@
 import {
   createContext,
   forwardRef,
+  useCallback,
   useContext,
   useEffect,
   useId,
@@ -61,7 +62,12 @@ import {
 } from "@unikit-bridge/ui/primitives";
 import { cva } from "class-variance-authority";
 
-import { AnchoredOverlay, type OverlayAlign, type OverlayPlacement } from "../lib/overlay";
+import {
+  AnchoredOverlay,
+  useOverlayPlacement,
+  type OverlayAlign,
+  type OverlayPlacement,
+} from "../lib/overlay";
 import { cn } from "../lib/utils";
 
 // ---------------------------------------------------------------------------
@@ -184,24 +190,27 @@ const Tooltip = forwardRef<BridgeViewRef, TooltipProps>(
 
     // 지연 진입 타이머 — 재스케줄언마운트 시 해제가 의무다.
     const delayTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-    const clearDelayTimer = () => {
+    const clearDelayTimer = useCallback(() => {
       if (delayTimerRef.current !== null) {
         clearTimeout(delayTimerRef.current);
         delayTimerRef.current = null;
       }
-    };
-    useEffect(() => clearDelayTimer, []);
+    }, []);
+    useEffect(() => clearDelayTimer, [clearDelayTimer]);
 
     // 타이머 콜백에서도 최신 열림 값/제어 여부를 읽도록 렌더마다 갱신하는 미러.
     const stateRef = useRef({ isOpen, open, onOpenChange });
     stateRef.current = { isOpen, open, onOpenChange };
-    const applyOpen = (next: boolean) => {
-      const state = stateRef.current;
-      if (state.open === undefined) setInternalOpen(next);
-      if (next !== state.isOpen) state.onOpenChange?.(next);
-      stateRef.current = { ...state, isOpen: next };
-      if (next) policy.markOpened();
-    };
+    const applyOpen = useCallback(
+      (next: boolean) => {
+        const state = stateRef.current;
+        if (state.open === undefined) setInternalOpen(next);
+        if (next !== state.isOpen) state.onOpenChange?.(next);
+        stateRef.current = { ...state, isOpen: next };
+        if (next) policy.markOpened();
+      },
+      [policy],
+    );
     const applyOpenRef = useRef(applyOpen);
     applyOpenRef.current = applyOpen;
 
@@ -213,7 +222,7 @@ const Tooltip = forwardRef<BridgeViewRef, TooltipProps>(
       return () => clearTimeout(id);
     }, [isOpen, displayDuration]);
 
-    const show = () => {
+    const show = useCallback(() => {
       clearDelayTimer();
       if (stateRef.current.isOpen) return;
       // skip 창 안의 재진입은 지연 없이 즉시 열림（radix skipDelayDuration 재현）.
@@ -225,16 +234,19 @@ const Tooltip = forwardRef<BridgeViewRef, TooltipProps>(
         delayTimerRef.current = null;
         applyOpen(true);
       }, resolvedDelay);
-    };
-    const hide = () => {
+    }, [clearDelayTimer, policy, applyOpen, resolvedDelay]);
+    const hide = useCallback(() => {
       clearDelayTimer();
       applyOpen(false);
-    };
+    }, [clearDelayTimer, applyOpen]);
+
+    const contextValue = useMemo<TooltipContextValue>(
+      () => ({ open: isOpen, show, hide, contentId: `${baseId}-tooltip-content`, triggerRef }),
+      [isOpen, show, hide, baseId],
+    );
 
     return (
-      <TooltipContext.Provider
-        value={{ open: isOpen, show, hide, contentId: `${baseId}-tooltip-content`, triggerRef }}
-      >
+      <TooltipContext.Provider value={contextValue}>
         <View ref={ref} {...props}>{children}</View>
       </TooltipContext.Provider>
     );
@@ -278,12 +290,28 @@ TooltipTrigger.displayName = "TooltipTrigger";
 const tooltipContentVariants = cva(
   // pointer-events-auto: 웹에서 오버레이 래퍼 box-none 상속 회피（기본 포함）.
   // relative는 하단 화살표 절대 배치의 기준이 된다.
-  "pointer-events-auto relative w-fit rounded-md bg-foreground px-3 py-1.5 text-background web:outline-none web:text-balance",
+  "pointer-events-auto relative w-fit rounded-md bg-foreground px-3 py-1.5 text-background unikit-popover-in web:outline-none web:text-balance",
 );
 
 // 네이티브 색 상속 불가로 내부 Text에 이중 지정（코드베이스 관행）.
 // text-balance는 컨테이너의 web: 토큰이 웹에서 상속된다.
 const tooltipContentTextVariants = cva("font-sans text-xs text-background");
+
+function TooltipArrow({ fallbackSide }: { fallbackSide: OverlayPlacement }) {
+  const resolvedSide = useOverlayPlacement() ?? fallbackSide;
+  if (resolvedSide !== "top" && resolvedSide !== "bottom") return null;
+  return (
+    <View
+      aria-hidden
+      className={cn(
+        "absolute inset-x-0 flex-row justify-center",
+        resolvedSide === "top" ? "-bottom-1" : "-top-1",
+      )}
+    >
+      <View className="size-2 rotate-45 bg-foreground" />
+    </View>
+  );
+}
 
 export type TooltipContentProps = ViewProps & {
   /** 전개 방향（기본 top — radix 기본값） */
@@ -319,16 +347,7 @@ const TooltipContent = forwardRef<BridgeViewRef, TooltipContentProps>(
           {...props}
         >
           <Text className={tooltipContentTextVariants()}>{children}</Text>
-          {/* 원본 rotate-45 사각형 화살표 → View 도형 근사.
-              카드가 앵커 위에 있는 side "top"일 때만 하단 배치가 성립한다. */}
-          {side === "top" && (
-            <View
-              aria-hidden
-              className="absolute inset-x-0 -bottom-1 flex-row justify-center"
-            >
-              <View className="size-2 rotate-45 bg-foreground" />
-            </View>
-          )}
+          <TooltipArrow fallbackSide={side} />
         </View>
       </AnchoredOverlay>
     );

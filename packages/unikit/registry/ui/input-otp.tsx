@@ -43,7 +43,7 @@ import {
 } from "@unikit-bridge/ui/primitives";
 import { cva } from "class-variance-authority";
 
-import { cn } from "../lib/utils";
+import { cn } from "@/lib/utils";
 
 // 원본 input-otp의 OTPInputContext 슬롯 상태와 동일 형태.
 type OTPSlotState = {

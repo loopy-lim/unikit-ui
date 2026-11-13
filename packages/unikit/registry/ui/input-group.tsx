@@ -46,7 +46,7 @@ import { cva, type VariantProps } from "class-variance-authority";
 import { Button, type ButtonProps } from "./button";
 import { Input, type InputProps } from "./input";
 import { Textarea, type TextareaProps } from "./textarea";
-import { cn } from "../lib/utils";
+import { cn } from "@/lib/utils";
 
 // ---------------------------------------------------------------------------
 // 그룹 파생 상태 — 직계 자식 정적 수집（머리 주석）

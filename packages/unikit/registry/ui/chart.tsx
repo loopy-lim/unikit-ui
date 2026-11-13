@@ -80,7 +80,7 @@ import {
   ChartText,
 } from "@unikit-bridge/ui/chart";
 
-import { cn } from "../lib/utils";
+import { cn } from "@/lib/utils";
 
 // ---------------------------------------------------------------------------
 // 설정컨텍스트

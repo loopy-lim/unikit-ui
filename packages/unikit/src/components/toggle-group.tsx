@@ -10,7 +10,10 @@
 import {
   createContext,
   forwardRef,
+  useCallback,
   useContext,
+  useMemo,
+  useRef,
   useState,
 } from "react";
 import {
@@ -94,29 +97,53 @@ const ToggleGroup = forwardRef<BridgeViewRef, ToggleGroupProps>(
       toArray(defaultValue),
     );
     const isControlled = value !== undefined;
-    const selected = isControlled ? toArray(value) : uncontrolled;
+    const selected = useMemo(
+      () => (isControlled ? toArray(value) : uncontrolled),
+      [isControlled, value, uncontrolled],
+    );
+    const selectedRef = useRef(selected);
+    selectedRef.current = selected;
 
-    const isSelected = (itemValue: string) => selected.includes(itemValue);
+    const isSelected = useCallback(
+      (itemValue: string) => selected.includes(itemValue),
+      [selected],
+    );
 
-    const handleItemPress = (itemValue: string) => {
-      if (type === "multiple") {
-        const next = isSelected(itemValue)
-          ? selected.filter((v) => v !== itemValue)
-          : [...selected, itemValue];
+    const handleItemPress = useCallback(
+      (itemValue: string) => {
+        const current = selectedRef.current;
+        if (type === "multiple") {
+          const next = current.includes(itemValue)
+            ? current.filter((v) => v !== itemValue)
+            : [...current, itemValue];
+          if (!isControlled) setUncontrolled(next);
+          if (onValueChange) {
+            // type 브랜치가 보장하는 시그니처로 좁힌다（any 아님）.
+            (onValueChange as (value: string[]) => void)(next);
+          }
+          return;
+        }
+        // single — 이미 선택된 항목 재선택 시 해제（radix 동작: 빈 문자열 방출）
+        const next = current[0] === itemValue ? [] : [itemValue];
         if (!isControlled) setUncontrolled(next);
         if (onValueChange) {
-          // type 브랜치가 보장하는 시그니처로 좁힌다（any 아님）.
-          (onValueChange as (value: string[]) => void)(next);
+          (onValueChange as (value: string) => void)(next[0] ?? "");
         }
-        return;
-      }
-      // single — 이미 선택된 항목 재선택 시 해제（radix 동작: 빈 문자열 방출）
-      const next = selected[0] === itemValue ? [] : [itemValue];
-      if (!isControlled) setUncontrolled(next);
-      if (onValueChange) {
-        (onValueChange as (value: string) => void)(next[0] ?? "");
-      }
-    };
+      },
+      [type, isControlled, onValueChange],
+    );
+
+    const contextValue = useMemo(
+      () => ({
+        type,
+        isSelected,
+        onItemPress: handleItemPress,
+        variant,
+        size,
+        disabled,
+      }),
+      [type, isSelected, handleItemPress, variant, size, disabled],
+    );
 
     return (
       <View
@@ -128,16 +155,7 @@ const ToggleGroup = forwardRef<BridgeViewRef, ToggleGroupProps>(
         )}
         {...props}
       >
-        <ToggleGroupContext.Provider
-          value={{
-            type,
-            isSelected,
-            onItemPress: handleItemPress,
-            variant,
-            size,
-            disabled,
-          }}
-        >
+        <ToggleGroupContext.Provider value={contextValue}>
           {children}
         </ToggleGroupContext.Provider>
       </View>
@@ -162,6 +180,11 @@ const ToggleGroupItem = forwardRef<BridgePressableRef, ToggleGroupItemProps>(
     const group = useContext(ToggleGroupContext);
     const isPressed = group.isSelected(value);
     const isDisabled = disabled || group.disabled;
+    const onItemPress = group.onItemPress;
+    const handlePressedChange = useCallback(
+      () => onItemPress(value),
+      [onItemPress, value],
+    );
 
     return (
       <Toggle
@@ -169,6 +192,7 @@ const ToggleGroupItem = forwardRef<BridgePressableRef, ToggleGroupItemProps>(
         variant={group.variant ?? variant}
         size={group.size ?? size}
         pressed={isPressed}
+        onPressedChange={handlePressedChange}
         disabled={isDisabled}
         className={cn(
           // 원본 항목 오버라이드: min-w-9 → min-w-0, px-2 → px-3. z-index는 웹 전용.

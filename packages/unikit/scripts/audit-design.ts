@@ -176,7 +176,17 @@ function scanPattern(files: string[], pattern: RegExp, label: string): Violation
     "scroll-area", "select", "sheet", "sidebar", "slider",
     "sonner", "spinner", "tooltip",
   ];
+  const srcFiles = readdirSync(path.join(PKG, "src", "components"))
+    .filter((f) => f.endsWith(".tsx"))
+    .map((f) => f.replace(/\.tsx$/, ""));
+  const regFiles = readdirSync(path.join(PKG, "registry", "ui"))
+    .filter((f) => f.endsWith(".tsx"))
+    .map((f) => f.replace(/\.tsx$/, ""));
   const vs: Violation[] = [];
+  for (const n of srcFiles) {
+    if (!names.includes(n)) vs.push({ file: `src/components/${n}.tsx`, detail: "audit-design 목록(names)에 누락됨" });
+    if (!regFiles.includes(n)) vs.push({ file: `registry/ui/${n}.tsx`, detail: "registry/ui 사본 파일 누락됨" });
+  }
   for (const n of names) {
     const orig = readFileSync(path.join(PKG, "src", "components", `${n}.tsx`), "utf8");
     const copy = readFileSync(path.join(PKG, "registry", "ui", `${n}.tsx`), "utf8").replaceAll('"@/lib/utils"', '"../lib/utils"');

@@ -15,7 +15,7 @@ import {
   type PressableProps,
 } from "@unikit-bridge/ui/primitives";
 
-import { cn } from "../lib/utils";
+import { cn } from "@/lib/utils";
 
 // 원본 크기 토큰 유지: size-4（16px） 박스·rounded-sm（UniKit 토큰 --radius-sm=4px）·border-input,
 // 체크 시 border/bg-primary.

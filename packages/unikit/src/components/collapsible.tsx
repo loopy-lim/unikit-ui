@@ -14,7 +14,10 @@
 import {
   createContext,
   forwardRef,
+  useCallback,
   useContext,
+  useMemo,
+  useRef,
   useState,
   type ReactNode,
 } from "react";
@@ -55,15 +58,20 @@ const Collapsible = forwardRef<BridgeViewRef, CollapsibleProps>(
     // 비제어 상태 — 제어（open 지정）면 무시된다.
     const [internalOpen, setInternalOpen] = useState(defaultOpen);
     const isOpen = open ?? internalOpen;
-    const setOpen = (next: boolean) => {
+    const isOpenRef = useRef(isOpen);
+    isOpenRef.current = isOpen;
+    const toggle = useCallback(() => {
       animateLayout();
+      const next = !isOpenRef.current;
       if (open === undefined) setInternalOpen(next);
-      if (next !== isOpen) onOpenChange?.(next);
-    };
+      onOpenChange?.(next);
+    }, [open, onOpenChange]);
+    const contextValue = useMemo(
+      () => ({ open: isOpen, toggle }),
+      [isOpen, toggle],
+    );
     return (
-      <CollapsibleContext.Provider
-        value={{ open: isOpen, toggle: () => setOpen(!isOpen) }}
-      >
+      <CollapsibleContext.Provider value={contextValue}>
         <View ref={ref} {...props}>
           {children}
         </View>

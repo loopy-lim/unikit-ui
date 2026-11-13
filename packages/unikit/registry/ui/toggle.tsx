@@ -16,7 +16,7 @@ import {
 } from "@unikit-bridge/ui/primitives";
 import { cva, type VariantProps } from "class-variance-authority";
 
-import { cn } from "../lib/utils";
+import { cn } from "@/lib/utils";
 
 // 컨테이너（Pressable） — 원본 base의 hover:bg-muted（기본 변형 호버）를 포함.
 // outline 변형의 hover:bg-accent는 변형 클래스가 뒤에 오므로 twMerge가 대체한다.

@@ -53,6 +53,7 @@ import {
   useCallback,
   useContext,
   useEffect,
+  useMemo,
   useRef,
   useState,
   type ReactNode,
@@ -201,76 +202,123 @@ const Combobox = forwardRef<BridgeViewRef, ComboboxProps>(
     const selectedValues = values !== undefined ? values : internalValues;
     const [internalOpen, setInternalOpen] = useState(defaultOpen ?? false);
     const isOpen = open ?? internalOpen;
-    // Popover에 제어로 전달해 열림을 미러링 — 항목 확정 시 여기서 닫는다.
-    const setOpen = (next: boolean) => {
-      if (open === undefined) setInternalOpen(next);
-      if (next !== isOpen) onOpenChange?.(next);
+
+    const stateRef = useRef({
+      multiple,
+      value,
+      selectedValue,
+      onValueChange,
+      values,
+      selectedValues,
+      onValuesChange,
+      open,
+      isOpen,
+      onOpenChange,
+    });
+    stateRef.current = {
+      multiple,
+      value,
+      selectedValue,
+      onValueChange,
+      values,
+      selectedValues,
+      onValuesChange,
+      open,
+      isOpen,
+      onOpenChange,
     };
+
+    // Popover에 제어로 전달해 열림을 미러링 — 항목 확정 시 여기서 닫는다.
+    const setOpen = useCallback((next: boolean) => {
+      const state = stateRef.current;
+      if (state.open === undefined) setInternalOpen(next);
+      if (next !== state.isOpen) state.onOpenChange?.(next);
+    }, []);
 
     // 라벨 레지스트리 — 등록만 하고 해제하지 않는다（닫힘 상태 표시 유지）.
     const labelRegistry = useRef(new Map<string, string>());
     const [, setRegistryVersion] = useState(0);
     const registerItem = useCallback((itemValue: string, label: string) => {
+      if (labelRegistry.current.get(itemValue) === label) return;
       labelRegistry.current.set(itemValue, label);
       setRegistryVersion((version) => version + 1);
     }, []);
 
-    const commitItem = (itemValue: string) => {
-      if (multiple) {
-        const next = selectedValues.includes(itemValue)
-          ? selectedValues.filter((entry) => entry !== itemValue)
-          : [...selectedValues, itemValue];
-        if (values === undefined) setInternalValues(next);
-        onValuesChange?.(next);
-        return; // 다중 선택은 팝업 유지
-      }
-      if (itemValue !== selectedValue) {
-        if (value === undefined) setInternalValue(itemValue);
-        onValueChange?.(itemValue);
-      }
-      setOpen(false);
-    };
+    const commitItem = useCallback(
+      (itemValue: string) => {
+        const state = stateRef.current;
+        if (state.multiple) {
+          const next = state.selectedValues.includes(itemValue)
+            ? state.selectedValues.filter((entry) => entry !== itemValue)
+            : [...state.selectedValues, itemValue];
+          if (state.values === undefined) setInternalValues(next);
+          state.onValuesChange?.(next);
+          return; // 다중 선택은 팝업 유지
+        }
+        if (itemValue !== state.selectedValue) {
+          if (state.value === undefined) setInternalValue(itemValue);
+          state.onValueChange?.(itemValue);
+        }
+        setOpen(false);
+      },
+      [setOpen],
+    );
 
-    const removeValue = (itemValue: string) => {
-      if (multiple) {
-        if (!selectedValues.includes(itemValue)) return;
-        const next = selectedValues.filter((entry) => entry !== itemValue);
-        if (values === undefined) setInternalValues(next);
-        onValuesChange?.(next);
+    const removeValue = useCallback((itemValue: string) => {
+      const state = stateRef.current;
+      if (state.multiple) {
+        if (!state.selectedValues.includes(itemValue)) return;
+        const next = state.selectedValues.filter((entry) => entry !== itemValue);
+        if (state.values === undefined) setInternalValues(next);
+        state.onValuesChange?.(next);
         return;
       }
-      if (selectedValue !== itemValue) return;
-      if (value === undefined) setInternalValue(null);
-      onValueChange?.("");
-    };
+      if (state.selectedValue !== itemValue) return;
+      if (state.value === undefined) setInternalValue(null);
+      state.onValueChange?.("");
+    }, []);
 
-    const clear = () => {
-      if (multiple) {
-        if (selectedValues.length === 0) return;
-        if (values === undefined) setInternalValues([]);
-        onValuesChange?.([]);
+    const clear = useCallback(() => {
+      const state = stateRef.current;
+      if (state.multiple) {
+        if (state.selectedValues.length === 0) return;
+        if (state.values === undefined) setInternalValues([]);
+        state.onValuesChange?.([]);
       } else {
-        if (selectedValue == null) return;
-        if (value === undefined) setInternalValue(null);
-        onValueChange?.("");
+        if (state.selectedValue == null) return;
+        if (state.value === undefined) setInternalValue(null);
+        state.onValueChange?.("");
       }
-    };
+    }, []);
+
+    const contextValue = useMemo<ComboboxContextValue>(
+      () => ({
+        multiple,
+        value: selectedValue,
+        values: selectedValues,
+        commitItem,
+        removeValue,
+        clear,
+        open: isOpen,
+        setOpen,
+        registerItem,
+        labels: labelRegistry.current,
+      }),
+      [
+        multiple,
+        selectedValue,
+        selectedValues,
+        commitItem,
+        removeValue,
+        clear,
+        isOpen,
+        setOpen,
+        registerItem,
+      ],
+    );
 
     return (
-      <ComboboxContext.Provider
-        value={{
-          multiple,
-          value: selectedValue,
-          values: selectedValues,
-          commitItem,
-          removeValue,
-          clear,
-          open: isOpen,
-          setOpen,
-          registerItem,
-          labels: labelRegistry.current,
-        }}
-      >
+      <ComboboxContext.Provider value={contextValue}>
         <Popover open={isOpen} onOpenChange={setOpen}>
           {/* Command 중첩 — 카드 토큰（bg-popoverroundedoverflow）은 인라인
               입력...카드 이중 프레임을 만들지 않도록 초기화한다. 필터...키보드

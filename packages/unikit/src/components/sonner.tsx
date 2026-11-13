@@ -259,8 +259,18 @@ function ToastIcon({
   }
 }
 
+const subscribeToasts = (listener: () => void) => {
+  listeners.add(listener);
+  return () => {
+    listeners.delete(listener);
+  };
+};
+const getClientToasts = () => toasts;
+const getServerToasts = () => EMPTY_TOASTS;
+const FIXED_WRAPPER_STYLE = { position: "fixed", left: 0, top: 0, right: 0, bottom: 0 } as const;
+
 const toastCardVariants = cva(
-  "pointer-events-auto relative flex-row items-start gap-3 rounded-lg border bg-popover px-4 py-3 shadow-lg web:max-w-sm",
+  "pointer-events-auto relative flex-row items-start gap-3 rounded-lg border bg-popover px-4 py-3 shadow-lg unikit-toast-in web:max-w-sm",
   {
     variants: {
       rich: {
@@ -397,15 +407,9 @@ const Toaster = forwardRef<BridgeViewRef, ToasterProps>(
     ref,
   ) => {
     const currentToasts = useSyncExternalStore(
-      (listener) => {
-        listeners.add(listener);
-        return () => listeners.delete(listener);
-      },
-      () => toasts,
-      // getServerSnapshot — SSR 프리렌더에 필수（빌드 오류 해소）. 서버에는
-      // 토스트가 없다（불변 빈 배열 상수 — 모듈 상태 반환 시 서버 렌더 중
-      // toast() 호출이 요청 간 누출·hydration 불일치를 일으킨다）.
-      () => EMPTY_TOASTS,
+      subscribeToasts,
+      getClientToasts,
+      getServerToasts,
     );
 
     return (
@@ -424,7 +428,7 @@ const Toaster = forwardRef<BridgeViewRef, ToasterProps>(
             POSITION_CLASSES[position],
             className,
           )}
-          style={{ position: "fixed", left: 0, top: 0, right: 0, bottom: 0 }}
+          style={FIXED_WRAPPER_STYLE}
           {...props}
         >
           {currentToasts.map((toastItem) => (

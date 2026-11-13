@@ -41,6 +41,7 @@ import {
   useCallback,
   useContext,
   useEffect,
+  useMemo,
   useRef,
   useState,
   type MutableRefObject,
@@ -61,7 +62,7 @@ import {
 } from "@unikit-bridge/ui/primitives";
 
 import { Button, type ButtonProps } from "./button";
-import { cn } from "../lib/utils";
+import { cn } from "@/lib/utils";
 
 // ---------------------------------------------------------------------------
 // 컨텍스트 — 원본 useCarousel과 동일한 소비 API
@@ -183,18 +184,21 @@ const Carousel = forwardRef<BridgeViewRef, CarouselProps>(
       setApi({ scrollPrev, scrollNext, canScrollPrev, canScrollNext });
     }, [setApi, scrollPrev, scrollNext, canScrollPrev, canScrollNext]);
 
+    const contextValue = useMemo(
+      () => ({
+        orientation,
+        carouselRef,
+        scrollPrev,
+        scrollNext,
+        canScrollPrev,
+        canScrollNext,
+        reportItemCount,
+      }),
+      [orientation, scrollPrev, scrollNext, canScrollPrev, canScrollNext, reportItemCount],
+    );
+
     return (
-      <CarouselContext.Provider
-        value={{
-          orientation,
-          carouselRef,
-          scrollPrev,
-          scrollNext,
-          canScrollPrev,
-          canScrollNext,
-          reportItemCount,
-        }}
-      >
+      <CarouselContext.Provider value={contextValue}>
         <View
           ref={setRef}
           accessibilityLabel="carousel"

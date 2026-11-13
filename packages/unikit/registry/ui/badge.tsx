@@ -16,7 +16,7 @@ import {
 } from "@unikit-bridge/ui/primitives";
 import { cva, type VariantProps } from "class-variance-authority";
 
-import { cn } from "../lib/utils";
+import { cn } from "@/lib/utils";
 
 // View（컨테이너） — 원본 w-fit은 uniwind 미지원 → self-start 치환（M-2 규약）.
 const badgeVariants = cva(

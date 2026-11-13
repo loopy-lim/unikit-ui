@@ -35,7 +35,7 @@ import {
 } from "@unikit-bridge/ui/primitives";
 import { cva, type VariantProps } from "class-variance-authority";
 
-import { cn } from "../lib/utils";
+import { cn } from "@/lib/utils";
 import { Label, type LabelProps } from "./label";
 
 // Field가 제공하는 상태 — 라벨·타이틀 스타일 연동의 단일 출처.

@@ -31,8 +31,10 @@
 import {
   createContext,
   forwardRef,
+  useCallback,
   useContext,
   useId,
+  useMemo,
   useRef,
   useState,
   type ReactNode,
@@ -142,26 +144,32 @@ const AlertDialog = forwardRef<BridgeViewRef, AlertDialogProps>(
     // 비제어 상태 — 제어（open 지정）면 무시된다（tabsaccordion 관행）.
     const [internalOpen, setInternalOpen] = useState(defaultOpen);
     const isOpen = open ?? internalOpen;
-    const setOpen = (next: boolean) => {
-      if (open === undefined) setInternalOpen(next);
-      if (next !== isOpen) onOpenChange?.(next);
-    };
+    const stateRef = useRef({ open, isOpen, onOpenChange });
+    stateRef.current = { open, isOpen, onOpenChange };
+    const setOpen = useCallback((next: boolean) => {
+      const state = stateRef.current;
+      if (state.open === undefined) setInternalOpen(next);
+      if (next !== state.isOpen) state.onOpenChange?.(next);
+    }, []);
     const baseId = useId();
     const triggerRef = useRef<unknown>(null);
+    const setTriggerElement = useCallback((element: unknown) => {
+      triggerRef.current = element;
+    }, []);
+    const contextValue = useMemo<AlertDialogContextValue>(
+      () => ({
+        open: isOpen,
+        setOpen,
+        contentId: `${baseId}-alert-dialog-content`,
+        titleId: `${baseId}-alert-dialog-title`,
+        descriptionId: `${baseId}-alert-dialog-description`,
+        triggerRef,
+        setTriggerElement,
+      }),
+      [isOpen, setOpen, baseId, setTriggerElement],
+    );
     return (
-      <AlertDialogContext.Provider
-        value={{
-          open: isOpen,
-          setOpen,
-          contentId: `${baseId}-alert-dialog-content`,
-          titleId: `${baseId}-alert-dialog-title`,
-          descriptionId: `${baseId}-alert-dialog-description`,
-          triggerRef,
-          setTriggerElement: (element) => {
-            triggerRef.current = element;
-          },
-        }}
-      >
+      <AlertDialogContext.Provider value={contextValue}>
         <View ref={ref} {...props}>
           {children}
         </View>

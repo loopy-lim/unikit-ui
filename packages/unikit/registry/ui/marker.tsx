@@ -31,7 +31,7 @@ import {
 } from "@unikit-bridge/ui/primitives";
 import { cva, type VariantProps } from "class-variance-authority";
 
-import { cn } from "../lib/utils";
+import { cn } from "@/lib/utils";
 
 const markerVariants = cva(
   "relative flex flex-row min-h-4 w-full items-center gap-2",

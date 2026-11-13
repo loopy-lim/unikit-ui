@@ -28,7 +28,7 @@ import {
 } from "@unikit-bridge/ui/primitives";
 import { cva } from "class-variance-authority";
 
-import { cn } from "../lib/utils";
+import { cn } from "@/lib/utils";
 
 const breadcrumbListVariants = cva(
   // 원본 List 토큰（text-sm text-muted-foreground 포함）. 전경색은 내부 Text에도

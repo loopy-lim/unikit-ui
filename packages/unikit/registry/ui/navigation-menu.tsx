@@ -45,8 +45,10 @@ import {
   Children,
   createContext,
   forwardRef,
+  useCallback,
   useContext,
   useId,
+  useMemo,
   useRef,
   useState,
   type ForwardedRef,
@@ -65,7 +67,7 @@ import {
 import { cva } from "class-variance-authority";
 
 import { AnchoredOverlay } from "../lib/overlay";
-import { cn } from "../lib/utils";
+import { cn } from "@/lib/utils";
 
 // ---------------------------------------------------------------------------
 // 내부 유틸
@@ -172,12 +174,19 @@ const NavigationMenu = forwardRef<BridgeViewRef, NavigationMenuProps>(
     // 비제어 상태 — 제어（value 지정）면 무시된다.
     const [internalValue, setInternalValue] = useState(defaultValue);
     const current = value !== undefined ? value : internalValue;
-    const setValue = (next: string | null) => {
-      if (value === undefined) setInternalValue(next);
-      if (next !== current) onValueChange?.(next);
-    };
+    const stateRef = useRef({ value, current, onValueChange });
+    stateRef.current = { value, current, onValueChange };
+    const setValue = useCallback((next: string | null) => {
+      const state = stateRef.current;
+      if (state.value === undefined) setInternalValue(next);
+      if (next !== state.current) state.onValueChange?.(next);
+    }, []);
+    const contextValue = useMemo<NavigationMenuContextValue>(
+      () => ({ value: current, setValue }),
+      [current, setValue],
+    );
     return (
-      <NavigationMenuContext.Provider value={{ value: current, setValue }}>
+      <NavigationMenuContext.Provider value={contextValue}>
         {/* 원본 group/navigation-menu 그룹 셀렉터는 미사용 — 조건부 클래스로 대체 */}
         <View
           ref={ref}
@@ -221,14 +230,17 @@ const NavigationMenuItem = forwardRef<BridgeViewRef, NavigationMenuItemProps>(
   ({ value, className, children, ...props }, ref) => {
     const id = useId();
     const triggerRef = useRef<BridgePressableRef | null>(null);
+    const itemValue = value ?? id;
+    const itemContextValue = useMemo<NavigationMenuItemContextValue>(
+      () => ({
+        itemValue,
+        triggerRef,
+        contentId: `${id}-navigation-menu-content`,
+      }),
+      [itemValue, id],
+    );
     return (
-      <NavigationMenuItemContext.Provider
-        value={{
-          itemValue: value ?? id,
-          triggerRef,
-          contentId: `${id}-navigation-menu-content`,
-        }}
-      >
+      <NavigationMenuItemContext.Provider value={itemContextValue}>
         <View ref={ref} className={cn("relative", className)} {...props}>
           {children}
         </View>
@@ -269,7 +281,7 @@ const NavigationMenuTrigger = forwardRef<
       }}
       className={cn(
         navigationMenuTriggerStyle(),
-        // 원본 data-［state=open］:bg-accent/50 → 조건부 클래스
+        // 원본 data-［state=open］:bg-accent → 조건부 클래스
         isOpen && "bg-accent/50",
         disabled && "web:pointer-events-none opacity-50",
         className,
@@ -314,7 +326,7 @@ const NavigationMenuContent = forwardRef<
         ref={ref}
         nativeID={nativeID ?? item.contentId}
         className={cn(
-          "pointer-events-auto rounded-md border border-border bg-popover p-2 pr-2.5 text-popover-foreground web:shadow-md",
+          "pointer-events-auto rounded-md border border-border bg-popover p-2 pr-2.5 text-popover-foreground unikit-popover-in web:shadow-md",
           className,
         )}
         {...props}

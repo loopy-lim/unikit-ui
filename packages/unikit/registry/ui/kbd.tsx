@@ -15,7 +15,7 @@ import {
 } from "@unikit-bridge/ui/primitives";
 import { cva } from "class-variance-authority";
 
-import { cn } from "../lib/utils";
+import { cn } from "@/lib/utils";
 
 // View（컨테이너） — 원본 토큰 그대로（h-5 min-w-5 px-1 rounded-sm bg-muted）.
 const kbdVariants = cva(

@@ -12,7 +12,9 @@
 import {
   createContext,
   forwardRef,
+  useCallback,
   useContext,
+  useMemo,
   useState,
 } from "react";
 import {
@@ -24,7 +26,7 @@ import {
   type ViewProps,
 } from "@unikit-bridge/ui/primitives";
 
-import { cn } from "../lib/utils";
+import { cn } from "@/lib/utils";
 
 // 그룹 상태 — RadioGroup이 공급하고 RadioGroupItem이 소비.
 type RadioGroupContextValue = {
@@ -71,10 +73,22 @@ const RadioGroup = forwardRef<BridgeViewRef, RadioGroupProps>(
     const isControlled = value !== undefined;
     const selectedValue = isControlled ? value : uncontrolled;
 
-    const handleItemPress = (itemValue: string) => {
-      if (!isControlled) setUncontrolled(itemValue);
-      onValueChange?.(itemValue);
-    };
+    const handleItemPress = useCallback(
+      (itemValue: string) => {
+        if (!isControlled) setUncontrolled(itemValue);
+        onValueChange?.(itemValue);
+      },
+      [isControlled, onValueChange],
+    );
+
+    const contextValue = useMemo(
+      () => ({
+        value: selectedValue,
+        disabled,
+        onItemPress: handleItemPress,
+      }),
+      [selectedValue, disabled, handleItemPress],
+    );
 
     return (
       <View
@@ -83,13 +97,7 @@ const RadioGroup = forwardRef<BridgeViewRef, RadioGroupProps>(
         className={cn("gap-3", className)}
         {...props}
       >
-        <RadioGroupContext.Provider
-          value={{
-            value: selectedValue,
-            disabled,
-            onItemPress: handleItemPress,
-          }}
-        >
+        <RadioGroupContext.Provider value={contextValue}>
           {children}
         </RadioGroupContext.Provider>
       </View>

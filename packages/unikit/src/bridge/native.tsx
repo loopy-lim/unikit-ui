@@ -869,6 +869,13 @@ const getViewport: GetViewport = () => {
 // ---------------------------------------------------------------------------
 
 function wrapNativeLucide(Icon: LucideIcon, defaultClassName = "size-4") {
+  const wrapperProps = {
+    className: cn("items-center justify-center", defaultClassName),
+  } as Record<string, unknown>;
+  const defaultSvgProps = {
+    className: defaultClassName,
+  } as Record<string, unknown>;
+
   return function NativeIcon({
     className,
     size = 16,
@@ -887,23 +894,22 @@ function wrapNativeLucide(Icon: LucideIcon, defaultClassName = "size-4") {
     const mergedStyle = rotate
       ? [style, { transform: [{ rotate }] }]
       : style;
+    const svgProps = className
+      ? ({ className: cn(defaultClassName, className) } as Record<string, unknown>)
+      : defaultSvgProps;
     // className의 text-* 색은 lucide Svg에 넘겨 uniwind가 color로 바인딩하게 한다.
     // rotate-* 는 래퍼 View transform으로 처리（Svg 자체 rotate 클래스 의존 회피）.
     return (
       <RNView
         aria-hidden={ariaHidden ? true : undefined}
         style={mergedStyle as ViewStyle}
-        {...({
-          className: cn("items-center justify-center", defaultClassName),
-        } as Record<string, unknown>)}
+        {...wrapperProps}
       >
         <Icon
           size={numericSize}
           color={color}
           strokeWidth={strokeWidth}
-          {...({
-            className: cn(defaultClassName, className),
-          } as Record<string, unknown>)}
+          {...svgProps}
         />
       </RNView>
     );

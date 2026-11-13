@@ -42,6 +42,7 @@ import {
   useContext,
   useEffect,
   useMemo,
+  useRef,
   useState,
   type ReactNode,
 } from "react";
@@ -53,6 +54,7 @@ import {
   ScrollView,
   Text,
   View,
+  type BridgeKeyEvent,
   type BridgePressableRef,
   type BridgeTextRef,
   type BridgeViewRef,
@@ -126,6 +128,8 @@ function collectItemLabels(
 // ---------------------------------------------------------------------------
 
 type SelectContextValue = {
+  open: boolean;
+  setOpen: (open: boolean) => void;
   value: string;
   /** 항목 선택 확정 — 값 반영 + popover 닫음 */
   setValue: (value: string) => void;
@@ -182,15 +186,22 @@ const Select = forwardRef<BridgeViewRef, SelectProps>(
     const current = value ?? internalValue;
     const [internalOpen, setInternalOpen] = useState(defaultOpen ?? false);
     const isOpen = open ?? internalOpen;
-    const setOpen = (next: boolean) => {
-      if (open === undefined) setInternalOpen(next);
-      if (next !== isOpen) onOpenChange?.(next);
-    };
-    const setValue = (next: string) => {
-      if (value === undefined) setInternalValue(next);
-      if (next !== current) onValueChange?.(next);
-      setOpen(false);
-    };
+    const stateRef = useRef({ open, isOpen, onOpenChange, value, current, onValueChange });
+    stateRef.current = { open, isOpen, onOpenChange, value, current, onValueChange };
+    const setOpen = useCallback((next: boolean) => {
+      const state = stateRef.current;
+      if (state.open === undefined) setInternalOpen(next);
+      if (next !== state.isOpen) state.onOpenChange?.(next);
+    }, []);
+    const setValue = useCallback(
+      (next: string) => {
+        const state = stateRef.current;
+        if (state.value === undefined) setInternalValue(next);
+        if (next !== state.current) state.onValueChange?.(next);
+        setOpen(false);
+      },
+      [setOpen],
+    );
 
     // 라벨 2단 조회 상태 — 정적 수집（트리 순회） + 항목 마운트 등록.
     const [runtimeLabels, setRuntimeLabels] = useState<
@@ -214,17 +225,22 @@ const Select = forwardRef<BridgeViewRef, SelectProps>(
       [runtimeLabels, staticLabels],
     );
 
+    const contextValue = useMemo<SelectContextValue>(
+      () => ({
+        open: isOpen,
+        setOpen,
+        value: current,
+        setValue,
+        disabled: disabled ?? false,
+        registerLabel,
+        labelOf,
+      }),
+      [isOpen, setOpen, current, setValue, disabled, registerLabel, labelOf],
+    );
+
     return (
       <Popover ref={ref} open={isOpen} onOpenChange={setOpen} {...props}>
-        <SelectContext.Provider
-          value={{
-            value: current,
-            setValue,
-            disabled: disabled ?? false,
-            registerLabel,
-            labelOf,
-          }}
-        >
+        <SelectContext.Provider value={contextValue}>
           {children}
         </SelectContext.Provider>
       </Popover>
@@ -255,15 +271,23 @@ export type SelectTriggerProps = PressableProps & {
 };
 
 const SelectTrigger = forwardRef<BridgePressableRef, SelectTriggerProps>(
-  ({ className, size = "default", children, disabled, ...props }, ref) => {
+  ({ className, size = "default", children, disabled, onKeyDown, ...props }, ref) => {
     const select = useSelectContext("SelectTrigger");
     // radix 관행 — 루트 disabled와 트리거 disabled는 OR로 합쳐진다.
     const isDisabled = disabled || select.disabled;
+    const handleKeyDown = (event: BridgeKeyEvent) => {
+      if (!isDisabled && (event.key === "ArrowDown" || event.key === "ArrowUp")) {
+        event.preventDefault();
+        if (!select.open) select.setOpen(true);
+      }
+      onKeyDown?.(event);
+    };
     return (
       <PopoverTrigger
         ref={ref}
         accessibilityRole="combobox"
         disabled={isDisabled}
+        onKeyDown={handleKeyDown}
         className={cn(
           selectTriggerVariants({ size }),
           isDisabled && "web:cursor-not-allowed opacity-50",

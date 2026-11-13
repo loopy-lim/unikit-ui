@@ -44,7 +44,7 @@ import {
   type ViewProps,
 } from "@unikit-bridge/ui/primitives";
 
-import { cn } from "../lib/utils";
+import { cn } from "@/lib/utils";
 import { Button } from "./button";
 
 // 요일 라벨 — 일요일 시작（한국어 고정）

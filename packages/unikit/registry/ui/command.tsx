@@ -179,11 +179,21 @@ const Command = forwardRef<BridgeViewRef, CommandProps>(
       setVersion((v) => v + 1);
     }, []);
     const registerItem = useCallback((meta: CommandItemMeta) => {
+      const existing = registry.current.get(meta.id);
       registry.current.set(meta.id, meta);
-      setVersion((v) => v + 1);
-      return () => {
-        registry.current.delete(meta.id);
+      const structuralSame =
+        existing &&
+        existing.value === meta.value &&
+        existing.disabled === meta.disabled &&
+        existing.groupId === meta.groupId &&
+        existing.keywords?.join("\0") === meta.keywords?.join("\0");
+      if (!structuralSame) {
         setVersion((v) => v + 1);
+      }
+      return () => {
+        if (registry.current.delete(meta.id)) {
+          setVersion((v) => v + 1);
+        }
       };
     }, []);
     const items = useMemo(
@@ -210,81 +220,107 @@ const Command = forwardRef<BridgeViewRef, CommandProps>(
     );
 
     // 매칭비활성 제외한 탐색 대상과 유효 선택값（미선택 시 첫 매칭）.
-    const selectableItems = items.filter(
-      (item) =>
-        !item.disabled &&
-        matchesFilter(filter, shouldFilter, item.value, item.keywords),
+    const selectableItems = useMemo(
+      () =>
+        items.filter(
+          (item) =>
+            !item.disabled &&
+            matchesFilter(filter, shouldFilter, item.value, item.keywords),
+        ),
+      [items, filter, shouldFilter],
     );
-    const activeValue =
-      selected !== null &&
-      selectableItems.some((item) => item.value === selected)
-        ? selected
-        : (selectableItems[0]?.value ?? null);
+    const activeValue = useMemo(
+      () =>
+        selected !== null &&
+        selectableItems.some((item) => item.value === selected)
+          ? selected
+          : (selectableItems[0]?.value ?? null),
+      [selected, selectableItems],
+    );
 
-    const moveSelection = (direction: 1 | -1) => {
-      if (selectableItems.length === 0) return;
-      const index = selectableItems.findIndex(
-        (item) => item.value === activeValue,
-      );
-      const next =
-        index === -1
-          ? 0
-          : loop
-            ? (index + direction + selectableItems.length) %
-              selectableItems.length
-            : Math.min(
-                selectableItems.length - 1,
-                Math.max(0, index + direction),
-              );
-      select(selectableItems[next].value);
-    };
+    const moveSelection = useCallback(
+      (direction: 1 | -1) => {
+        if (selectableItems.length === 0) return;
+        const index = selectableItems.findIndex(
+          (item) => item.value === activeValue,
+        );
+        const next =
+          index === -1
+            ? 0
+            : loop
+              ? (index + direction + selectableItems.length) %
+                selectableItems.length
+              : Math.min(
+                  selectableItems.length - 1,
+                  Math.max(0, index + direction),
+                );
+        select(selectableItems[next].value);
+      },
+      [selectableItems, activeValue, loop, select],
+    );
 
-    const handleKeyDown = (event: BridgeKeyEvent) => {
-      switch (event.key) {
-        case "ArrowUp":
-          event.preventDefault();
-          moveSelection(-1);
-          break;
-        case "ArrowDown":
-          event.preventDefault();
-          moveSelection(1);
-          break;
-        case "Enter": {
-          const chosen = selectableItems.find(
-            (item) => item.value === activeValue,
-          );
-          if (chosen) {
+    const handleKeyDown = useCallback(
+      (event: BridgeKeyEvent) => {
+        switch (event.key) {
+          case "ArrowUp":
             event.preventDefault();
-            select(chosen.value);
-            chosen.onSelect?.(chosen.value);
+            moveSelection(-1);
+            break;
+          case "ArrowDown":
+            event.preventDefault();
+            moveSelection(1);
+            break;
+          case "Enter": {
+            const chosen = selectableItems.find(
+              (item) => item.value === activeValue,
+            );
+            if (chosen) {
+              event.preventDefault();
+              select(chosen.value);
+              chosen.onSelect?.(chosen.value);
+            }
+            break;
           }
-          break;
+          case "Escape":
+            // 필터 비움 — 이미 비었으면 무동작（닫기는 소비측 역할）
+            event.preventDefault();
+            if (filter !== "") setFilter("");
+            break;
         }
-        case "Escape":
-          // 필터 비움 — 이미 비었으면 무동작（닫기는 소비측 역할）
-          event.preventDefault();
-          if (filter !== "") setFilter("");
-          break;
-      }
-    };
+      },
+      [moveSelection, selectableItems, activeValue, select, filter, setFilter],
+    );
 
     const baseId = useId();
     const listId = `${baseId}-command-list`;
+    const contextValue = useMemo<CommandContextValue>(
+      () => ({
+        filter,
+        setFilter,
+        shouldFilter,
+        items,
+        registerItem,
+        activeValue,
+        select,
+        handleKeyDown,
+        listId,
+        version,
+      }),
+      [
+        filter,
+        setFilter,
+        shouldFilter,
+        items,
+        registerItem,
+        activeValue,
+        select,
+        handleKeyDown,
+        listId,
+        version,
+      ],
+    );
     return (
-      <CommandContext.Provider
-        value={{
-          filter,
-          setFilter,
-          shouldFilter,
-          items,
-          registerItem,
-          activeValue,
-          select,
-          handleKeyDown,
-          listId,
-          version,
-        }}
-      >
+      <CommandContext.Provider value={contextValue}>
         <View
           ref={ref}
           className={cn(
@@ -493,18 +529,25 @@ const CommandItem = forwardRef<BridgePressableRef, CommandItemProps>(
 
     // 레지스트리 등록 — 비매칭으로 렌더 제외돼도 컴포넌트는 마운트 상태라
     // 등록이 유지되고, 필터 복귀 시 즉시 다시 나타난다.
+    // onSelect/keywords를 ref에 보관해 인라인 콜백·배열 리터럴로 매 렌더
+    // 레지스트리 해제→재등록(version 증가)이 발생하지 않게 한다.
+    const onSelectRef = useRef(onSelect);
+    onSelectRef.current = onSelect;
+    const keywordsRef = useRef(keywords);
+    keywordsRef.current = keywords;
+    const keywordsKey = keywords?.join("\0") ?? "";
     const registerItem = command.registerItem;
     useEffect(() => {
       const meta: CommandItemMeta = {
         id,
         value: resolvedValue,
-        keywords,
+        keywords: keywordsRef.current,
         disabled: disabled === true,
         groupId,
-        onSelect,
+        onSelect: (selectedValue) => onSelectRef.current?.(selectedValue),
       };
       return registerItem(meta);
-    }, [registerItem, id, resolvedValue, keywords, disabled, groupId, onSelect]);
+    }, [registerItem, id, resolvedValue, keywordsKey, disabled, groupId]);
 
     // 비매칭 항목은 렌더 제외 — 원본 cmdk hidden 처리와 같은 가시 결과.
     if (

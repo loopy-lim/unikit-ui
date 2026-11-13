@@ -13,9 +13,11 @@
  */
 import {
   createContext,
+  useCallback,
   useContext,
   useEffect,
   useMemo,
+  useRef,
   useState,
   type ReactNode,
 } from "react";
@@ -38,23 +40,72 @@ export type UnikitThemeProviderProps = {
   children: ReactNode;
   /** 초기 스킴（기본값 "light" — 02-design §1.4） */
   defaultColorScheme?: UnikitColorScheme;
+  /** 웹 localStorage 키(지정 시 마운트 후 복원 및 변경 시 영속화) */
+  storageKey?: string;
+  /** 스킴 변경 콜백 */
+  onColorSchemeChange?: (colorScheme: UnikitColorScheme) => void;
 };
 
 export function UnikitThemeProvider({
   children,
   defaultColorScheme = "light",
+  storageKey,
+  onColorSchemeChange,
 }: UnikitThemeProviderProps) {
-  const [colorScheme, setColorScheme] =
+  const [colorScheme, setColorSchemeState] =
     useState<UnikitColorScheme>(defaultColorScheme);
+  const onChangeRef = useRef(onColorSchemeChange);
+  onChangeRef.current = onColorSchemeChange;
+
+  useEffect(() => {
+    if (!storageKey || typeof window === "undefined") return;
+    try {
+      const saved = window.localStorage.getItem(storageKey);
+      if (saved === "light" || saved === "dark") {
+        setColorSchemeState(saved);
+      }
+    } catch {
+      // storage 접근 불가 환경 무시
+    }
+  }, [storageKey]);
+
+  const setColorScheme = useCallback(
+    (next: UnikitColorScheme) => {
+      setColorSchemeState(next);
+      if (storageKey && typeof window !== "undefined") {
+        try {
+          window.localStorage.setItem(storageKey, next);
+        } catch {
+          // storage 접근 불가 환경 무시
+        }
+      }
+      onChangeRef.current?.(next);
+    },
+    [storageKey],
+  );
+
+  const toggleColorScheme = useCallback(() => {
+    setColorSchemeState((prev) => {
+      const next: UnikitColorScheme = prev === "light" ? "dark" : "light";
+      if (storageKey && typeof window !== "undefined") {
+        try {
+          window.localStorage.setItem(storageKey, next);
+        } catch {
+          // storage 접근 불가 환경 무시
+        }
+      }
+      onChangeRef.current?.(next);
+      return next;
+    });
+  }, [storageKey]);
 
   const value = useMemo<UnikitThemeContextValue>(
     () => ({
       colorScheme,
       setColorScheme,
-      toggleColorScheme: () =>
-        setColorScheme((prev) => (prev === "light" ? "dark" : "light")),
+      toggleColorScheme,
     }),
-    [colorScheme],
+    [colorScheme, setColorScheme, toggleColorScheme],
   );
 
   // 스킴 → 엔진 바인딩（마운트 시 기본값도 반영 — 네이티브에서 adaptive system

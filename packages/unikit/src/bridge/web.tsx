@@ -118,6 +118,15 @@ export type * from "./types";
 // pointerEvents는 CSS pointer-events로 치환한다（포인터 정밀도가 높은 웹에서는
 // box-only가 의미가 없어 auto로 근사 — 실사용은 box-none뿐）.
 // ---------------------------------------------------------------------------
+const VIEW_BASE_CLASS = "flex flex-col";
+const PRESSABLE_BASE_CLASS = "flex flex-col text-left";
+const SINGLE_LINE_STYLE: React.CSSProperties = {
+  display: "block",
+  overflow: "hidden",
+  textOverflow: "ellipsis",
+  whiteSpace: "nowrap",
+};
+
 const View = forwardRef<BridgeViewRef, ViewProps>(
   (
     {
@@ -139,10 +148,11 @@ const View = forwardRef<BridgeViewRef, ViewProps>(
         : pointerEvents === "box-only"
           ? "auto"
           : pointerEvents;
-    const resolvedStyle = {
-      ...(style as React.CSSProperties | undefined),
-      ...(pointerEventsValue ? { pointerEvents: pointerEventsValue } : {}),
-    };
+    const resolvedStyle: React.CSSProperties | undefined = pointerEventsValue
+      ? style
+        ? { ...(style as React.CSSProperties), pointerEvents: pointerEventsValue }
+        : { pointerEvents: pointerEventsValue }
+      : (style as React.CSSProperties | undefined);
     return (
       <div
         ref={ref as React.Ref<HTMLDivElement>}
@@ -150,7 +160,7 @@ const View = forwardRef<BridgeViewRef, ViewProps>(
         data-testid={testID}
         role={accessibilityRole}
         aria-label={accessibilityLabel}
-        className={cn("flex flex-col", className)}
+        className={className ? cn(VIEW_BASE_CLASS, className) : VIEW_BASE_CLASS}
         style={resolvedStyle}
         {...rest}
       >
@@ -168,34 +178,37 @@ const Text = forwardRef<BridgeTextRef, TextProps>(
   (
     { className, style, children, nativeID, testID, onPress, accessibilityLabel, accessibilityRole, numberOfLines, ...rest },
     ref,
-  ) => (
-    <span
-      ref={ref as React.Ref<HTMLSpanElement>}
-      id={nativeID}
-      data-testid={testID}
-      role={accessibilityRole}
-      aria-label={accessibilityLabel}
-      className={className}
-      // numberOfLines → line-clamp(동적 값이라 동적 style 계약으로 — 임의값 클래스 금지)
-      style={{
-        ...(style as React.CSSProperties),
-        ...(numberOfLines
-          ? numberOfLines === 1
-            ? { display: "block", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }
-            : {
-                display: "-webkit-box",
-                WebkitBoxOrient: "vertical",
-                WebkitLineClamp: numberOfLines,
-                overflow: "hidden",
-              }
-          : {}),
-      }}
-      onClick={onPress}
-      {...rest}
-    >
-      {children}
-    </span>
-  ),
+  ) => {
+    const resolvedStyle: React.CSSProperties | undefined = numberOfLines
+      ? numberOfLines === 1
+        ? style
+          ? { ...(style as React.CSSProperties), ...SINGLE_LINE_STYLE }
+          : SINGLE_LINE_STYLE
+        : {
+            ...(style as React.CSSProperties | undefined),
+            display: "-webkit-box",
+            WebkitBoxOrient: "vertical",
+            WebkitLineClamp: numberOfLines,
+            overflow: "hidden",
+          }
+      : (style as React.CSSProperties | undefined);
+    return (
+      <span
+        ref={ref as React.Ref<HTMLSpanElement>}
+        id={nativeID}
+        data-testid={testID}
+        role={accessibilityRole}
+        aria-label={accessibilityLabel}
+        className={className}
+        // numberOfLines → line-clamp(동적 값이라 동적 style 계약으로 — 임의값 클래스 금지)
+        style={resolvedStyle}
+        onClick={onPress}
+        {...rest}
+      >
+        {children}
+      </span>
+    );
+  },
 );
 Text.displayName = "Text";
 
@@ -235,7 +248,7 @@ const Pressable = forwardRef<BridgePressableRef, PressableProps>(
       type="button"
       id={nativeID}
       data-testid={testID}
-      className={cn("flex flex-col text-left", className)}
+      className={className ? cn(PRESSABLE_BASE_CLASS, className) : PRESSABLE_BASE_CLASS}
       style={style as React.CSSProperties}
       onClick={onPress}
       disabled={disabled}
@@ -879,7 +892,7 @@ function wrapWebLucide(Icon: LucideIcon, defaultClassName = "size-4") {
   }: IconProps) {
     return (
       <Icon
-        className={cn(defaultClassName, className)}
+        className={className ? cn(defaultClassName, className) : defaultClassName}
         {...(size != null ? { size } : {})}
         color={color}
         strokeWidth={strokeWidth}

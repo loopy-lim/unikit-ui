@@ -20,7 +20,7 @@ import {
 } from "@unikit-bridge/ui/primitives";
 import { cva, type VariantProps } from "class-variance-authority";
 
-import { cn } from "../lib/utils";
+import { cn } from "@/lib/utils";
 
 // Empty — 빈 상태 컨테이너（원본 border-dashed 토큰 보존 — 테두리 굵기는
 // 소비자 className으로 지정하는 원본 사용법과 동일）.

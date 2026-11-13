@@ -13,7 +13,16 @@
 //   （래퍼가 pointerEvents="box-none" → CSS none 치환 상속 때문）. 네이티브는
 //   box-none이 자동으로 자식 수신을 허용한다.
 // - 네이티브 useReposition은 no-op — 스크롤 중 앵커 팝업 재배치는 웹 전용.
-import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type ReactNode,
+} from "react";
 
 import {
   Portal,
@@ -42,6 +51,8 @@ const POSITION_CLASSES: Record<ModalOverlayPosition, string> = {
   left: "flex-row items-center justify-start",
   right: "flex-row items-center justify-end",
 };
+
+const MODAL_WRAPPER_STYLE = { position: "fixed", inset: 0 } as const;
 
 export type ModalOverlayProps = {
   visible: boolean;
@@ -98,7 +109,11 @@ export function ModalOverlay({
       visible={visible}
       onBackdropPress={dismissOnBackdrop ? onClose : undefined}
       onRequestClose={onClose}
-      backdropClassName={cn("bg-black/50 unikit-backdrop-in", backdropClassName)}
+      backdropClassName={
+        backdropClassName
+          ? cn("bg-black/50 unikit-backdrop-in", backdropClassName)
+          : "bg-black/50 unikit-backdrop-in"
+      }
     >
       <View
         ref={contentRef}
@@ -112,7 +127,7 @@ export function ModalOverlay({
         // 카드가 뷰포트 밖으로 나간다 — G3 F-2）. 네이티브 브리지가
         // fixed→absolute로 치환하고 RN Modal（창 전체） 컨테이너 기준이
         // 되어 동일 좌표계가 성립한다.
-        style={{ position: "fixed", inset: 0 }}
+        style={MODAL_WRAPPER_STYLE}
         className={cn("flex", POSITION_CLASSES[position], className)}
       >
         {children}
@@ -127,6 +142,13 @@ export function ModalOverlay({
 
 export type OverlayPlacement = "top" | "bottom" | "left" | "right";
 export type OverlayAlign = "start" | "center" | "end";
+
+const OverlayPlacementContext = createContext<OverlayPlacement | null>(null);
+
+/** AnchoredOverlay가 뷰포트 충돌 플립 후 확정한 실제 배치 방향 */
+export function useOverlayPlacement(): OverlayPlacement | null {
+  return useContext(OverlayPlacementContext);
+}
 
 export type AnchoredOverlayProps = {
   visible: boolean;
@@ -150,6 +172,8 @@ export type AnchoredOverlayProps = {
 
 type Rect = { x: number; y: number; w: number; h: number };
 
+const VIEWPORT_PADDING = 8;
+
 /** ref 객체 또는 요소 값을 그대로 뽑아 measureInWindow에 전달한다. */
 function measureRef(ref: unknown, callback: Parameters<typeof measureInWindow>[1]) {
   const el =
@@ -159,20 +183,49 @@ function measureRef(ref: unknown, callback: Parameters<typeof measureInWindow>[1
   if (el) measureInWindow(el, callback);
 }
 
-/** 앵커콘텐츠 측정값 → 뷰포트 좌표（left/top）. 클램프 여백 8px. */
-export function computeOverlayPosition(
+/** 앵커·콘텐츠 측정값 → 뷰포트 좌표(left/top) 및 충돌 플립이 적용된 최종 배치 방향. */
+export function computeOverlayPositionWithPlacement(
   anchor: Rect | null,
   content: { w: number; h: number } | null,
   options: { placement: OverlayPlacement; align: OverlayAlign; offset: number },
-): { left: number; top: number } {
+): { left: number; top: number; placement: OverlayPlacement } {
   const a = anchor ?? { x: 0, y: 0, w: 0, h: 0 };
   const cw = content?.w ?? 0;
   const ch = content?.h ?? 0;
-  const { placement, align, offset } = options;
+  const { align, offset } = options;
+  let resolvedPlacement = options.placement;
+  const viewport = getViewport();
+
+  if (
+    content &&
+    viewport.height > 0 &&
+    (resolvedPlacement === "bottom" || resolvedPlacement === "top")
+  ) {
+    const spaceBelow = viewport.height - (a.y + a.h + offset) - VIEWPORT_PADDING;
+    const spaceAbove = a.y - offset - VIEWPORT_PADDING;
+    if (resolvedPlacement === "bottom" && ch > spaceBelow && spaceAbove > spaceBelow) {
+      resolvedPlacement = "top";
+    } else if (resolvedPlacement === "top" && ch > spaceAbove && spaceBelow > spaceAbove) {
+      resolvedPlacement = "bottom";
+    }
+  } else if (
+    content &&
+    viewport.width > 0 &&
+    (resolvedPlacement === "right" || resolvedPlacement === "left")
+  ) {
+    const spaceRight = viewport.width - (a.x + a.w + offset) - VIEWPORT_PADDING;
+    const spaceLeft = a.x - offset - VIEWPORT_PADDING;
+    if (resolvedPlacement === "right" && cw > spaceRight && spaceLeft > spaceRight) {
+      resolvedPlacement = "left";
+    } else if (resolvedPlacement === "left" && cw > spaceLeft && spaceRight > spaceLeft) {
+      resolvedPlacement = "right";
+    }
+  }
+
   let left = 0;
   let top = 0;
-  if (placement === "bottom" || placement === "top") {
-    top = placement === "bottom" ? a.y + a.h + offset : a.y - ch - offset;
+  if (resolvedPlacement === "bottom" || resolvedPlacement === "top") {
+    top = resolvedPlacement === "bottom" ? a.y + a.h + offset : a.y - ch - offset;
     left =
       align === "start"
         ? a.x
@@ -180,18 +233,34 @@ export function computeOverlayPosition(
           ? a.x + (a.w - cw) / 2
           : a.x + a.w - cw;
   } else {
-    left = placement === "right" ? a.x + a.w + offset : a.x - cw - offset;
+    left = resolvedPlacement === "right" ? a.x + a.w + offset : a.x - cw - offset;
     top =
       align === "start" ? a.y : align === "center" ? a.y + (a.h - ch) / 2 : a.y + a.h - ch;
   }
-  const viewport = getViewport();
+
   if (viewport.width > 0) {
-    left = Math.min(Math.max(left, 8), Math.max(viewport.width - cw - 8, 8));
+    left = Math.min(
+      Math.max(left, VIEWPORT_PADDING),
+      Math.max(viewport.width - cw - VIEWPORT_PADDING, VIEWPORT_PADDING),
+    );
   }
   if (viewport.height > 0) {
-    if (top + ch > viewport.height - 8) top = Math.max(viewport.height - ch - 8, 8);
-    else if (top < 8) top = 8;
+    if (top + ch > viewport.height - VIEWPORT_PADDING) {
+      top = Math.max(viewport.height - ch - VIEWPORT_PADDING, VIEWPORT_PADDING);
+    } else if (top < VIEWPORT_PADDING) {
+      top = VIEWPORT_PADDING;
+    }
   }
+  return { left, top, placement: resolvedPlacement };
+}
+
+/** 앵커콘텐츠 측정값 → 뷰포트 좌표（left/top）. 클램프 여백 8px. */
+export function computeOverlayPosition(
+  anchor: Rect | null,
+  content: { w: number; h: number } | null,
+  options: { placement: OverlayPlacement; align: OverlayAlign; offset: number },
+): { left: number; top: number } {
+  const { left, top } = computeOverlayPositionWithPlacement(anchor, content, options);
   return { left, top };
 }
 
@@ -220,10 +289,16 @@ export function AnchoredOverlay({
 
   const measure = useCallback(() => {
     measureRef(anchorRef, (x, y, width, height) =>
-      setAnchorRect({ x, y, w: width, h: height }),
+      setAnchorRect((prev) =>
+        prev && prev.x === x && prev.y === y && prev.w === width && prev.h === height
+          ? prev
+          : { x, y, w: width, h: height },
+      ),
     );
     measureRef(contentRef, (_x, _y, width, height) =>
-      setContentSize({ w: width, h: height }),
+      setContentSize((prev) =>
+        prev && prev.w === width && prev.h === height ? prev : { w: width, h: height },
+      ),
     );
   }, [anchorRef]);
 
@@ -233,13 +308,32 @@ export function AnchoredOverlay({
   // 잡는다. 이 의존성이 없으면 contentSize가 영구 null → 카드가 투명(opacity
   // 0) 상태로 남는다(G3 F-1 — 첫 오픈 불가시화).
   useEffect(() => {
-    if (visible) measure();
+    if (!visible) {
+      setAnchorRect(null);
+      setContentSize(null);
+      return;
+    }
+    measure();
   }, [visible, ready, measure]);
   useReposition(measure, visible);
   useDismiss(onClose, visible);
   useOverlayFocus(contentRef, visible, triggerRef);
 
-  const position = computeOverlayPosition(anchorRect, contentSize, { placement, align, offset });
+  const position = computeOverlayPositionWithPlacement(anchorRect, contentSize, {
+    placement,
+    align,
+    offset,
+  });
+  const positionedStyle = useMemo(
+    () => ({
+      position: "fixed" as const,
+      left: position.left,
+      top: position.top,
+      // 콘텐츠 크기 미측정 첫 프레임은 깜빡임 방지로 숨긴다
+      opacity: contentSize === null ? 0 : 1,
+    }),
+    [position.left, position.top, contentSize],
+  );
   return (
     // onBackdropPress: 투명 백드롭이 앵커 팝업 바깥 탭/클릭을 잡아 닫는다
     // （웹 fixed 투명층네이티브 Modal 배경 Pressable — 양측 동일 UX）.
@@ -249,16 +343,12 @@ export function AnchoredOverlay({
         ref={contentRef}
         accessibilityRole={accessibilityRole}
         accessibilityLabel={accessibilityLabel}
-        className={cn("pointer-events-auto", className)}
-        style={{
-          position: "fixed",
-          left: position.left,
-          top: position.top,
-          // 콘텐츠 크기 미측정 첫 프레임은 깜빡임 방지로 숨긴다
-          opacity: contentSize === null ? 0 : 1,
-        }}
+        className={className ? cn("pointer-events-auto", className) : "pointer-events-auto"}
+        style={positionedStyle}
       >
-        {children}
+        <OverlayPlacementContext.Provider value={position.placement}>
+          {children}
+        </OverlayPlacementContext.Provider>
       </View>
     </Portal>
   );

@@ -29,7 +29,7 @@ import {
 } from "@unikit-bridge/ui/primitives";
 import { cva, type VariantProps } from "class-variance-authority";
 
-import { cn } from "../lib/utils";
+import { cn } from "@/lib/utils";
 
 // 그룹 뼈대 — 원본의 방향 변형. 모서리 붙임 토큰은 아래 주입 로직으로 이동.
 // w-fit은 uniwind 미지원 — self-start 치환으로 양쪽 플랫폼 내용 폭을 맞춘다（M-2）.

@@ -26,7 +26,7 @@ import {
 } from "@unikit-bridge/ui/primitives";
 import { cva } from "class-variance-authority";
 
-import { cn } from "../lib/utils";
+import { cn } from "@/lib/utils";
 
 // 가로 스크롤 컨테이너（원본 table-container div）
 // 표 구역 context — 푸터 여부를 셀 Text로 전달한다（alert.tsx의 variant context

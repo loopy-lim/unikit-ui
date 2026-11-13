@@ -26,7 +26,7 @@ import {
 } from "@unikit-bridge/ui/primitives";
 import { cva, type VariantProps } from "class-variance-authority";
 
-import { cn } from "../lib/utils";
+import { cn } from "@/lib/utils";
 
 // 컨테이너（View） — 배경·테두리. 원본의 grid 배치를 flex-row（글리프+콘텐츠 열）로 치환.
 const alertVariants = cva(

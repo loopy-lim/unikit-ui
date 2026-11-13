@@ -9,7 +9,7 @@ import {
 } from "@unikit-bridge/ui/primitives";
 import { cva } from "class-variance-authority";
 
-import { cn } from "../lib/utils";
+import { cn } from "@/lib/utils";
 
 // 원본 base 값 정비（사이클 71）: h-9·px-3 py-1·min-w-0·shadow-xs·selection·md:text-sm.
 // 미지원（로드맵）: file:*（file 입력 없음）·aria-invalid:*（InputGroup 경유 처리）.

@@ -17,7 +17,7 @@ import {
 } from "@unikit-bridge/ui/primitives";
 import { cva, type VariantProps } from "class-variance-authority";
 
-import { cn } from "../lib/utils";
+import { cn } from "@/lib/utils";
 
 // 트랙（Pressable） — 원본 크기 토큰: default 18.4px（h-4.5 근사）·w-8, sm h-3.5·w-6.
 const switchTrackVariants = cva(

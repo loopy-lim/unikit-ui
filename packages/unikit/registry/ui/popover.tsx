@@ -30,9 +30,11 @@
 import {
   createContext,
   forwardRef,
+  useCallback,
   useContext,
   useEffect,
   useId,
+  useMemo,
   useRef,
   useState,
   type ForwardedRef,
@@ -98,18 +100,23 @@ const Popover = forwardRef<BridgeViewRef, PopoverProps>(
     // 비제어 상태 — 제어（open 지정）면 무시된다.
     const [internalOpen, setInternalOpen] = useState(defaultOpen ?? false);
     const isOpen = open ?? internalOpen;
-    const setOpen = (next: boolean) => {
-      if (open === undefined) setInternalOpen(next);
-      if (next !== isOpen) onOpenChange?.(next);
-    };
+    const stateRef = useRef({ open, isOpen, onOpenChange });
+    stateRef.current = { open, isOpen, onOpenChange };
+    const setOpen = useCallback((next: boolean) => {
+      const state = stateRef.current;
+      if (state.open === undefined) setInternalOpen(next);
+      if (next !== state.isOpen) state.onOpenChange?.(next);
+    }, []);
     const baseId = useId();
     const triggerRef = useRef<BridgePressableRef | null>(null);
     const anchorRef = useRef<BridgeViewRef | null>(null);
     const [hasAnchor, setHasAnchor] = useState(false);
+    const contextValue = useMemo<PopoverContextValue>(
+      () => ({ open: isOpen, setOpen, baseId, triggerRef, anchorRef, hasAnchor, setHasAnchor }),
+      [isOpen, setOpen, baseId, hasAnchor],
+    );
     return (
-      <PopoverContext.Provider
-        value={{ open: isOpen, setOpen, baseId, triggerRef, anchorRef, hasAnchor, setHasAnchor }}
-      >
+      <PopoverContext.Provider value={contextValue}>
         <View ref={ref} {...props}>{children}</View>
       </PopoverContext.Provider>
     );

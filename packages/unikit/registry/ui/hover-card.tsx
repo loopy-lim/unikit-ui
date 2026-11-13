@@ -30,8 +30,10 @@
 import {
   createContext,
   forwardRef,
+  useCallback,
   useContext,
   useId,
+  useMemo,
   useRef,
   useState,
   type ForwardedRef,
@@ -48,7 +50,7 @@ import {
 import { cva } from "class-variance-authority";
 
 import { AnchoredOverlay, type OverlayAlign, type OverlayPlacement } from "../lib/overlay";
-import { cn } from "../lib/utils";
+import { cn } from "@/lib/utils";
 
 type HoverCardContextValue = {
   open: boolean;
@@ -101,14 +103,21 @@ const HoverCard = forwardRef<BridgeViewRef, HoverCardProps>(
     // 비제어 상태 — 제어（open 지정）면 무시된다.
     const [internalOpen, setInternalOpen] = useState(defaultOpen ?? false);
     const isOpen = open ?? internalOpen;
-    const setOpen = (next: boolean) => {
-      if (open === undefined) setInternalOpen(next);
-      if (next !== isOpen) onOpenChange?.(next);
-    };
+    const stateRef = useRef({ open, isOpen, onOpenChange });
+    stateRef.current = { open, isOpen, onOpenChange };
+    const setOpen = useCallback((next: boolean) => {
+      const state = stateRef.current;
+      if (state.open === undefined) setInternalOpen(next);
+      if (next !== state.isOpen) state.onOpenChange?.(next);
+    }, []);
     const baseId = useId();
     const triggerRef = useRef<BridgePressableRef | null>(null);
+    const contextValue = useMemo<HoverCardContextValue>(
+      () => ({ open: isOpen, setOpen, baseId, triggerRef }),
+      [isOpen, setOpen, baseId],
+    );
     return (
-      <HoverCardContext.Provider value={{ open: isOpen, setOpen, baseId, triggerRef }}>
+      <HoverCardContext.Provider value={contextValue}>
         <View ref={ref} {...props}>{children}</View>
       </HoverCardContext.Provider>
     );
@@ -144,7 +153,7 @@ HoverCardTrigger.displayName = "HoverCardTrigger";
 
 const hoverCardContentVariants = cva(
   // pointer-events-auto: 웹에서 오버레이 래퍼 box-none 상속 회피（기본 포함）.
-  "pointer-events-auto w-64 rounded-md border border-border bg-popover p-4 text-popover-foreground web:outline-none web:shadow-md",
+  "pointer-events-auto w-64 rounded-md border border-border bg-popover p-4 text-popover-foreground unikit-popover-in web:outline-none web:shadow-md",
 );
 
 export type HoverCardContentProps = ViewProps & {

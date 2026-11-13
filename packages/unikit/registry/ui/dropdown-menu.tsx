@@ -42,8 +42,10 @@ import {
   Children,
   createContext,
   forwardRef,
+  useCallback,
   useContext,
   useId,
+  useMemo,
   useRef,
   useState,
   type ForwardedRef,
@@ -68,7 +70,7 @@ import {
   type OverlayAlign,
   type OverlayPlacement,
 } from "../lib/overlay";
-import { cn } from "../lib/utils";
+import { cn } from "@/lib/utils";
 
 // ---------------------------------------------------------------------------
 // 내부 유틸
@@ -166,7 +168,7 @@ const DropdownMenuRadioGroupContext =
 
 // 메뉴 카드 — 원본 콘텐츠 토큰 + 골격 요구 pointer-events-auto（§규칙 6）.
 const CARD_CLASSES =
-  "pointer-events-auto z-50 min-w-32 rounded-md border border-border bg-popover p-1 text-popover-foreground web:max-h-96 web:overflow-x-hidden web:overflow-y-auto web:shadow-md";
+  "pointer-events-auto z-50 min-w-32 rounded-md border border-border bg-popover p-1 text-popover-foreground web:max-h-96 web:overflow-x-hidden web:overflow-y-auto web:shadow-md unikit-popover-in";
 
 // 일반 항목 — 기본 상호작용 및 커서/선택 방지/포커스 아웃라인.
 const ITEM_CLASSES =
@@ -211,16 +213,23 @@ const DropdownMenu = forwardRef<BridgeViewRef, DropdownMenuProps>(
     // 비제어 상태 — 제어（open 지정）면 무시된다.
     const [internalOpen, setInternalOpen] = useState(defaultOpen);
     const isOpen = open !== undefined ? open : internalOpen;
-    const setOpen = (next: boolean) => {
-      if (open === undefined) setInternalOpen(next);
-      if (next !== isOpen) onOpenChange?.(next);
-    };
+    const isOpenRef = useRef(isOpen);
+    isOpenRef.current = isOpen;
+    const setOpen = useCallback(
+      (next: boolean) => {
+        if (open === undefined) setInternalOpen(next);
+        if (next !== isOpenRef.current) onOpenChange?.(next);
+      },
+      [open, onOpenChange],
+    );
     const triggerRef = useRef<BridgePressableRef | null>(null);
     const baseId = useId();
+    const contextValue = useMemo(
+      () => ({ open: isOpen, setOpen, triggerRef, baseId }),
+      [isOpen, setOpen, baseId],
+    );
     return (
-      <DropdownMenuContext.Provider
-        value={{ open: isOpen, setOpen, triggerRef, baseId }}
-      >
+      <DropdownMenuContext.Provider value={contextValue}>
         {/* w-fit 미지원 — kbd.tsx 관행의 self-start（교차축 시작 정렬）로 트리거
             폭 수축. 풀폭 트리거는 사용처 className(self-stretch)으로. */}
         <View ref={ref} className={cn("self-start", className)} {...props}>
@@ -470,16 +479,19 @@ const DropdownMenuRadioGroup = forwardRef<
     // 제어/비제어 통합 — 라디오는 단일 선택이라 문자열 state면 충분하다.
     const [uncontrolled, setUncontrolled] = useState(defaultValue);
     const selected = value !== undefined ? value : uncontrolled;
+    const onItemSelect = useCallback(
+      (itemValue: string) => {
+        if (value === undefined) setUncontrolled(itemValue);
+        onValueChange?.(itemValue);
+      },
+      [value, onValueChange],
+    );
+    const contextValue = useMemo(
+      () => ({ value: selected, onItemSelect }),
+      [selected, onItemSelect],
+    );
     return (
-      <DropdownMenuRadioGroupContext.Provider
-        value={{
-          value: selected,
-          onItemSelect: (itemValue) => {
-            if (value === undefined) setUncontrolled(itemValue);
-            onValueChange?.(itemValue);
-          },
-        }}
-      >
+      <DropdownMenuRadioGroupContext.Provider value={contextValue}>
         <View ref={ref} {...props}>
           {children}
         </View>
@@ -597,10 +609,12 @@ function DropdownMenuSub({ children }: DropdownMenuSubProps) {
   const [open, setOpen] = useState(false);
   const triggerRef = useRef<BridgePressableRef | null>(null);
   const baseId = useId();
+  const contextValue = useMemo(
+    () => ({ open, setOpen, triggerRef, baseId }),
+    [open, baseId],
+  );
   return (
-    <DropdownMenuSubContext.Provider
-      value={{ open, setOpen, triggerRef, baseId }}
-    >
+    <DropdownMenuSubContext.Provider value={contextValue}>
       {children}
     </DropdownMenuSubContext.Provider>
   );
@@ -698,7 +712,7 @@ const DropdownMenuSubContent = forwardRef<
           nativeID={`${sub.baseId}-dropdown-menu-sub-content`}
           // 원본 서브 콘텐츠: overflow-hidden·shadow-lg（본체는 overflow-y-auto·shadow-md와 구별）
           className={cn(
-            "pointer-events-auto z-50 min-w-32 overflow-hidden rounded-md border border-border bg-popover p-1 text-popover-foreground web:shadow-lg",
+            "pointer-events-auto z-50 min-w-32 overflow-hidden rounded-md border border-border bg-popover p-1 text-popover-foreground web:shadow-lg unikit-popover-in",
             className,
           )}
           {...props}

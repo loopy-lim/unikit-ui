@@ -33,7 +33,7 @@ import {
 } from "@unikit-bridge/ui/primitives";
 import { cva, type VariantProps } from "class-variance-authority";
 
-import { cn } from "../lib/utils";
+import { cn } from "@/lib/utils";
 import { buttonVariants, buttonTextVariants } from "./button";
 
 const paginationVariants = cva("mx-auto w-full flex-row justify-center");

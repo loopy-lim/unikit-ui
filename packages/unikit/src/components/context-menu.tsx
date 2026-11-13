@@ -44,8 +44,10 @@ import {
   Children,
   createContext,
   forwardRef,
+  useCallback,
   useContext,
   useId,
+  useMemo,
   useRef,
   useState,
   type ForwardedRef,
@@ -168,7 +170,7 @@ const ContextMenuRadioGroupContext =
 
 // 메뉴 카드 — 원본 콘텐츠 토큰 + 골격 요구 pointer-events-auto（§규칙 6）.
 const CARD_CLASSES =
-  "pointer-events-auto z-50 min-w-32 rounded-md border border-border bg-popover p-1 text-popover-foreground web:max-h-96 web:overflow-x-hidden web:overflow-y-auto web:shadow-md";
+  "pointer-events-auto z-50 min-w-32 rounded-md border border-border bg-popover p-1 text-popover-foreground unikit-popover-in web:max-h-96 web:overflow-x-hidden web:overflow-y-auto web:shadow-md";
 
 // 일반 항목 — 기본 상호작용 및 커서/선택 방지/포커스 아웃라인.
 const ITEM_CLASSES =
@@ -213,16 +215,21 @@ const ContextMenu = forwardRef<BridgeViewRef, ContextMenuProps>(
     // 비제어 상태 — 제어（open 지정）면 무시된다.
     const [internalOpen, setInternalOpen] = useState(defaultOpen);
     const isOpen = open !== undefined ? open : internalOpen;
-    const setOpen = (next: boolean) => {
-      if (open === undefined) setInternalOpen(next);
-      if (next !== isOpen) onOpenChange?.(next);
-    };
+    const stateRef = useRef({ open, isOpen, onOpenChange });
+    stateRef.current = { open, isOpen, onOpenChange };
+    const setOpen = useCallback((next: boolean) => {
+      const state = stateRef.current;
+      if (state.open === undefined) setInternalOpen(next);
+      if (next !== state.isOpen) state.onOpenChange?.(next);
+    }, []);
     const triggerRef = useRef<BridgePressableRef | null>(null);
     const baseId = useId();
+    const contextValue = useMemo<ContextMenuContextValue>(
+      () => ({ open: isOpen, setOpen, triggerRef, baseId }),
+      [isOpen, setOpen, baseId],
+    );
     return (
-      <ContextMenuContext.Provider
-        value={{ open: isOpen, setOpen, triggerRef, baseId }}
-      >
+      <ContextMenuContext.Provider value={contextValue}>
         {/* 컨텍스트 트리거는 임의 폭 콘텐츠（카드 등）를 감싸므로 폭 수축 없이 통과 */}
         <View ref={ref} className={className} {...props}>
           {children}
@@ -456,16 +463,19 @@ const ContextMenuRadioGroup = forwardRef<
   // 제어/비제어 통합 — 라디오는 단일 선택이라 문자열 state면 충분하다.
   const [uncontrolled, setUncontrolled] = useState(defaultValue);
   const selected = value !== undefined ? value : uncontrolled;
+  const onItemSelect = useCallback(
+    (itemValue: string) => {
+      if (value === undefined) setUncontrolled(itemValue);
+      onValueChange?.(itemValue);
+    },
+    [value, onValueChange],
+  );
+  const contextValue = useMemo(
+    () => ({ value: selected, onItemSelect }),
+    [selected, onItemSelect],
+  );
   return (
-    <ContextMenuRadioGroupContext.Provider
-      value={{
-        value: selected,
-        onItemSelect: (itemValue) => {
-          if (value === undefined) setUncontrolled(itemValue);
-          onValueChange?.(itemValue);
-        },
-      }}
-    >
+    <ContextMenuRadioGroupContext.Provider value={contextValue}>
       <View ref={ref} {...props}>
         {children}
       </View>
@@ -583,10 +593,12 @@ function ContextMenuSub({ children }: ContextMenuSubProps) {
   const [open, setOpen] = useState(false);
   const triggerRef = useRef<BridgePressableRef | null>(null);
   const baseId = useId();
+  const contextValue = useMemo(
+    () => ({ open, setOpen, triggerRef, baseId }),
+    [open, baseId],
+  );
   return (
-    <ContextMenuSubContext.Provider
-      value={{ open, setOpen, triggerRef, baseId }}
-    >
+    <ContextMenuSubContext.Provider value={contextValue}>
       {children}
     </ContextMenuSubContext.Provider>
   );

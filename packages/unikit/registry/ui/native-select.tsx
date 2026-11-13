@@ -45,7 +45,7 @@ import {
 } from "@unikit-bridge/ui/primitives";
 import { cva } from "class-variance-authority";
 
-import { cn } from "../lib/utils";
+import { cn } from "@/lib/utils";
 
 /** OptGroup 래퍼를 풀어 SelectOption 직계 목록으로 평탄화（네이티브 추출 정합）. */
 function flattenOptions(children: ReactNode): ReactNode[] {

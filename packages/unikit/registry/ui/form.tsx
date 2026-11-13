@@ -53,7 +53,7 @@ import {
   type ViewProps,
 } from "@unikit-bridge/ui/primitives";
 
-import { cn } from "../lib/utils";
+import { cn } from "@/lib/utils";
 import { Label, type LabelProps } from "./label";
 
 const Form = FormProvider;

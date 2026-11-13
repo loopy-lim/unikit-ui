@@ -15,7 +15,7 @@ import {
   type ViewProps,
 } from "@unikit-bridge/ui/primitives";
 
-import { cn } from "../lib/utils";
+import { cn } from "@/lib/utils";
 
 export type AspectRatioProps = ViewProps & {
   /** 가로세로 비율（가로 ÷ 세로, 기본 1 — 정사각형） */

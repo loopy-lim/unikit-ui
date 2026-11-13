@@ -37,7 +37,7 @@ import {
   type ViewProps,
 } from "@unikit-bridge/ui/primitives";
 
-import { cn } from "../lib/utils";
+import { cn } from "@/lib/utils";
 
 /** 메시지 가로 정렬 — 좌（start, 상대방） / 우（end, 나） */
 export type MessageAlign = "start" | "end";

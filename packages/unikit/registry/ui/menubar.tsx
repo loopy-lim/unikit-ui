@@ -39,8 +39,11 @@ import {
   Children,
   createContext,
   forwardRef,
+  useCallback,
   useContext,
   useId,
+  useMemo,
+  useRef,
   useState,
   type ReactNode,
 } from "react";
@@ -82,7 +85,7 @@ import {
   type DropdownMenuSubProps,
   type DropdownMenuSubTriggerProps,
 } from "./dropdown-menu";
-import { cn } from "../lib/utils";
+import { cn } from "@/lib/utils";
 
 // ---------------------------------------------------------------------------
 // 상태 context — 루트（단일 열림 조율）메뉴（자기 열림）
@@ -128,12 +131,19 @@ const Menubar = forwardRef<BridgeViewRef, MenubarProps>(
     // 비제어 상태 — 제어（value 지정）면 무시된다.
     const [internalValue, setInternalValue] = useState(defaultValue);
     const current = value !== undefined ? value : internalValue;
-    const setValue = (next: string | null) => {
-      if (value === undefined) setInternalValue(next);
-      if (next !== current) onValueChange?.(next);
-    };
+    const stateRef = useRef({ value, current, onValueChange });
+    stateRef.current = { value, current, onValueChange };
+    const setValue = useCallback((next: string | null) => {
+      const state = stateRef.current;
+      if (state.value === undefined) setInternalValue(next);
+      if (next !== state.current) state.onValueChange?.(next);
+    }, []);
+    const contextValue = useMemo<MenubarContextValue>(
+      () => ({ value: current, setValue }),
+      [current, setValue],
+    );
     return (
-      <MenubarContext.Provider value={{ value: current, setValue }}>
+      <MenubarContext.Provider value={contextValue}>
         <View
           ref={ref}
           accessibilityRole="menubar"
@@ -162,13 +172,15 @@ function MenubarMenu({ value, children }: MenubarMenuProps) {
   const fallbackId = useId();
   const menuValue = value ?? fallbackId;
   const isOpen = menubar.value === menuValue;
+  const menuContextValue = useMemo(() => ({ isOpen }), [isOpen]);
+  const handleOpenChange = useCallback(
+    (open: boolean) => menubar.setValue(open ? menuValue : null),
+    [menubar, menuValue],
+  );
   return (
-    <MenubarMenuContext.Provider value={{ isOpen }}>
+    <MenubarMenuContext.Provider value={menuContextValue}>
       {/* 제어 모드 조합 — 다른 메뉴가 열리면 이 값이 바뀌어 자동으로 닫힌다 */}
-      <DropdownMenu
-        open={isOpen}
-        onOpenChange={(open) => menubar.setValue(open ? menuValue : null)}
-      >
+      <DropdownMenu open={isOpen} onOpenChange={handleOpenChange}>
         {children}
       </DropdownMenu>
     </MenubarMenuContext.Provider>

@@ -19,7 +19,7 @@ import {
 } from "@unikit-bridge/ui/primitives";
 import { cva } from "class-variance-authority";
 
-import { cn } from "../lib/utils";
+import { cn } from "@/lib/utils";
 
 // 원본 뼈대: flex flex-col gap-6 ... py-6 — 세로 패딩은 루트, 가로 패딩(px-6)은
 // 헤더·콘텐츠·푸터가 담당하고 자식 사이 간격은 루트 gap-6가 낸다.

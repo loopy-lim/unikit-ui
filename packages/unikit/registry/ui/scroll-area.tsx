@@ -25,7 +25,7 @@ import {
   type ViewProps,
 } from "@unikit-bridge/ui/primitives";
 
-import { cn } from "../lib/utils";
+import { cn } from "@/lib/utils";
 
 export type ScrollAreaProps = ScrollViewProps;
 

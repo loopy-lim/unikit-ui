@@ -11,7 +11,7 @@ import { forwardRef } from "react";
 import { Text, type BridgeTextRef, type TextProps } from "@unikit-bridge/ui/primitives";
 import { cva } from "class-variance-authority";
 
-import { cn } from "../lib/utils";
+import { cn } from "@/lib/utils";
 
 const labelVariants = cva(
   // 원본 select-none（라벨 드래그 선택 방지） — 네이티브 Text는 기본 비선택이라 web: 접두.

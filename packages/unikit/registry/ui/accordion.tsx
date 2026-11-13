@@ -18,8 +18,11 @@
 import {
   createContext,
   forwardRef,
+  useCallback,
   useContext,
   useId,
+  useMemo,
+  useRef,
   useState,
   type ReactNode,
 } from "react";
@@ -35,7 +38,7 @@ import {
   type ViewProps,
 } from "@unikit-bridge/ui/primitives";
 
-import { cn } from "../lib/utils";
+import { cn } from "@/lib/utils";
 
 type AccordionContextValue = {
   type: "single" | "multiple";
@@ -107,29 +110,37 @@ const Accordion = forwardRef<BridgeViewRef, AccordionProps>(
       toItems(defaultValue),
     );
     const openItems = value !== undefined ? toItems(value) : internalItems;
-    const toggleItem = (itemValue: string) => {
-      animateLayout();
-      const isOpen = openItems.includes(itemValue);
-      let next: string[];
-      if (isOpen) {
-        // single 비접이형（collapsible=false）은 마지막 펼침 항목을 유지한다.
-        if (type === "single" && !collapsible) return;
-        next = openItems.filter((v) => v !== itemValue);
-      } else {
-        next =
-          type === "single"
-            ? [itemValue]
-            : [...openItems, itemValue];
-      }
-      if (value === undefined) setInternalItems(next);
-      if (type === "single") onValueChange?.(next[0] ?? "");
-      else onValueChange?.(next);
-    };
+    const openItemsRef = useRef(openItems);
+    openItemsRef.current = openItems;
+    const toggleItem = useCallback(
+      (itemValue: string) => {
+        animateLayout();
+        const currentItems = openItemsRef.current;
+        const isOpen = currentItems.includes(itemValue);
+        let next: string[];
+        if (isOpen) {
+          // single 비접이형（collapsible=false）은 마지막 펼침 항목을 유지한다.
+          if (type === "single" && !collapsible) return;
+          next = currentItems.filter((v) => v !== itemValue);
+        } else {
+          next =
+            type === "single"
+              ? [itemValue]
+              : [...currentItems, itemValue];
+        }
+        if (value === undefined) setInternalItems(next);
+        if (type === "single") onValueChange?.(next[0] ?? "");
+        else onValueChange?.(next);
+      },
+      [type, collapsible, value, onValueChange],
+    );
     const baseId = useId();
+    const contextValue = useMemo(
+      () => ({ type, collapsible, openItems, toggleItem, baseId }),
+      [type, collapsible, openItems, toggleItem, baseId],
+    );
     return (
-      <AccordionContext.Provider
-        value={{ type, collapsible, openItems, toggleItem, baseId }}
-      >
+      <AccordionContext.Provider value={contextValue}>
         <View ref={ref} {...props}>
           {children}
         </View>
@@ -147,15 +158,17 @@ const AccordionItem = forwardRef<BridgeViewRef, AccordionItemProps>(
   ({ value, className, children, ...props }, ref) => {
     const accordion = useAccordionContext("AccordionItem");
     const open = accordion.openItems.includes(value);
+    const toggle = useCallback(
+      () => accordion.toggleItem(value),
+      [accordion.toggleItem, value],
+    );
+    const contentId = contentIdOf(accordion.baseId, value);
+    const itemContextValue = useMemo(
+      () => ({ value, open, toggle, contentId }),
+      [value, open, toggle, contentId],
+    );
     return (
-      <AccordionItemContext.Provider
-        value={{
-          value,
-          open,
-          toggle: () => accordion.toggleItem(value),
-          contentId: contentIdOf(accordion.baseId, value),
-        }}
-      >
+      <AccordionItemContext.Provider value={itemContextValue}>
         <View
           ref={ref}
           className={cn("border-b border-border", className)}

@@ -18,7 +18,7 @@ import {
   type ViewProps,
 } from "@unikit-bridge/ui/primitives";
 
-import { cn } from "../lib/utils";
+import { cn } from "@/lib/utils";
 
 export type ProgressProps = ViewProps & {
   /** 현재 진행값 — max 대비 백분율로 렌더（미지정 시 0%） */

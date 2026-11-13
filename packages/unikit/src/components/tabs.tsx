@@ -24,9 +24,14 @@
 import {
   createContext,
   forwardRef,
+  useCallback,
   useContext,
+  useEffect,
   useId,
+  useMemo,
+  useRef,
   useState,
+  type ForwardedRef,
   type ReactNode,
 } from "react";
 import {
@@ -34,6 +39,7 @@ import {
   Pressable,
   Text,
   View,
+  type BridgeKeyEvent,
   type BridgePressableRef,
   type BridgeViewRef,
   type PressableProps,
@@ -43,11 +49,23 @@ import { cva, type VariantProps } from "class-variance-authority";
 
 import { cn } from "../lib/utils";
 
+type TabTriggerRecord = {
+  value: string;
+  disabled: boolean;
+  ref: { current: BridgePressableRef | null };
+};
+
 type TabsContextValue = {
   value: string;
   setValue: (value: string) => void;
   /** 트리거 aria-controls ↔ 콘텐츠 nativeID를 결정적으로 연결하기 위한 토대 ID */
   baseId: string;
+  registerTrigger: (
+    value: string,
+    disabled: boolean,
+    ref: { current: BridgePressableRef | null },
+  ) => () => void;
+  handleTriggerKeyDown: (currentValue: string, event: BridgeKeyEvent) => void;
 };
 
 const TabsContext = createContext<TabsContextValue | null>(null);
@@ -58,6 +76,20 @@ function useTabsContext(component: string): TabsContextValue {
     throw new Error(`<${component}>는 <Tabs> 안에서 사용해야 합니다.`);
   }
   return ctx;
+}
+
+function composeRefs(
+  ...refs: Array<
+    ForwardedRef<BridgePressableRef> | { current: BridgePressableRef | null }
+  >
+) {
+  return (node: BridgePressableRef | null) => {
+    for (const ref of refs) {
+      if (!ref) continue;
+      if (typeof ref === "function") ref(node);
+      else ref.current = node;
+    }
+  };
 }
 
 // 트리거（말록）와 콘텐츠（패널）를 잇는 ID — value의 공백은 ID에 쓸 수 없어 치환.
@@ -81,14 +113,86 @@ const Tabs = forwardRef<BridgeViewRef, TabsProps>(
     // 비제어 상태 — 제어（value 지정）면 무시된다.
     const [internalValue, setInternalValue] = useState(defaultValue ?? "");
     const current = value ?? internalValue;
-    const setValue = (next: string) => {
-      animateLayout();
-      if (value === undefined) setInternalValue(next);
-      if (next !== current) onValueChange?.(next);
-    };
+    const currentRef = useRef(current);
+    currentRef.current = current;
+    const setValue = useCallback(
+      (next: string) => {
+        animateLayout();
+        if (value === undefined) setInternalValue(next);
+        if (next !== currentRef.current) onValueChange?.(next);
+      },
+      [value, onValueChange],
+    );
+    const triggersRef = useRef<TabTriggerRecord[]>([]);
+    const registerTrigger = useCallback(
+      (
+        triggerValue: string,
+        disabled: boolean,
+        triggerRef: { current: BridgePressableRef | null },
+      ) => {
+        const list = triggersRef.current;
+        const existingIndex = list.findIndex((item) => item.value === triggerValue);
+        const record: TabTriggerRecord = {
+          value: triggerValue,
+          disabled,
+          ref: triggerRef,
+        };
+        if (existingIndex >= 0) {
+          list[existingIndex] = record;
+        } else {
+          list.push(record);
+        }
+        return () => {
+          const idx = triggersRef.current.findIndex(
+            (item) => item.ref === triggerRef,
+          );
+          if (idx >= 0) triggersRef.current.splice(idx, 1);
+        };
+      },
+      [],
+    );
+    const handleTriggerKeyDown = useCallback(
+      (currentValue: string, event: BridgeKeyEvent) => {
+        const enabled = triggersRef.current.filter((item) => !item.disabled);
+        if (enabled.length === 0) return;
+        const currentIdx = enabled.findIndex((item) => item.value === currentValue);
+        let nextIdx = -1;
+        if (event.key === "ArrowRight") {
+          nextIdx = currentIdx < 0 ? 0 : (currentIdx + 1) % enabled.length;
+        } else if (event.key === "ArrowLeft") {
+          nextIdx =
+            currentIdx < 0
+              ? enabled.length - 1
+              : (currentIdx - 1 + enabled.length) % enabled.length;
+        } else if (event.key === "Home") {
+          nextIdx = 0;
+        } else if (event.key === "End") {
+          nextIdx = enabled.length - 1;
+        } else {
+          return;
+        }
+        event.preventDefault();
+        const target = enabled[nextIdx];
+        if (!target) return;
+        setValue(target.value);
+        const focusable = target.ref.current as { focus?: () => void } | null;
+        focusable?.focus?.();
+      },
+      [setValue],
+    );
     const baseId = useId();
+    const contextValue = useMemo(
+      () => ({
+        value: current,
+        setValue,
+        baseId,
+        registerTrigger,
+        handleTriggerKeyDown,
+      }),
+      [current, setValue, baseId, registerTrigger, handleTriggerKeyDown],
+    );
     return (
-      <TabsContext.Provider value={{ value: current, setValue, baseId }}>
+      <TabsContext.Provider value={contextValue}>
         <View ref={ref} className={cn("gap-2", className)} {...props}>
           {children}
         </View>
@@ -121,8 +225,12 @@ export type TabsListProps = ViewProps & VariantProps<typeof tabsListVariants>;
 const TabsList = forwardRef<BridgeViewRef, TabsListProps>(
   ({ className, variant, ...props }, ref) => {
     const resolved = variant ?? "default";
+    const listContextValue = useMemo(
+      () => ({ variant: resolved }),
+      [resolved],
+    );
     return (
-      <TabsListContext.Provider value={{ variant: resolved }}>
+      <TabsListContext.Provider value={listContextValue}>
         <View
           ref={ref}
           accessibilityRole="tablist"
@@ -142,13 +250,19 @@ export type TabsTriggerProps = PressableProps & {
 };
 
 const TabsTrigger = forwardRef<BridgePressableRef, TabsTriggerProps>(
-  ({ value, className, children, disabled, onPress, ...props }, ref) => {
+  ({ value, className, children, disabled, onPress, onKeyDown, ...props }, ref) => {
     const tabs = useTabsContext("TabsTrigger");
     const list = useContext(TabsListContext);
     const active = tabs.value === value;
+    const localRef = useRef<BridgePressableRef | null>(null);
+    const registerTrigger = tabs.registerTrigger;
+    useEffect(
+      () => registerTrigger(value, disabled === true, localRef),
+      [registerTrigger, value, disabled],
+    );
     return (
       <Pressable
-        ref={ref}
+        ref={composeRefs(ref, localRef)}
         accessibilityRole="tab"
         aria-selected={active}
         aria-controls={contentIdOf(tabs.baseId, value)}
@@ -156,6 +270,10 @@ const TabsTrigger = forwardRef<BridgePressableRef, TabsTriggerProps>(
         onPress={() => {
           tabs.setValue(value);
           onPress?.();
+        }}
+        onKeyDown={(event) => {
+          tabs.handleTriggerKeyDown(value, event);
+          onKeyDown?.(event);
         }}
         className={cn(
           "relative flex-row flex-1 items-center justify-center gap-1.5 rounded-md border border-transparent px-2 py-1 web:transition-all",

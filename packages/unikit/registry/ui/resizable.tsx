@@ -25,6 +25,7 @@ import {
   cloneElement,
   createContext,
   forwardRef,
+  useCallback,
   useContext,
   useEffect,
   isValidElement,
@@ -130,42 +131,56 @@ const ResizablePanelGroup = forwardRef<BridgeViewRef, ResizablePanelGroupProps>(
     const containerRef = useRef<BridgeViewRef>(null);
     const axisRef = useRef(0);
     const startRef = useRef(0);
-    const measureContainer = () => {
+    const sizesRef = useRef(sizes);
+    sizesRef.current = sizes;
+    const measureContainer = useCallback(() => {
       measureInWindow(containerRef.current, (_x, _y, width, height) => {
         axisRef.current = direction === "horizontal" ? width : height;
       });
-    };
-    useEffect(measureContainer, [direction]);
+    }, [direction]);
+    useEffect(measureContainer, [measureContainer]);
 
-    const beginResize = (index: number) => {
-      measureContainer();
-      startRef.current = sizes[index] ?? 0;
-    };
-    const moveResize = (index: number, event: BridgeDragEvent) => {
-      const axis = axisRef.current;
-      if (index < 0 || axis <= 0) return;
-      const delta = direction === "horizontal" ? event.dx : event.dy;
-      const { minSize, maxSize } = constraints[index]!;
-      const next = Math.min(
-        maxSize,
-        Math.max(minSize, startRef.current + (delta / axis) * 100),
-      );
-      setSizes((prev) =>
-        prev.map((size, i) => (i === index ? next : size)),
-      );
-    };
+    const beginResize = useCallback(
+      (index: number) => {
+        measureContainer();
+        startRef.current = sizesRef.current[index] ?? 0;
+      },
+      [measureContainer],
+    );
+    const moveResize = useCallback(
+      (index: number, event: BridgeDragEvent) => {
+        const axis = axisRef.current;
+        if (index < 0 || axis <= 0) return;
+        const delta = direction === "horizontal" ? event.dx : event.dy;
+        const { minSize, maxSize } = constraints[index]!;
+        const next = Math.min(
+          maxSize,
+          Math.max(minSize, startRef.current + (delta / axis) * 100),
+        );
+        setSizes((prev) =>
+          prev.map((size, i) => (i === index ? next : size)),
+        );
+      },
+      [direction, constraints],
+    );
 
     // 사용측 ref와 내부 측정 ref 병합 — 하나의 DOM/RN 요소를 공유한다.
-    const combinedRef = (node: BridgeViewRef | null) => {
-      containerRef.current = node;
-      if (typeof ref === "function") ref(node);
-      else if (ref) (ref as { current: BridgeViewRef | null }).current = node;
-    };
+    const combinedRef = useCallback(
+      (node: BridgeViewRef | null) => {
+        containerRef.current = node;
+        if (typeof ref === "function") ref(node);
+        else if (ref) (ref as { current: BridgeViewRef | null }).current = node;
+      },
+      [ref],
+    );
+
+    const contextValue = useMemo(
+      () => ({ direction, sizes, beginResize, moveResize }),
+      [direction, sizes, beginResize, moveResize],
+    );
 
     return (
-      <ResizableContext.Provider
-        value={{ direction, sizes, beginResize, moveResize }}
-      >
+      <ResizableContext.Provider value={contextValue}>
         <View
           ref={combinedRef}
           className={cn(

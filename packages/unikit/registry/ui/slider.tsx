@@ -40,7 +40,7 @@ import {
   type PressableProps,
 } from "@unikit-bridge/ui/primitives";
 
-import { cn } from "../lib/utils";
+import { cn } from "@/lib/utils";
 
 export type SliderProps = Omit<
   PressableProps,
