@@ -91,7 +91,7 @@ export default function Home() {
 }
 ```
 
-> npm `@unikit-bridge/ui` 0.2.0 still ships the first 28 components. Use **option 2 (registry copy)** for the full 61 until the next publish.
+> npm `@unikit-bridge/ui` 0.3.0 ships the full 61 components (60 barrel + `@unikit-bridge/ui/chart`). Use **option 2 (registry copy)** if you want to own and edit the component source directly.
 
 **Option 2 — source copy (summary)**
 
@@ -148,6 +148,5 @@ Both demos render the same screens via `@unikit-bridge/ui`.
 ## Known limits
 
 - **Native on device** — CI covers web / bundle builds. Use [docs/expo-go.md](docs/expo-go.md) for hardware.
-- **npm publish gap** — 0.2.0 is the 28-component cut. Full 61 via next publish or registry copy.
-- **Unsupported behaviors** — overlay enter/exit animation (instant), native hover open, some select/menu keyboard nav, chart responsive/dark, etc. See [docs/roadmap-components.md](docs/roadmap-components.md).
+- **Unsupported behaviors** — overlay exit animations (enter animations supported on web), native hover open, chart responsive/dark, etc. See [docs/roadmap-components.md](docs/roadmap-components.md).
 - **Icon peers** — web `lucide-react`, native `lucide-react-native` (bridged). Components never import Lucide directly.

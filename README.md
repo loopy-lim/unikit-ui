@@ -91,7 +91,7 @@ export default function Home() {
 }
 ```
 
-> npm 0.2.0 게시분은 1차 28종 시점이에요. 저장소 61종은 다음 게시까지 **방법 2(레지스트리 복사)** 로 쓰면 돼요.
+> npm `@unikit-bridge/ui` 0.3.0부터 61종 전량(배럴 60종 + `@unikit-bridge/ui/chart`)을 제공해요. 소스를 직접 소유하려면 **방법 2(레지스트리 복사)** 를 쓰세요.
 
 **방법 2 — 소스 복사 (요약)**
 
@@ -150,6 +150,5 @@ UniKit/
 ## 알려진 한계
 
 - **실물 네이티브** — CI는 웹·번들 빌드까지. 기기 화면은 [docs/expo-go.md](docs/expo-go.md)로 확인하세요.
-- **npm 게시 갭** — 0.2.0은 28종 시점. 61종은 다음 게시 또는 레지스트리 복사.
-- **미지원 기능** — 오버레이 등장/퇴장 애니메이션(즉시 전환), 네이티브 hover 개방, select·메뉴 키보드 탐색 일부, chart 반응형·다크 등. 목록은 [docs/roadmap-components.md](docs/roadmap-components.md).
+- **미지원 기능** — 오버레이 퇴장 애니메이션(진입 애니메이션만 웹 지원), 네이티브 hover 개방, chart 반응형·다크 등. 목록은 [docs/roadmap-components.md](docs/roadmap-components.md).
 - **아이콘 peer** — 웹 `lucide-react`, 네이티브 `lucide-react-native`(브리지가 감쌈). 컴포넌트는 lucide를 직접 import하지 않아요.
