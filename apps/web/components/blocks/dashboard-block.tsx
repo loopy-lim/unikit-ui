@@ -55,7 +55,6 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-  UnikitThemeProvider,
 } from "@unikit-bridge/ui";
 import { ScrollView, Text, View } from "@unikit-bridge/ui/primitives";
 
@@ -134,8 +133,7 @@ function useIsMobile(breakpoint = 768) {
 export function DashboardBlock() {
   const isMobile = useIsMobile();
   return (
-    <UnikitThemeProvider>
-      <SidebarProvider className="min-h-dvh w-full" isMobile={isMobile}>
+    <SidebarProvider className="min-h-dvh w-full" isMobile={isMobile}>
         <Sidebar collapsible="offcanvas">
           {/** 헤더 — 공용 BrandMark(로그인 블록·어시스턴트 셸과 같은 마크) */}
           <SidebarHeader>
@@ -330,6 +328,5 @@ export function DashboardBlock() {
           </ScrollView>
         </SidebarInset>
       </SidebarProvider>
-    </UnikitThemeProvider>
   );
 }

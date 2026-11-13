@@ -21,8 +21,6 @@ import {
   FieldLabel,
   Input,
   Separator,
-  Toaster,
-  UnikitThemeProvider,
   toast,
 } from "@unikit-bridge/ui";
 import { Text, View } from "@unikit-bridge/ui/primitives";
@@ -31,8 +29,7 @@ import { BackToBlocks, BlockThemeToggle, BrandMark } from "./block-chrome";
 
 export function LoginBlock() {
   return (
-    <UnikitThemeProvider>
-      <View className="relative flex min-h-dvh w-full flex-col items-center justify-center gap-6 bg-muted p-6 md:p-10">
+    <View className="relative flex min-h-dvh w-full flex-col items-center justify-center gap-6 bg-muted p-6 md:p-10">
         <BackToBlocks />
         <BlockThemeToggle />
 
@@ -136,12 +133,9 @@ export function LoginBlock() {
           </CardContent>
         </Card>
 
-        <Text className="font-sans text-xs text-muted-foreground">
-          이 화면의 모든 요소는 @unikit-bridge/ui 컴포넌트예요.
-        </Text>
-
-        <Toaster position="bottom-right" richColors closeButton />
-      </View>
-    </UnikitThemeProvider>
+      <Text className="font-sans text-xs text-muted-foreground">
+        이 화면의 모든 요소는 @unikit-bridge/ui 컴포넌트예요.
+      </Text>
+    </View>
   );
 }

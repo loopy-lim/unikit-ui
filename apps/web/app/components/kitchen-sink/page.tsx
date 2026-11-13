@@ -117,7 +117,7 @@ import {
 /** 전체 스크롤 데모 — DocsShell(테마·Toaster) 안에서 기존 섹션을 이어 붙인다. */
 export default function KitchenSinkPage() {
   return (
-    <View className="mx-auto w-full max-w-[640px] space-y-10 pb-8">
+    <View className="mx-auto w-full max-w-2xl space-y-10 pb-8">
       <Header />
       <ButtonSection />
       <CardSection />

@@ -4,7 +4,7 @@
  */
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useEffect, useState, type ReactNode } from "react";
+import { memo, useEffect, useState, type ReactNode } from "react";
 import { Menu } from "lucide-react";
 import {
   Button,
@@ -12,48 +12,41 @@ import {
   SheetContent,
   SheetTitle,
   SheetTrigger,
-  Toaster,
+  cn,
+  useUnikitTheme,
 } from "@unikit-bridge/ui";
 import { Text, View } from "@unikit-bridge/ui/primitives";
-import { UnikitThemeProvider, useUnikitTheme } from "@unikit-bridge/ui";
 
 import { SiteBrand } from "../site/brand";
+import { ThemeCustomizer } from "../site/site-theme";
 import { catalogByCategory } from "./catalog";
+import { CommandSearchTrigger } from "./command-search";
+
+const CATALOG_GROUPS = catalogByCategory();
 
 export function DocsProviders({ children }: { children: ReactNode }) {
-  return (
-    <UnikitThemeProvider>
-      {children}
-      <Toaster position="bottom-right" richColors closeButton />
-    </UnikitThemeProvider>
-  );
+  return <>{children}</>;
 }
 
 export function DocsShell({ children }: { children: ReactNode }) {
   const [navOpen, setNavOpen] = useState(false);
 
   return (
-    <DocsProviders>
-      <View className="site-docs-canvas">
-        <DocsHeader>
-          <DocsMobileNav open={navOpen} onOpenChange={setNavOpen} />
-        </DocsHeader>
-        <View className="mx-auto flex w-full max-w-7xl flex-col px-4 sm:px-6 md:flex-row lg:px-8">
-          <DocsSidebar />
-          <DocsMain>{children}</DocsMain>
-        </View>
+    <View className="site-docs-canvas">
+      <DocsHeader>
+        <DocsMobileNav open={navOpen} onOpenChange={setNavOpen} />
+      </DocsHeader>
+      <View className="mx-auto flex w-full max-w-7xl flex-col px-4 sm:px-6 md:flex-row lg:px-8">
+        <DocsSidebar />
+        <DocsMain>{children}</DocsMain>
       </View>
-    </DocsProviders>
+    </View>
   );
 }
 
 function DocsMain({ children }: { children: ReactNode }) {
-  const pathname = usePathname();
   return (
-    <View
-      key={pathname}
-      className="site-docs-enter min-w-0 flex-1 pb-16 pt-6 sm:pt-8 md:pl-8 lg:pl-10"
-    >
+    <View className="min-w-0 flex-1 pb-16 pt-6 sm:pt-8 md:pl-8 lg:pl-10">
       {children}
     </View>
   );
@@ -100,11 +93,13 @@ function DocsHeader({ children }: { children: ReactNode }) {
             </Link>
           </View>
         </View>
-        <View className="flex flex-row items-center gap-3 sm:gap-4">
+        <View className="flex flex-row items-center gap-2 sm:gap-3">
+          <CommandSearchTrigger />
+          <ThemeCustomizer />
           <a
             href="https://github.com/loopy-lim/UniKit"
             aria-label="GitHub (새 창에서 열림)"
-            className="site-focusable font-sans text-sm text-muted-foreground transition-colors hover:text-foreground"
+            className="site-focusable hidden font-sans text-sm text-muted-foreground transition-colors hover:text-foreground lg:inline"
             rel="noreferrer"
             target="_blank"
           >
@@ -131,7 +126,7 @@ function docsNavLinkClass(active: boolean) {
 }
 
 /** 카탈로그 목차 본문 — 사이드바(md+)·드로어 공용 마크업 */
-function DocsNavGroups({
+const DocsNavGroups = memo(function DocsNavGroups({
   pathname,
   onNavigate,
   showAllLink = true,
@@ -140,20 +135,18 @@ function DocsNavGroups({
   onNavigate?: () => void;
   showAllLink?: boolean;
 }) {
-  const groups = catalogByCategory();
-
   return (
     <>
       {showAllLink ? (
         <Link
           href="/components"
           onClick={onNavigate}
-          className={`mb-5 ${docsNavLinkClass(pathname === "/components")}`}
+          className={cn("mb-5", docsNavLinkClass(pathname === "/components"))}
         >
           전체 목록
         </Link>
       ) : null}
-      {groups.map((group) => (
+      {CATALOG_GROUPS.map((group) => (
         <View key={group.category} className="mb-6">
           <Text className="mb-2.5 px-3 font-sans text-[11px] font-semibold uppercase tracking-[0.08em] text-muted-foreground">
             {group.label}
@@ -177,7 +170,7 @@ function DocsNavGroups({
       ))}
     </>
   );
-}
+});
 
 /** md+ 고정 사이드바 — 모바일은 DocsMobileNav 드로어가 담당 */
 function DocsSidebar() {
@@ -279,8 +272,8 @@ export function PreviewFrame({
     <View
       className={
         align === "start"
-          ? "site-preview-enter site-preview-stage flex min-h-44 items-start justify-start rounded-xl border border-border p-6 sm:p-8"
-          : "site-preview-enter site-preview-stage flex min-h-44 items-center justify-center rounded-xl border border-border p-6 sm:p-8"
+          ? "site-preview-stage flex min-h-44 items-start justify-start rounded-xl border border-border p-6 sm:p-8"
+          : "site-preview-stage flex min-h-44 items-center justify-center rounded-xl border border-border p-6 sm:p-8"
       }
     >
       <View
@@ -363,15 +356,65 @@ export function CodeBlock({
   );
 }
 
+type PackageManager = "bun" | "npm" | "pnpm";
+
 export function InstallSnippet({ name }: { name: string }) {
-  const cmd = `bunx shadcn@latest add https://ui.unikit.ll3.kr/r/${name}.json -y`;
+  const [pm, setPm] = useState<PackageManager>("bun");
+  const [copied, setCopied] = useState(false);
+  const [failed, setFailed] = useState(false);
+
+  const runner =
+    pm === "bun" ? "bunx --bun" : pm === "pnpm" ? "pnpm dlx" : "npx";
+  const cmd = `${runner} shadcn@latest add https://ui.unikit.ll3.kr/r/${name}.json -y`;
+
+  async function copy() {
+    try {
+      await navigator.clipboard.writeText(cmd);
+      setFailed(false);
+      setCopied(true);
+      window.setTimeout(() => setCopied(false), 1500);
+    } catch {
+      setCopied(false);
+      setFailed(true);
+      window.setTimeout(() => setFailed(false), 1500);
+    }
+  }
+
   return (
-    <View className="space-y-3">
+    <section id="installation" className="scroll-mt-24 space-y-3">
       <Text className="font-sans text-base font-semibold tracking-tight text-foreground">
         Installation
       </Text>
-      <CodeBlock code={cmd} label="Command" />
-    </View>
+      <View className="relative overflow-hidden rounded-xl border border-border bg-background">
+        <View className="flex flex-row items-center justify-between border-b border-border/80 px-3 py-2">
+          <View className="flex flex-row items-center gap-1">
+            {(["bun", "npm", "pnpm"] as const).map((item) => {
+              const active = pm === item;
+              return (
+                <button
+                  key={item}
+                  type="button"
+                  onClick={() => setPm(item)}
+                  className={
+                    active
+                      ? "site-focusable rounded-md bg-muted px-2.5 py-1 font-sans text-xs font-medium text-foreground"
+                      : "site-focusable rounded-md px-2.5 py-1 font-sans text-xs text-muted-foreground transition-colors hover:text-foreground"
+                  }
+                >
+                  {item}
+                </button>
+              );
+            })}
+          </View>
+          <Button variant="ghost" size="sm" onPress={copy}>
+            {failed ? "복사 실패" : copied ? "복사됨" : "복사"}
+          </Button>
+        </View>
+        <pre className="site-mono overflow-x-auto bg-muted/30 p-4 sm:p-5 text-[13px] leading-6 text-foreground">
+          <code>{cmd}</code>
+        </pre>
+      </View>
+    </section>
   );
 }
 
@@ -389,31 +432,48 @@ export function DemoPanel({
   code: string;
   align?: "center" | "start";
 }) {
+  const [copied, setCopied] = useState(false);
+
+  async function copyCode() {
+    try {
+      await navigator.clipboard.writeText(code);
+      setCopied(true);
+      window.setTimeout(() => setCopied(false), 1500);
+    } catch {
+      setCopied(false);
+    }
+  }
+
   return (
-    <View className="site-preview-enter overflow-hidden rounded-xl border border-border bg-background">
-      <View className="flex flex-row gap-1 border-b border-border bg-muted/20 px-3 py-2">
-        {(
-          [
-            ["preview", "미리보기"],
-            ["code", "코드"],
-          ] as const
-        ).map(([id, label]) => {
-          const active = tab === id;
-          return (
-            <button
-              key={id}
-              type="button"
-              onClick={() => onChange(id)}
-              className={
-                active
-                  ? "site-focusable rounded-md bg-background px-3 py-1.5 font-sans text-xs font-medium text-foreground"
-                  : "site-focusable rounded-md px-3 py-1.5 font-sans text-xs text-muted-foreground transition-colors hover:text-foreground"
-              }
-            >
-              {label}
-            </button>
-          );
-        })}
+    <View className="overflow-hidden rounded-xl border border-border bg-background">
+      <View className="flex flex-row items-center justify-between gap-2 border-b border-border bg-muted/20 px-3 py-2">
+        <View className="flex flex-row gap-1">
+          {(
+            [
+              ["preview", "미리보기"],
+              ["code", "코드"],
+            ] as const
+          ).map(([id, label]) => {
+            const active = tab === id;
+            return (
+              <button
+                key={id}
+                type="button"
+                onClick={() => onChange(id)}
+                className={
+                  active
+                    ? "site-focusable rounded-md bg-background px-3 py-1.5 font-sans text-xs font-medium text-foreground"
+                    : "site-focusable rounded-md px-3 py-1.5 font-sans text-xs text-muted-foreground transition-colors hover:text-foreground"
+                }
+              >
+                {label}
+              </button>
+            );
+          })}
+        </View>
+        <Button variant="ghost" size="sm" onPress={copyCode}>
+          {copied ? "복사됨" : "코드 복사"}
+        </Button>
       </View>
       {tab === "preview" ? (
         <View

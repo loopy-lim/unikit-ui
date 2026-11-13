@@ -1,6 +1,6 @@
 "use client";
 
-import { toast, Badge, Button, Toaster } from "@unikit-bridge/ui";
+import { toast, Badge, Button } from "@unikit-bridge/ui";
 import {
   Carousel,
   CarouselContent,
@@ -140,7 +140,6 @@ export const sonnerDemo: ShowcaseDemo = {
         >
           토스트 보내기
         </Button>
-        <Toaster position="bottom-right" richColors closeButton />
       </View>
     );
   },

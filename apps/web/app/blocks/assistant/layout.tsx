@@ -16,9 +16,8 @@ import {
   Home,
   Sparkles,
 } from "lucide-react";
-import { Badge, Toaster } from "@unikit-bridge/ui";
+import { Badge, cn } from "@unikit-bridge/ui";
 import { Text, View } from "@unikit-bridge/ui/primitives";
-import { UnikitThemeProvider } from "@unikit-bridge/ui";
 
 import { BlockThemeToggle, BrandMark } from "../../../components/blocks/block-chrome";
 
@@ -29,54 +28,51 @@ const NAV = [
 
 export default function DemoLayout({ children }: { children: ReactNode }) {
   return (
-    <UnikitThemeProvider>
-      <View className="flex h-dvh w-full flex-col overflow-hidden bg-background md:flex-row">
-        {/** 모바일 상단 바 + 탭 스트립 */}
-        <View className="md:hidden">
-          <View className="flex h-14 flex-row items-center justify-between border-b border-border px-4">
-            <Link href="/blocks/assistant">
-              <BrandMark label="UniKit 도우미" />
-            </Link>
-            <BlockThemeToggle floating={false} />
-          </View>
-          <View className="flex flex-row items-center gap-1 border-b border-border px-2 py-1.5">
-            {NAV.map((item) => (
-              <NavLink key={item.href} {...item} />
-            ))}
-          </View>
+    <View className="flex h-dvh w-full flex-col overflow-hidden bg-background md:flex-row">
+      {/** 모바일 상단 바 + 탭 스트립 */}
+      <View className="md:hidden">
+        <View className="flex h-14 flex-row items-center justify-between border-b border-border px-4">
+          <Link href="/blocks/assistant">
+            <BrandMark label="UniKit 도우미" />
+          </Link>
+          <BlockThemeToggle floating={false} />
         </View>
-        {/** 데스크톱 좌측 내비 */}
-        <View className="hidden w-56 shrink-0 flex-col border-r border-border bg-card md:flex">
-          {/** flex-row 필수 — 브리지 View는 flex-col을 기본 접두으로 붙인다 */}
-          <View className="flex h-16 flex-row items-center px-4">
-            <Link href="/blocks/assistant">
-              <BrandMark label="UniKit 도우미" />
-            </Link>
-          </View>
-          <View className="flex-1 gap-1 px-3">
-            {NAV.map((item) => (
-              <NavLink key={item.href} {...item} />
-            ))}
-            <View className="mt-4 gap-1 border-t border-border pt-3">
-              <ExternalLink href="/blocks" icon={Blocks} label="Blocks 목록" />
-              <ExternalLink href="/components" icon={BookOpen} label="컴포넌트 문서" />
-              <ExternalLink
-                href="https://github.com/loopy-lim/UniKit"
-                icon={ExternalLinkIcon}
-                label="GitHub"
-              />
-            </View>
-          </View>
-          <View className="flex flex-row items-center justify-between gap-2 px-4 py-4">
-            <Badge variant="secondary">데모 앱</Badge>
-            <BlockThemeToggle floating={false} />
-          </View>
+        <View className="flex flex-row items-center gap-1 border-b border-border px-2 py-1.5">
+          {NAV.map((item) => (
+            <NavLink key={item.href} {...item} />
+          ))}
         </View>
-        {/** 본문 — 페이지가 h-full로 채운다 */}
-        <View className="min-h-0 min-w-0 flex-1">{children}</View>
       </View>
-      <Toaster position="bottom-right" richColors closeButton />
-    </UnikitThemeProvider>
+      {/** 데스크톱 좌측 내비 */}
+      <View className="hidden w-56 shrink-0 flex-col border-r border-border bg-card md:flex">
+        {/** flex-row 필수 — 브리지 View는 flex-col을 기본 접두으로 붙인다 */}
+        <View className="flex h-16 flex-row items-center px-4">
+          <Link href="/blocks/assistant">
+            <BrandMark label="UniKit 도우미" />
+          </Link>
+        </View>
+        <View className="flex-1 gap-1 px-3">
+          {NAV.map((item) => (
+            <NavLink key={item.href} {...item} />
+          ))}
+          <View className="mt-4 gap-1 border-t border-border pt-3">
+            <ExternalLink href="/blocks" icon={Blocks} label="Blocks 목록" />
+            <ExternalLink href="/components" icon={BookOpen} label="컴포넌트 문서" />
+            <ExternalLink
+              href="https://github.com/loopy-lim/UniKit"
+              icon={ExternalLinkIcon}
+              label="GitHub"
+            />
+          </View>
+        </View>
+        <View className="flex flex-row items-center justify-between gap-2 px-4 py-4">
+          <Badge variant="secondary">데모 앱</Badge>
+          <BlockThemeToggle floating={false} />
+        </View>
+      </View>
+      {/** 본문 — 페이지가 h-full로 채운다 */}
+      <View className="min-h-0 min-w-0 flex-1">{children}</View>
+    </View>
   );
 }
 
@@ -96,11 +92,12 @@ function NavLink({
   return (
     <Link
       href={href}
-      className={`flex flex-row items-center gap-2.5 rounded-md px-3 py-2 font-sans text-sm ${
+      className={cn(
+        "flex flex-row items-center gap-2.5 rounded-md px-3 py-2 font-sans text-sm",
         active
           ? "bg-muted font-medium text-foreground"
-          : "text-muted-foreground web:transition-colors web:hover:bg-muted/50 web:hover:text-foreground"
-      }`}
+          : "text-muted-foreground web:transition-colors web:hover:bg-muted/50 web:hover:text-foreground",
+      )}
     >
       <Icon className="size-4" />
       <Text className="font-sans text-sm">{label}</Text>

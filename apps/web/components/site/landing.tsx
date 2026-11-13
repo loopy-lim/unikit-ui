@@ -38,10 +38,11 @@ import {
   TabsContent,
   TabsList,
   TabsTrigger,
-  UnikitThemeProvider,
   useUnikitTheme,
 } from "@unikit-bridge/ui";
 import { SiteBrand, UnikitMark } from "./brand";
+import { ThemeCustomizer } from "./site-theme";
+import { CommandSearchTrigger } from "../showcase/command-search";
 
 /** Hero·TeaserSection 공통 CTA 링크 클래스 — 문자열이 같아 상수로 공유(한쪽만 고치면 외관이 갈라진다) */
 const CTA_PRIMARY_CLASS =
@@ -69,7 +70,7 @@ function SiteNav() {
     <header className="border-b border-border/80">
       <div className="mx-auto flex h-16 w-full max-w-7xl items-center justify-between gap-4 px-4 sm:px-6 lg:px-8">
         <SiteBrand />
-        <nav className="flex items-center gap-3 text-sm">
+        <nav className="flex items-center gap-2.5 text-sm sm:gap-3">
           <Link
             href="/blocks"
             className="site-focusable text-muted-foreground transition-colors hover:text-foreground"
@@ -90,6 +91,8 @@ function SiteNav() {
           >
             GitHub
           </a>
+          <CommandSearchTrigger />
+          <ThemeCustomizer />
           <ThemeToggle />
         </nav>
       </div>
@@ -324,7 +327,7 @@ function Footer() {
   return (
     <footer className="border-t border-border/60 py-10">
       <div className="mx-auto max-w-7xl px-4 text-center text-xs text-muted-foreground sm:px-6 lg:px-8">
-        UniKit v0.2 — React, React Native, shadcn-shaped
+        UniKit v0.3 — React, React Native, shadcn-shaped
       </div>
     </footer>
   );
@@ -332,17 +335,15 @@ function Footer() {
 
 export function LandingPage() {
   return (
-    <UnikitThemeProvider>
-      <div className="site-canvas">
-        <SiteNav />
-        <main>
-          <Hero />
-          <ValueSection />
-          <InstallSection />
-          <TeaserSection />
-        </main>
-        <Footer />
-      </div>
-    </UnikitThemeProvider>
+    <div className="site-canvas">
+      <SiteNav />
+      <main>
+        <Hero />
+        <ValueSection />
+        <InstallSection />
+        <TeaserSection />
+      </main>
+      <Footer />
+    </div>
   );
 }

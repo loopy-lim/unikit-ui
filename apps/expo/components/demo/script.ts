@@ -97,12 +97,12 @@ const ANSWERS: DemoAnswer[] = [
   {
     keywords: ["몇 종", "컴포넌트 수", "구성", "규모", "레지스트리", "아이템"],
     answer:
-      "지금 UniKit은 packages/unikit/src/components에 61종이 있고, registry.json에는 66아이템(UI 61 + utils 1 + theme 4)이 등록돼 있어요.\n\n같은 본문이 registry/ui 트리에도 사본으로 들어 있어서 소비자 프로젝트로 복사할 수 있어요. 쇼케이스의 Components 목록이 그 61종을 전부 살리고 있으니 둘러보세요.",
+      "지금 UniKit은 packages/unikit/src/components에 61종이 있고, registry.json에는 67아이템(UI 61 + utils 1 + theme 4 + animations 1)이 등록돼 있어요.\n\n같은 본문이 registry/ui 트리에도 사본으로 들어 있어서 소비자 프로젝트로 복사할 수 있어요. 쇼케이스의 Components 목록이 그 61종을 전부 살리고 있으니 둘러보세요.",
   },
   {
     keywords: ["설치", "install", "시작", "추가", "add"],
     answer:
-      "두 가지 방법이 있어요.\n\n1) npm 패키지 — bun add @unikit-bridge/ui 로 설치해요. 현재 게시분은 0.2.0이고, 게시 시점 기준 28종이에요.\n\n2) 소스 복사 — shadcn CLI 규격 레지스트리(/r/registry.json)에서 컴포넌트 소스를 내 프로젝트로 가져와요. 복사한 코드는 내 것이 되니 자유롭게 고칠 수 있고, 최신 61종을 모두 쓸 수 있어요.",
+      "두 가지 방법이 있어요.\n\n1) npm 패키지 — bun add @unikit-bridge/ui 로 설치해요(0.3.0부터 61종 전량 포함).\n\n2) 소스 복사 — shadcn CLI 규격 레지스트리(/r/registry.json)에서 컴포넌트 소스를 내 프로젝트로 가져와요. 복사한 코드는 내 것이 되니 자유롭게 고칠 수 있어요.",
   },
   {
     keywords: ["브리지", "네이티브", "웹", "플랫폼", "크로스", "같은", "어떻게 하나"],

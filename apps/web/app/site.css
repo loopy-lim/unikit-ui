@@ -73,23 +73,6 @@
   background-position: 0 0, 0 0, 0 0;
 }
 
-.site-fade-up {
-  /* 불필요한 진입 애니메이션 제거 */
-}
-
-.site-fade-up-delay {
-  /* 불필요한 지연 애니메이션 제거 */
-}
-
-/* 쇼케이스 문서 — 라우트 전환·카드·프리뷰 */
-.site-docs-enter {
-  /* 불필요한 라우트 애니메이션 제거 */
-}
-
-.site-preview-enter {
-  /* 불필요한 프리뷰 애니메이션 제거 */
-}
-
 /* 쇼케이스 Preview 스테이지 — AI-slop 점 격자 제거하고 깔끔한 배경 사용 */
 .site-preview-stage {
   background-color: hsl(var(--background));
@@ -99,10 +82,6 @@
   transition:
     border-color 150ms ease,
     background-color 150ms ease;
-}
-
-.site-card:hover {
-  /* 들뜸 애니메이션(translateY) 제거 */
 }
 
 .site-nav-link {
@@ -140,23 +119,16 @@
   animation: unikit-zoom-in 160ms cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 
+.unikit-toast-in {
+  animation: unikit-toast-in 220ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
 .site-stage-band {
   background-color: hsl(var(--card) / 0.5);
 }
 
 .site-band {
   background-color: hsl(var(--muted) / 0.3);
-}
-
-@keyframes site-fade-up {
-  from {
-    opacity: 0;
-    transform: translateY(12px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
 }
 
 @keyframes unikit-fade-in {
@@ -223,23 +195,27 @@
   }
 }
 
+@keyframes unikit-toast-in {
+  from {
+    opacity: 0;
+    transform: translateY(10px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
-  .site-fade-up,
-  .site-fade-up-delay,
-  .site-docs-enter,
-  .site-preview-enter,
   .unikit-backdrop-in,
   .unikit-dialog-in,
   .unikit-sheet-in-top,
   .unikit-sheet-in-bottom,
   .unikit-sheet-in-left,
   .unikit-sheet-in-right,
-  .unikit-popover-in {
+  .unikit-popover-in,
+  .unikit-toast-in {
     animation: none;
-  }
-
-  .site-card:hover {
-    transform: none;
   }
 }
 

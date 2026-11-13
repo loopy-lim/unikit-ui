@@ -1,7 +1,6 @@
 import { notFound } from "next/navigation";
 
 import { catalog, getCatalogItem } from "../../../components/showcase/catalog";
-import { demos } from "../../../components/showcase/demos";
 
 import { ComponentDoc } from "./component-doc";
 
@@ -15,7 +14,7 @@ export default async function ShowcaseComponentPage({
   params: Promise<{ name: string }>;
 }) {
   const { name } = await params;
-  if (!getCatalogItem(name) || !demos[name]) {
+  if (!getCatalogItem(name)) {
     notFound();
   }
   return <ComponentDoc name={name} />;

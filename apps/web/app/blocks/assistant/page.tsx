@@ -16,7 +16,7 @@ import {
   Sparkles,
   type LucideIcon,
 } from "lucide-react";
-import { Badge, Card, CardContent, CardDescription, CardHeader, CardTitle } from "@unikit-bridge/ui";
+import { Badge, Card, CardContent, CardDescription, CardHeader, CardTitle, cn } from "@unikit-bridge/ui";
 import {
   Item,
   ItemActions,
@@ -119,7 +119,7 @@ export default function DemoHomePage() {
                   href={`/blocks/assistant/chat?q=${encodeURIComponent(r.prompt)}`}
                   className="web:transition-opacity web:hover:opacity-80"
                 >
-                  <Item className={index === 0 ? "border-t-0" : ""}>
+                  <Item className={cn(index === 0 && "border-t-0")}>
                     <ItemMedia className="flex size-9 items-center justify-center rounded-md bg-muted">
                       <MessageSquare className="size-4 text-muted-foreground" />
                     </ItemMedia>
