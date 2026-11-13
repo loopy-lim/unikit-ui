@@ -1,4 +1,4 @@
-// Card — shadcn/ui new-york-v4 card를 UniKit 유니버설로 이식. 하위 5종 포함 총 6종 export.
+// Card — shadcn/ui new-york-v4 card를 UniKit UI 유니버설로 이식. 하위 5종 포함 총 6종 export.
 // 포팅 판단:
 // - Card의 text-card-foreground는 §0.5（상속 차단）로 자식 Text에 닿지 않아 클래스에서
 //   제외 — 대신 CardTitle·Description 내부 Text에 전경색을 이중 지정한다.

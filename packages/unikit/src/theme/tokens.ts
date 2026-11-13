@@ -1,5 +1,5 @@
 /**
- * UniKit 디자인 토큰 — 라이트/다크 단일 출처（single source of truth）.
+ * UniKit UI 디자인 토큰 — 라이트/다크 단일 출처（single source of truth）.
  *
  * 값의 원천: docs/sdd/02-design.md §2.1（색 19종, HSL 채널값）·§2.2（반경）.
  * 값 형식은 TW3 `hsl（var（--token））` 매핑과 호환하는 HSL 채널 문자열（"H S% L%"）이며,

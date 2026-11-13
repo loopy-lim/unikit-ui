@@ -1,6 +1,6 @@
 "use client";
 /**
- * 데모 앱 채팅 화면(웹) — "UniKit 도우미".
+ * 데모 앱 채팅 화면(웹) — "UniKit UI 도우미".
  * message 족(MessageScroller·Message·Bubble) + attachment(업로드 Progress) +
  * select·sheet·slider·switch·field·separator + 헤더 ⋯ 오버플로우(DropdownMenu)를
  * 실제 앱 화면처럼 조합한 견본이다. 답변은 components/blocks/script.ts의 대본 스트리밍.
@@ -122,7 +122,7 @@ export function AssistantScreen() {
   const [creativity, setCreativity] = useState(40);
   const [streaming, setStreaming] = useState(true);
   const [systemPrompt, setSystemPrompt] = useState(
-    "UniKit에 대해 한국어로 친절하게 답하는 데모 도우미.",
+    "UniKit UI에 대해 한국어로 친절하게 답하는 데모 도우미.",
   );
 
   const idRef = useRef(0);
@@ -294,7 +294,7 @@ export function AssistantScreen() {
         </Avatar>
         <View className="min-w-0 flex-1 flex-col">
           <Text className="font-sans text-sm font-semibold text-foreground web:truncate">
-            UniKit 도우미
+            UniKit UI 도우미
           </Text>
           {/** 부제는 데스크톱 폭에서만 — 모바일에서는 감겨서 헤더가 지저분해진다 */}
           <Text className="hidden font-sans text-xs text-muted-foreground md:block">
@@ -352,7 +352,7 @@ export function AssistantScreen() {
               </EmptyMedia>
               <EmptyTitle>무엇이 궁금하세요?</EmptyTitle>
               <EmptyDescription>
-                UniKit에 대해 물어보세요. 답변은 미리 쓴 대본을 흘려 보내요.
+                UniKit UI에 대해 물어보세요. 답변은 미리 쓴 대본을 흘려 보내요.
               </EmptyDescription>
             </EmptyHeader>
             <EmptyContent className="w-full gap-2">
@@ -541,7 +541,7 @@ export function AssistantScreen() {
                   send();
                 }
               }}
-              placeholder="UniKit에 대해 물어보세요"
+              placeholder="UniKit UI에 대해 물어보세요"
               className="min-h-9 flex-1 resize-none border-0 bg-transparent px-2 shadow-none focus-visible:border-transparent focus-visible:ring-0 focus-visible:ring-offset-0"
             />
             <Button

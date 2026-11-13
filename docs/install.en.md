@@ -1,4 +1,4 @@
-# Add UniKit to your project
+# Add UniKit UI to your project
 
 [한국어](install.md) · **English**
 
@@ -27,7 +27,7 @@ Then wire the styling engine:
 
   ```css
   @custom-variant dark (&:where(.dark, .dark *));
-  @custom-variant web (&:where(:root, :root *));   /* enable UniKit web: classes */
+  @custom-variant web (&:where(:root, :root *));   /* enable UniKit UI web: classes */
   @source '../node_modules/@unikit-bridge/ui/src'; /* scan package class strings */
   ```
 
@@ -60,7 +60,7 @@ export default function Home() {
 
 ## Option 2 — copy sources with shadcn CLI
 
-Public registry base: <https://ui.ll3.kr/r/> (catalog: [registry.json](https://ui.ll3.kr/r/registry.json)). While hacking UniKit itself, swap in `http://localhost:3000/r/`.
+Public registry base: <https://ui.ll3.kr/r/> (catalog: [registry.json](https://ui.ll3.kr/r/registry.json)). While hacking UniKit UI itself, swap in `http://localhost:3000/r/`.
 
 What you get: one component file (`components/unikit/<name>.tsx`) plus auto-installed deps. Deps stay minimal — shared `@unikit-bridge/ui`, plus only what that component imports (cva · clsx · tailwind-merge · tailwindcss). `form` optionally peers `react-hook-form`; `chart` peers `react-native-svg`. Copied `cn` imports resolve to `@/lib/utils`; bridge primitives resolve to `@unikit-bridge/ui/primitives`.
 
@@ -76,7 +76,7 @@ bunx shadcn@latest init -b base -p nova -y
 
 > Keep the Tailwind v4 setup from create-next-app — no downgrade or extra config file.
 
-### Step 2 — pull components from the UniKit registry
+### Step 2 — pull components from the UniKit UI registry
 
 In the consumer project:
 
@@ -92,10 +92,10 @@ bunx shadcn@latest add https://ui.ll3.kr/r/button.json https://ui.ll3.kr/r/card.
 
 67 registry items (UI 61 + utils 1 + theme 4 + animations 1): <https://ui.ll3.kr/r/registry.json>. Sources land under `components/unikit/`.
 
-> **Local registry** — while editing UniKit, run `cd apps/web && bun x next dev -p 3000` and use `http://localhost:3000/r/...` instead.
+> **Local registry** — while editing UniKit UI, run `cd apps/web && bun x next dev -p 3000` and use `http://localhost:3000/r/...` instead.
 
 > **shadcn CLI 4.23 notes**
-> - `lib/utils.ts` may be skipped as “already exists” — init’s `cn` is fine for UniKit.
+> - `lib/utils.ts` may be skipped as “already exists” — init’s `cn` is fine for UniKit UI.
 > - Leading source comments are stripped on copy — no functional impact.
 
 ### Step 3 — required consumer settings
@@ -130,7 +130,7 @@ export default nextConfig;
 bunx shadcn@latest add https://ui.ll3.kr/r/theme.json -y
 ```
 
-That injects 20 UniKit tokens into `:root` / `.dark`. Details: [packages/unikit/docs/tokens.md](../packages/unikit/docs/tokens.md).
+That injects 20 UniKit UI tokens into `:root` / `.dark`. Details: [packages/unikit/docs/tokens.md](../packages/unikit/docs/tokens.md).
 
 Web overlay entry animations (optional; pulled in by dialog/sheet/popover/drawer/alert-dialog):
 

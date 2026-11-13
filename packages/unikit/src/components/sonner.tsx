@@ -9,7 +9,7 @@
 //   toast.custom（JSX 렌더）action/cancel 버튼description 외 sonner 고유
 //   프로퍼티（unstylediconsoffset 등）는 미지원 — 원본 shadcn 래퍼도 쓰지
 //   않는 범위다（제한 기록）.
-// - theme（받아서 무시했던 next-themes 연동）은 제거 — 스타일은 UniKit 팝오버
+// - theme（받아서 무시했던 next-themes 연동）은 제거 — 스타일은 UniKit UI 팝오버
 //   토큰（bg-popovertext-popover-foregroundborder）으로 통일했다（원본이
 //   --normal-bg=var（--popover） 등으로 매핑하던 것의 정착）.
 // - 비모달 오버레이: ModalOverlay（백드롭포커스 트랩ESC스크롤 잠금 포함）가

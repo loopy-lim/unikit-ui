@@ -5,11 +5,11 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/loopy-lim/UniKit.git",
+    "url": "git+https://github.com/loopy-lim/unikit-ui.git",
     "directory": "packages/unikit"
   },
-  "homepage": "https://github.com/loopy-lim/UniKit#readme",
-  "bugs": "https://github.com/loopy-lim/UniKit/issues",
+  "homepage": "https://github.com/loopy-lim/unikit-ui#readme",
+  "bugs": "https://github.com/loopy-lim/unikit-ui/issues",
   "keywords": [
     "react-native",
     "expo",

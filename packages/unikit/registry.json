@@ -1,13 +1,13 @@
 {
   "$schema": "https://ui.shadcn.com/schema/registry.json",
-  "name": "unikit",
+  "name": "unikit-ui",
   "homepage": "https://ui.ll3.kr/r/registry.json",
   "items": [
     {
       "name": "utils",
       "type": "registry:lib",
       "title": "cn utility",
-      "description": "clsx + tailwind-merge를 합성한 shadcn/ui 표준 cn 유틸리티. UniKit 컴포넌트 전체의 유일한 로컬 의존성.",
+      "description": "clsx + tailwind-merge를 합성한 shadcn/ui 표준 cn 유틸리티. UniKit UI 컴포넌트 전체의 유일한 로컬 의존성.",
       "files": [
         {
           "path": "registry/lib/utils.ts",
@@ -19,7 +19,7 @@
     {
       "name": "theme",
       "type": "registry:theme",
-      "title": "UniKit 디자인 토큰 (라이트/다크)",
+      "title": "UniKit UI 디자인 토큰 (라이트/다크)",
       "description": "tokens.ts 단일 출처에서 생성된 디자인 토큰 20종(색 19 + radius). add 한 번으로 소비자 CSS에 :root/.dark 변수가 주입됩니다. 재생성은 `bun run generate:design`.",
       "cssVars": {
         "light": {
@@ -71,8 +71,8 @@
     {
       "name": "theme-blue",
       "type": "registry:theme",
-      "title": "UniKit 프리셋 테마 — Blue (slate 중립)",
-      "description": "UniKit 프리셋 테마(Blue / 중립 slate). Tailwind 공식 팔레트에서 계산해 WCAG 대비(라이트 기준 ≥4.5:1)를 검증한 값입니다. 같은 방식으로 add하면 기존 토큰 값을 그 자리에서 교체합니다.",
+      "title": "UniKit UI 프리셋 테마 — Blue (slate 중립)",
+      "description": "UniKit UI 프리셋 테마(Blue / 중립 slate). Tailwind 공식 팔레트에서 계산해 WCAG 대비(라이트 기준 ≥4.5:1)를 검증한 값입니다. 같은 방식으로 add하면 기존 토큰 값을 그 자리에서 교체합니다.",
       "cssVars": {
         "light": {
           "--background": "0 0% 100%",
@@ -123,8 +123,8 @@
     {
       "name": "theme-emerald",
       "type": "registry:theme",
-      "title": "UniKit 프리셋 테마 — Emerald (zinc 중립)",
-      "description": "UniKit 프리셋 테마(Emerald / 중립 zinc). Tailwind 공식 팔레트에서 계산해 WCAG 대비(라이트 기준 ≥4.5:1)를 검증한 값입니다. 같은 방식으로 add하면 기존 토큰 값을 그 자리에서 교체합니다.",
+      "title": "UniKit UI 프리셋 테마 — Emerald (zinc 중립)",
+      "description": "UniKit UI 프리셋 테마(Emerald / 중립 zinc). Tailwind 공식 팔레트에서 계산해 WCAG 대비(라이트 기준 ≥4.5:1)를 검증한 값입니다. 같은 방식으로 add하면 기존 토큰 값을 그 자리에서 교체합니다.",
       "cssVars": {
         "light": {
           "--background": "0 0% 100%",
@@ -175,8 +175,8 @@
     {
       "name": "theme-amber",
       "type": "registry:theme",
-      "title": "UniKit 프리셋 테마 — Amber (stone 중립)",
-      "description": "UniKit 프리셋 테마(Amber / 중립 stone). Tailwind 공식 팔레트에서 계산해 WCAG 대비(라이트 기준 ≥4.5:1)를 검증한 값입니다. 같은 방식으로 add하면 기존 토큰 값을 그 자리에서 교체합니다.",
+      "title": "UniKit UI 프리셋 테마 — Amber (stone 중립)",
+      "description": "UniKit UI 프리셋 테마(Amber / 중립 stone). Tailwind 공식 팔레트에서 계산해 WCAG 대비(라이트 기준 ≥4.5:1)를 검증한 값입니다. 같은 방식으로 add하면 기존 토큰 값을 그 자리에서 교체합니다.",
       "cssVars": {
         "light": {
           "--background": "0 0% 100%",
@@ -996,7 +996,7 @@
       "name": "attachment",
       "type": "registry:ui",
       "title": "Attachment",
-      "description": "shadcn/ui(new-york-v4) attachment의 유니버설(웹+네이티브 한 벌 소스) 포팅. 포팅 판단(원본 대비 차이·이유): 재사용한다(원본 의존과 동일 구성). 원본 기본 size \"icon-xs\"는 UniKit",
+      "description": "shadcn/ui(new-york-v4) attachment의 유니버설(웹+네이티브 한 벌 소스) 포팅. 포팅 판단(원본 대비 차이·이유): 재사용한다(원본 의존과 동일 구성). 원본 기본 size \"icon-xs\"는 UniKit UI",
       "files": [
         {
           "path": "registry/ui/attachment.tsx",

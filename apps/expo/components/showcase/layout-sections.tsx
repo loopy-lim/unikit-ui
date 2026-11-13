@@ -92,7 +92,7 @@ function SidebarFixedDemo() {
       <Sidebar collapsible="offcanvas">
         <SidebarHeader className="p-3">
           <Badge variant="secondary" className="self-start">
-            UniKit
+            UniKit UI
           </Badge>
         </SidebarHeader>
         <SidebarContent>

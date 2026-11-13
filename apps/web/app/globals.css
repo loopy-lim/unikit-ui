@@ -1,7 +1,7 @@
 @import "tailwindcss";
 
 /*
- * UniKit — 표준 Tailwind v4 전역 CSS(엔진 교체: NativeWind/RNW → DOM 브리지).
+ * UniKit UI — 표준 Tailwind v4 전역 CSS(엔진 교체: NativeWind/RNW → DOM 브리지).
  *
  * - @custom-variant dark: .dark 클래스 기반(shadcn 표준). UnikitThemeProvider의
  *   웹 브리지가 document.documentElement에 .dark를 토글한다.
@@ -45,7 +45,7 @@
 /* UNIKIT-THEME-MAP:END */
 
 /*
- * UniKit 디자인 토큰(T-5) — 값의 단일 출처는 packages/unikit/src/theme/tokens.ts다.
+ * UniKit UI 디자인 토큰(T-5) — 값의 단일 출처는 packages/unikit/src/theme/tokens.ts다.
  * 아래 마커 사이 블록은 `bun run generate:design`(packages/unikit)이 생성하므로
  * 이 영역은 수동 수정 금지다(일관성은 `bun run audit:design`이 검사).
  * 런타임 스킴 전환은 UnikitThemeProvider(웹 브리지 — .dark 토글)가 담당한다.

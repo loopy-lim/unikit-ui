@@ -44,7 +44,7 @@ export const accordionDemo: ShowcaseDemo = {
     return (
       <Accordion defaultValue="what" className="w-full max-w-sm">
         <AccordionItem value="what">
-          <AccordionTrigger>UniKit이 뭔가요?</AccordionTrigger>
+          <AccordionTrigger>UniKit UI가 뭔가요?</AccordionTrigger>
           <AccordionContent>
             <Text className="font-sans text-sm text-muted-foreground">
               웹·앱 공통 UI 컴포넌트 모음이에요.

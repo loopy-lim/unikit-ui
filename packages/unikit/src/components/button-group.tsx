@@ -1,4 +1,4 @@
-// ButtonGroup — shadcn/ui new-york-v4 button-group을 UniKit 유니버설로 이식.
+// ButtonGroup — shadcn/ui new-york-v4 button-group을 UniKit UI 유니버설로 이식.
 //
 // 포팅 판단（자식 셀렉터 제거）:
 // - 원본의 붙임（attach） 처리는 자식 셀렉터（［&>*:not（:first-child）］:

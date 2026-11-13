@@ -324,7 +324,7 @@ function AccordionDemo() {
   return (
     <Accordion defaultValue="what">
       <AccordionItem value="what">
-        <AccordionTrigger>UniKit이 뭔가요?</AccordionTrigger>
+        <AccordionTrigger>UniKit UI가 뭔가요?</AccordionTrigger>
         <AccordionContent>
           <Text className="font-sans text-sm text-muted-foreground">
             한 벌 소스로 React(웹)와 React Native 양쪽에 같은 모습을 내는
@@ -517,7 +517,7 @@ function ItemDemo() {
       <ItemContent>
         <ItemTitle>즐겨찾는 프로젝트</ItemTitle>
         <ItemDescription>
-          어디서나 같은 모습으로 열리는 UniKit이에요.
+          어디서나 같은 모습으로 열리는 UniKit UI예요.
         </ItemDescription>
       </ItemContent>
       <ItemActions>

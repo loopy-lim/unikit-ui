@@ -1,4 +1,4 @@
-# UniKit bun 설정
+# UniKit UI bun 설정
 # R-2(bun 판, 2026-11-07): bun 기본 isolated linker는 루트 node_modules를 비워 둔다.
 # Expo/Metro·babel(babel.config.js의 babel-preset-expo 등)은 앱 디렉터리에서
 # 상향 해석으로 의존성을 찾는데, apps/expo/node_modules에는 직접 의존성만 링크되어

@@ -5,7 +5,7 @@
  *   bun run check:consumer <소비자 globals.css 경로> <프리셋: zinc|blue|emerald|amber>
  *
  * 동작: 중괄호 깊이 파사(문자 단위 depth 계산)로 `:root`·`.dark` 선언 블록을 추출해
- * UniKit 토큰 20종만 대조한다. 소비자 자산(`--sidebar*`, `--chart-*` 등)은 무시하고,
+ * UniKit UI 토큰 20종만 대조한다. 소비자 자산(`--sidebar*`, `--chart-*` 등)은 무시하고,
  * 값은 shadcn CLI가 넣는 `hsl(...)` 함수 래핑 양쪽(래핑/비래핑)을 허용한다(스트립 후 비교).
  * 20키 전부 양 스킴에서 일치하면 exit 0, 아니면 불일치 상세 출력 후 exit 1.
  *
@@ -92,7 +92,7 @@ for (const [scheme, tokens] of [["light", expected.light], ["dark", expected.dar
       mismatches++;
     } else ok++;
   }
-  console.log(`[${ok === keys.length ? "OK" : "FAIL"}] ${selector}: UniKit ${keys.length}키 중 ${ok} 일치 (소비자 자산 ${Object.keys(got).length - keys.length}키 무시)`);
+  console.log(`[${ok === keys.length ? "OK" : "FAIL"}] ${selector}: UniKit UI ${keys.length}키 중 ${ok} 일치 (소비자 자산 ${Object.keys(got).length - keys.length}키 무시)`);
 }
 
 if (mismatches === 0) {

@@ -178,7 +178,7 @@ export const cardDemo: ShowcaseDemo = {
             <Label nativeID="card-name">이름</Label>
             <Input
               accessibilityLabelledBy="card-name"
-              placeholder="UniKit Demo"
+              placeholder="UniKit UI Demo"
             />
           </View>
           <View className="flex flex-col gap-2">
@@ -500,7 +500,7 @@ export const itemDemo: ShowcaseDemo = {
         </ItemMedia>
         <ItemContent>
           <ItemTitle>즐겨찾기</ItemTitle>
-          <ItemDescription>UniKit 프로젝트</ItemDescription>
+          <ItemDescription>UniKit UI 프로젝트</ItemDescription>
         </ItemContent>
         <ItemActions>
           <Button variant="outline" size="sm">

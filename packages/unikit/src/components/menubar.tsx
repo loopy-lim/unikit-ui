@@ -22,7 +22,7 @@
 //   children은 자체 Text로 감싸 조건부 전경을 직접 준다 — 요소 자식은 그대로 전달돼
 //   dropdown 트리거의 wrapTextChildren이 통과시킨다（select 트리거 위임 패턴）.
 //   배경 하이라이트는 web:focus-visible·web:hover·active·isOpen 조건부 근사
-//   （UniKit 관행 — 네이티브 hover 부재）, 라벨 전경은 web:hover·active·isOpen로만
+//   （UniKit UI 관행 — 네이티브 hover 부재）, 라벨 전경은 web:hover·active·isOpen로만
 //   근사한다. 라벨의 focus-visible 전환은 Pressable 포커스 계약 부재로 미구현 —
 //   한계·로드맵（input-group과 동일 계열, 사이클 72 G3 F-1）.
 // - MenubarContent: 원본 기본값（align startsideOffset 8） 유지, min-w-［12rem］

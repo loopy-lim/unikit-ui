@@ -1,4 +1,4 @@
-// 데모 앱 채팅 화면(엑스포) — "UniKit 도우미". 웹 사본(apps/web/components/
+// 데모 앱 채팅 화면(엑스포) — "UniKit UI 도우미". 웹 사본(apps/web/components/
 // blocks/assistant-screen.tsx)과 같은 구성: 대본 스트리밍 · 첨부(업로드
 // Progress) · 모델 전환 · 헤더 ⋯ 오버플로우(DropdownMenu) · 설정 시트(Field+
 // Separator). 차이는 키보드 회피(KeyboardAvoidingView)·공유(Share)·시트 방향
@@ -130,7 +130,7 @@ export default function DemoChat() {
   const [creativity, setCreativity] = useState(40);
   const [streaming, setStreaming] = useState(true);
   const [systemPrompt, setSystemPrompt] = useState(
-    "UniKit에 대해 한국어로 친절하게 답하는 데모 도우미.",
+    "UniKit UI에 대해 한국어로 친절하게 답하는 데모 도우미.",
   );
 
   const idRef = useRef(0);
@@ -318,7 +318,7 @@ export default function DemoChat() {
                 className="font-sans text-base font-semibold text-foreground"
                 numberOfLines={1}
               >
-                UniKit 도우미
+                UniKit UI 도우미
               </Text>
               <Badge variant="secondary" className="px-1.5 py-0">
                 데모
@@ -379,7 +379,7 @@ export default function DemoChat() {
                   </EmptyMedia>
                   <EmptyTitle>무엇이 궁금하세요?</EmptyTitle>
                   <EmptyDescription>
-                    UniKit에 대해 물어보세요. 답변은 미리 쓴 대본을 흘려 보내요.
+                    UniKit UI에 대해 물어보세요. 답변은 미리 쓴 대본을 흘려 보내요.
                   </EmptyDescription>
                 </EmptyHeader>
                 <EmptyContent className="w-full gap-2">
@@ -552,7 +552,7 @@ export default function DemoChat() {
               <Textarea
                 value={input}
                 onChangeText={setInput}
-                placeholder="UniKit에 대해 물어보세요"
+                placeholder="UniKit UI에 대해 물어보세요"
                 className="min-h-9 flex-1 border-0 bg-transparent px-1"
               />
               <Button

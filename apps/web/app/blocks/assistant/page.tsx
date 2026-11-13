@@ -1,6 +1,6 @@
 "use client";
 /**
- * 데모 앱 홈(웹) — "UniKit 도우미" 앱의 대문.
+ * 데모 앱 홈(웹) — "UniKit UI 도우미" 앱의 대문.
  * 인사 · 빠른 질문 카드 · 이어서 하기 목록만 담고, 실제 대화는
  * /blocks/assistant/chat로 넘어간다(q 파라미터로 질문을 실어 보낸다).
  * 엑스포 사본은 apps/expo/app/demo/index.tsx. 아이콘은 lucide-react.

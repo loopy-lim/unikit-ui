@@ -1,6 +1,6 @@
-# UniKit 컴포넌트 로드맵 — shadcn 카탈로그 전량 이식 완료
+# UniKit UI 컴포넌트 로드맵 — shadcn 카탈로그 전량 이식 완료
 
-shadcn/ui(new-york-v4)의 `registry:ui` 61종을 UniKit 유니버설(한 벌 소스 → 웹·네이티브 동일 렌더)로 가져오는 작업이 **2026-11-10에 61/61 전량 완료**됐어요. 이 문서는 완료 이력, 브리지 계약상 아직 재현하지 못한 **미지원 기능 로드맵**, 그리고 **경쟁 현황**을 정리해요. 수치의 기준일: 2026-11-10.
+shadcn/ui(new-york-v4)의 `registry:ui` 61종을 UniKit UI 유니버설(한 벌 소스 → 웹·네이티브 동일 렌더)로 가져오는 작업이 **2026-11-10에 61/61 전량 완료**됐어요. 이 문서는 완료 이력, 브리지 계약상 아직 재현하지 못한 **미지원 기능 로드맵**, 그리고 **경쟁 현황**을 정리해요. 수치의 기준일: 2026-11-10.
 
 ## 현재 상태: 61 / 61종 완료
 
@@ -106,7 +106,7 @@ shadcn/ui(new-york-v4)의 `registry:ui` 61종을 UniKit 유니버설(한 벌 소
 
 ## 경쟁 현황 (2026-11-10 실측 — docs/sdd/51-research.md §4)
 
-| 항목 | shadcn/ui | Astryx | react-native-reusables | UniKit |
+| 항목 | shadcn/ui | Astryx | react-native-reusables | UniKit UI |
 |---|---|---|---|---|
 | 카탈로그 | 61종(ui 디렉터리)·66(문서) | 코어 122 디렉터리 | 32종(+인증 폼 14) | **61종 — 전량 유니버설** |
 | 플랫폼 범위 | 웹(3엔진) | 웹 안정 + SwiftUI 실험(canary) | RN 중심 | **웹+RN 단일 소스** |
@@ -114,10 +114,10 @@ shadcn/ui(new-york-v4)의 `registry:ui` 61종을 UniKit 유니버설(한 벌 소
 | AI 계층 | MCP 7도구·skills/ | "agent ready"·AGENTS.md | — | llms.txt·AGENTS.md(이번 사이클) → MCP 과제 |
 
 - **shadcn/ui** — 2026-10 Trace·Code Block 추가, AI Elements 21 패턴. RN 공식 지원은 여전히 없어요.
-- **Astryx**(Meta) — ★20,252·주간 다운로드 약 66만. `@astryxdesign/native` v0.1.0(canary)은 SwiftUI 네이티브 뷰 + JS 코어(JSON 브리지) 실험 — "React Native and Android bindings are not built yet". UniKit(React 단일 소스 + RN 브리지)과는 접근 자체가 달라요.
+- **Astryx**(Meta) — ★20,252·주간 다운로드 약 66만. `@astryxdesign/native` v0.1.0(canary)은 SwiftUI 네이티브 뷰 + JS 코어(JSON 브리지) 실험 — "React Native and Android bindings are not built yet". UniKit UI(React 단일 소스 + RN 브리지)과는 접근 자체가 달라요.
 - **react-native-reusables** — ★8,720, 마지막 푸시 2026-09-27(약 6주 공백). nativewind·uniwind 이중 발행, 인증 폼 패턴 14항목이 컴포넌트와 혼재.
 - **@aniui·@tetra-ui**(신규 확인) — shadcn 커뮤니티 디렉터리에 등재된 RN 전용 경쟁자예요. @aniui는 93종(uniwind/NativeWind)이지만 현재 디렉터리 헬스 unavailable(30일 가용성 3%)·숨김 처리, @tetra-ui는 45종 healthy예요. 둘 다 RN 전용이라 웹+RN 단일 소스 포지션엔 영향이 없어요(2026-11-10 실측 — docs/sdd/51-research.md §4.6).
-- **UniKit 위치** — "shadcn 카탈로그 전량 + 웹·네이티브 단일 소스" 주장이 카탈로그 규모(61/61)에서 실제로 성립하는 시점이 됐어요. 레지스트리 공개 호스팅은 <https://ui.ll3.kr>에 올라가 있어요. 남은 갭은 shadcn 디렉터리 등재·AI 계층·게시 물량(npm 0.2.0은 1차 28종)이에요.
+- **UniKit UI 위치** — "shadcn 카탈로그 전량 + 웹·네이티브 단일 소스" 주장이 카탈로그 규모(61/61)에서 실제로 성립하는 시점이 됐어요. 레지스트리 공개 호스팅은 <https://ui.ll3.kr>에 올라가 있어요. 남은 갭은 shadcn 디렉터리 등재·AI 계층·게시 물량(npm 0.2.0은 1차 28종)이에요.
 
 ## 다음 사이클 제안
 

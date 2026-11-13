@@ -1,5 +1,5 @@
 /**
- * 데모 앱 "UniKit 도우미" — 가상 어시스턴트 대본(웹용 사본).
+ * 데모 앱 "UniKit UI 도우미" — 가상 어시스턴트 대본(웹용 사본).
  * 실제 API 호출 없이 키워드 매칭으로 미리 쓴 답변을 타이핑하듯 흘려 보낸다.
  * 답변 속 수치는 저장소 사실 기준(src/components 61종 · registry.json 66아이템).
  * 엑스포 앱(apps/expo/components/demo/script.ts)에 동일 내용 사본이 있다 — 한쪽을 고치면 같이 고른다.
@@ -43,7 +43,7 @@ export const DEMO_SUGGESTIONS: DemoSuggestion[] = [
   {
     title: "구성 알아보기",
     description: "컴포넌트가 몇 종인지, 레지스트리 규모",
-    prompt: "UniKit에 컴포넌트가 몇 종 있어?",
+    prompt: "UniKit UI에 컴포넌트가 몇 종 있어?",
   },
   {
     title: "설치 방법",
@@ -97,7 +97,7 @@ const ANSWERS: DemoAnswer[] = [
   {
     keywords: ["몇 종", "컴포넌트 수", "구성", "규모", "레지스트리", "아이템"],
     answer:
-      "지금 UniKit은 packages/unikit/src/components에 61종이 있고, registry.json에는 67아이템(UI 61 + utils 1 + theme 4 + animations 1)이 등록돼 있어요.\n\n같은 본문이 registry/ui 트리에도 사본으로 들어 있어서 소비자 프로젝트로 복사할 수 있어요. 쇼케이스의 Components 목록이 그 61종을 전부 살리고 있으니 둘러보세요.",
+      "지금 UniKit UI는 packages/unikit/src/components에 61종이 있고, registry.json에는 67아이템(UI 61 + utils 1 + theme 4 + animations 1)이 등록돼 있어요.\n\n같은 본문이 registry/ui 트리에도 사본으로 들어 있어서 소비자 프로젝트로 복사할 수 있어요. 쇼케이스의 Components 목록이 그 61종을 전부 살리고 있으니 둘러보세요.",
   },
   {
     keywords: ["설치", "install", "시작", "추가", "add"],
@@ -127,7 +127,7 @@ const ANSWERS: DemoAnswer[] = [
 ];
 
 const FALLBACK_ANSWER =
-  "좋은 질문이에요! 저는 UniKit 데모 앱의 가상 도우미라 실제 추론은 없고, 미리 쓴 답변만 흘려 보낼 수 있어요.\n\n컴포넌트 수 · 설치 · 브리지 · 다크 모드 · 임의값 클래스 · 폼 조합 중 하나를 물어보면 자세히 답해요. 모델 전환(무니 mini/pro), 첨부, 재시도 같은 화면 요소도 이리저리 만져 보세요.";
+  "좋은 질문이에요! 저는 UniKit UI 데모 앱의 가상 도우미라 실제 추론은 없고, 미리 쓴 답변만 흘려 보낼 수 있어요.\n\n컴포넌트 수 · 설치 · 브리지 · 다크 모드 · 임의값 클래스 · 폼 조합 중 하나를 물어보면 자세히 답해요. 모델 전환(무니 mini/pro), 첨부, 재시도 같은 화면 요소도 이리저리 만져 보세요.";
 
 /** 질문 텍스트에서 키워드를 찾아 대본 답변을 고른다 */
 export function answerFor(prompt: string): string {

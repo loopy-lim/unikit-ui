@@ -1,4 +1,4 @@
-// Avatar — shadcn/ui new-york-v4 avatar（Radix Avatar 기반）를 UniKit 유니버설로 이식.
+// Avatar — shadcn/ui new-york-v4 avatar（Radix Avatar 기반）를 UniKit UI 유니버설로 이식.
 //
 // 포팅 판단（radix 엔진 의존 제거）:
 // - 로드 실패 상태 공유는 React context로 재현 — Avatar（루트）가

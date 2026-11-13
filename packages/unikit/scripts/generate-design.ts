@@ -56,7 +56,7 @@ export interface ThemeItemDef {
 export const THEME_ITEMS: ThemeItemDef[] = [
   {
     name: "theme",
-    title: "UniKit 디자인 토큰 (라이트/다크)",
+    title: "UniKit UI 디자인 토큰 (라이트/다크)",
     label: "Zinc (기본)",
     neutral: "zinc",
     primaryStep: "zinc-900",
@@ -74,14 +74,14 @@ function presetEntry(key: keyof typeof themePresets): ThemeItemDef {
   const p: ThemePreset = themePresets[key];
   return {
     name: `theme-${key}`,
-    title: `UniKit 프리셋 테마 — ${p.label} (${p.neutral} 중립)`,
+    title: `UniKit UI 프리셋 테마 — ${p.label} (${p.neutral} 중립)`,
     label: p.label,
     neutral: p.neutral,
     primaryStep: p.primaryStep,
     light: { ...p.light },
     dark: { ...p.dark },
     description:
-      `UniKit 프리셋 테마(${p.label} / 중립 ${p.neutral}). Tailwind 공식 팔레트에서 계산해 WCAG 대비(라이트 기준 ≥4.5:1)를 검증한 값입니다. ` +
+      `UniKit UI 프리셋 테마(${p.label} / 중립 ${p.neutral}). Tailwind 공식 팔레트에서 계산해 WCAG 대비(라이트 기준 ≥4.5:1)를 검증한 값입니다. ` +
       "같은 방식으로 add하면 기존 토큰 값을 그 자리에서 교체합니다.",
   };
 }
@@ -214,7 +214,7 @@ export function buildTokensDoc(): string {
     const ratio = contrastRatioHsl(t.light["--primary"]!, t.light["--primary-foreground"]!).toFixed(2);
     return `| \`${t.name}\` (${t.label}) | ${t.neutral} | ${t.primaryStep} | ${ratio}:1 | \`bunx shadcn add <레지스트리>/r/${t.name}.json -y\` |`;
   }).join("\n");
-  return `# UniKit 디자인 토큰 카탈로그
+  return `# UniKit UI 디자인 토큰 카탈로그
 
 > ⛔ 이 파일은 \`bun run generate:design\`(packages/unikit)이 생성합니다 — 수동 수정 금지.
 > 값의 출처는 [\`src/theme/tokens.ts\`](../src/theme/tokens.ts)(기본)와 [\`src/theme/presets.ts\`](../src/theme/presets.ts)(프리셋 3종)입니다. 값 형식은 CSS \`hsl()\` 함수 인자로 바로 쓰는 HSL 채널 문자열("H S% L%")입니다.

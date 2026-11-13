@@ -1,4 +1,4 @@
-// Empty — shadcn/ui new-york-v4 empty를 UniKit 유니버설로 이식.
+// Empty — shadcn/ui new-york-v4 empty를 UniKit UI 유니버설로 이식.
 //
 // 포팅 판단:
 // - 단순 레이아웃 컴포넌트군 — 엔진 의존이 없어 구조·토큰을 그대로 옮기고

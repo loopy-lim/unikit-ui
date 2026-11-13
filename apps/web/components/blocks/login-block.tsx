@@ -1,7 +1,7 @@
 "use client";
 /**
  * 로그인 블록(웹) — /blocks/login 전체 화면.
- * shadcn login-03(흐린 배경 위 중앙 카드) 구성을 UniKit 컴포넌트로 조립.
+ * shadcn login-03(흐린 배경 위 중앙 카드) 구성을 UniKit UI 컴포넌트로 조립.
  * - 브랜드 마크 + Card(제목·폼·소셜 버튼) + 하단 안내 3단 구성.
  * - 제출·소셜 버튼은 실제 로그인이 없는 데모 — Toaster로 안내한다(거짓 동작 금지).
  * - 좌상단 ← Blocks 알약 + 우상단 테마 토글은 block-chrome의 공용 장치
@@ -34,7 +34,7 @@ export function LoginBlock() {
         <BlockThemeToggle />
 
         {/** 브랜드 — 공용 BrandMark(어시스턴트 셸·대시보드와 같은 마크) */}
-        <BrandMark label="UniKit" />
+        <BrandMark label="UniKit UI" />
 
         <Card className="w-full max-w-sm">
           <CardHeader>

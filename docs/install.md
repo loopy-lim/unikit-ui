@@ -1,4 +1,4 @@
-# 내 프로젝트에 UniKit 추가하기
+# 내 프로젝트에 UniKit UI 추가하기
 
 **한국어** · [English](install.en.md)
 
@@ -27,7 +27,7 @@ bun add lucide-react-native
 
   ```css
   @custom-variant dark (&:where(.dark, .dark *));
-  @custom-variant web (&:where(:root, :root *));   /* UniKit의 web: 접두 클래스 활성화 */
+  @custom-variant web (&:where(:root, :root *));   /* UniKit UI의 web: 접두 클래스 활성화 */
   @source '../node_modules/@unikit-bridge/ui/src'; /* 패키지 내부의 클래스 문자열 스캔 */
   ```
 
@@ -60,7 +60,7 @@ export default function Home() {
 
 ## 방법 2 — shadcn CLI로 소스 복사
 
-공개 레지스트리 기준 URL은 <https://ui.ll3.kr/r/> 예요(카탈로그: [registry.json](https://ui.ll3.kr/r/registry.json)). UniKit을 고치면서 로컬 서버를 쓸 때는 `http://localhost:3000/r/`로 바꾸면 돼요.
+공개 레지스트리 기준 URL은 <https://ui.ll3.kr/r/> 예요(카탈로그: [registry.json](https://ui.ll3.kr/r/registry.json)). UniKit UI를 고치면서 로컬 서버를 쓸 때는 `http://localhost:3000/r/`로 바꾸면 돼요.
 
 복사되는 것: 컴포넌트 소스 1개(`components/unikit/<이름>.tsx`)와 자동 설치되는 의존성이에요. 의존성은 컴포넌트마다 최소화되어 있어요 — 공통 `@unikit-bridge/ui`, 필요한 것만 추가(cva·clsx·tailwind-merge·tailwindcss — button은 5종 전부, dialog는 패키지뿐). `form`은 선택 의존 `react-hook-form`, `chart`는 `react-native-svg`를 peer로 안내해요. 복사본의 `cn` import는 내 프로젝트 경로(`@/lib/utils`)로, 브리지 프리미티브 import는 npm 패키지(`@unikit-bridge/ui/primitives`)로 해석돼요.
 
@@ -78,7 +78,7 @@ bunx shadcn@latest init -b base -p nova -y
 
 > create-next-app이 만드는 Tailwind CSS v4 환경을 그대로 써요 — 버전을 내리거나 별도 설정 파일을 만들 필요가 없어요.
 
-### 2단계 — UniKit 레지스트리에서 컴포넌트 가져오기
+### 2단계 — UniKit UI 레지스트리에서 컴포넌트 가져오기
 
 소비자 프로젝트에서 컴포넌트를 추가해요. 하나씩:
 
@@ -94,17 +94,17 @@ bunx shadcn@latest add https://ui.ll3.kr/r/button.json https://ui.ll3.kr/r/card.
 
 등록된 아이템 67종(UI 61 + utils 1 + theme 4 + animations 1) 전체 목록은 <https://ui.ll3.kr/r/registry.json> 에서 확인할 수 있어요. `components/unikit/`에 소스가 복사되고 의존성이 자동으로 설치돼요.
 
-> **로컬 레지스트리** — UniKit 저장소를 고치는 중이면 `cd apps/web && bun x next dev -p 3000` 후 URL만 `http://localhost:3000/r/...`로 바꿔요.
+> **로컬 레지스트리** — UniKit UI 저장소를 고치는 중이면 `cd apps/web && bun x next dev -p 3000` 후 URL만 `http://localhost:3000/r/...`로 바꿔요.
 
 > **shadcn CLI 4.23 동작 참고** 두 가지:
-> - `lib/utils.ts`는 CLI가 특수 취급해요. `add`가 `lib/utils.ts`를 "이미 존재한다"며 건너뛰는 출력이 나오는데, init이 만든 표준 cn(`export { cn } from "cn"`)이 그대로 쓰인다는 뜻이에요. UniKit 컴포넌트가 쓰는 `cn`과 기능이 같으니 그대로 두면 됩니다.
+> - `lib/utils.ts`는 CLI가 특수 취급해요. `add`가 `lib/utils.ts`를 "이미 존재한다"며 건너뛰는 출력이 나오는데, init이 만든 표준 cn(`export { cn } from "cn"`)이 그대로 쓰인다는 뜻이에요. UniKit UI 컴포넌트가 쓰는 `cn`과 기능이 같으니 그대로 두면 됩니다.
 > - 복사된 컴포넌트 파일에서 원본 소스의 앞부분 주석은 CLI가 제거해요. 기능에는 영향이 없어요.
 
 ### 3단계 — 소비자 프로젝트 필수 설정
 
 복사만으로는 빌드가 실패해요. 복사 컴포넌트가 npm 패키지 `@unikit-bridge/ui`의 브리지를 쓰므로, 내 프로젝트에 맞는 설정 3가지를 추가해야 해요. **이 단계를 빠뜨리는 것이 빌드 실패의 가장 흔한 원인**이에요.
 
-**(a) Next.js가 패키지를 컴파일하도록** — `@unikit-bridge/ui`는 TypeScript 소스로 배포돼서 Next가 직접 컴파일하게 해야 해요. `next.config.ts`를 통째로 다음으로 바꿔도 됩니다(원본: UniKit의 `apps/web/next.config.ts`):
+**(a) Next.js가 패키지를 컴파일하도록** — `@unikit-bridge/ui`는 TypeScript 소스로 배포돼서 Next가 직접 컴파일하게 해야 해요. `next.config.ts`를 통째로 다음으로 바꿔도 됩니다(원본: UniKit UI의 `apps/web/next.config.ts`):
 
 ```ts
 import type { NextConfig } from "next";
@@ -123,11 +123,11 @@ export default nextConfig;
 
 ```css
 @custom-variant dark (&:where(.dark, .dark *));  /* shadcn init이 이미 넣었으면 생략 */
-@custom-variant web (&:where(:root, :root *));   /* UniKit의 web: 접두 클래스 활성화 */
+@custom-variant web (&:where(:root, :root *));   /* UniKit UI의 web: 접두 클래스 활성화 */
 @source '../node_modules/@unikit-bridge/ui/src'; /* 브리지 프리미티브 내부 클래스 스캔 */
 ```
 
-- `web:` 변형 — UniKit 컴포넌트의 웹 전용 효과(그림자·전환 등)는 `web:shadow-*`처럼 접두가 붙어요. 이 줄이 있어야 웹에서 활성화돼요(네이티브는 uniwind가 같은 접두를 처리해요).
+- `web:` 변형 — UniKit UI 컴포넌트의 웹 전용 효과(그림자·전환 등)는 `web:shadow-*`처럼 접두가 붙어요. 이 줄이 있어야 웹에서 활성화돼요(네이티브는 uniwind가 같은 접두를 처리해요).
 - `@source` — 복사한 파일이 아니라 **패키지 내부**(브리지 프리미티브의 기본 클래스)에 있는 클래스 문자열도 Tailwind가 생성하도록 스캔 대상에 넣는 줄이에요.
 
 **(c) 토큰 받기** — 복사·붙여넣기 대신 레지스트리에서 **한 줄**로 받아요:
@@ -136,7 +136,7 @@ export default nextConfig;
 bunx shadcn@latest add https://ui.ll3.kr/r/theme.json -y
 ```
 
-`app/globals.css`의 `:root`(라이트)와 `.dark`(다크) 블록에 UniKit 디자인 토큰 20종(색 19 + radius)이 자동으로 주입돼요. 이때 CLI가 값을 `hsl(...)` 함수 형태로 감싸 넣기도 하는데, 값 자체는 UniKit 토큰과 동일해요. 토큰별 값이 궁금하면 [packages/unikit/docs/tokens.md](../packages/unikit/docs/tokens.md)를 보세요. `<html>` 등 조상 요소에 `dark` 클래스를 붙이면 전체 토큰이 다크 값으로 전환돼요.
+`app/globals.css`의 `:root`(라이트)와 `.dark`(다크) 블록에 UniKit UI 디자인 토큰 20종(색 19 + radius)이 자동으로 주입돼요. 이때 CLI가 값을 `hsl(...)` 함수 형태로 감싸 넣기도 하는데, 값 자체는 UniKit UI 토큰과 동일해요. 토큰별 값이 궁금하면 [packages/unikit/docs/tokens.md](../packages/unikit/docs/tokens.md)를 보세요. `<html>` 등 조상 요소에 `dark` 클래스를 붙이면 전체 토큰이 다크 값으로 전환돼요.
 
 오버레이 등장 애니메이션(웹)이 필요하면 같은 방식으로 `animations` 항목도 받을 수 있어요. `dialog`·`sheet`·`popover`·`drawer`·`alert-dialog`는 레지스트리 의존으로 자동 포함돼요:
 
@@ -162,7 +162,7 @@ bunx shadcn@latest add https://ui.ll3.kr/r/animations.json -y
 
 ### 4단계 — 사용해 보기
 
-페이지에서 복사한 컴포넌트를 가져다 써 보세요. import 경로만 내 프로젝트 경로(`@/components/unikit/...`)로 바꾸면 UniKit 데모 앱과 똑같이 동작해요:
+페이지에서 복사한 컴포넌트를 가져다 써 보세요. import 경로만 내 프로젝트 경로(`@/components/unikit/...`)로 바꾸면 UniKit UI 데모 앱과 똑같이 동작해요:
 
 ```tsx
 // app/page.tsx

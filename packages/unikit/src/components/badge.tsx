@@ -1,4 +1,4 @@
-// Badge — shadcn/ui new-york-v4 badge를 UniKit 유니버설로 이식（사이클 71 원본값 정비）.
+// Badge — shadcn/ui new-york-v4 badge를 UniKit UI 유니버설로 이식（사이클 71 원본값 정비）.
 // 이중 지정 원칙（§0.5）: 배경·테두리는 View, 전경색은 내부 Text에 명시（Button과 동일 패턴）.
 // 미지원（로드맵）: ［a&］:hover:*（링크 래퍼 조건 — 뱃지는 Pressable이 아니어서 hover
 // 배경·전경 전환·hover 밑줄이 없다）·aria-invalid:*（invalid 상태 없음）·

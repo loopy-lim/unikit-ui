@@ -1,4 +1,4 @@
-// Button — shadcn/ui new-york-v4 button을 UniKit 유니버설로 이식（사이클 71 원본값 정비）.
+// Button — shadcn/ui new-york-v4 button을 UniKit UI 유니버설로 이식（사이클 71 원본값 정비）.
 // 이중 지정 원칙（§0.5）: 배경·테두리는 Pressable, 전경색·밑줄은 내부 Text에 명시.
 // （DOM 브리지에서도 span은 부모 상속이 막히므로 전경색 명시가 양쪽에 필요）
 // 미지원（로드맵）: aria-invalid:*（invalid 상태 없음）·has-［>svg］:*·［&_svg］:*（자식

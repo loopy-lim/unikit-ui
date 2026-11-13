@@ -248,7 +248,7 @@ export const hoverCardDemo: ShowcaseDemo = {
             <Avatar>
               <AvatarFallback>유</AvatarFallback>
             </Avatar>
-            <Text className="font-sans text-sm text-foreground">UniKit</Text>
+            <Text className="font-sans text-sm text-foreground">UniKit UI</Text>
           </View>
         </HoverCardContent>
       </HoverCard>

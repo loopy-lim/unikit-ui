@@ -127,7 +127,7 @@ function AssistantPreview() {
   return (
     <View className="w-full max-w-52 gap-2">
       <Bubble variant="default" align="end">
-        <BubbleContent>UniKit이 뭐야?</BubbleContent>
+        <BubbleContent>UniKit UI가 뭐야?</BubbleContent>
       </Bubble>
       <Bubble variant="outline">
         <BubbleContent>한 import로 웹·앱이 같은 UI!</BubbleContent>

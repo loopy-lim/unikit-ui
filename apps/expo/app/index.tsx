@@ -1,4 +1,4 @@
-// UniKit Expo 쇼케이스 — 카탈로그 재구성(2026-11-10): 세로로 쭉 나열하던
+// UniKit UI Expo 쇼케이스 — 카탈로그 재구성(2026-11-10): 세로로 쭉 나열하던
 // 단일 페이지를 RNR(react-native-reusables 쇼케이스) 관행인 "검색 가능한
 // 목록 → 컴포넌트별 상세 화면" 구조로 바꿨다. 데모 본문은
 // components/showcase/*-sections.tsx의 CatalogEntry로 옮겼고, 이 화면은
@@ -118,13 +118,13 @@ const CatalogListHeader = memo(function CatalogListHeader({
         <View className="min-w-0 flex-1 flex-row items-center gap-3 pr-2">
           <Image
             source={brandMark}
-            accessibilityLabel="UniKit"
+            accessibilityLabel="UniKit UI"
             className="size-11 rounded-[22%]"
             style={BRAND_IMAGE_STYLE}
           />
           <View className="min-w-0 flex-1">
             <Text className="font-sans text-2xl font-bold tracking-tight text-foreground">
-              UniKit
+              UniKit UI
             </Text>
             <Text className="mt-1 font-sans text-xs text-muted-foreground">
               React와 React Native에서 같은 컴포넌트, 같은 모습
@@ -149,7 +149,7 @@ const CatalogListHeader = memo(function CatalogListHeader({
       <Link href="/demo" asChild>
         <Pressable
           className="mt-4 flex-row items-center gap-3 rounded-2xl border border-border/60 bg-card p-4 active:bg-muted/50 active:opacity-85"
-          accessibilityLabel="데모 앱 UniKit 도우미 열기"
+          accessibilityLabel="데모 앱 UniKit UI 도우미 열기"
         >
           <View className="flex size-10 items-center justify-center rounded-xl bg-primary/10">
             <Text className="font-sans text-lg text-foreground">✦</Text>
@@ -157,7 +157,7 @@ const CatalogListHeader = memo(function CatalogListHeader({
           <View className="min-w-0 flex-1 gap-0.5">
             <View className="flex-row items-center gap-2">
               <Text className="font-sans text-sm font-semibold tracking-tight text-foreground">
-                데모 앱 — UniKit 도우미
+                데모 앱 — UniKit UI 도우미
               </Text>
               <Badge variant="outline" className="px-1.5 py-0 text-xs">
                 새
@@ -281,7 +281,7 @@ export default function Index() {
     () => (
       <View className="pt-8">
         <Text className="text-center font-sans text-xs text-muted-foreground">
-          UniKit v0.3 — Expo와 Next.js에서 같은 화면을 보고 있어요.
+          UniKit UI v0.3 — Expo와 Next.js에서 같은 화면을 보고 있어요.
         </Text>
       </View>
     ),

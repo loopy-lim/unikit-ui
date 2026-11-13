@@ -2,7 +2,7 @@
 /**
  * 대시보드 블록(웹) — /blocks/dashboard 전체 화면.
  * shadcn dashboard-01(사이드바 + 지표 카드 + 차트 + 데이터 표) 구성을
- * UniKit 컴포넌트로 조립.
+ * UniKit UI 컴포넌트로 조립.
  * - 차트: 단일 시리즈 막대(--chart-1) — 시리즈가 하나면 범례 없이 제목이
  *   시리즈를 명시한다. 아래 데이터 표가 표 형태 데이터 뷰를 겸한다.
  * - 지표 증감은 ▲▼ 글리프 + 부호 수치 텍스트로만 표현 — 상태 색 토큰이
@@ -137,7 +137,7 @@ export function DashboardBlock() {
         <Sidebar collapsible="offcanvas">
           {/** 헤더 — 공용 BrandMark(로그인 블록·어시스턴트 셸과 같은 마크) */}
           <SidebarHeader>
-            <BrandMark label="UniKit 관리자" className="px-2 py-1.5" />
+            <BrandMark label="UniKit UI 관리자" className="px-2 py-1.5" />
           </SidebarHeader>
 
           <SidebarContent>
@@ -218,7 +218,7 @@ export function DashboardBlock() {
               <BreadcrumbList>
                 <BreadcrumbItem>
                   <Text className="font-sans text-sm text-muted-foreground">
-                    UniKit 관리자
+                    UniKit UI 관리자
                   </Text>
                 </BreadcrumbItem>
                 <BreadcrumbSeparator />

@@ -9,7 +9,7 @@ function hubHtml() {
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>UniKit</title>
+  <title>UniKit UI</title>
   <style>
     :root { color-scheme: light dark; }
     body { font-family: ui-sans-serif, system-ui, sans-serif; margin: 0; min-height: 100vh; display: grid; place-items: center; background: #0a0a0a; color: #fafafa; }
@@ -23,9 +23,9 @@ function hubHtml() {
 </head>
 <body>
   <main>
-    <h1>UniKit</h1>
+    <h1>UniKit UI</h1>
     <p>Product hub for ll3.kr</p>
-    <a href="/ui"><span>UniKit UI</span><code>/ui → ui.ll3.kr</code></a>
+    <a href="/ui"><span>소개 · 카탈로그</span><code>/ui → ui.ll3.kr</code></a>
     <a href="/scriptca"><span>scriptca</span><code>/scriptca → scriptca.ll3.kr</code></a>
   </main>
 </body>

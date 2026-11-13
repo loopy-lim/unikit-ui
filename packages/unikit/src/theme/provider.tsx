@@ -1,5 +1,5 @@
 /**
- * UniKit 테마 Provider — colorScheme 상태를 보유하고 브리지를 통해
+ * UniKit UI 테마 Provider — colorScheme 상태를 보유하고 브리지를 통해
  * 각 플랫폼의 스타일링 엔진에 반영한다.
  *
  * 메커니즘（엔진 교체: NativeWind → 브리지 구조）:

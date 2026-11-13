@@ -97,7 +97,7 @@ function DocsHeader({ children }: { children: ReactNode }) {
           <CommandSearchTrigger />
           <ThemeCustomizer />
           <a
-            href="https://github.com/loopy-lim/UniKit"
+            href="https://github.com/loopy-lim/unikit-ui"
             aria-label="GitHub (새 창에서 열림)"
             className="site-focusable hidden font-sans text-sm text-muted-foreground transition-colors hover:text-foreground lg:inline"
             rel="noreferrer"
@@ -240,7 +240,7 @@ function DocsMobileNav({
             </Link>
           ))}
           <a
-            href="https://github.com/loopy-lim/UniKit"
+            href="https://github.com/loopy-lim/unikit-ui"
             aria-label="GitHub (새 창에서 열림)"
             onClick={() => onOpenChange(false)}
             className={docsNavLinkClass(false)}

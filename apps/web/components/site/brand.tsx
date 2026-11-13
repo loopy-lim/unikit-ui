@@ -51,7 +51,7 @@ export function SiteBrand({
           wordmarkClassName ?? "text-lg"
         )}
       >
-        UniKit
+        UniKit UI
       </span>
     </Link>
   );

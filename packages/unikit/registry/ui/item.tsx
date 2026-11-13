@@ -1,4 +1,4 @@
-// Item — shadcn/ui new-york-v4 item（193줄）을 UniKit 유니버설로 이식.
+// Item — shadcn/ui new-york-v4 item（193줄）을 UniKit UI 유니버설로 이식.
 //
 // 포팅 판단:
 // - asChild（radix Slot） 제거 — View 렌더 고정.

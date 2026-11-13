@@ -84,7 +84,7 @@ function SiteNav() {
             Components
           </Link>
           <a
-            href="https://github.com/loopy-lim/UniKit"
+            href="https://github.com/loopy-lim/unikit-ui"
             className="site-focusable hidden text-muted-foreground transition-colors hover:text-foreground sm:inline"
             rel="noreferrer"
             target="_blank"
@@ -110,7 +110,7 @@ function Hero() {
             className="size-16 sm:size-20 md:size-24"
           />
           <p className="site-display text-5xl font-semibold tracking-tight text-foreground sm:text-6xl md:text-7xl">
-            UniKit
+            UniKit UI
           </p>
         </div>
         <h1 className="mt-4 max-w-3xl text-xl font-medium leading-snug tracking-tight text-foreground sm:text-2xl md:text-3xl">
@@ -327,7 +327,7 @@ function Footer() {
   return (
     <footer className="border-t border-border/60 py-10">
       <div className="mx-auto max-w-7xl px-4 text-center text-xs text-muted-foreground sm:px-6 lg:px-8">
-        UniKit v0.3 — React, React Native, shadcn-shaped
+        UniKit UI v0.3 — React, React Native, shadcn-shaped
       </div>
     </footer>
   );

@@ -292,7 +292,7 @@ export function PopupMenuSection() {
             </Avatar>
             <View className="flex flex-col gap-1">
               <Text className="font-sans text-sm font-semibold text-foreground">
-                UniKit
+                UniKit UI
               </Text>
               <Text className="font-sans text-xs text-muted-foreground">
                 한 벌 소스로 웹·앱 모두에 같은 UI를 내요.

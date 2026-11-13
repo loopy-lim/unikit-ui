@@ -18,7 +18,7 @@
 // - 폭 CSS 변수（--sidebar-width 16rem 등）는 표준 계단 토큰으로 치환:
 //   w-64（16rem）w-72（18rem 모바일）w-12（3rem 아이콘）w-14（아이콘+패딩 3.5rem,
 //   원본 calc（3rem+1rem）의 임의값 근사）.
-// - sidebar-* 색 팔레트는 UniKit 토큰 20종에 없어（check-consumer-theme가 소비자
+// - sidebar-* 색 팔레트는 UniKit UI 토큰 20종에 없어（check-consumer-theme가 소비자
 //   자산으로 분류） 다음 매핑으로 근사: bg-sidebar→bg-background,
 //   text-sidebar-foreground→text-foreground, bg-sidebar-accent→bg-accent,
 //   *-accent-foreground→*-accent-foreground, sidebar-border→border,

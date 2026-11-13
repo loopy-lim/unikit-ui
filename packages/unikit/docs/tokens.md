@@ -1,4 +1,4 @@
-# UniKit 디자인 토큰 카탈로그
+# UniKit UI 디자인 토큰 카탈로그
 
 > ⛔ 이 파일은 `bun run generate:design`(packages/unikit)이 생성합니다 — 수동 수정 금지.
 > 값의 출처는 [`src/theme/tokens.ts`](../src/theme/tokens.ts)(기본)와 [`src/theme/presets.ts`](../src/theme/presets.ts)(프리셋 3종)입니다. 값 형식은 CSS `hsl()` 함수 인자로 바로 쓰는 HSL 채널 문자열("H S% L%")입니다.

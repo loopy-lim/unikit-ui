@@ -1,6 +1,6 @@
-# UniKit Spacing & Layout Design System (스페이싱 디자인 시스템)
+# UniKit UI Spacing & Layout Design System (스페이싱 디자인 시스템)
 
-UniKit의 모든 컴포넌트와 사이트(랜딩, 쇼케이스)는 웹(Next.js)과 네이티브(React Native / Expo) 양쪽에서 동일한 시각적 비례와 정렬을 유지하기 위해 **4px / 8px 기반의 통일된 Spacing 규칙**을 준수합니다.
+UniKit UI의 모든 컴포넌트와 사이트(랜딩, 쇼케이스)는 웹(Next.js)과 네이티브(React Native / Expo) 양쪽에서 동일한 시각적 비례와 정렬을 유지하기 위해 **4px / 8px 기반의 통일된 Spacing 규칙**을 준수합니다.
 
 ---
 
@@ -36,7 +36,7 @@ Tailwind CSS의 기본 `--spacing` (0.25rem = 4px) 기반 척도를 단일 출�
 
 ### 2.2 쇼케이스 사이드바 & 본문 정렬 (Sidebar & Main Rhythm)
 - `DocsHeader`와 `DocsShell` 본문 래퍼가 동일한 `max-w-7xl px-4 sm:px-6 lg:px-8` 컨테이너를 공유합니다.
-- `DocsSidebar`의 좌측 콘텐츠 시작점은 상단 헤더 로고(`UniKit`)의 좌측 x좌표와 정확히 일치합니다.
+- `DocsSidebar`의 좌측 콘텐츠 시작점은 상단 헤더 로고(`UniKit UI`)의 좌측 x좌표와 정확히 일치합니다.
 - 사이드바와 본문 사이의 거터는 `md:pl-8 lg:pl-10`으로 여유를 확보합니다.
 - `DocsMain`이 하단 여백(`pb-16`)을 전담하며, 하위 자식 페이지에서 `pb-8`을 중복 선언하지 않습니다.
 

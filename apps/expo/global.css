@@ -2,7 +2,7 @@
 @import 'uniwind';
 
 /*
- * UniKit — uniwind(Tailwind v4) 전역 CSS.
+ * UniKit UI — uniwind(Tailwind v4) 전역 CSS.
  * - @source: 모노레포 패키지(@unikit/bridge)의 className을 스캔에 포함(공식 monorepo 가이드).
  * - @theme inline: tokens.ts의 시맨틱 토큰(--background 등)을 Tailwind 유틸리티
  *   (bg-background 등)로 연결. 값 블록은 아래 마커 영역(generate:design 생성).

@@ -1,6 +1,6 @@
-# UniKit
+# UniKit UI
 
-> UniKit은 import 하나로 React(웹)와 React Native 양쪽에서 같은 모습을 내는 shadcn/ui 형태의 UI 컴포넌트 라이브러리예요. 컴포넌트 61종(shadcn/ui new-york-v4 카탈로그 전량)을 한 벌 소스로 제공해요. npm 패키지명은 `@unikit-bridge/ui`(0.3.0 기준 61종 전량 제공).
+> UniKit UI는 import 하나로 React(웹)와 React Native 양쪽에서 같은 모습을 내는 shadcn/ui 형태의 UI 컴포넌트 라이브러리예요. 컴포넌트 61종(shadcn/ui new-york-v4 카탈로그 전량)을 한 벌 소스로 제공해요. npm 패키지명은 `@unikit-bridge/ui`(0.3.0 기준 61종 전량 제공).
 
 ## 한 벌 소스 원칙 (가장 중요)
 
@@ -48,4 +48,4 @@
 
 - 검증: 루트에서 `bun run typecheck`(워크스페이스 3패키지)와 `bun run audit:design`(일관성 검사 8종).
 - 패키지 매니저는 bun만(pnpm 금지). 소스는 `src/`(배럴)와 `registry/`(복사용) 두 트리가 있고 본문은 같아야 해요(import 문만 다름).
-- 문서: README.md(빠른 시작) · docs/install.md(소비자 설치) · docs/components.md(사용법) · docs/roadmap-components.md(로드맵·경쟁) · packages/unikit/docs/tokens.md(토큰 값) · docs/sdd/(개발 과정 문서).
+- 문서: README.md(빠른 시작, 영어) · README.ko.md(한국어) · docs/install.md(소비자 설치) · docs/components.md(사용법) · docs/roadmap-components.md(로드맵·경쟁) · packages/unikit/docs/tokens.md(토큰 값) · docs/sdd/(개발 과정 문서).

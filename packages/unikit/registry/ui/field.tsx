@@ -1,4 +1,4 @@
-// Field — shadcn/ui new-york-v4 field（248줄）을 UniKit 유니버설로 이식.
+// Field — shadcn/ui new-york-v4 field（248줄）을 UniKit UI 유니버설로 이식.
 //
 // 포팅 판단（radix/base 엔진 의존 제거）:
 // - Radix Field가 data-* 속성으로 흘리던 상태（invalid·disabled）는 Field의

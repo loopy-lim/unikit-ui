@@ -1,4 +1,4 @@
-// ToggleGroup — shadcn/ui new-york-v4 toggle-group을 UniKit 브리지로 이식.
+// ToggleGroup — shadcn/ui new-york-v4 toggle-group을 UniKit UI 브리지로 이식.
 // 포팅 판단:
 // - radix ToggleGroup（Root/Item） 제거 — 선택 상태는 React context로 관리하고
 //   하위 항목은 Toggle（./toggle）에 pressed를 주입해 재사용한다.

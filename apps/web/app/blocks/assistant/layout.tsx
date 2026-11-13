@@ -33,7 +33,7 @@ export default function DemoLayout({ children }: { children: ReactNode }) {
       <View className="md:hidden">
         <View className="flex h-14 flex-row items-center justify-between border-b border-border px-4">
           <Link href="/blocks/assistant">
-            <BrandMark label="UniKit 도우미" />
+            <BrandMark label="UniKit UI 도우미" />
           </Link>
           <BlockThemeToggle floating={false} />
         </View>
@@ -48,7 +48,7 @@ export default function DemoLayout({ children }: { children: ReactNode }) {
         {/** flex-row 필수 — 브리지 View는 flex-col을 기본 접두으로 붙인다 */}
         <View className="flex h-16 flex-row items-center px-4">
           <Link href="/blocks/assistant">
-            <BrandMark label="UniKit 도우미" />
+            <BrandMark label="UniKit UI 도우미" />
           </Link>
         </View>
         <View className="flex-1 gap-1 px-3">
@@ -59,7 +59,7 @@ export default function DemoLayout({ children }: { children: ReactNode }) {
             <ExternalLink href="/blocks" icon={Blocks} label="Blocks 목록" />
             <ExternalLink href="/components" icon={BookOpen} label="컴포넌트 문서" />
             <ExternalLink
-              href="https://github.com/loopy-lim/UniKit"
+              href="https://github.com/loopy-lim/unikit-ui"
               icon={ExternalLinkIcon}
               label="GitHub"
             />

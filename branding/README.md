@@ -1,4 +1,4 @@
-# UniKit brand assets
+# UniKit UI brand assets
 
 확정 BI:
 

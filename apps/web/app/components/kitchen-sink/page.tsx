@@ -137,7 +137,7 @@ export default function KitchenSinkPage() {
       <ChartSection />
       <View className="pt-6">
         <Text className="text-center font-sans text-xs text-muted-foreground">
-          UniKit — 전체 스크롤 데모(Expo 쇼케이스와 같은 구성)
+          UniKit UI — 전체 스크롤 데모(Expo 쇼케이스와 같은 구성)
         </Text>
       </View>
     </View>
@@ -149,7 +149,7 @@ function Header() {
   return (
     <View className="mb-8">
       <Text className="font-sans text-2xl font-bold web:tracking-tight text-foreground">
-        UniKit
+        UniKit UI
       </Text>
       <Text className="font-sans text-sm text-muted-foreground">
         React와 React Native에서 같은 컴포넌트, 같은 모습.
@@ -234,7 +234,7 @@ function CardSection() {
         {/* 카드 1: Header / Content / Footer(텍스트 + Button outline sm) */}
         <Card>
           <CardHeader>
-            <CardTitle>안녕, UniKit!</CardTitle>
+            <CardTitle>안녕, UniKit UI!</CardTitle>
             <CardDescription>복사해서 쓰는 유니버설 컴포넌트</CardDescription>
           </CardHeader>
           <CardContent>
@@ -444,7 +444,7 @@ function DisclosureSection() {
         {/* Accordion — 첫 항목 펼침 */}
         <Accordion defaultValue="what">
           <AccordionItem value="what">
-            <AccordionTrigger>UniKit이 뭔가요?</AccordionTrigger>
+            <AccordionTrigger>UniKit UI가 뭔가요?</AccordionTrigger>
             <AccordionContent>
               <Text className="font-sans text-sm text-muted-foreground">
                 한 벌 소스로 React(웹)와 React Native 양쪽에 같은 모습을 내는
@@ -648,7 +648,7 @@ function DataLayoutSection() {
           <ItemContent>
             <ItemTitle>즐겨찾는 프로젝트</ItemTitle>
             <ItemDescription>
-              어디서나 같은 모습으로 열리는 UniKit이에요.
+              어디서나 같은 모습으로 열리는 UniKit UI예요.
             </ItemDescription>
           </ItemContent>
           <ItemActions>

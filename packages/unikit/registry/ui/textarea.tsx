@@ -1,4 +1,4 @@
-// Textarea — shadcn/ui new-york-v4 textarea를 UniKit 유니버설로 이식.
+// Textarea — shadcn/ui new-york-v4 textarea를 UniKit UI 유니버설로 이식.
 //
 // 포팅 판단:
 // - <textarea> 요소 대신 브리지 TextInput에 multiline을 준다（웹 <textarea> ·

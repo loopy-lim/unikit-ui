@@ -1,4 +1,4 @@
-// UniKit 루트 레지스트리 로딩 — shadcn 패키지(shadcn/registry → @shadcn/registry)의
+// UniKit UI 루트 레지스트리 로딩 — shadcn 패키지(shadcn/registry → @shadcn/registry)의
 // loadRegistry/loadRegistryItem을 이 앱에서 쓰는 형태로 조정해 재노출한다(T-9).
 //
 // 조정 내용: 레지스트리 원본 위치 지정. 레지스트리는 이 앱이 아니라 모노레포의

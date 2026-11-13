@@ -93,7 +93,7 @@ export function CommandSearch({
     <CommandDialog
       open={open}
       onOpenChange={onOpenChange}
-      title="UniKit 빠른 탐색"
+      title="UniKit UI 빠른 탐색"
       className="max-w-lg"
     >
       <Command className="h-auto">

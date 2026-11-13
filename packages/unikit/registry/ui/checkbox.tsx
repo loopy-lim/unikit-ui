@@ -1,4 +1,4 @@
-// Checkbox — shadcn/ui new-york-v4 checkbox를 UniKit 브리지로 이식.
+// Checkbox — shadcn/ui new-york-v4 checkbox를 UniKit UI 브리지로 이식.
 // 포팅 판단:
 // - radix-ui Checkbox（Root/Indicator） 제거 — 체크 상태는 React state（제어/비제어）로
 //   직접 관리하고, 원본의 data-state=checked 셀렉터는 조건부 클래스 문자열로 전개
@@ -17,7 +17,7 @@ import {
 
 import { cn } from "@/lib/utils";
 
-// 원본 크기 토큰 유지: size-4（16px） 박스·rounded-sm（UniKit 토큰 --radius-sm=4px）·border-input,
+// 원본 크기 토큰 유지: size-4（16px） 박스·rounded-sm（UniKit UI 토큰 --radius-sm=4px）·border-input,
 // 체크 시 border/bg-primary.
 // 라벨 없음 — 라벨은 소비자가 Label과 조합한다（checkbox 원본과 동일한 계약）.
 export type CheckboxProps = Omit<PressableProps, "onPress" | "aria-checked"> & {

@@ -1,4 +1,4 @@
-// 데모 앱 홈(엑스포) — "UniKit 도우미" 앱의 대문. 웹 사본(apps/web/app/blocks/
+// 데모 앱 홈(엑스포) — "UniKit UI 도우미" 앱의 대문. 웹 사본(apps/web/app/blocks/
 // assistant/page.tsx)과 같은 구성: 인사 · 빠른 질문 · 이어서 하기. 질문을 고르면
 // /demo/chat으로 q를 실어 보내 바로 대화가 시작된다. 컴포넌트 import는 오직
 // @unikit-bridge/ui, 프리미티브는 @unikit-bridge/ui/primitives(AC-1).
@@ -74,7 +74,7 @@ export default function DemoHome() {
                 {todayLabel()}
               </Text>
               <Text className="font-sans text-2xl font-bold tracking-tight text-foreground">
-                UniKit 도우미
+                UniKit UI 도우미
               </Text>
             </View>
             <ThemeToggleButton />

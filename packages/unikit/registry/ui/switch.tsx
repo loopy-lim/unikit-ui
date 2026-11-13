@@ -1,4 +1,4 @@
-// Switch — shadcn/ui new-york-v4 switch를 UniKit 브리지로 이식.
+// Switch — shadcn/ui new-york-v4 switch를 UniKit UI 브리지로 이식.
 // 포팅 판단:
 // - radix Switch（Root/Thumb） 제거 — 토글 상태는 React state（제어/비제어）로 관리.
 // - 원본의 data-state·data-size·group-data 셀렉터 전개 — 크기는 cva size

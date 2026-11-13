@@ -1,4 +1,4 @@
-// RadioGroup — shadcn/ui new-york-v4 radio-group을 UniKit 브리지로 이식.
+// RadioGroup — shadcn/ui new-york-v4 radio-group을 UniKit UI 브리지로 이식.
 // 포팅 판단:
 // - radix RadioGroup（Root/Item/Indicator） 제거 — 선택 상태는 React context로
 //   직접 관리하고, 원본의 data-state=checked 셀렉터 대신 선택 점 조건부 렌더.

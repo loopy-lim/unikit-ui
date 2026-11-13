@@ -1,4 +1,4 @@
-// Toggle — shadcn/ui new-york-v4 toggle을 UniKit 브리지로 이식.
+// Toggle — shadcn/ui new-york-v4 toggle을 UniKit UI 브리지로 이식.
 // 포팅 판단:
 // - radix Toggle 제거 — 눌림 상태는 React state（제어/비제어）로 관리.
 // - 원본의 data-state=on 셀렉터 → pressed 조건부 클래스（bg-accent·text-accent-foreground）.

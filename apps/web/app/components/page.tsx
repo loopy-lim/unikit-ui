@@ -92,7 +92,7 @@ export default function ShowcaseIndexPage() {
           Components
         </Text>
         <Text className="max-w-2xl font-sans text-[15px] leading-7 text-muted-foreground">
-          UniKit {catalog.length}종 — 웹과 React Native에서 같은 소스로 렌더링해요.
+          UniKit UI {catalog.length}종 — 웹과 React Native에서 같은 소스로 렌더링해요.
           카드 미리보기는 전부 실제 컴포넌트예요. 컴포넌트를 골라 Preview와 사용
           코드를 확인하세요.
         </Text>

@@ -1,11 +1,11 @@
 # AGENTS.md — 코딩 에이전트 기여 지침
 
-UniKit 저장소에서 작업하는 코딩 에이전트(Claude Code 등)를 위한 지침이에요. 사람 기여자는 [README.md](README.md)와 [docs/components.md](docs/components.md)를, AI 도구용 라이브러리 요약은 [llms.txt](llms.txt)를 보세요.
+UniKit UI 저장소에서 작업하는 코딩 에이전트(Claude Code 등)를 위한 지침이에요. 사람 기여자는 [README.md](README.md)와 [docs/components.md](docs/components.md)를, AI 도구용 라이브러리 요약은 [llms.txt](llms.txt)를 보세요.
 
 ## 저장소 구조
 
 ```text
-UniKit/  (bun 워크스페이스: apps/*, packages/*)
+unikit-ui/  (bun 워크스페이스: apps/*, packages/*)
 ├── apps/expo/                  # Expo 데모 앱(쇼케이스·블록, uniwind 엔진)
 ├── apps/web/                   # Next.js 데모 앱(랜딩 /, /components, /blocks, 레지스트리 /r/)
 ├── packages/unikit/            # @unikit-bridge/ui — 본체
@@ -39,7 +39,7 @@ bun run generate:design            # 토큰 변경 시에만: globals.css·regis
 - `audit:design`은 위반 1건이면 exit 1로 실패해요. 머리 주석의 원본 클래스 인용은 주석 라인 제외로 스캔해요(오탐 방지).
 - 웹 데모 빌드 확인: `cd apps/web && bun run build`(prebuild가 `public/r/*.json` 정적 생성 + `output: "export"`). 레지스트리 확인: `bun x next dev -p 3000` 후 `/r/registry.json`. Cloudflare Pages 배포는 `apps/web/DEPLOY.md`.
 
-## 컴포넌트 이식 규칙 9조 (shadcn → UniKit, docs/sdd/42-design-plan.md §3)
+## 컴포넌트 이식 규칙 9조 (shadcn → UniKit UI, docs/sdd/42-design-plan.md §3)
 
 shadcn 컴포넌트를 이식·수정할 때 지키는 공통 규칙이에요. 원본은 `shadcn-ref/ui/{이름}.tsx`:
 
@@ -79,7 +79,7 @@ shadcn 컴포넌트를 이식·수정할 때 지키는 공통 규칙이에요. �
 
 ## 문서 지침
 
-- 모든 문서는 한국어(단, packages/unikit/README.md는 영어 — 기존 문서 언어 유지). 문체는 기존 문서(해요체 설명체)를 따라요.
+- 문서는 한국어가 기본이에요. 예외: 루트 [README.md](README.md)(영어 우선, 한국어는 [README.ko.md](README.ko.md))·[packages/unikit/README.md](packages/unikit/README.md)(영어)·[docs/install.en.md](docs/install.en.md). 한국어 문체는 해요체 설명체를 따라요.
 - 기존 문서를 고칠 때는 내용을 지우지 말고 병합해요(보존 원칙). 수치·날짜는 저장소에서 재검증 후 기입해요.
 - 컴포넌트 수·상태 표기의 기준: `src/components`(61종)·`registry/ui`(61종)·`registry.json`(67 아이템 = UI 61 + utils 1 + theme 4 + animations 1). 미지원 기능은 각 컴포넌트 머리 주석의 "로드맵" 기록이 근거예요.
-- 사람용 설치·소비 상세는 [docs/install.md](docs/install.md), 루트 [README.md](README.md)는 빠른 시작·요약만 담아요.
+- 사람용 설치·소비 상세는 [docs/install.md](docs/install.md), 루트 [README.md](README.md)(영)·[README.ko.md](README.ko.md)(한)는 빠른 시작·요약만 담아요.

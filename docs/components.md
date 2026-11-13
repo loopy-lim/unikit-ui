@@ -1,10 +1,10 @@
-# UniKit 컴포넌트 사용법
+# UniKit UI 컴포넌트 사용법
 
-UniKit의 컴포넌트 61종(기초 5종 Button·Card·Input·Label·Badge + shadcn 카탈로그 1차 23종 + 2차 33종)과 테마를 다루는 법을 정리했어요. 모든 내용은 실제 소스(`packages/unikit/src/`)와 쇼케이스(`apps/expo/app/index.tsx`) 기준이에요. 기초 5종과 1차 23종은 아래에 상세(Props 표·변형)를 적었고, 2차 33종(2026-11-10 완료)은 계열별 표로 각 1줄 요점만 적어요 — 상세 포팅 판단(원본 대비 차이·미지원 항목)은 각 소스 파일의 머리 주석에 있어요.
+UniKit UI의 컴포넌트 61종(기초 5종 Button·Card·Input·Label·Badge + shadcn 카탈로그 1차 23종 + 2차 33종)과 테마를 다루는 법을 정리했어요. 모든 내용은 실제 소스(`packages/unikit/src/`)와 쇼케이스(`apps/expo/app/index.tsx`) 기준이에요. 기초 5종과 1차 23종은 아래에 상세(Props 표·변형)를 적었고, 2차 33종(2026-11-10 완료)은 계열별 표로 각 1줄 요점만 적어요 — 상세 포팅 판단(원본 대비 차이·미지원 항목)은 각 소스 파일의 머리 주석에 있어요.
 
 ## import 방법
 
-**UniKit 모노레포 안에서** (Expo·Next 데모 앱 모두 동일):
+**UniKit UI 모노레포 안에서** (Expo·Next 데모 앱 모두 동일):
 
 ```tsx
 import { Button, Card, Input, Label, Badge } from "@unikit-bridge/ui";
@@ -148,7 +148,7 @@ import {
 ```tsx
 <Card>
   <CardHeader>
-    <CardTitle>안녕, UniKit!</CardTitle>
+    <CardTitle>안녕, UniKit UI!</CardTitle>
     <CardDescription>복사해서 쓰는 유니버설 컴포넌트</CardDescription>
   </CardHeader>
   <CardContent>
@@ -302,7 +302,7 @@ import { Badge } from "@unikit-bridge/ui";   // 복사본이면 "@/components/un
 
 ## shadcn 카탈로그 1차 — 23종 추가 컴포넌트
 
-shadcn/ui(new-york-v4)의 컴포넌트를 UniKit 유니버설(한 벌 소스 → 웹·네이티브 동일 렌더)로 이식한 첫 배치예요. 전부 npm 패키지(`@unikit-bridge/ui`)와 레지스트리(shadcn CLI `add`) 양쪽에서 동일하게 제공돼요. 각 컴포넌트의 상세 포팅 판단은 소스 파일 머리 주석에 적혀 있어요.
+shadcn/ui(new-york-v4)의 컴포넌트를 UniKit UI 유니버설(한 벌 소스 → 웹·네이티브 동일 렌더)로 이식한 첫 배치예요. 전부 npm 패키지(`@unikit-bridge/ui`)와 레지스트리(shadcn CLI `add`) 양쪽에서 동일하게 제공돼요. 각 컴포넌트의 상세 포팅 판단은 소스 파일 머리 주석에 적혀 있어요.
 
 공통 사항(아래 표의 컴포넌트 전부):
 
@@ -376,7 +376,7 @@ import { Checkbox, Switch, Tabs, Accordion, Progress, Alert } from "@unikit-brid
 
 ## shadcn 카탈로그 2차 — 33종 추가 컴포넌트 (사이클 40, 2026-11-10 완료)
 
-shadcn 카탈로그 잔여 33종을 전량 이식해 UniKit은 61종 전부를 갖추게 됐어요(61/61). 1차와 같은 규칙(shadcn API 유지·Radix 제거 후 React state+context·브리지 아이콘)에 더해, 이번 배치의 공통 사항:
+shadcn 카탈로그 잔여 33종을 전량 이식해 UniKit UI는 61종 전부를 갖추게 됐어요(61/61). 1차와 같은 규칙(shadcn API 유지·Radix 제거 후 React state+context·브리지 아이콘)에 더해, 이번 배치의 공통 사항:
 
 - **오버레이 계열은 `src/lib/overlay.tsx`가 떠받쳐요.** 포털(웹 createPortal / 네이티브 Modal), 백드롭, 바깥 눌림·ESC 닫기, 포커스 이동·트랩·복귀, 앵커 위치 계산(measure 기반 side/align 배치 + 뷰포트 클램프)을 통합 오버레이 훈이 담당해요. dialog 계열(중앙 모달)은 포털+백드롭만, popover 계열은 앵커 위치 계산까지 소비해요.
 - **등장/퇴장 애니메이션은 마운트/언마운트 즉시 전환**이에요(`data-[state]` 셀렉터가 없는 네이티브에서 재현 불가 — 로드맵). 웹 전용 효과는 역시 `web:` 접두 클래스예요.
@@ -467,7 +467,7 @@ import { Dialog, DialogContent, DialogTrigger, DialogTitle } from "@unikit-bridg
 
 ## 테마 — 라이트/다크 토큰
 
-UniKit의 모든 색은 CSS 변수 토큰이에요. 값의 단일 출처는 `packages/unikit/src/theme/tokens.ts`이고, 소비자 프로젝트에서는 [README](../README.md)의 "토큰 받기" 절(`theme` 항목 add 한 줄)로 같은 토큰을 받아요.
+UniKit UI의 모든 색은 CSS 변수 토큰이에요. 값의 단일 출처는 `packages/unikit/src/theme/tokens.ts`이고, 소비자 프로젝트에서는 [README](../README.md)의 "토큰 받기" 절(`theme` 항목 add 한 줄)로 같은 토큰을 받아요.
 
 ### 모노레포 안에서: `UnikitThemeProvider`
 
@@ -491,7 +491,7 @@ const { colorScheme, toggleColorScheme, setColorScheme } = useUnikitTheme();
 
 토큰 20종의 라이트/다크 **값 전체는 생성 카탈로그 [packages/unikit/docs/tokens.md](../packages/unikit/docs/tokens.md)를 보세요.** 이 문서에는 역할 구조만 요약해요 — 값 사본이 여러 곳에 있으면 어느 순간 어긋나는(드리프트) 위험이 생겨서, 기계 검사되는 카탈로그 한 곳에만 값을 둬요.
 
-- 색 토큰은 **표면/전경 쌍** 구조예요. 기본 `--background`·`--foreground`, 표면 `--card`·`--popover`(popover·dropdown-menu 등 2차 오버레이 계열의 카드 표면), 행동 `--primary`·`--secondary`·`--muted`·`--accent`·`--destructive`가 각각 `-foreground` 짝을 가져요. 테두리는 `--border`(일반)·`--input`(입력창), 키보드 포커스 링은 `--ring`이에요. 색 계열은 zinc예요. 차트 시리즈 색 `--chart-1..5`는 UniKit 토큰이 아니라 소비자 앱이 정의하는 토큰이에요(shadcn 차트 표준 — chart 컴포넌트가 참조해요).
+- 색 토큰은 **표면/전경 쌍** 구조예요. 기본 `--background`·`--foreground`, 표면 `--card`·`--popover`(popover·dropdown-menu 등 2차 오버레이 계열의 카드 표면), 행동 `--primary`·`--secondary`·`--muted`·`--accent`·`--destructive`가 각각 `-foreground` 짝을 가져요. 테두리는 `--border`(일반)·`--input`(입력창), 키보드 포커스 링은 `--ring`이에요. 색 계열은 zinc예요. 차트 시리즈 색 `--chart-1..5`는 UniKit UI 토큰이 아니라 소비자 앱이 정의하는 토큰이에요(shadcn 차트 표준 — chart 컴포넌트가 참조해요).
 - `--destructive` 라이트값은 WCAG AA 대비 확보를 위해 shadcn 기본 대신 한 단계 진한 red-600 계로 조정했어요(정확한 값은 카탈로그 참조).
 - `--radius`는 모서리 반경 기준값이에요. `rounded-md`는 기준값 − 2px, `rounded-lg`는 기준값, Card의 `rounded-xl`은 기준값 + 4px로 파생돼요.
 
@@ -499,7 +499,7 @@ const { colorScheme, toggleColorScheme, setColorScheme } = useUnikitTheme();
 
 ## 접근성 공통 (브리지 계약)
 
-UniKit 컴포넌트에 지정하는 접근성 prop이 브리지를 거쳐 각 플랫폼의 표준으로 나가는 방식을 정리한 표예요. **같은 prop을 웹·네이티브 양쪽에서 그대로 써요.**
+UniKit UI 컴포넌트에 지정하는 접근성 prop이 브리지를 거쳐 각 플랫폼의 표준으로 나가는 방식을 정리한 표예요. **같은 prop을 웹·네이티브 양쪽에서 그대로 써요.**
 
 | 컴포넌트에 지정하는 prop | 웹 DOM 렌더 | 네이티브(React Native) | 비고 |
 |---|---|---|---|
