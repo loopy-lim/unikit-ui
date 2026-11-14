@@ -5,9 +5,12 @@ UniKit UI 저장소에서 작업하는 코딩 에이전트(Claude Code 등)를 �
 ## 저장소 구조
 
 ```text
-unikit-ui/  (bun 워크스페이스: apps/*, packages/*)
+unikit-ui/  (bun 워크스페이스: apps/*, apps/mobile/web-editor, packages/*)
 ├── apps/expo/                  # Expo 데모 앱(쇼케이스·블록, uniwind 엔진)
 ├── apps/web/                   # Next.js 데모 앱(랜딩 /, /components, /blocks, 레지스트리 /r/)
+├── apps/desktop/               # Tauri 2 도그푸딩 앱(UniKit Markdown — tiptap 위지윅, tauri fs·dialog)
+├── apps/mobile/                # Expo RN 도그푸딩 앱(UniKit Markdown — WebView↔tiptap 브리지, expo-file-system)
+│   └── web-editor/             # WebView용 tiptap 단일 HTML 번들(vite-plugin-singlefile — bun run build:editor)
 ├── packages/unikit/            # @unikit-bridge/ui — 본체
 │   ├── src/bridge/             # 브리지 — web.tsx(default 조건)·native.tsx(react-native 조건)·types.ts(공통 계약)
 │   ├── src/components/         # 컴포넌트 61종(배럴 진입 대상 60종 + chart)
@@ -31,10 +34,13 @@ unikit-ui/  (bun 워크스페이스: apps/*, packages/*)
 
 ```bash
 bun install                        # 최초 1회 (패키지 매니저는 bun만 — pnpm 금지)
-bun run typecheck                  # 워크스페이스 3패키지 tsc --noEmit (루트에서)
+bun run typecheck                  # 워크스페이스 전체 tsc --noEmit (루트에서)
 bun run audit:design               # 디자인 일관성 검사 9종(임의값 클래스·registry files 실재·WCAG 대비·브리지 flex 방향 등)
 bun run generate:design            # 토큰 변경 시에만: globals.css·registry theme·tokens.md 재생성
 ```
+
+- 도그푸딩 앱(UniKit Markdown): 웹 UI 확인은 `cd apps/desktop && bun x vite preview` 후 브라우저. 데스크톱 패키징은 `cd apps/desktop && bun run tauri build`(Rust 필요).
+- 모바일 에뮬레이터 실행: `cd apps/mobile && bun run build:editor` 후 `cd android && ./gradlew assembleDebug -PreactNativeArchitectures=x86_64` → `adb -s emulator-5554 install -r app/build/outputs/apk/debug/app-debug.apk` → Metro `bun x expo start --dev-client` + `adb -s emulator-5554 reverse tcp:8081 tcp:8081`. 주의: 폰 등 여러 기기가 붙어 있으면 `expo run:android`의 ANDROID_SERIAL 지정이 gradle 설치를 못 막아 실제 기기에 설치될 수 있다(2026-11-14 학습) — 빌드와 설치를 분리해 실행한다.
 
 - `audit:design`은 위반 1건이면 exit 1로 실패해요. 머리 주석의 원본 클래스 인용은 주석 라인 제외로 스캔해요(오탐 방지).
 - 웹 데모 빌드 확인: `cd apps/web && bun run build`(prebuild가 `public/r/*.json` 정적 생성 + `output: "export"`). 레지스트리 확인: `bun x next dev -p 3000` 후 `/r/registry.json`. Cloudflare Pages 배포는 `apps/web/DEPLOY.md`.

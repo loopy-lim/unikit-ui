@@ -50,6 +50,7 @@ import {
   ArrowLeftIcon as LucideArrowLeftIcon,
   ArrowRightIcon as LucideArrowRightIcon,
   ArrowUpIcon as LucideArrowUpIcon,
+  BoldIcon as LucideBoldIcon,
   CheckCircle2Icon as LucideCheckCircle2Icon,
   CheckIcon as LucideCheckIcon,
   ChevronDownIcon as LucideChevronDownIcon,
@@ -57,13 +58,23 @@ import {
   ChevronRightIcon as LucideChevronRightIcon,
   ChevronUpIcon as LucideChevronUpIcon,
   CircleIcon as LucideCircleIcon,
+  CodeIcon as LucideCodeIcon,
   GripVerticalIcon as LucideGripVerticalIcon,
+  Heading1Icon as LucideHeading1Icon,
+  Heading2Icon as LucideHeading2Icon,
   InfoIcon as LucideInfoIcon,
+  ItalicIcon as LucideItalicIcon,
+  ListIcon as LucideListIcon,
+  ListOrderedIcon as LucideListOrderedIcon,
   Loader2Icon as LucideLoader2Icon,
   MinusIcon as LucideMinusIcon,
   MoreHorizontalIcon as LucideMoreHorizontalIcon,
   PanelLeftIcon as LucidePanelLeftIcon,
+  Redo2Icon as LucideRedo2Icon,
   SearchIcon as LucideSearchIcon,
+  StrikethroughIcon as LucideStrikethroughIcon,
+  TextQuoteIcon as LucideTextQuoteIcon,
+  Undo2Icon as LucideUndo2Icon,
   XCircleIcon as LucideXCircleIcon,
   XIcon as LucideXIcon,
   type LucideIcon,
@@ -924,6 +935,18 @@ const XCircleIcon = wrapWebLucide(LucideXCircleIcon);
 const Loader2Icon = wrapWebLucide(LucideLoader2Icon);
 const PanelLeftIcon = wrapWebLucide(LucidePanelLeftIcon);
 const GripVerticalIcon = wrapWebLucide(LucideGripVerticalIcon);
+// 툴바 서식 아이콘 — 마크다운 에디터 도그푸딩(apps/desktop·apps/mobile)에서 사용.
+const BoldIcon = wrapWebLucide(LucideBoldIcon);
+const ItalicIcon = wrapWebLucide(LucideItalicIcon);
+const StrikethroughIcon = wrapWebLucide(LucideStrikethroughIcon);
+const Heading1Icon = wrapWebLucide(LucideHeading1Icon);
+const Heading2Icon = wrapWebLucide(LucideHeading2Icon);
+const ListIcon = wrapWebLucide(LucideListIcon);
+const ListOrderedIcon = wrapWebLucide(LucideListOrderedIcon);
+const TextQuoteIcon = wrapWebLucide(LucideTextQuoteIcon);
+const CodeIcon = wrapWebLucide(LucideCodeIcon);
+const Undo2Icon = wrapWebLucide(LucideUndo2Icon);
+const Redo2Icon = wrapWebLucide(LucideRedo2Icon);
 
 export {
   View,
@@ -972,4 +995,15 @@ export {
   Loader2Icon,
   PanelLeftIcon,
   GripVerticalIcon,
+  BoldIcon,
+  ItalicIcon,
+  StrikethroughIcon,
+  Heading1Icon,
+  Heading2Icon,
+  ListIcon,
+  ListOrderedIcon,
+  TextQuoteIcon,
+  CodeIcon,
+  Undo2Icon,
+  Redo2Icon,
 };

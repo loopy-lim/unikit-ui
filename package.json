@@ -5,6 +5,7 @@
   "packageManager": "bun@1.4.4",
   "workspaces": [
     "apps/*",
+    "apps/mobile/web-editor",
     "packages/*"
   ],
   "scripts": {

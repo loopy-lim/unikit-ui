@@ -1,0 +1,199 @@
+@import "tailwindcss";
+
+/*
+ * UniKit Markdown(데스크톱) — UniKit UI 토큰을 Tauri/Vite 소비자로 가져온 도그푸딩 사본.
+ *
+ * - 토큰 값의 단일 출처는 packages/unikit/src/theme/tokens.ts이며,
+ *   apps/web/app/globals.css의 생성 블록(UNIKIT-THEME-MAP/UNIKIT-TOKENS)과 같은 내용이다.
+ *   이 앱은 데모 웹 앱이 아니라서 generate:design의 갱신 대상이 아니므로
+ *   토큰이 바뀌면 이 파일도 함께 갱신해야 한다(audit 대상 밖 — 도그푸딩 관찰용).
+ * - ProseMirror(.tiptap) 타이포그래피는 UniKit 시맨틱 토큰 변수만으로 구성했다.
+ */
+@custom-variant dark (&:where(.dark, .dark *));
+@custom-variant web (&:where(:root, :root *));
+
+@source '../../../packages/unikit/src';
+
+/* ⛔ UNIKIT-THEME-MAP:BEGIN — apps/web/app/globals.css 생성 블록과 동일(수동 수집). */
+@theme inline {
+  --color-background: hsl(var(--background));
+  --color-foreground: hsl(var(--foreground));
+  --color-card: hsl(var(--card));
+  --color-card-foreground: hsl(var(--card-foreground));
+  --color-popover: hsl(var(--popover));
+  --color-popover-foreground: hsl(var(--popover-foreground));
+  --color-primary: hsl(var(--primary));
+  --color-primary-foreground: hsl(var(--primary-foreground));
+  --color-secondary: hsl(var(--secondary));
+  --color-secondary-foreground: hsl(var(--secondary-foreground));
+  --color-muted: hsl(var(--muted));
+  --color-muted-foreground: hsl(var(--muted-foreground));
+  --color-accent: hsl(var(--accent));
+  --color-accent-foreground: hsl(var(--accent-foreground));
+  --color-destructive: hsl(var(--destructive));
+  --color-destructive-foreground: hsl(var(--destructive-foreground));
+  --color-border: hsl(var(--border));
+  --color-input: hsl(var(--input));
+  --color-ring: hsl(var(--ring));
+
+  --radius-lg: var(--radius);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-sm: calc(var(--radius) - 4px);
+}
+/* UNIKIT-THEME-MAP:END */
+
+/* ⛔ UNIKIT-TOKENS:BEGIN — apps/web/app/globals.css 생성 블록과 동일(수동 수집). */
+@layer base {
+  :root {
+    --background: 0 0% 100%;
+    --foreground: 240 10% 3.9%;
+    --card: 0 0% 100%;
+    --card-foreground: 240 10% 3.9%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 240 10% 3.9%;
+    --primary: 240 5.9% 10%;
+    --primary-foreground: 0 0% 98%;
+    --secondary: 240 4.8% 95.9%;
+    --secondary-foreground: 240 5.9% 10%;
+    --muted: 240 4.8% 95.9%;
+    --muted-foreground: 240 3.8% 46.1%;
+    --accent: 240 4.8% 95.9%;
+    --accent-foreground: 240 5.9% 10%;
+    --destructive: 0 72.2% 50.6%;
+    --destructive-foreground: 0 0% 98%;
+    --border: 240 5.9% 90%;
+    --input: 240 5.9% 90%;
+    --ring: 240 5.9% 10%;
+    --radius: 0.5rem;
+  }
+
+  .dark {
+    --background: 240 10% 3.9%;
+    --foreground: 0 0% 98%;
+    --card: 240 10% 3.9%;
+    --card-foreground: 0 0% 98%;
+    --popover: 240 10% 3.9%;
+    --popover-foreground: 0 0% 98%;
+    --primary: 0 0% 98%;
+    --primary-foreground: 240 5.9% 10%;
+    --secondary: 240 3.7% 15.9%;
+    --secondary-foreground: 0 0% 98%;
+    --muted: 240 3.7% 15.9%;
+    --muted-foreground: 240 5% 64.9%;
+    --accent: 240 3.7% 15.9%;
+    --accent-foreground: 0 0% 98%;
+    --destructive: 0 72% 65%;
+    --destructive-foreground: 0 0% 98%;
+    --border: 240 3.7% 15.9%;
+    --input: 240 3.7% 15.9%;
+    --ring: 240 4.9% 83.9%;
+    --radius: 0.5rem;
+  }
+}
+/* UNIKIT-TOKENS:END */
+
+@layer base {
+  *,
+  ::after,
+  ::before,
+  ::backdrop,
+  ::file-selector-button {
+    border-color: hsl(var(--border));
+  }
+}
+
+/* tiptap(ProseMirror) 타이포그래피 — 시맨틱 토큰만 사용. */
+.tiptap {
+  color: hsl(var(--foreground));
+  caret-color: hsl(var(--primary));
+  outline: none;
+}
+.tiptap p {
+  line-height: 1.7;
+  margin: 0.75em 0;
+}
+.tiptap h1,
+.tiptap h2,
+.tiptap h3 {
+  font-weight: 600;
+  line-height: 1.3;
+  margin: 1.5em 0 0.5em;
+  letter-spacing: -0.01em;
+}
+.tiptap h1 {
+  font-size: 1.875rem;
+  margin-top: 0.5em;
+}
+.tiptap h2 {
+  font-size: 1.5rem;
+}
+.tiptap h3 {
+  font-size: 1.25rem;
+}
+.tiptap ul,
+.tiptap ol {
+  padding-inline-start: 1.5em;
+  margin: 0.75em 0;
+}
+.tiptap ul {
+  list-style: disc;
+}
+.tiptap ul ul {
+  list-style: circle;
+}
+.tiptap ol {
+  list-style: decimal;
+}
+.tiptap li {
+  margin: 0.25em 0;
+}
+.tiptap li > p {
+  margin: 0;
+}
+.tiptap blockquote {
+  border-inline-start: 2px solid hsl(var(--border));
+  color: hsl(var(--muted-foreground));
+  padding-inline-start: 1em;
+  margin: 1em 0;
+}
+.tiptap code {
+  background: hsl(var(--muted));
+  color: hsl(var(--foreground));
+  border-radius: var(--radius-sm);
+  font-size: 0.875em;
+  padding: 0.15em 0.4em;
+}
+.tiptap pre {
+  background: hsl(var(--muted));
+  border: 1px solid hsl(var(--border));
+  border-radius: var(--radius-md);
+  margin: 1em 0;
+  padding: 0.75em 1em;
+  overflow-x: auto;
+}
+.tiptap pre code {
+  background: transparent;
+  padding: 0;
+}
+.tiptap a {
+  color: hsl(var(--primary));
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  cursor: pointer;
+}
+.tiptap hr {
+  border: none;
+  border-top: 1px solid hsl(var(--border));
+  margin: 2em 0;
+}
+/* 첫 노드가 문단·제목 어느 쪽이어도 플레이스홀더가 뜨게 한다. */
+.tiptap p.is-editor-empty:first-child::before,
+.tiptap h1.is-editor-empty:first-child::before,
+.tiptap h2.is-editor-empty:first-child::before,
+.tiptap h3.is-editor-empty:first-child::before {
+  color: hsl(var(--muted-foreground));
+  content: attr(data-placeholder);
+  float: left;
+  height: 0;
+  pointer-events: none;
+}

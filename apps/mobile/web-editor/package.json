@@ -1,0 +1,21 @@
+{
+  "name": "@unikit/mobile-web-editor",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "scripts": {
+    "build": "vite build",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@tiptap/core": "^3.0.0",
+    "@tiptap/extensions": "^3.0.0",
+    "@tiptap/markdown": "^3.0.0",
+    "@tiptap/starter-kit": "^3.0.0"
+  },
+  "devDependencies": {
+    "typescript": "~6.0.3",
+    "vite": "^8.0.16",
+    "vite-plugin-singlefile": "^2.3.0"
+  }
+}
