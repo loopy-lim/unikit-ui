@@ -14,6 +14,10 @@
  * hitSlop은 웹에서 무시된다（포인터 정밀도가 높아 불필요）. onLongPress（길게
  * 누르기）도 웹 표준이 아니므로 폐기한다 — context-menu는 onContextMenu로.
  *
+ * 사이클 90 확장（docs/sdd/92-design-plan §2）: onHoverIn/onHoverOut→
+ * onMouseEnter/onMouseLeave（View·Pressable）, View onLayout→ResizeObserver,
+ * Pressable onFocus/onBlur는 DOM 표준명 그대로.
+ *
  * 사이클 40 확장（잔여 shadcn 33종 이식 지원）: Portal（createPortal→body）
  * ScrollView（overflow div + ref scrollTo）Select/SelectOption（select/option）
  * measureInWindow（getBoundingClientRect — 이미 뷰포트 좌표, scrollX/Y 가산
@@ -149,6 +153,9 @@ const View = forwardRef<BridgeViewRef, ViewProps>(
       accessibilityLabel,
       accessibilityRole,
       pointerEvents,
+      onLayout,
+      onHoverIn,
+      onHoverOut,
       ...rest
     },
     ref,
@@ -164,15 +171,41 @@ const View = forwardRef<BridgeViewRef, ViewProps>(
         ? { ...(style as React.CSSProperties), pointerEvents: pointerEventsValue }
         : { pointerEvents: pointerEventsValue }
       : (style as React.CSSProperties | undefined);
+    // onLayout — RN View onLayout의 웹 실현（사이클 90）. ResizeObserver로
+    // 마운트 시 1회 + 크기 변화마다 {width,height}를 전달한다. 콜백은 ref로
+    // 최신 것을 읽어(inline 화살표 전개에서 관찰 재시작하지 않게) prop 유무로만
+    // 구독한다. onKeyDown은 DOM 표준명이라 rest로 그대로 흐른다.
+    const nodeRef = useRef<HTMLDivElement | null>(null);
+    const layoutRef = useRef(onLayout);
+    layoutRef.current = onLayout;
+    const hasLayout = onLayout !== undefined;
+    useEffect(() => {
+      if (!hasLayout) return;
+      const el = nodeRef.current;
+      if (!el || typeof ResizeObserver !== "function") return;
+      const observer = new ResizeObserver((entries) => {
+        const rect = entries[0]?.contentRect;
+        if (rect) layoutRef.current?.({ width: rect.width, height: rect.height });
+      });
+      observer.observe(el);
+      return () => observer.disconnect();
+    }, [hasLayout]);
+    const setRef = (node: HTMLDivElement | null) => {
+      nodeRef.current = node;
+      if (typeof ref === "function") ref(node);
+      else if (ref) (ref as { current: HTMLDivElement | null }).current = node;
+    };
     return (
       <div
-        ref={ref as React.Ref<HTMLDivElement>}
+        ref={setRef}
         id={nativeID}
         data-testid={testID}
         role={accessibilityRole}
         aria-label={accessibilityLabel}
         className={className ? cn(VIEW_BASE_CLASS, className) : VIEW_BASE_CLASS}
         style={resolvedStyle}
+        onMouseEnter={onHoverIn}
+        onMouseLeave={onHoverOut}
         {...rest}
       >
         {children}
@@ -250,6 +283,10 @@ const Pressable = forwardRef<BridgePressableRef, PressableProps>(
       hitSlop: _hitSlop,
       onLongPress: _onLongPress, // 네이티브 전용 제스처 — 웹 폐기(context-menu는 onContextMenu)
       onContextMenu,
+      // hover 2종은 웹 mouse 이벤트로 이름만 치환（사이클 90）. onFocus/onBlur/
+      // onKeyDown은 DOM 표준명이라 rest로 그대로 흐른다.
+      onHoverIn,
+      onHoverOut,
       ...rest
     },
     ref,
@@ -265,6 +302,8 @@ const Pressable = forwardRef<BridgePressableRef, PressableProps>(
       disabled={disabled}
       aria-label={accessibilityLabel}
       role={accessibilityRole}
+      onMouseEnter={onHoverIn}
+      onMouseLeave={onHoverOut}
       // 브라우저 기본 우클릭 메뉴를 막고 커스텀 메뉴（context-menu）만 띄운다
       onContextMenu={
         onContextMenu
@@ -408,29 +447,97 @@ Image.displayName = "Image";
 // 담당하고 lib/overlay가 둘을 조합한다（이중 발화 방지）.
 // modal={false}는 웹에서 무의미하다 — 웹 포털은 원래 비모달（백드롭 없으면
 // 클릭을 잡지 않는다）.
+// dismissViaDocument（사이클 90 F-4） — hover 진입 오버레이용 대안 포착 방식.
+// 투명 커버층이 전체 화면을 덮는 순간 브라우저가 hover 체인을 재계산해 트리거에
+// mouseleave가 발생, hover로 열린 카드가 스스로 닫힌다. 이 값이 true면 커버층을
+// 깔지 않고 문서 수준 pointerdown 리스너로 카드 밖 판정을 한다（radix
+// DismissableLayer 방식의 근사）. 포함 판정 기준으로 children을 display:contents
+// 래퍼로 감싼다(박스를 만들지 않아 레이아웃 불변).
+//
+// 계층 스택（사이클 90 F-10） — 열린 카드가 여러 개일 때(메뉴+서브메뉴) 각 포털이
+// 독립 판정하면 ① 서브 카드 안 눌림도 루트가 «바깥»으로 닫아버려 언마운트가
+// click보다 먼저 와 항목 선택이 유실되고 ② 트리거 재클릭이 닫힘→토글 재오픈이
+// 된다. 등록 순(=마운트 순) 스택에서 위에서부터 내려가며, 눌림 대상을 포함하는
+// 층을 만나면 멈추고 그 위의 층만 닫는다(radix DismissableLayer 스택 근사).
+// dismissIgnoreRef(트리거)도 포함 판정에 넣어 트리거 눌림은 트리거 토글에 맡긴다.
 // ---------------------------------------------------------------------------
+type DismissLayer = {
+  host: HTMLDivElement;
+  close: () => void;
+  /** 바깥 판정에서 제외할 요소(트리거) — null이면 없음 */
+  ignoreNode: Node | null;
+};
+const dismissLayers: DismissLayer[] = [];
+function resolveDismissIgnoreNode(ref: unknown): Node | null {
+  const el =
+    ref && typeof ref === "object" && "current" in (ref as Record<string, unknown>)
+      ? (ref as { current: unknown }).current
+      : ref;
+  return el instanceof Node ? el : null;
+}
+
 const Portal = ({
   children,
   visible,
   onBackdropPress,
   backdropClassName,
+  dismissViaDocument,
+  dismissIgnoreRef,
 }: PortalProps) => {
+  // 문서 리스너 포착 — 카드 밖 pointerdown만 onBackdropPress로 전달한다.
+  // 훅은 언제 불려도 같은 순서로 호출돼야 하므로 조기 반환보다 앞에 둔다.
+  // close는 ref로 갱신해 등록 자체는 마운트마다 1회로 안정시킨다 — 콜백 인라인
+  // 화살표 때문에 매 렌더 재등록하면 스택 순서가 흔들린다(루트가 서브 위로).
+  const hostRef = useRef<HTMLDivElement | null>(null);
+  const closeRef = useRef(onBackdropPress);
+  closeRef.current = onBackdropPress;
+  useEffect(() => {
+    if (!visible || !dismissViaDocument || !closeRef.current) return;
+    const layer: DismissLayer = {
+      host: hostRef.current!,
+      close: () => closeRef.current?.(),
+      ignoreNode: resolveDismissIgnoreNode(dismissIgnoreRef),
+    };
+    dismissLayers.push(layer);
+    const handlePointerDown = (event: PointerEvent) => {
+      if (!(event.target instanceof Node)) return;
+      const layers = dismissLayers.slice();
+      for (let i = layers.length - 1; i >= 0; i--) {
+        const current = layers[i]!;
+        const inside =
+          current.host.contains(event.target) ||
+          (current.ignoreNode !== null && current.ignoreNode.contains(event.target));
+        if (inside) break;
+        current.close();
+      }
+    };
+    document.addEventListener("pointerdown", handlePointerDown);
+    return () => {
+      const index = dismissLayers.indexOf(layer);
+      if (index !== -1) dismissLayers.splice(index, 1);
+      document.removeEventListener("pointerdown", handlePointerDown);
+    };
+  }, [visible, dismissViaDocument, dismissIgnoreRef]);
   if (!visible || typeof document === "undefined") return null;
   // 백드롭 렌더 조건 — 닫기 핸들러가 있거나(onBackdropPress — 투명 클릭
   // 포착층이라도 렌더) 배경 클래스가 있으면(딤 — alert-dialog 등 닫힘
   // 차단만 하는 오버레이) 무조건 렌더한다. 둘 다 없으면 백드롭 없이
   // children만(비모달 — 토스트). onBackdropPress가 없는 백드롭은 클릭을
   // 삼키되 닫지 않는다(원본 radix alert-dialog 동작 — G3 F-3 반영).
+  // dismissViaDocument면 커버층을 생략한다(문서 리스너가 포착을 대신).
+  const renderBackdrop = (onBackdropPress || backdropClassName) && !dismissViaDocument;
   return createPortal(
     <>
-      {onBackdropPress || backdropClassName ? (
+      {renderBackdrop ? (
         <div
           className={backdropClassName}
           style={{ position: "fixed", inset: 0 }}
           onPointerDown={onBackdropPress}
         />
       ) : null}
-      {children}
+      <div ref={hostRef} style={{ display: "contents" }}>
+        {children}
+      </div>
     </>,
     document.body,
   );

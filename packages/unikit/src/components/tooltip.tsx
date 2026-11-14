@@ -3,16 +3,18 @@
 // React state + context로, 오버레이는 lib/overlay의 AnchoredOverlay로 구성한다.
 //
 // 포팅 판단（원본 대비 차이）:
-// - 진입 조건 설계: 원본은 hover/포커스 진입 시 delayDuration 후 열리고 포인터
-//   이탈 시 닫힌다. 브리지 PressableProps에 hover/포커스 이벤트 계약이 없어
-//   （onLongPress는 웹 폐기onFocus 부재） hover 상태 열림을 포인터 이벤트로
-//   관리할 수 없다 — 진입을 press로 근사한다.
-//    onPress（웹 클릭 + 네이티브 탭）: 닫힘 상태면 지연 로직대로 열고, 열림
-//     상태면 즉시 닫는다（토글）.
-//    onLongPress（네이티브 롱프레스 전용, 웹은 브리지가 폐기）: 지연 로직대로
-//     연다. 플랫폼 분기 없이 두 핸들러를 항상 연결해 어느 쪽에서도 동작한다.
-//    웹 focus（키보드） 진입은 onFocus 계약 부재로 미지원 — aria-describedby
-//     연결로 스크린리더는 콘텐츠를 인지한다（한계）.
+// - 진입 조건（사이클 90 원본 정합 — 브리지 onHoverIn/onHoverOut/onFocus/onBlur
+//   계약 추가로 재현）: 트리거 hover 진입 시 지연 로직대로 열리고 이탈 시
+//   닫힌다. focus 진입（웹 키보드 탭·모바일 탭 포커스）에도 열리고 blur에서
+//   닫힌다 — 원본 radix의 hover/focus 진입 조건과 같다.
+//   hover/focus 진입("pointer" 모드) 중에는 onPress 토글이 동작하지 않는다
+//   （원본도 클릭으로 툴팁을 끄지 않는다）.
+//   터치 기기에서 hover 계열은 발화하지 않아 기존 press 근사가 폴백으로 남는다:
+//    onPress（네이티브 탭·hover 없는 환경）: 닫힘 상태면 지연 로직대로 열고,
+//     열림 상태면 즉시 닫는다（토글）.
+//    onLongPress（네이티브 롱프레스 전용, 웹은 브리지가 폐기）: 지연 로직대로 연다.
+//   displayDuration 자동 닫힘은 press 진입분만 — pointer 진입은 포인터·포커스가
+//   머무는 동안 유지된다（원본 정합）.
 // - 지연 재현: delayDuration（기본 0 — 원본 Provider 기본값） 후 열림,
 //   skipDelayDuration（기본 300 — radix 기본값） 창 안의 재진입은 지연 없이 즉시
 //   열림, displayDuration（신규 프로퍼티, 기본 3000） 후 자동 닫힘. 전부
@@ -30,6 +32,10 @@
 // - 애니메이션（animate-in/outfadezoomdata-［side］ 슬라이드）과 origin 변형은
 //   즉시 전환으로 근사 — 토큰 전부 제거.
 // - 카드 className에 pointer-events-auto 기본 포함（웹 box-none 상속 회피）.
+// - 바깥 포인터 닫힘（웹）: 투명 커버층 대신 문서 수준 리스너로 포착한다（사이클
+//   90 F-4 정정 — 커버층이 열리는 순간 브라우저 hover 재계산으로 트리거
+//   mouseleave를 일으켜 hover 진입 툴팁이 스스로 닫혔다. AnchoredOverlay 전체
+//   기본 동작 참조）. 네이티브는 RN Modal 배경 Pressable이 담당.
 // - 접근성: 카드 role="tooltip"（원본과 동일） + nativeID, 트리거는 원본처럼
 //   aria-describedby로 카드를 설명 연결한다（열림 중에만 — 닫힘 카드는 언마운트
 //   되므로 끊어진 참조를 만들지 않는다）. RN은 role="tooltip"aria-describedby를
@@ -138,10 +144,13 @@ function TooltipProvider({
 
 type TooltipContextValue = {
   open: boolean;
-  /** 지연 로직대로 연다（skip 창이면 즉시, 아니면 delayDuration 후） */
-  show: () => void;
+  /** 지연 로직대로 연다（skip 창이면 즉시, 아니면 delayDuration 후）.
+   *  source "pointer"는 hover/focus 진입 — 자동 닫힘·클릭 토글 제외 대상. */
+  show: (source?: "pointer") => void;
   /** 지연 타이머를 취소하고 즉시 닫는다 */
   hide: () => void;
+  /** 진입 경로 — "pointer"(hover/focus) · "press"(터치 폴백) · null(닫힘) */
+  entry: "pointer" | "press" | null;
   /** 카드 nativeID ↔ 트리거 aria-describedby 연결용 ID */
   contentId: string;
   /** 트리거 요소 ref — 앵커 측정닫힘 후 포커스 복귀에 공용 */
@@ -214,35 +223,54 @@ const Tooltip = forwardRef<BridgeViewRef, TooltipProps>(
     const applyOpenRef = useRef(applyOpen);
     applyOpenRef.current = applyOpen;
 
-    // displayDuration 자동 닫힘 — 열림마다 1회 스케줄, 클린업 필수.
+    // displayDuration 자동 닫힘 — press 진입분만 열림마다 1회 스케줄, 클린업 필수.
+    // pointer(hover/focus) 진입은 이탈·블러 사건이 닫힘을 담당한다（원본 정합）.
+    // entry는 state다 — 이미 열린(press) 채 hover 진입이 와도 context.entry가
+    // 갱신돼야 트리거의 onPress 게이트(«pointer 진입 중 클릭으로 끄지 않는다»)가
+    // 올바르게 막힌다. ref면 재렌더가 없어 stale 값이 남았다(G4 F-14).
+    const [entry, setEntry] = useState<"pointer" | "press" | null>(null);
     const displayDuration = policy.displayDuration;
     useEffect(() => {
       if (!isOpen || displayDuration <= 0) return;
+      if (entry === "pointer") return;
       const id = setTimeout(() => applyOpenRef.current(false), displayDuration);
       return () => clearTimeout(id);
-    }, [isOpen, displayDuration]);
+    }, [isOpen, displayDuration, entry]);
 
-    const show = useCallback(() => {
-      clearDelayTimer();
-      if (stateRef.current.isOpen) return;
-      // skip 창 안의 재진입은 지연 없이 즉시 열림（radix skipDelayDuration 재현）.
-      if (policy.isSkipped()) {
-        applyOpen(true);
-        return;
-      }
-      delayTimerRef.current = setTimeout(() => {
-        delayTimerRef.current = null;
-        applyOpen(true);
-      }, resolvedDelay);
-    }, [clearDelayTimer, policy, applyOpen, resolvedDelay]);
+    const show = useCallback(
+      (source?: "pointer") => {
+        // 이미 열려 있어도 진입 경로는 갱신한다(press→hover 상승, F-14).
+        setEntry(source ?? "press");
+        clearDelayTimer();
+        if (stateRef.current.isOpen) return;
+        // skip 창 안의 재진입은 지연 없이 즉시 열림（radix skipDelayDuration 재현）.
+        if (policy.isSkipped()) {
+          applyOpen(true);
+          return;
+        }
+        delayTimerRef.current = setTimeout(() => {
+          delayTimerRef.current = null;
+          applyOpen(true);
+        }, resolvedDelay);
+      },
+      [clearDelayTimer, policy, applyOpen, resolvedDelay],
+    );
     const hide = useCallback(() => {
       clearDelayTimer();
+      setEntry(null);
       applyOpen(false);
     }, [clearDelayTimer, applyOpen]);
 
     const contextValue = useMemo<TooltipContextValue>(
-      () => ({ open: isOpen, show, hide, contentId: `${baseId}-tooltip-content`, triggerRef }),
-      [isOpen, show, hide, baseId],
+      () => ({
+        open: isOpen,
+        show,
+        hide,
+        entry,
+        contentId: `${baseId}-tooltip-content`,
+        triggerRef,
+      }),
+      [isOpen, show, hide, entry, baseId],
     );
 
     return (
@@ -263,7 +291,10 @@ export type TooltipTriggerProps = PressableProps;
 // 없어서 네이티브에서 문자열 children이 런타임 에러를 낸다(2026-11-10 실증).
 
 const TooltipTrigger = forwardRef<BridgePressableRef, TooltipTriggerProps>(
-  ({ onPress, onLongPress, ...props }, ref) => {
+  (
+    { onPress, onLongPress, onHoverIn, onHoverOut, onFocus, onBlur, ...props },
+    ref,
+  ) => {
     const tooltip = useTooltipContext("TooltipTrigger");
     return (
       <Pressable
@@ -271,9 +302,31 @@ const TooltipTrigger = forwardRef<BridgePressableRef, TooltipTriggerProps>(
         // 원본 관행대로 트리거의 보조 설명을 카드와 연결 — 열림 중에만（닫힘 카드는
         // 언마운트되므로 끊어진 참조를 만들지 않는다）.
         aria-describedby={tooltip.open ? tooltip.contentId : undefined}
+        // hover/focus 진입（사이클 90） — 원본 radix 진입 조건 재현. 터치 기기에서는
+        // 발화하지 않아 아래 press 폴백이 담당한다.
+        onHoverIn={() => {
+          tooltip.show("pointer");
+          onHoverIn?.();
+        }}
+        onHoverOut={() => {
+          tooltip.hide();
+          onHoverOut?.();
+        }}
+        onFocus={() => {
+          tooltip.show("pointer");
+          onFocus?.();
+        }}
+        onBlur={() => {
+          tooltip.hide();
+          onBlur?.();
+        }}
         onPress={() => {
-          if (tooltip.open) tooltip.hide();
-          else tooltip.show();
+          // pointer 진입 중에는 클릭으로 끄지 않는다（원본 정합 — 토글은 hover
+          // 계열이 없는 터치 환경 폴백）.
+          if (tooltip.entry !== "pointer") {
+            if (tooltip.open) tooltip.hide();
+            else tooltip.show();
+          }
           onPress?.();
         }}
         onLongPress={() => {
@@ -337,6 +390,8 @@ const TooltipContent = forwardRef<BridgeViewRef, TooltipContentProps>(
         align={align}
         offset={sideOffset}
         triggerRef={tooltip.triggerRef}
+        // hover/focus 개방 계열은 열림에 포커스를 뺏지 않는다(원본 정합 — F-5).
+        focusOnOpen={false}
         className="z-50"
       >
         <View

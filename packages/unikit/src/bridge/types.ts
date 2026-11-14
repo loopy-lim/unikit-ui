@@ -16,6 +16,11 @@
  * onContextMenu/onLongPress/onKeyDown, PortalScrollViewSelect 프리미티브,
  * measureInWindowuseDrag오버레이 훈 4종（useOverlayFocususeDismiss
  * useRepositionuseScrollLock）.
+ *
+ * 사이클 90 확장（로드맵 미지원 해소 — docs/sdd/92-design-plan §2）:
+ * PressableProps onHoverIn/onHoverOut/onFocus/onBlur, ViewProps
+ * onLayout（BridgeLayout）/onKeyDown/onHoverIn/onHoverOut, BridgePressableRef
+ * 선택적 focus().
  */
 import type { ComponentType, ReactElement, ReactNode } from "react";
 
@@ -28,6 +33,12 @@ export type BridgeColorScheme = "light" | "dark";
  * 정적 스타일은 여전히 className이 원칙이고, 여기는 동적 값 전용이다.
  */
 export type BridgeStyle = Record<string, string | number | undefined>;
+
+/**
+ * onLayout 측정값（사이클 90） — 웹 ResizeObserver contentRect / 네이티브 RN
+ * View onLayout layout에서 폭·높이만 좁힌 공통 최소 형태.
+ */
+export type BridgeLayout = { width: number; height: number };
 
 /**
  * 플랫폼 공통 접근성 역할 — ARIA role과 RN accessibilityRole의 교집합 +
@@ -90,6 +101,19 @@ export type ViewProps = {
   /** 동적 값 전용 인라인 스타일（정적 스타일은 className 원칙） */
   style?: BridgeStyle;
   children?: ReactNode;
+  /**
+   * 레이아웃 크기 변화（사이클 90） — 웹 ResizeObserver / 네이티브 RN View
+   * onLayout을 {width,height}로 좁힌 공통 계약. 마운트 시 1회 + 크기 변화마다
+   * 발화한다. 소비처: chart fluid 폭 등（컨테이너 폭 추종）.
+   */
+  onLayout?: (layout: BridgeLayout) => void;
+  /** 키 입력（메뉴 카드 키보드 탐색） — 웹 onKeyDown. 네이티브 폐기（한계） */
+  onKeyDown?: (event: BridgeKeyEvent) => void;
+  /** 포인터 진입（hover-card 카드 이탈 닫힘） — 웹 mouseenter. 네이티브 폐기
+   *  （RN View에는 hover 계약 없음 — Pressable만 onHoverIn 보유） */
+  onHoverIn?: () => void;
+  /** 포인터 이탈 — 웹 mouseleave. 네이티브 폐기（〃） */
+  onHoverOut?: () => void;
   /** 네이티브 nativeID — 웹에서는 id로 전달된다 */
   nativeID?: string;
   testID?: string;
@@ -179,6 +203,19 @@ export type PressableProps = {
   onLongPress?: () => void;
   /** 키 입력（웹 키보드 탐색조정） — 웹 onKeyDown. 네이티브 미지원（폐기） */
   onKeyDown?: (event: BridgeKeyEvent) => void;
+  /**
+   * 포인터（마우스·스타일러스） 진입（사이클 90） — 웹 onMouseEnter,
+   * 네이티브 RN Pressable onHoverIn（터치 기기에서는 발화하지 않는다）.
+   * 소비처: tooltip·hover-card·navigation-menu hover 진입, 서브메뉴 hover 개방.
+   */
+  onHoverIn?: () => void;
+  /** 포인터 이탈 — 웹 onMouseLeave, 네이티브 RN Pressable onHoverOut */
+  onHoverOut?: () => void;
+  /** 포커스 진입（무인자） — 웹 focus, 네이티브 RN Pressable onFocus.
+   *  소비처: tooltip 키보드 진입, 메뉴 키보드 탐색 항목 추적. */
+  onFocus?: () => void;
+  /** 포커스 이탈（무인자） — 웹 blur, 네이티브 RN Pressable onBlur */
+  onBlur?: () => void;
   /** RN 전용 터치 타깃 확장（px） — 웹에서는 무시 */
   hitSlop?: number | { top: number; bottom: number; left: number; right: number };
   nativeID?: string;
@@ -248,7 +285,14 @@ export type TextInputProps = {
 
 export interface BridgeViewRef {}
 export interface BridgeTextRef {}
-export interface BridgePressableRef {}
+/**
+ * 웹 DOM 요소는 focus()를 노출한다 — 메뉴 키보드 탐색（사이클 90）이 등록된
+ * 항목으로 포커스를 옮기는 데 쓴다. 네이티브 RN 인스턴스는 이 메서드가
+ * 없어（선택적 계약） 호출 가드로 no-op가 된다.
+ */
+export interface BridgePressableRef {
+  focus?(): void;
+}
 export interface BridgeImageRef {}
 export interface BridgeTextInputRef {
   focus(): void;
@@ -263,6 +307,15 @@ export interface BridgeTextInputRef {
 export type BridgeKeyEvent = {
   key: string;
   preventDefault: () => void;
+  /** 전파 중단（메뉴 카드 중첩 2중 처리 방지） — 웹 DOM KeyboardEvent 제공,
+   *  선택적이라 네이티브 래핑 구현부는 생략한다. */
+  stopPropagation?: () => void;
+  /** 수정자 키 눌림（사이클 90 후속 — 메뉴 타입어헤드가 일반 글자만
+   *  받아들이게 하는 게이트용） — 웹은 DOM KeyboardEvent가 구조적으로
+   *  제공하고, 네이티브 래핑 구현부는 생략한다(없으면 false 취급). */
+  ctrlKey?: boolean;
+  altKey?: boolean;
+  metaKey?: boolean;
 };
 
 /** 포털 — 부모 레이아웃을 벗어난 최상위 렌더（dialogpopovertoast 등）.
@@ -277,6 +330,18 @@ export type PortalProps = {
   onRequestClose?: () => void;
   /** 백드롭 추가 클래스（z-index배경색 — 예: "z-40 bg-background/80"） */
   backdropClassName?: string;
+  /** 웹에서 바깥 눌림 포착을 투명 커버층 대신 문서 수준 pointerdown 리스너로
+   *  한다（기본 false — 커버층）. hover 진입 오버레이（tooltip·hover-card）용:
+   *  전체 화면 커버층이 열리는 순간 트리거의 hover를 가로채 mouseleave를
+   *  일으켜 카드가 스스로 닫히는 사이클 90 결함(F-4)의 대응이며, radix
+   *  DismissableLayer（문서 리스너） 방식의 근사다. 네이티브는 문서 리스너
+   *  계약이 없어 이 값을 무시하고 RN Modal 배경 Pressable(cover)로 동작한다. */
+  dismissViaDocument?: boolean;
+  /** 문서 리스너의 바깥 판정에서 제외할 요소(앵커·트리거) ref — dismissViaDocument
+   *  전용. 이 요소 위의 pointerdown은 바깥 닫힘을 일으키지 않아 트리거 자신의
+   *  눌림 토글로 이어진다(열린 메뉴의 트리거 재클릭 = 닫힘 — 사이클 90 F-10).
+   *  ref 객체 또는 요소. 웹 전용(네이티브는 RN Modal이 담당). */
+  dismissIgnoreRef?: unknown;
   /** 모달성（기본 true） — 네이티브에서만 유효. true면 RN Modal（배경 조작 차단
    *  OS 뒤로가기 연결）, false면 절대 배치 View로 렌더해 배경 조작을 막지 않는다
    *  （토스트 등 비모달 오버레이 — T-3b 제기）. 이때 화면 최상위 배치는 소비자가

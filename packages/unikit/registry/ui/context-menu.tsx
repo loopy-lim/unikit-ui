@@ -17,15 +17,24 @@
 //   스타일만 리셋하고 자식（카드 등 임의 콘텐츠）을 세로로 감싼다. asChild
 //   미지원은 dropdown-menu.tsx와 동일.
 // - 서브메뉴（Sub 계열）: 중첩 AnchoredOverlay로 실제 서브메뉴를 구현（1단계
-//   근사가 아님）. 복잡도 판단 — SubTrigger 눌림으로 열고 닫는다（hover 열기는
-//   브리지 계약 밖）, Sub 열림은 비제어 내부 state, ESC는 서브루트가 동시에
-//   닫힌다（document 단위 useDismiss — 근사）.
+//   근사가 아님）. SubTrigger는 hover로 열린다（사이클 90 해소 — dropdown-menu와
+//   동일 판단）: radix Menu 원본값 그대로 진입 100ms 뒤 열림 예약, 이탈 300ms
+//   grace 뒤 닫힘 예약（카드 진입이 취소）. Sub 열림은 비제어 내부 state, ESC는
+//   서브루트가 동시에 닫힌다（document 단위 useDismiss — 근사）.
 // - 아이콘: CheckIcon·ChevronRightIcon — 브리지 lucide 아이콘 프리미티브
 //   （checkbox/radio-group/accordion 관행, lucide — primitives 경유）. CircleIcon은 점 View
 //   （size-2 rounded-full）로 근사.
 // - 항목 onSelect는 무인자 콜백으로 단순화（preventDefault 닫기 방지 미지원）,
 //   선택 시 항상 메뉴가 닫힌다.
-// - 미지원（로드맵）: 등장/퇴장 애니메이션, 화살표키타입어헤드루프 탐색,
+// - 키보드 탐색（사이클 90 해소 — 웹 전용）: 카드 안에서 ArrowDown/Up（양 끝
+//   루프）Home/End로 항목 DOM 포커스를 옮기고, ArrowRight는 SubTrigger 서브를
+//   열고 ArrowLeft는 닫아 트리거로 돌아간다 — lib/menu-nav 공유 골격
+//   （dropdown-menu와 동일 판단）. 네이티브 View는 onKeyDown을 폐기（브리지
+//   계약 한계）.
+// - 포커스 정책（사이클 90, radix Menu 정합 — dropdown-menu와 동일 판단）:
+//   항목 pointerenter 시 해당 항목으로 포커스 이동. 서브 개방의 첫 항목 포커스는
+//   진입 경로를 따른다（hover/press 개방은 이동 없음, ArrowRight 개방만 이동）.
+// - 미지원（로드맵）: 등장/퇴장 애니메이션, 타입어헤드,
 //   포인터 좌표 배치, alignOffsetavoidCollisions. 바깥 포인터 눌림 닫기는
 //   AnchoredOverlay 투명 백드롭이 제공한다（G3 정합 갱신）. 웹에서는
 //   AnchoredOverlay의 포커스 이동
@@ -46,6 +55,7 @@ import {
   forwardRef,
   useCallback,
   useContext,
+  useEffect,
   useId,
   useMemo,
   useRef,
@@ -59,6 +69,7 @@ import {
   Pressable,
   Text,
   View,
+  type BridgeKeyEvent,
   type BridgePressableRef,
   type BridgeTextRef,
   type BridgeViewRef,
@@ -71,7 +82,16 @@ import {
   AnchoredOverlay,
   type OverlayAlign,
   type OverlayPlacement,
-} from "../lib/overlay";
+} from "@/lib/overlay";
+import {
+  composeMenuItemFocus,
+  composeMenuItemHoverIn,
+  composeMenuNavKeyDown,
+  MenuNavContext,
+  useMenuItemRef,
+  useMenuNav,
+  useMenuNavContext,
+} from "@/lib/menu-nav";
 import { cn } from "@/lib/utils";
 
 // ---------------------------------------------------------------------------
@@ -134,6 +154,20 @@ function useContextMenuContext(component: string): ContextMenuContextValue {
 type ContextMenuSubContextValue = {
   open: boolean;
   setOpen: (open: boolean) => void;
+  /** 눌림 즉시 개방 — press도 pointer 진입으로 표시한다（포커스 이동 없음.
+   *  setOpen(true)을 직접 쓰면 entry가 null로 남아 focusOnOpen이 켜진다 —
+   *  G4 F-13, dropdown-menu와 동일 판단）. */
+  openViaPointer: () => void;
+  /** 트리거 hover 진입 — 100ms 뒤 열림 예약（이미 열림이면 닫힘 예약 취소만）.
+   *  source "pointer"(hover)는 개방 시 항목 포커스 이동을 하지 않는다（radix
+   *  포인터 모드 — SubContent focusOnOpen 참조）, "keyboard"(ArrowRight)만 이동한다. */
+  scheduleOpen: (source?: "pointer" | "keyboard") => void;
+  /** 트리거·카드 이탈 — 지연 열림을 취소하고 300ms 뒤 닫힘 예약 */
+  scheduleClose: () => void;
+  /** 카드 진입 — 예약된 닫힘을 취소한다（트리거→카드 포인터 이동 유지） */
+  cancelClose: () => void;
+  /** 이번 개방의 진입 경로 — "pointer"(hover·press 토글) · "keyboard" · null */
+  entry: "pointer" | "keyboard" | null;
   triggerRef: PressableRefObject;
   baseId: string;
 };
@@ -289,30 +323,39 @@ const ContextMenuContent = forwardRef<BridgeViewRef, ContextMenuContentProps>(
       align = "start",
       sideOffset = 4,
       children,
+      onKeyDown,
       ...props
     },
     ref,
   ) => {
     const menu = useContextMenuContext("ContextMenuContent");
+    // 카드 키보드 탐색（사이클 90） — lib/menu-nav 공유 골격.
+    const nav = useMenuNav();
     return (
       <AnchoredOverlay
         visible={menu.open}
         onClose={() => menu.setOpen(false)}
         anchorRef={menu.triggerRef}
+        // 닫힘(Enter·ESC) 후 포커스를 트리거로 복귀시킨다(G4 — BODY에 남으면
+        // 다음 Tab이 문서 처음부터 시작된다).
+        triggerRef={menu.triggerRef}
         placement={side}
         align={align}
         offset={sideOffset}
         className="z-50"
         accessibilityRole="menu"
       >
-        <View
-          ref={ref}
-          nativeID={`${menu.baseId}-context-menu-content`}
-          className={cn(CARD_CLASSES, className)}
-          {...props}
-        >
-          {children}
-        </View>
+        <MenuNavContext.Provider value={nav}>
+          <View
+            ref={ref}
+            nativeID={`${menu.baseId}-context-menu-content`}
+            onKeyDown={composeMenuNavKeyDown(nav, onKeyDown)}
+            className={cn(CARD_CLASSES, className)}
+            {...props}
+          >
+            {children}
+          </View>
+        </MenuNavContext.Provider>
       </AnchoredOverlay>
     );
   },
@@ -343,17 +386,25 @@ const ContextMenuItem = forwardRef<BridgePressableRef, ContextMenuItemProps>(
       disabled,
       onSelect,
       children,
+      onFocus,
+      onHoverIn,
       ...props
     },
     ref,
   ) => {
     const menu = useContextMenuContext("ContextMenuItem");
     const destructive = variant === "destructive";
+    // 키보드 탐색 등록（사이클 90）.
+    const nav = useMenuNavContext();
+    const { id, attach, nodeRef } = useMenuItemRef(ref);
     return (
       <Pressable
-        ref={ref}
+        ref={attach}
         accessibilityRole="menuitem"
         disabled={disabled}
+        // 포인터 진입 항목으로 포커스 이동（radix pointerenter 정합 — 사이클 90）.
+        onHoverIn={composeMenuItemHoverIn(nav, id, nodeRef, onHoverIn)}
+        onFocus={composeMenuItemFocus(nav, id, onFocus)}
         onPress={() => {
           onSelect?.();
           menu.setOpen(false);
@@ -409,6 +460,8 @@ const ContextMenuCheckboxItem = forwardRef<
       onSelect,
       disabled,
       children,
+      onFocus,
+      onHoverIn,
       ...props
     },
     ref,
@@ -417,12 +470,18 @@ const ContextMenuCheckboxItem = forwardRef<
     // 제어/비제어 통합 — checkbox.tsx와 동일 구조.
     const [uncontrolled, setUncontrolled] = useState(defaultChecked);
     const isChecked = checked !== undefined ? checked : uncontrolled;
+    // 키보드 탐색 등록（사이클 90）.
+    const nav = useMenuNavContext();
+    const { id, attach, nodeRef } = useMenuItemRef(ref);
     return (
       <Pressable
-        ref={ref}
+        ref={attach}
         accessibilityRole="menuitem"
         aria-checked={isChecked}
         disabled={disabled}
+        // 포인터 진입 항목으로 포커스 이동（radix pointerenter 정합 — 사이클 90）.
+        onHoverIn={composeMenuItemHoverIn(nav, id, nodeRef, onHoverIn)}
+        onFocus={composeMenuItemFocus(nav, id, onFocus)}
         onPress={() => {
           const next = !isChecked;
           if (checked === undefined) setUncontrolled(next);
@@ -497,39 +556,50 @@ export type ContextMenuRadioItemProps = Omit<
 const ContextMenuRadioItem = forwardRef<
   BridgePressableRef,
   ContextMenuRadioItemProps
->(({ className, value, onSelect, disabled, children, ...props }, ref) => {
-  const menu = useContextMenuContext("ContextMenuRadioItem");
-  const group = useContext(ContextMenuRadioGroupContext);
-  const isChecked = group.value === value;
-  return (
-    <Pressable
-      ref={ref}
-      accessibilityRole="menuitem"
-      aria-checked={isChecked}
-      disabled={disabled}
-      onPress={() => {
-        group.onItemSelect(value);
-        onSelect?.();
-        menu.setOpen(false);
-      }}
-      className={cn(
-        INDICATED_ITEM_CLASSES,
-        disabled && "web:pointer-events-none opacity-50",
-        className,
-      )}
-      {...props}
-    >
-      {/* 표시자 — 원본 ItemIndicator + CircleIcon（fill-current size-2） 대신 점
-          View(radio-group.tsx 관행). 배경이 popover라 foreground 점. */}
-      <View aria-hidden className={INDICATOR_SLOT_CLASSES}>
-        {isChecked ? (
-          <View className="size-2 rounded-full bg-foreground" />
-        ) : null}
-      </View>
-      {wrapTextChildren(children, ITEM_TEXT_CLASSES)}
-    </Pressable>
-  );
-});
+>(
+  (
+    { className, value, onSelect, disabled, children, onFocus, onHoverIn, ...props },
+    ref,
+  ) => {
+    const menu = useContextMenuContext("ContextMenuRadioItem");
+    const group = useContext(ContextMenuRadioGroupContext);
+    const isChecked = group.value === value;
+    // 키보드 탐색 등록（사이클 90）.
+    const nav = useMenuNavContext();
+    const { id, attach, nodeRef } = useMenuItemRef(ref);
+    return (
+      <Pressable
+        ref={attach}
+        accessibilityRole="menuitem"
+        aria-checked={isChecked}
+        disabled={disabled}
+        // 포인터 진입 항목으로 포커스 이동（radix pointerenter 정합 — 사이클 90）.
+        onHoverIn={composeMenuItemHoverIn(nav, id, nodeRef, onHoverIn)}
+        onFocus={composeMenuItemFocus(nav, id, onFocus)}
+        onPress={() => {
+          group.onItemSelect(value);
+          onSelect?.();
+          menu.setOpen(false);
+        }}
+        className={cn(
+          INDICATED_ITEM_CLASSES,
+          disabled && "web:pointer-events-none opacity-50",
+          className,
+        )}
+        {...props}
+      >
+        {/* 표시자 — 원본 ItemIndicator + CircleIcon（fill-current size-2） 대신 점
+            View(radio-group.tsx 관행). 배경이 popover라 foreground 점. */}
+        <View aria-hidden className={INDICATOR_SLOT_CLASSES}>
+          {isChecked ? (
+            <View className="size-2 rounded-full bg-foreground" />
+          ) : null}
+        </View>
+        {wrapTextChildren(children, ITEM_TEXT_CLASSES)}
+      </Pressable>
+    );
+  },
+);
 ContextMenuRadioItem.displayName = "ContextMenuRadioItem";
 
 export type ContextMenuLabelProps = ViewProps & {
@@ -588,14 +658,108 @@ ContextMenuShortcut.displayName = "ContextMenuShortcut";
 
 export type ContextMenuSubProps = { children?: ReactNode };
 
+// radix Menu 원본값（packages/react/menu/src/menu.tsx） — SubTrigger onPointerMove의
+// 지연 열림 setTimeout 100ms, 포인터 grace 타이머 300ms（dropdown-menu와 동일）.
+const SUB_OPEN_DELAY = 100;
+const SUB_CLOSE_GRACE = 300;
+
 function ContextMenuSub({ children }: ContextMenuSubProps) {
-  // 서브 열림은 비제어 — 눌림 토글로만 조작（원본 open/onOpenChange 제어 미지원）.
-  const [open, setOpen] = useState(false);
+  // 서브 열림은 비제어 — 눌림 토글·hover로만 조작（원본 open/onOpenChange 제어 미지원）.
+  const [open, setOpenState] = useState(false);
+  const openRef = useRef(open);
+  openRef.current = open;
   const triggerRef = useRef<BridgePressableRef | null>(null);
   const baseId = useId();
+
+  // hover 지연 타이머（사이클 90） — 재스케줄·언마운트 해제가 의무.
+  // entry는 이번 개방의 진입 경로（pointer=hover/press, keyboard=ArrowRight） —
+  // SubContent의 focusOnOpen 결정에만 쓰이고 닫힘 때 null로 돌아간다.
+  const [entry, setEntry] = useState<"pointer" | "keyboard" | null>(null);
+  const openTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const closeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const clearOpenTimer = useCallback(() => {
+    if (openTimerRef.current !== null) {
+      clearTimeout(openTimerRef.current);
+      openTimerRef.current = null;
+    }
+  }, []);
+  const clearCloseTimer = useCallback(() => {
+    if (closeTimerRef.current !== null) {
+      clearTimeout(closeTimerRef.current);
+      closeTimerRef.current = null;
+    }
+  }, []);
+  useEffect(
+    () => () => {
+      clearOpenTimer();
+      clearCloseTimer();
+    },
+    [clearOpenTimer, clearCloseTimer],
+  );
+  // 즉시 전환（눌림 토글·바깥 닫힘）은 보류 타이머를 청소하고 반영한다.
+  const setOpen = useCallback(
+    (next: boolean) => {
+      clearOpenTimer();
+      clearCloseTimer();
+      setOpenState(next);
+      if (!next) setEntry(null);
+    },
+    [clearOpenTimer, clearCloseTimer],
+  );
+  const scheduleOpen = useCallback(
+    (source?: "pointer" | "keyboard") => {
+      clearCloseTimer();
+      if (openRef.current) return;
+      clearOpenTimer();
+      openTimerRef.current = setTimeout(() => {
+        openTimerRef.current = null;
+        setEntry(source ?? "pointer");
+        setOpenState(true);
+      }, SUB_OPEN_DELAY);
+    },
+    [clearCloseTimer, clearOpenTimer],
+  );
+  // 눌림 개방 — 지연 없이 즉시, 진입은 pointer로 표시（F-13）.
+  const openViaPointer = useCallback(() => {
+    clearOpenTimer();
+    clearCloseTimer();
+    setEntry("pointer");
+    setOpenState(true);
+  }, [clearOpenTimer, clearCloseTimer]);
+  const scheduleClose = useCallback(() => {
+    clearOpenTimer();
+    if (!openRef.current) return;
+    clearCloseTimer();
+    closeTimerRef.current = setTimeout(() => {
+      closeTimerRef.current = null;
+      setEntry(null);
+      setOpenState(false);
+    }, SUB_CLOSE_GRACE);
+  }, [clearOpenTimer, clearCloseTimer]);
+  const cancelClose = clearCloseTimer;
+
   const contextValue = useMemo(
-    () => ({ open, setOpen, triggerRef, baseId }),
-    [open, baseId],
+    () => ({
+      open,
+      setOpen,
+      openViaPointer,
+      scheduleOpen,
+      scheduleClose,
+      cancelClose,
+      entry,
+      triggerRef,
+      baseId,
+    }),
+    [
+      open,
+      setOpen,
+      openViaPointer,
+      scheduleOpen,
+      scheduleClose,
+      cancelClose,
+      entry,
+      baseId,
+    ],
   );
   return (
     <ContextMenuSubContext.Provider value={contextValue}>
@@ -612,40 +776,80 @@ export type ContextMenuSubTriggerProps = Omit<PressableProps, "onPress"> & {
 const ContextMenuSubTrigger = forwardRef<
   BridgePressableRef,
   ContextMenuSubTriggerProps
->(({ className, inset, disabled, children, ...props }, ref) => {
-  const sub = useContextMenuSubContext("ContextMenuSubTrigger");
-  return (
-    <Pressable
-      ref={composeRefs(ref, sub.triggerRef)}
-      accessibilityRole="menuitem"
-      aria-expanded={sub.open}
-      aria-controls={`${sub.baseId}-context-menu-sub-content`}
-      disabled={disabled}
-      onPress={() => sub.setOpen(!sub.open)}
-      className={cn(
-        ITEM_CLASSES,
-        ITEM_HIGHLIGHT_CLASSES,
-        inset && "pl-8",
-        // 원본 data-［state=open］:bg-accent → 조건부 클래스
-        sub.open && "bg-accent active:bg-accent",
-        disabled && "web:pointer-events-none opacity-50",
-        className,
-      )}
-      {...props}
-    >
-      {wrapTextChildren(
-        children,
-        cn(ITEM_TEXT_CLASSES, sub.open && "text-accent-foreground"),
-      )}
-      <ChevronRightIcon
+>(
+  (
+    { className, inset, disabled, children, onHoverIn, onHoverOut, onFocus, onKeyDown, ...props },
+    ref,
+  ) => {
+    const sub = useContextMenuSubContext("ContextMenuSubTrigger");
+    // 키보드 탐색 등록（사이클 90） — ArrowRight가 scheduleOpen으로 이어진다
+    // （keyboard 진입 표시 — SubContext entry 계약）.
+    const nav = useMenuNavContext();
+    const composedRef = useMemo(
+      () => composeRefs(ref, sub.triggerRef),
+      [ref, sub.triggerRef],
+    );
+    const openViaKeyboard = useMemo(
+      () => () => sub.scheduleOpen("keyboard"),
+      [sub.scheduleOpen],
+    );
+    const { id, attach, nodeRef } = useMenuItemRef(composedRef, openViaKeyboard);
+    return (
+      <Pressable
+        ref={attach}
+        accessibilityRole="menuitem"
+        aria-expanded={sub.open}
+        aria-controls={`${sub.baseId}-context-menu-sub-content`}
+        disabled={disabled}
+        // hover 개방（사이클 90 해소） — radix 원본값: 진입 100ms 뒤 열림 예약,
+        // 이탈은 300ms grace 뒤 닫힘 예약（dropdown-menu와 동일 판단）.
+        // 진입 항목 포커스 이동은 composeMenuItemHoverIn.
+        onHoverIn={composeMenuItemHoverIn(nav, id, nodeRef, () => {
+          sub.scheduleOpen("pointer");
+          onHoverIn?.();
+        })}
+        onHoverOut={() => {
+          sub.scheduleClose();
+          onHoverOut?.();
+        }}
+        onFocus={composeMenuItemFocus(nav, id, onFocus)}
+        // hover 개방(포커스가 트리거에 남는 radix 포인터 모드) 중 ArrowLeft는
+        // 서브를 닫는다（dropdown-menu와 동일 판단, radix 정합 — 사이클 90）.
+        onKeyDown={(event) => {
+          if (event.key === "ArrowLeft" && sub.open) {
+            event.preventDefault();
+            event.stopPropagation?.();
+            sub.setOpen(false);
+          }
+          onKeyDown?.(event);
+        }}
+        // 눌림 토글 — 개방은 openViaPointer（pointer 진입 표시, F-13）.
+        onPress={() => (sub.open ? sub.setOpen(false) : sub.openViaPointer())}
         className={cn(
-          "ml-auto size-4",
-          sub.open ? "text-accent-foreground" : "text-muted-foreground",
+          ITEM_CLASSES,
+          ITEM_HIGHLIGHT_CLASSES,
+          inset && "pl-8",
+          // 원본 data-［state=open］:bg-accent → 조건부 클래스
+          sub.open && "bg-accent active:bg-accent",
+          disabled && "web:pointer-events-none opacity-50",
+          className,
         )}
-      />
-    </Pressable>
-  );
-});
+        {...props}
+      >
+        {wrapTextChildren(
+          children,
+          cn(ITEM_TEXT_CLASSES, sub.open && "text-accent-foreground"),
+        )}
+        <ChevronRightIcon
+          className={cn(
+            "ml-auto size-4",
+            sub.open ? "text-accent-foreground" : "text-muted-foreground",
+          )}
+        />
+      </Pressable>
+    );
+  },
+);
 ContextMenuSubTrigger.displayName = "ContextMenuSubTrigger";
 
 export type ContextMenuSubContentProps = ViewProps & {
@@ -666,31 +870,58 @@ const ContextMenuSubContent = forwardRef<
       align = "start",
       sideOffset = 4,
       children,
+      onKeyDown,
       ...props
     },
     ref,
   ) => {
     const sub = useContextMenuSubContext("ContextMenuSubContent");
+    // 서브 카드 자체 키보드 탐색（사이클 90） — ArrowLeft는 서브를 닫고 트리거로
+    // 포커스를 되돌린다（dropdown-menu와 동일 판단）.
+    const nav = useMenuNav();
+    const handleKeyDown = (event: BridgeKeyEvent) => {
+      if (event.key === "ArrowLeft") {
+        event.preventDefault();
+        event.stopPropagation?.();
+        sub.setOpen(false);
+        sub.triggerRef.current?.focus?.();
+        return;
+      }
+      nav.handleKeyDown(event);
+      onKeyDown?.(event);
+    };
     return (
       // 중첩 AnchoredOverlay — 서브트리거에 앵커링된 2단 레벨 메뉴.
       <AnchoredOverlay
         visible={sub.open}
         onClose={() => sub.setOpen(false)}
         anchorRef={sub.triggerRef}
+        // 닫힘 후 포커스 복귀 — 서브는 서브트리거로(ArrowLeft 닫힘과 같은 착지).
+        triggerRef={sub.triggerRef}
         placement={side}
         align={align}
         offset={sideOffset}
+        // hover 개방(pointer)은 첫 항목으로 포커스를 옮기지 않는다（radix 포인터
+        // 모드 정합 — dropdown-menu와 동일 판단）. ArrowRight 개방(keyboard)만
+        // 첫 항목 포커스. 항목 hover 진입 시 포커스는 composeMenuItemHoverIn이 옮긴다.
+        focusOnOpen={sub.entry !== "pointer"}
         className="z-50"
         accessibilityRole="menu"
       >
-        <View
-          ref={ref}
-          nativeID={`${sub.baseId}-context-menu-sub-content`}
-          className={cn(CARD_CLASSES, "web:shadow-lg", className)}
-          {...props}
-        >
-          {children}
-        </View>
+        <MenuNavContext.Provider value={nav}>
+          <View
+            ref={ref}
+            nativeID={`${sub.baseId}-context-menu-sub-content`}
+            onKeyDown={handleKeyDown}
+            // 카드 진입은 닫힘 예약을 취소, 이탈은 재예약（사이클 90 — 300ms grace）.
+            onHoverIn={() => sub.cancelClose()}
+            onHoverOut={() => sub.scheduleClose()}
+            className={cn(CARD_CLASSES, "web:shadow-lg", className)}
+            {...props}
+          >
+            {children}
+          </View>
+        </MenuNavContext.Provider>
       </AnchoredOverlay>
     );
   },

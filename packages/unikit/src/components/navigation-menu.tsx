@@ -15,8 +15,14 @@
 //   유지된다 — 콘텐츠는 항상 트리거 바로 아래 카드로 뜬다.
 // - NavigationMenuIndicator: 활성 트리거 아래 화살표를 indicator x 이동
 //   트릭으로 배치하는데 트리거 위치 측정 계약이 없어 재현 불가 — 생략（no-op）.
-// - Trigger: hover 개방은 브리지 onHoverIn 계약 부재로 눌림 토글 근사
-//   （dropdown-menu와 동일 판단）. ChevronDownIcon（브리지 lucide 아이콘 프리미티브）는
+// - Trigger hover 개방（사이클 90 해소 — 브리지 onHoverIn 계약 추가）: 포인터
+//   진입 시 200ms（radix NavigationMenu delayDuration 기본값） 후 열리고, 다른
+//   메뉴가 열려 있으면 즉시 전환되며 닫힌 뒤 300ms（skipDelayDuration 기본값）
+//   창 안의 재진입은 즉시 열린다（radix 공식 문서 값 그대로）. 이탈 닫힘도
+//   delayDuration 200ms 지연으로 예약되고 트리거↔카드 반대편 진입이 취소해
+//   포인터 이동을 유지한다（원본 루트 영역 감지의 포탈 카드 근사）. 눌림 토글도
+//   유지되고 터치 기기에서는 hover가 발화하지 않아 눌림 토글이 담당한다.
+//   ChevronDownIcon（브리지 lucide 아이콘 프리미티브）는
 //   개방 시 web:rotate-180 회전 근사（원본 300ms 전이 유지, 원본 top-［1px］ 임의값과
 //   size-3은 text-xs로 근사）.
 // - navigationMenuTriggerStyle: 원본 cva 문자열을 유지하되 data-［state=open］
@@ -33,7 +39,7 @@
 //   불가로 전부 제거하고, viewport=false 모드 카드 토큰（borderbg-popover
 //   p-2 pr-2.5shadow）을 기본으로 쓴다（위치크기 전환은 AnchoredOverlay가
 //   담당）. slide-in-from-right-52 등 방향 애니메이션도 미지원.
-// - 미지원: 화살표키 트리거 순회hover 지연 개방트리거 폭 추종 콘텐츠
+// - 미지원: 화살표키 트리거 순회트리거 폭 추종 콘텐츠
 //   （w-full 토큰 제거 — 카드 폭은 내용 결정, 사용처 className으로 조정）.
 // - 아이템 value: radix는 자동 생성한다 — 포팅도 useId로 자동 생성하되
 //   value prop 명시를 허용해 Root value/onValueChange 제어와 연결하게 했다.
@@ -47,6 +53,7 @@ import {
   forwardRef,
   useCallback,
   useContext,
+  useEffect,
   useId,
   useMemo,
   useRef,
@@ -106,6 +113,12 @@ function wrapTextChildren(children: ReactNode, textClassName: string) {
 type NavigationMenuContextValue = {
   value: string | null;
   setValue: (next: string | null) => void;
+  /** 트리거 포인터 진입 — 지연 로직대로 해당 아이템을 연다（다른 메뉴 열림·skip 창은 즉시 전환） */
+  hoverOpen: (itemValue: string) => void;
+  /** 카드 포인터 진입 — 예약된 닫힘을 취소한다（트리거↔카드 이동 유지） */
+  hoverHold: () => void;
+  /** 트리거·카드 포인터 이탈 — 지연 열림을 취소하고 200ms 뒤 닫힘을 예약한다 */
+  hoverLeave: () => void;
 };
 
 const NavigationMenuContext = createContext<NavigationMenuContextValue | null>(
@@ -149,6 +162,10 @@ function useNavigationMenuItemContext(
 // 루트리스트아이템
 // ---------------------------------------------------------------------------
 
+// radix NavigationMenu 기본값（공식 문서） — hover 지연 열림·재진입 즉시 열림 창.
+const NAV_HOVER_DELAY = 200;
+const NAV_SKIP_DELAY = 300;
+
 export type NavigationMenuProps = ViewProps & {
   /** 활성（콘텐츠 전개） 아이템 value（제어） — null이면 전부 닫힘 */
   value?: string | null;
@@ -181,9 +198,79 @@ const NavigationMenu = forwardRef<BridgeViewRef, NavigationMenuProps>(
       if (state.value === undefined) setInternalValue(next);
       if (next !== state.current) state.onValueChange?.(next);
     }, []);
+
+    // hover 지연 개방·닫힘（사이클 90） — radix delayDuration(200)·skipDelayDuration(300)
+    // 기본값 재현. delayDuration은 열림·닫힘 지연에 모두 적용된다: 트리거/카드 이탈은
+    // 200ms 뒤 닫힘을 예약하고 반대편 진입이 예약을 취소해 트리거↔카드 포인터 이동을
+    // 유지한다. 메뉴가 닫히는 순간 skipUntil 창을 열어 300ms 안의 재진입은 지연 없이
+    // 즉시 열린다.
+    const prevValueRef = useRef<string | null>(current);
+    const skipUntilRef = useRef(0);
+    useEffect(() => {
+      if (prevValueRef.current !== null && current === null) {
+        skipUntilRef.current = Date.now() + NAV_SKIP_DELAY;
+      }
+      prevValueRef.current = current;
+    }, [current]);
+    const openTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+    const closeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+    const clearOpenTimer = useCallback(() => {
+      if (openTimerRef.current !== null) {
+        clearTimeout(openTimerRef.current);
+        openTimerRef.current = null;
+      }
+    }, []);
+    const clearCloseTimer = useCallback(() => {
+      if (closeTimerRef.current !== null) {
+        clearTimeout(closeTimerRef.current);
+        closeTimerRef.current = null;
+      }
+    }, []);
+    useEffect(
+      () => () => {
+        clearOpenTimer();
+        clearCloseTimer();
+      },
+      [clearOpenTimer, clearCloseTimer],
+    );
+    const hoverOpen = useCallback(
+      (itemValue: string) => {
+        clearCloseTimer();
+        clearOpenTimer();
+        const active = stateRef.current.current;
+        // 이미 그 아이템이 열려 있으면 유지, 다른 메뉴가 열려 있으면 즉시 전환（radix 정합）.
+        if (active !== null) {
+          if (active !== itemValue) setValue(itemValue);
+          return;
+        }
+        // skip 창 안의 재진입은 지연 없이 즉시 열림.
+        if (Date.now() < skipUntilRef.current) {
+          setValue(itemValue);
+          return;
+        }
+        openTimerRef.current = setTimeout(() => {
+          openTimerRef.current = null;
+          // 지연 도중 다른 경로（눌림 등）로 열렸으면 덮어쓰지 않는다.
+          if (stateRef.current.current === null) setValue(itemValue);
+        }, NAV_HOVER_DELAY);
+      },
+      [clearCloseTimer, clearOpenTimer, setValue],
+    );
+    /** 카드 진입 — 이탈이 예약한 닫힘을 취소한다 */
+    const hoverHold = clearCloseTimer;
+    /** 트리거·카드 이탈 — 지연 열림을 취소하고 200ms 뒤 닫힘을 예약한다 */
+    const hoverLeave = useCallback(() => {
+      clearOpenTimer();
+      clearCloseTimer();
+      if (stateRef.current.current === null) return;
+      closeTimerRef.current = setTimeout(() => {
+        closeTimerRef.current = null;
+        setValue(null);
+      }, NAV_HOVER_DELAY);
+    }, [clearOpenTimer, clearCloseTimer, setValue]);
     const contextValue = useMemo<NavigationMenuContextValue>(
-      () => ({ value: current, setValue }),
-      [current, setValue],
+      () => ({ value: current, setValue, hoverOpen, hoverHold, hoverLeave }),
+      [current, setValue, hoverOpen, hoverHold, hoverLeave],
     );
     return (
       <NavigationMenuContext.Provider value={contextValue}>
@@ -264,40 +351,55 @@ export type NavigationMenuTriggerProps = PressableProps;
 const NavigationMenuTrigger = forwardRef<
   BridgePressableRef,
   NavigationMenuTriggerProps
->(({ className, children, disabled, onPress, ...props }, ref) => {
-  const nav = useNavigationMenuContext("NavigationMenuTrigger");
-  const item = useNavigationMenuItemContext("NavigationMenuTrigger");
-  const isOpen = nav.value === item.itemValue;
-  return (
-    <Pressable
-      ref={composeRefs(ref, item.triggerRef)}
-      accessibilityRole="button"
-      aria-expanded={isOpen}
-      aria-controls={item.contentId}
-      disabled={disabled}
-      onPress={() => {
-        nav.setValue(isOpen ? null : item.itemValue);
-        onPress?.();
-      }}
-      className={cn(
-        navigationMenuTriggerStyle(),
-        // 원본 data-［state=open］:bg-accent → 조건부 클래스
-        isOpen && "bg-accent/50",
-        disabled && "web:pointer-events-none opacity-50",
-        className,
-      )}
-      {...props}
-    >
-      {wrapTextChildren(children, "font-sans text-sm font-medium text-foreground")}
-      <ChevronDownIcon
+>(
+  (
+    { className, children, disabled, onPress, onHoverIn, onHoverOut, ...props },
+    ref,
+  ) => {
+    const nav = useNavigationMenuContext("NavigationMenuTrigger");
+    const item = useNavigationMenuItemContext("NavigationMenuTrigger");
+    const isOpen = nav.value === item.itemValue;
+    return (
+      <Pressable
+        ref={composeRefs(ref, item.triggerRef)}
+        accessibilityRole="button"
+        aria-expanded={isOpen}
+        aria-controls={item.contentId}
+        disabled={disabled}
+        // hover 개방（사이클 90） — 200ms 지연 열림·즉시 전환은 루트가 담당한다.
+        // 터치 기기에서는 발화하지 않아 눌림 토글이 담당한다.
+        onHoverIn={() => {
+          nav.hoverOpen(item.itemValue);
+          onHoverIn?.();
+        }}
+        onHoverOut={() => {
+          nav.hoverLeave();
+          onHoverOut?.();
+        }}
+        onPress={() => {
+          nav.setValue(isOpen ? null : item.itemValue);
+          onPress?.();
+        }}
         className={cn(
-          "ml-1 size-3 text-muted-foreground web:transition-transform web:duration-300",
-          isOpen && "web:rotate-180",
+          navigationMenuTriggerStyle(),
+          // 원본 data-［state=open］:bg-accent → 조건부 클래스
+          isOpen && "bg-accent/50",
+          disabled && "web:pointer-events-none opacity-50",
+          className,
         )}
-      />
-    </Pressable>
-  );
-});
+        {...props}
+      >
+        {wrapTextChildren(children, "font-sans text-sm font-medium text-foreground")}
+        <ChevronDownIcon
+          className={cn(
+            "ml-1 size-3 text-muted-foreground web:transition-transform web:duration-300",
+            isOpen && "web:rotate-180",
+          )}
+        />
+      </Pressable>
+    );
+  },
+);
 NavigationMenuTrigger.displayName = "NavigationMenuTrigger";
 
 export type NavigationMenuContentProps = ViewProps;
@@ -320,11 +422,17 @@ const NavigationMenuContent = forwardRef<
       align="start"
       offset={6}
       triggerRef={item.triggerRef}
+      // hover 개방 계열은 열림에 포커스를 뺏지 않는다(원본 정합 — F-5).
+      focusOnOpen={false}
       className="z-50"
     >
       <View
         ref={ref}
         nativeID={nativeID ?? item.contentId}
+        // 카드 진입은 닫힘 예약을 취소, 이탈은 재예약（사이클 90 — 트리거↔카드
+        // 포인터 이동 유지, 닫힘도 delayDuration 200ms 지연）.
+        onHoverIn={() => nav.hoverHold()}
+        onHoverOut={() => nav.hoverLeave()}
         className={cn(
           "pointer-events-auto rounded-md border border-border bg-popover p-2 pr-2.5 text-popover-foreground unikit-popover-in web:shadow-md",
           className,

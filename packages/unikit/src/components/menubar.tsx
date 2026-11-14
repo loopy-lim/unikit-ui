@@ -12,9 +12,12 @@
 //   제어 모드（open/onOpenChange）로 렌더하고 다른 메뉴가 열리면 자동으로 닫는다.
 //   원본 Root의 value/onValueChange 계약（활성 메뉴 제어）도 이 값으로 유지되고,
 //   MenubarMenu에 value를 명시하면 사용처가 이 식별자로 제어할 수 있다.
-// - 미지원（radix 대비 근사）: 열린 상태에서 인접 트리거 hover 전환（브리지에
-//   onHoverIn 계약 부재 — dropdown SubTrigger와 동일 판단, 눌림 전환만）,
-//   화살표키 트리거 순회타입어헤드, 등장/퇴장 애니메이션origin 변형,
+// - 열린 상태에서 인접 트리거 hover 전환（사이클 90 해소 — 브리지 onHoverIn
+//   계약 추가）: 메뉴가 하나라도 열려 있으면 트리거 hover만으로 즉시 전환한다
+//   （radix menubar 정합）. 닫힌 상태의 hover는 무동작, 터치 기기에서는
+//   눌림 전환이 담당한다.
+// - 미지원（radix 대비 근사）: 화살표키 트리거 순회타입어헤드,
+//   등장/퇴장 애니메이션origin 변형,
 //   alignOffset=-4（AnchoredOverlay 계약 밖 — Content에서 미수용으로 제거）.
 //   ESC바깥 눌림 닫기포커스 이동은 소비하는 dropdown 계열이 제공한다.
 // - MenubarTrigger: 원본 토큰（focus/open 하이라이트 bg-accent·text-accent-foreground
@@ -107,9 +110,14 @@ function useMenubarContext(component: string): MenubarContextValue {
   return ctx;
 }
 
-/** 메뉴 단위 열림 — MenubarTrigger가 하이라이트 조건으로 소비 */
-const MenubarMenuContext = createContext<{ isOpen: boolean }>({
+/** 메뉴 단위 열림·hover 전환 — MenubarTrigger가 소비 */
+const MenubarMenuContext = createContext<{
+  isOpen: boolean;
+  /** 트리거 hover 진입 — 다른 메뉴가 열려 있을 때만 즉시 전환한다（radix 정합） */
+  hoverActivate: () => void;
+}>({
   isOpen: false,
+  hoverActivate: () => {},
 });
 
 // ---------------------------------------------------------------------------
@@ -172,7 +180,15 @@ function MenubarMenu({ value, children }: MenubarMenuProps) {
   const fallbackId = useId();
   const menuValue = value ?? fallbackId;
   const isOpen = menubar.value === menuValue;
-  const menuContextValue = useMemo(() => ({ isOpen }), [isOpen]);
+  // 인접 트리거 hover 전환（사이클 90 해소） — 메뉴가 하나라도 열려 있을 때만
+  // hover로 즉시 전환한다（닫힌 상태의 hover는 무동작 — radix menubar 정합）.
+  const hoverActivate = useCallback(() => {
+    if (menubar.value !== null) menubar.setValue(menuValue);
+  }, [menubar, menuValue]);
+  const menuContextValue = useMemo(
+    () => ({ isOpen, hoverActivate }),
+    [isOpen, hoverActivate],
+  );
   const handleOpenChange = useCallback(
     (open: boolean) => menubar.setValue(open ? menuValue : null),
     [menubar, menuValue],
@@ -201,11 +217,17 @@ function MenubarPortal({ children }: MenubarPortalProps) {
 export type MenubarTriggerProps = PressableProps;
 
 const MenubarTrigger = forwardRef<BridgePressableRef, MenubarTriggerProps>(
-  ({ className, children, ...props }, ref) => {
+  ({ className, children, onHoverIn, ...props }, ref) => {
     const menu = useContext(MenubarMenuContext);
     return (
       <DropdownMenuTrigger
         ref={ref}
+        // 인접 트리거 hover 전환（사이클 90） — 열린 상태에서만 즉시 전환.
+        // 터치 기기에서는 발화하지 않아 눌림 전환이 담당한다.
+        onHoverIn={() => {
+          menu.hoverActivate();
+          onHoverIn?.();
+        }}
         className={cn(
           "items-center rounded-sm px-2 py-1 active:bg-accent web:hover:bg-accent web:focus-visible:bg-accent",
           // 원본 data-［state=open］:bg-accent → 조건부 클래스

@@ -45,8 +45,9 @@
 //   새지 않도록 40→48로 올렸다（2026-11-12 블록 검증）. 그보다 길면
 //   tickFormat으로 줄인다.
 // - 유동 폭: 원본 ResponsiveContainer 근사로 width="fluid"를 지원한다 —
-//   컨테이너 자체 폭을 ResizeObserver로 측정해 캔버스 폭으로 쓴다（웹 전용.
-//   네이티브는 ResizeObserver 계약이 없어 기본 320 폴백 — 고정 폭 권장）.
+//   컨테이너 자체 폭을 브리지 onLayout 계약으로 측정해 캔버스 폭으로 쓴다
+//   （사이클 90부터 웹 ResizeObserver·네이티브 RN onLayout 양측 지원. 첫 측정
+//   전엔 기본 320으로 렌더해 전환한다）.
 // - 원본 임의값 클래스 정규화: min-w-［8rem］→min-w-32, rounded-［2px］→rounded-xs,
 //   border-［1.5px］→border-2（스텝 근사）. shadow-xl은 웹 전용（web:）으로 내렸다.
 //   dark: 변형은 없다（토큰이 스킴 단일값）. 원본 툴팁/범례 인디케이터의
@@ -57,17 +58,15 @@ import {
   forwardRef,
   isValidElement,
   useContext,
-  useEffect,
   useMemo,
-  useRef,
   useState,
   type ComponentType,
   type ReactNode,
-  type RefObject,
 } from "react";
 import {
   Text,
   View,
+  type BridgeLayout,
   type BridgeViewRef,
   type ViewProps,
 } from "@unikit-bridge/ui/primitives";
@@ -784,30 +783,6 @@ function ChartStyle(_props: { id?: string; config?: ChartConfig }) {
   return null;
 }
 
-/**
- * fluid 캔버스 폭 측정 — width="fluid"면 컨테이너 자체 폭（ResizeObserver）을
- * 캔버스 폭으로 쓴다. 첫 측정 전엔 기본 320으로 렌더해 전환한다. 네이티브는
- * ResizeObserver 계약이 없어 기본값으로 폴백한다（고정 폭 사용 권장）.
- */
-function useFluidWidth(
-  ref: RefObject<HTMLElement | null>,
-  width: number | "fluid",
-): number {
-  const [measured, setMeasured] = useState(0);
-  useEffect(() => {
-    if (width !== "fluid") return;
-    const el = ref.current;
-    if (!el || typeof ResizeObserver !== "function") return;
-    const observer = new ResizeObserver((entries) => {
-      const next = Math.round(entries[0]?.contentRect.width ?? 0);
-      setMeasured((prev) => (Math.abs(prev - next) >= 1 ? next : prev));
-    });
-    observer.observe(el);
-    return () => observer.disconnect();
-  }, [ref, width]);
-  return width === "fluid" ? measured || INITIAL_DIMENSION.width : width;
-}
-
 // ---------------------------------------------------------------------------
 // 컨테이너 — context 제공children 분류포인터 이벤트
 // ---------------------------------------------------------------------------
@@ -818,7 +793,7 @@ export type ChartContainerProps = Omit<ViewProps, "children"> & {
   /** x축（범주） 데이터 키 — 미지정 시 첫 행의 첫 문자열 값 키 */
   xKey?: string;
   /** 캔버스 폭（px） — 기본 320（원본 INITIAL_DIMENSION）. "fluid"면 컨테이너
-   *  폭에 맞춘다（웹 전용 — ResizeObserver, 네이티브는 기본값 폴백） */
+   *  폭에 맞춘다（브리지 onLayout — 웹·네이티브 양측, 사이클 90） */
   width?: number | "fluid";
   /** 캔버스 높이（px） — 기본 200 */
   height?: number;
@@ -838,21 +813,31 @@ const ChartContainer = forwardRef<BridgeViewRef, ChartContainerProps>(
       accessibilityLabel,
       className,
       children,
+      onLayout,
       ...props
     },
     ref,
   ) => {
     const [activeIndex, setActiveIndex] = useState<number | null>(null);
 
-    // fluid 캔버스 측정 ref — forwardRef 노출과 겸한다（브리지 ref 인스턴스는
-    // 웹에서 div라 HTMLElement로 캐스팅해 쓴다）.
-    const containerRef = useRef<HTMLElement | null>(null);
-    const canvasWidth = useFluidWidth(containerRef, width);
-    const setContainerRef = (instance: BridgeViewRef | null) => {
-      containerRef.current = instance as HTMLElement | null;
-      if (typeof ref === "function") ref(instance);
-      else if (ref) (ref as { current: BridgeViewRef | null }).current = instance;
-    };
+    // fluid 캔버스 폭 — 브리지 onLayout 계약으로 컨테이너 자체 폭을 잰다
+    // （사이클 90: 웹 ResizeObserver·네이티브 RN onLayout 양측）. 1px 미만
+    // 변화는 무시해 마이크로 재측정 루프를 막는다. 소비자 onLayout과 겸한다.
+    const [fluidWidth, setFluidWidth] = useState(0);
+    const handleLayout =
+      width === "fluid" || onLayout !== undefined
+        ? (layout: BridgeLayout) => {
+            if (width === "fluid") {
+              const next = Math.round(layout.width);
+              setFluidWidth((prev) =>
+                Math.abs(prev - next) >= 1 ? next : prev,
+              );
+            }
+            onLayout?.(layout);
+          }
+        : undefined;
+    const canvasWidth =
+      width === "fluid" ? fluidWidth || INITIAL_DIMENSION.width : width;
 
     // children 분류 — SVG 조각（시리즈축격자）, 오버레이（ChartTooltip）,
     // 흐름（ChartLegend）. 시리즈는 색 인덱스 순서 확보를 위해 dataKey를 수집한다.
@@ -913,7 +898,8 @@ const ChartContainer = forwardRef<BridgeViewRef, ChartContainerProps>(
         }}
       >
         <View
-          ref={setContainerRef}
+          ref={ref}
+          onLayout={handleLayout}
           className={cn(
             "relative flex-col items-center",
             width === "fluid" && "w-full",

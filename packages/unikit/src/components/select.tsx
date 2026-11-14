@@ -27,7 +27,13 @@
 // - 임의값 근사: min-w-［8rem］→min-w-32（동일 8rem）, ring-［3px］→ring-3（비대괄호
 //   계단 — 사이클 72 원본 규격 정렬）, max-h-（--radix-）→max-h-96,
 //   transition-［］→web:transition-all. dark: 제거.
-// - 미지원（로드맵）: 화살표키타입어헤드 탐색, 등장/퇴장 애니메이션, name/required
+// - 카드 키보드 탐색（사이클 90 해소 — 웹 전용）: 트리거 ArrowDown/Up 열림에
+//   이어 카드 안에서 ArrowDown/Up（양 끝 루프）Home/End로 항목 DOM 포커스를
+//   옮긴다 — lib/menu-nav 공유 골격. 항목은 웹 <button>이라 엔터 선택은 브라우저
+//   기본 동작. 항목 pointerenter 포커스 이동도 골격이 제공한다（radix 정합）.
+//   개방 시 포커스는 첫 항목으로 간다（근사 — radix는 선택된 항목을 우선
+//   포커스한다）. 네이티브 View는 onKeyDown을 폐기한다（브리지 계약 한계）.
+// - 미지원（로드맵）: 타입어헤드, 등장/퇴장 애니메이션, name/required
 //   폼 제출용 숨은 input, 항목 textValue 프로퍼티, SelectValue 함수형 children.
 // - 접근성: 트리거 combobox role + popover가 부여하는 aria-expandedaria-controls
 //   （↔ 콘텐츠 nativeID）, 콘텐츠 listbox role, 항목 option + aria-selected.
@@ -66,6 +72,15 @@ import { cva } from "class-variance-authority";
 
 import { Popover, PopoverContent, PopoverTrigger } from "./popover";
 import type { OverlayAlign, OverlayPlacement } from "../lib/overlay";
+import {
+  composeMenuItemFocus,
+  composeMenuItemHoverIn,
+  composeMenuNavKeyDown,
+  MenuNavContext,
+  useMenuItemRef,
+  useMenuNav,
+  useMenuNavContext,
+} from "../lib/menu-nav";
 import { cn } from "../lib/utils";
 
 // ---------------------------------------------------------------------------
@@ -350,10 +365,13 @@ const SelectContent = forwardRef<BridgeViewRef, SelectContentProps>(
       align,
       sideOffset,
       nativeID,
+      onKeyDown,
       ...props
     },
     ref,
   ) => {
+    // 카드 키보드 탐색（사이클 90） — 항목 등록·방향키 루빙은 lib/menu-nav.
+    const nav = useMenuNav();
     return (
       <PopoverContent
         ref={ref}
@@ -364,6 +382,7 @@ const SelectContent = forwardRef<BridgeViewRef, SelectContentProps>(
         // 덮는다. nativeID는 popover 기본값（트리거 aria-controls와 연결됨） 유지.
         accessibilityRole="listbox"
         nativeID={nativeID}
+        onKeyDown={composeMenuNavKeyDown(nav, onKeyDown)}
         // popover 카드 기본 w-72 p-4를 셀렉트 목록용으로 무효화（twMerge 병합）
         className={cn("w-auto min-w-32 p-0 web:shadow-md", className)}
         {...props}
@@ -371,9 +390,11 @@ const SelectContent = forwardRef<BridgeViewRef, SelectContentProps>(
         {/* 목록 뷰포트 — 원본 Viewport p-1. ScrollView로 양측 실제 스크롤
             (웹 overflow div ... 네이티브 RN ScrollView). max-h는 원본
             --radix-...available-height의 표준 계단 근사. */}
-        <ScrollView className="max-h-96" contentContainerClassName="p-1">
-          {children}
-        </ScrollView>
+        <MenuNavContext.Provider value={nav}>
+          <ScrollView className="max-h-96" contentContainerClassName="p-1">
+            {children}
+          </ScrollView>
+        </MenuNavContext.Provider>
       </PopoverContent>
     );
   },
@@ -411,7 +432,10 @@ export type SelectItemProps = Omit<
 };
 
 const SelectItem = forwardRef<BridgePressableRef, SelectItemProps>(
-  ({ className, value, disabled, onSelect, children, ...props }, ref) => {
+  (
+    { className, value, disabled, onSelect, children, onFocus, onHoverIn, ...props },
+    ref,
+  ) => {
     const select = useSelectContext("SelectItem");
     const selected = select.value === value;
     const label = textOfChildren(children);
@@ -419,12 +443,19 @@ const SelectItem = forwardRef<BridgePressableRef, SelectItemProps>(
     useEffect(() => {
       if (label !== undefined) select.registerLabel(value, label);
     }, [select, value, label]);
+    // 키보드 탐색 등록（사이클 90） — 카드 밖 렌더는 nav가 없어도 동작.
+    const nav = useMenuNavContext();
+    const { id, attach, nodeRef } = useMenuItemRef(ref);
     return (
       <Pressable
-        ref={ref}
+        ref={attach}
         accessibilityRole="option"
         aria-selected={selected}
         disabled={disabled}
+        // 포인터 진입 항목으로 포커스 이동（radix pointerenter 정합 — 하이라이트와
+        // DOM 포커스가 일치해야 Enter가 가리키는 항목을 선택한다, 사이클 90）.
+        onHoverIn={composeMenuItemHoverIn(nav, id, nodeRef, onHoverIn)}
+        onFocus={composeMenuItemFocus(nav, id, onFocus)}
         onPress={() => {
           select.setValue(value);
           onSelect?.();

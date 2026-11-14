@@ -88,7 +88,7 @@ import {
   type CommandListProps,
 } from "./command";
 import { Popover, PopoverContent, PopoverTrigger } from "./popover";
-import type { OverlayAlign, OverlayPlacement } from "../lib/overlay";
+import type { OverlayAlign, OverlayPlacement } from "@/lib/overlay";
 import { cn } from "@/lib/utils";
 
 // ---------------------------------------------------------------------------

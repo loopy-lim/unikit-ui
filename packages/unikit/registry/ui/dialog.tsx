@@ -50,7 +50,7 @@ import {
 } from "@unikit-bridge/ui/primitives";
 
 import { Button } from "./button";
-import { ModalOverlay } from "../lib/overlay";
+import { ModalOverlay } from "@/lib/overlay";
 import { cn } from "@/lib/utils";
 
 type DialogContextValue = {

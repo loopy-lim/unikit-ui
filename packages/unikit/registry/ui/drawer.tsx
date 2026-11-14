@@ -54,7 +54,7 @@ import {
 } from "@unikit-bridge/ui/primitives";
 import { cva } from "class-variance-authority";
 
-import { ModalOverlay, type ModalOverlayPosition } from "../lib/overlay";
+import { ModalOverlay, type ModalOverlayPosition } from "@/lib/overlay";
 import { cn } from "@/lib/utils";
 
 type DrawerContextValue = {

@@ -166,6 +166,10 @@ export type AnchoredOverlayProps = {
   className?: string;
   /** 닫힘 후 포커스 복귀 대상（트리거） ref — 웹 전용 */
   triggerRef?: unknown;
+  /** 열림 시 카드 안 첫 포커서블로 포커스 이동（기본 true — radix 메뉴·셀렉트
+   *  관행）. hover 개방 계열(navigation-menu)은 포커스를 뺏지 않으므로 false로
+   *  지정한다（원본도 hover 개방에 포커스 이동이 없다）. */
+  focusOnOpen?: boolean;
   accessibilityRole?: BridgeRole;
   accessibilityLabel?: string;
 };
@@ -279,6 +283,7 @@ export function AnchoredOverlay({
   children,
   className,
   triggerRef,
+  focusOnOpen = true,
   accessibilityRole,
   accessibilityLabel,
 }: AnchoredOverlayProps) {
@@ -317,7 +322,12 @@ export function AnchoredOverlay({
   }, [visible, ready, measure]);
   useReposition(measure, visible);
   useDismiss(onClose, visible);
-  useOverlayFocus(contentRef, visible, triggerRef);
+  // focus 이동의 active는 visible&&ready — visible만 쓰면 첫 커밋(카드 마운트
+  // 전, contentRef null)에서 이펙트가 no-op로 끝나 ready 반전에도 재실행되지
+  // 않아 열림 때 카드 안으로 포커스가 들어가지 않았다(키보드 탐색 F-5 —
+  // radix는 콘텐츠 포커스 이동이 메뉴 탐색의 전제). focusOnOpen=false면 이동
+  // 자체를 생략(hover 개방 계열 — 포커스 뺏지 않음).
+  useOverlayFocus(contentRef, visible && ready && focusOnOpen, triggerRef);
 
   const position = computeOverlayPositionWithPlacement(anchorRect, contentSize, {
     placement,
@@ -335,10 +345,23 @@ export function AnchoredOverlay({
     [position.left, position.top, contentSize],
   );
   return (
-    // onBackdropPress: 투명 백드롭이 앵커 팝업 바깥 탭/클릭을 잡아 닫는다
-    // （웹 fixed 투명층네이티브 Modal 배경 Pressable — 양측 동일 UX）.
-    // 비모달 팝업이지만 바깥 상호작용은 "닫힘 후 재시도"로 일관 처리한다.
-    <Portal visible={visible && ready} onBackdropPress={onClose} onRequestClose={onClose}>
+    // onBackdropPress: 바깥 탭/클릭을 잡아 닫는다. 네이티브는 RN Modal 배경
+    // Pressable이 담당한다. 웹은 dismissViaDocument — 문서 수준 pointerdown
+    // 리스너로 카드 밖 판정한다（radix DismissableLayer의 근사）. 투명 전체
+    // 화면 커버층은 쓰지 않는다: 커버가 나타나는 순간 브라우저 hover 재계산이
+    // 트리거를 mouseleave시켜 hover 개방 팝업(nav-menu·menubar·서브메뉴·
+    // hover-card·tooltip)이 200ms 주기로 스스로 닫힘을 반복했다（사이클 90
+    // F-4）. 덤으로 열림 중 페이지 상호작용 차단도 사라진다 — 바깥 클릭이
+    // 닫힘과 함께 그 대상에도 전달된다(비모달 근사 — radix Menu 계열 원본은
+    // 기본 modal이라 바깥 포인터를 차단한다). dismissIgnoreRef(앵커=트리거)로
+    // 트리거 눌림은 토글에 맡긴다 — 열린 카드의 트리거 재클릭은 닫힘(F-10).
+    <Portal
+      visible={visible && ready}
+      onBackdropPress={onClose}
+      onRequestClose={onClose}
+      dismissViaDocument
+      dismissIgnoreRef={anchorRef}
+    >
       <View
         ref={contentRef}
         accessibilityRole={accessibilityRole}

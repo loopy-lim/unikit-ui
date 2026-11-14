@@ -3,18 +3,23 @@
 // React state + context로, 오버레이는 lib/overlay의 AnchoredOverlay로 구성한다.
 //
 // 포팅 판단（원본 대비 차이）:
-// - 진입 조건 설계: 원본은 포인터 진입（hover） 후 openDelay（ms） 뒤 열리고 포인터
-//   이탈 시 closeDelay 뒤 닫힌다. 브리지 PressableProps에 hover/포인터 이벤트
-//   계약이 없어（onLongPress는 웹 폐기onFocus 부재） hover 상태 열림을 포인터
-//   이벤트로 관리할 수 없다 — 진입을 press 토글로 근사한다.
-//    onPress（웹 클릭 + 네이티브 탭）: 열림/닫힘 토글 — 양측 공통 진입로.
+// - 진입 조건（사이클 90 원본 정합 — 브리지 onHoverIn/onHoverOut 계약 추가로
+//   재현）: 트리거 포인터 진입 시 openDelay（기본 200） 후 열리고, 트리거·카드
+//   이탈 시 closeDelay（기본 300） 후 닫힌다. 카드 진입은 닫힘 예약을 취소해
+//   트리거→카드 포인터 이동을 유지한다 — 원본 radix HoverCard 동작.
+//   터치 기기에서 hover 계열은 발화하지 않아 기존 press 근사가 폴백으로 남는다:
+//    onPress（네이티브 탭·hover 없는 환경）: 열림/닫힘 토글.
 //    onLongPress（네이티브 롱프레스 전용, 웹은 브리지가 폐기）: 열림.
-//   플랫폼 분기 없이 두 핸들러를 항상 연결해 어느 쪽에서도 동작한다.
-// - openDelay（원본 기본 200）closeDelay（원본 기본 300） 프로퍼티는 API 호환을
-//   위해 수용하되 즉시 전환 근사에서는 대기 없이 바로 열림/닫힘（미사용 토큰）.
-// - 콘텐츠 이탈 닫힘바깥 포인터 닫힘 미지원（포인터 이벤트 계약 부재
-//   AnchoredOverlay 비모달 원칙） — 닫기는 ESC（브리지 useDismiss, 웹）와
-//   트리거 재누름으로 한다. openDelay/closeDelay와 함께 원본 대비 상실 목록.
+//   hover 진입("pointer" 모드) 중에는 onPress 토글이 동작하지 않는다（원본도
+//   클릭으로 카드를 끄지 않는다）.
+// - openDelay/closeDelay는 실제 지연으로 동작한다（사이클 90 전환 — 이전까지는
+//   API 호환용 미사용 토큰이었다）.
+// - 콘텐츠 이탈 닫힘은 위 지연 로직이 담당하고（사이클 90 해소）, 바깥 포인터
+//   닫힘은 웹에서 문서 수준 리스너로 포착한다（사이클 90 F-4 정정 — 투명 커버층
+//   방식은 카드가 열리는 순간 브라우저 hover 재계산으로 트리거 mouseleave를
+//   일으켜 카드를 스스로 닫히게 했다. AnchoredOverlay 전체 기본 동작 참조）.
+//   네이티브는 RN Modal 배경 Pressable이 그대로 담당한다. ESC（브리지
+//   useDismiss, 웹）는 유지된다.
 // - 원본 Content의 sidesideOffset 프로퍼티명을 유지하되 내부적으로
 //   AnchoredOverlay의 placementoffset로 매핑（기본 side "bottom"sideOffset 4
 //   align "center"는 원본 기본값 그대로）.
@@ -32,6 +37,7 @@ import {
   forwardRef,
   useCallback,
   useContext,
+  useEffect,
   useId,
   useMemo,
   useRef,
@@ -49,12 +55,22 @@ import {
 } from "@unikit-bridge/ui/primitives";
 import { cva } from "class-variance-authority";
 
-import { AnchoredOverlay, type OverlayAlign, type OverlayPlacement } from "../lib/overlay";
+import { AnchoredOverlay, type OverlayAlign, type OverlayPlacement } from "@/lib/overlay";
 import { cn } from "@/lib/utils";
 
 type HoverCardContextValue = {
   open: boolean;
   setOpen: (open: boolean) => void;
+  /** 포인터 진입 — openDelay 후 열림 예약（이미 열림이면 닫힘 예약 취소） */
+  scheduleOpen: () => void;
+  /** 포인터 이탈 — closeDelay 후 닫힘 예약 */
+  scheduleClose: () => void;
+  /** 카드 진입 — 닫힘 예약 취소（트리거→카드 이동 유지） */
+  cancelClose: () => void;
+  /** 진입 경로 — "pointer"(hover) · null(press 개방 전·닫힘). press는 값을
+   *  남기지 않는다: press로 열린 뒤 hover가 오면 pointer로 상승해야 클릭
+   *  닫힘이 다시 막히기 때문이다(G4 F-14). */
+  entry: "pointer" | null;
   /** 트리거 aria-controls ↔ 카드 nativeID 연결용 토대 ID */
   baseId: string;
   /** 트리거 요소 ref — 앵커 측정닫힘 후 포커스 복귀에 공용 */
@@ -87,17 +103,15 @@ export type HoverCardProps = ViewProps & {
   open?: boolean;
   defaultOpen?: boolean;
   onOpenChange?: (open: boolean) => void;
-  /** 원본 radix openDelay（기본 200） 호환 — 즉시 전환 근사에서 미사용 */
+  /** 포인터 진입 후 열림까지 대기 ms（기본 200 — radix 기본값） */
   openDelay?: number;
-  /** 원본 radix closeDelay（기본 300） 호환 — 즉시 전환 근사에서 미사용 */
+  /** 포인터 이탈 후 닫힘까지 대기 ms（기본 300 — radix 기본값） */
   closeDelay?: number;
 };
 
 const HoverCard = forwardRef<BridgeViewRef, HoverCardProps>(
   (
-    // openDelaycloseDelay는 API 호환용으로만 수용（즉시 전환 근사에서 미사용） —
-    // rest로 흘러 View에 알 수 없는 속성이 되지 않게 폐기한다（브리지 관행）.
-    { open, defaultOpen, onOpenChange, openDelay: _openDelay, closeDelay: _closeDelay, children, ...props },
+    { open, defaultOpen, onOpenChange, openDelay = 200, closeDelay = 300, children, ...props },
     ref,
   ) => {
     // 비제어 상태 — 제어（open 지정）면 무시된다.
@@ -110,11 +124,70 @@ const HoverCard = forwardRef<BridgeViewRef, HoverCardProps>(
       if (state.open === undefined) setInternalOpen(next);
       if (next !== state.isOpen) state.onOpenChange?.(next);
     }, []);
+
+    // 포인터 진입/이탈 지연 타이머（사이클 90） — 재스케줄·언마운트 해제가 의무.
+    // entry는 state다(ref 금지): 이미 열린(press) 채 hover 진입이 와도 context
+    // 재렌더로 트리거 onPress 게이트가 갱신돼야 한다(G4 F-14).
+    const [entry, setEntry] = useState<"pointer" | null>(null);
+    const openTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+    const closeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+    const clearOpenTimer = useCallback(() => {
+      if (openTimerRef.current !== null) {
+        clearTimeout(openTimerRef.current);
+        openTimerRef.current = null;
+      }
+    }, []);
+    const clearCloseTimer = useCallback(() => {
+      if (closeTimerRef.current !== null) {
+        clearTimeout(closeTimerRef.current);
+        closeTimerRef.current = null;
+      }
+    }, []);
+    useEffect(
+      () => () => {
+        clearOpenTimer();
+        clearCloseTimer();
+      },
+      [clearOpenTimer, clearCloseTimer],
+    );
+    const scheduleOpen = useCallback(() => {
+      clearCloseTimer();
+      // 이미 열려 있어도 진입 경로는 pointer로 갱신한다(press 개방의 상승 —
+      // 이것이 없으면 press로 연 카드 위에서 클릭이 카드를 껐다, F-14).
+      setEntry("pointer");
+      if (stateRef.current.isOpen) return;
+      clearOpenTimer();
+      openTimerRef.current = setTimeout(() => {
+        openTimerRef.current = null;
+        setOpen(true);
+      }, openDelay);
+    }, [clearCloseTimer, clearOpenTimer, openDelay, setOpen]);
+    const scheduleClose = useCallback(() => {
+      clearOpenTimer();
+      if (!stateRef.current.isOpen) return;
+      clearCloseTimer();
+      closeTimerRef.current = setTimeout(() => {
+        closeTimerRef.current = null;
+        setEntry(null);
+        setOpen(false);
+      }, closeDelay);
+    }, [clearCloseTimer, clearOpenTimer, closeDelay, setOpen]);
+    const cancelClose = useCallback(clearCloseTimer, [clearCloseTimer]);
+
     const baseId = useId();
     const triggerRef = useRef<BridgePressableRef | null>(null);
     const contextValue = useMemo<HoverCardContextValue>(
-      () => ({ open: isOpen, setOpen, baseId, triggerRef }),
-      [isOpen, setOpen, baseId],
+      () => ({
+        open: isOpen,
+        setOpen,
+        scheduleOpen,
+        scheduleClose,
+        cancelClose,
+        entry,
+        baseId,
+        triggerRef,
+      }),
+      [isOpen, setOpen, scheduleOpen, scheduleClose, cancelClose, entry, baseId],
     );
     return (
       <HoverCardContext.Provider value={contextValue}>
@@ -128,7 +201,10 @@ HoverCard.displayName = "HoverCard";
 export type HoverCardTriggerProps = PressableProps;
 
 const HoverCardTrigger = forwardRef<BridgePressableRef, HoverCardTriggerProps>(
-  ({ onPress, onLongPress, ...props }, ref) => {
+  (
+    { onPress, onLongPress, onHoverIn, onHoverOut, ...props },
+    ref,
+  ) => {
     const hoverCard = useHoverCardContext("HoverCardTrigger");
     return (
       <Pressable
@@ -136,8 +212,21 @@ const HoverCardTrigger = forwardRef<BridgePressableRef, HoverCardTriggerProps>(
         accessibilityRole="button"
         aria-expanded={hoverCard.open}
         aria-controls={`${hoverCard.baseId}-hover-card-content`}
+        // 포인터 진입/이탈（사이클 90） — 지연 열림·닫힘 예약. 터치에서는 발화하지
+        // 않아 아래 press 폴백이 담당한다.
+        onHoverIn={() => {
+          hoverCard.scheduleOpen();
+          onHoverIn?.();
+        }}
+        onHoverOut={() => {
+          hoverCard.scheduleClose();
+          onHoverOut?.();
+        }}
         onPress={() => {
-          hoverCard.setOpen(!hoverCard.open);
+          // hover 진입 중에는 클릭으로 끄지 않는다（원본 정합 — 토글은 터치 폴백）.
+          if (hoverCard.entry !== "pointer") {
+            hoverCard.setOpen(!hoverCard.open);
+          }
           onPress?.();
         }}
         onLongPress={() => {
@@ -180,11 +269,17 @@ const HoverCardContent = forwardRef<BridgeViewRef, HoverCardContentProps>(
         align={align}
         offset={sideOffset}
         triggerRef={hoverCard.triggerRef}
+        // hover 개방 계열은 열림에 포커스를 뺏지 않는다(원본 정합 — F-5).
+        focusOnOpen={false}
         className="z-50"
       >
         <View
           ref={ref}
           nativeID={nativeID ?? `${hoverCard.baseId}-hover-card-content`}
+          // 카드 진입은 닫힘 예약을 취소, 이탈은 재예약（사이클 90 — 트리거→카드
+          // 포인터 이동 유지, 원본 정합）.
+          onHoverIn={() => hoverCard.cancelClose()}
+          onHoverOut={() => hoverCard.scheduleClose()}
           className={cn(hoverCardContentVariants(), className)}
           {...props}
         >

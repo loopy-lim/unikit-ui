@@ -54,7 +54,7 @@ import {
 import { cva } from "class-variance-authority";
 
 import { Button, type ButtonProps } from "./button";
-import { ModalOverlay } from "../lib/overlay";
+import { ModalOverlay } from "@/lib/overlay";
 import { cn } from "@/lib/utils";
 
 type AlertDialogContextValue = {

@@ -17,6 +17,32 @@
       ]
     },
     {
+      "name": "overlay",
+      "type": "registry:lib",
+      "title": "Overlay 공통 골격",
+      "description": "ModalOverlay(중앙시트형 모달)·AnchoredOverlay(앵커 팝업) 공통 골격. dialog·sheet·popover·dropdown-menu·tooltip·select 등 오버레이 계열 컴포넌트의 로컬 의존성.",
+      "files": [
+        {
+          "path": "registry/lib/overlay.tsx",
+          "type": "registry:lib",
+          "target": "lib/overlay.tsx"
+        }
+      ]
+    },
+    {
+      "name": "menu-nav",
+      "type": "registry:lib",
+      "title": "메뉴 카드 키보드 탐색 골격",
+      "description": "select·dropdown-menu·context-menu 공용 키보드 탐색(방향키 루빙·Home/End·타입어헤드) 공유 골격. 웹 전용(네이티브 View onKeyDown 계약 한계).",
+      "files": [
+        {
+          "path": "registry/lib/menu-nav.tsx",
+          "type": "registry:lib",
+          "target": "lib/menu-nav.tsx"
+        }
+      ]
+    },
+    {
       "name": "theme",
       "type": "registry:theme",
       "title": "UniKit UI 디자인 토큰 (라이트/다크)",
@@ -985,7 +1011,8 @@
       ],
       "registryDependencies": [
         "utils",
-        "animations"
+        "animations",
+        "overlay"
       ],
       "dependencies": [
         "@unikit-bridge/ui",
@@ -1107,7 +1134,8 @@
       "registryDependencies": [
         "command",
         "popover",
-        "utils"
+        "utils",
+        "overlay"
       ],
       "dependencies": [
         "@unikit-bridge/ui"
@@ -1146,7 +1174,9 @@
       ],
       "registryDependencies": [
         "utils",
-        "animations"
+        "animations",
+        "overlay",
+        "menu-nav"
       ],
       "dependencies": [
         "@unikit-bridge/ui"
@@ -1166,7 +1196,8 @@
       ],
       "registryDependencies": [
         "utils",
-        "animations"
+        "animations",
+        "overlay"
       ],
       "dependencies": [
         "@unikit-bridge/ui"
@@ -1205,7 +1236,8 @@
       ],
       "registryDependencies": [
         "utils",
-        "animations"
+        "animations",
+        "overlay"
       ],
       "dependencies": [
         "@unikit-bridge/ui",
@@ -1226,7 +1258,9 @@
       ],
       "registryDependencies": [
         "utils",
-        "animations"
+        "animations",
+        "overlay",
+        "menu-nav"
       ],
       "dependencies": [
         "@unikit-bridge/ui"
@@ -1268,7 +1302,8 @@
       ],
       "registryDependencies": [
         "utils",
-        "animations"
+        "animations",
+        "overlay"
       ],
       "dependencies": [
         "@unikit-bridge/ui",
@@ -1428,7 +1463,8 @@
       ],
       "registryDependencies": [
         "utils",
-        "animations"
+        "animations",
+        "overlay"
       ],
       "dependencies": [
         "@unikit-bridge/ui",
@@ -1449,7 +1485,8 @@
       ],
       "registryDependencies": [
         "utils",
-        "animations"
+        "animations",
+        "overlay"
       ],
       "dependencies": [
         "@unikit-bridge/ui",
@@ -1508,7 +1545,9 @@
       ],
       "registryDependencies": [
         "popover",
-        "utils"
+        "utils",
+        "overlay",
+        "menu-nav"
       ],
       "dependencies": [
         "@unikit-bridge/ui",
@@ -1529,7 +1568,8 @@
       ],
       "registryDependencies": [
         "utils",
-        "animations"
+        "animations",
+        "overlay"
       ],
       "dependencies": [
         "@unikit-bridge/ui",
@@ -1632,7 +1672,8 @@
       ],
       "registryDependencies": [
         "utils",
-        "animations"
+        "animations",
+        "overlay"
       ],
       "dependencies": [
         "@unikit-bridge/ui",

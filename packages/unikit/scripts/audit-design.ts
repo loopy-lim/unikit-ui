@@ -189,13 +189,22 @@ function scanPattern(files: string[], pattern: RegExp, label: string): Violation
   }
   for (const n of names) {
     const orig = readFileSync(path.join(PKG, "src", "components", `${n}.tsx`), "utf8");
-    const copy = readFileSync(path.join(PKG, "registry", "ui", `${n}.tsx`), "utf8").replaceAll('"@/lib/utils"', '"../lib/utils"');
+    const copy = readFileSync(path.join(PKG, "registry", "ui", `${n}.tsx`), "utf8")
+      .replaceAll('"@/lib/utils"', '"../lib/utils"')
+      .replaceAll('"@/lib/overlay"', '"../lib/overlay"')
+      .replaceAll('"@/lib/menu-nav"', '"../lib/menu-nav"');
     if (orig !== copy) vs.push({ file: `registry/ui/${n}.tsx`, detail: "src/components 원본과 내용 다름(import 치환 제외)" });
   }
   const uo = readFileSync(path.join(PKG, "src", "lib", "utils.ts"), "utf8");
   const uc = readFileSync(path.join(PKG, "registry", "lib", "utils.ts"), "utf8");
   if (uo !== uc) vs.push({ file: "registry/lib/utils.ts", detail: "src/lib/utils.ts와 byte 다름" });
-  report("d", vs.length === 0, `registry 사본 ${names.length + 1}종 동일(import 치환 제외)`, vs);
+  // 사이클 90 후속 — lib 모듈 사본(overlay·menu-nav)도 동일 대상.
+  for (const libName of ["overlay", "menu-nav"]) {
+    const lo = readFileSync(path.join(PKG, "src", "lib", `${libName}.tsx`), "utf8");
+    const lc = readFileSync(path.join(PKG, "registry", "lib", `${libName}.tsx`), "utf8");
+    if (lo !== lc) vs.push({ file: `registry/lib/${libName}.tsx`, detail: `src/lib/${libName}.tsx와 byte 다름` });
+  }
+  report("d", vs.length === 0, `registry 사본 ${names.length + 3}종 동일(import 치환 제외)`, vs);
 }
 
 // ── (e) registry.json files 경로 실재 ───────────────────────────────────────
@@ -246,6 +255,10 @@ function scanPattern(files: string[], pattern: RegExp, label: string): Violation
   const PALETTE_ALLOWLIST: Record<string, RegExp> = {
     "slider.tsx": /^bg-white$/,
     "sonner.tsx": /^(?:border|bg)-(?:emerald-600|red-600|amber-500|sky-500)$|^text-white(?:\/80)?$/,
+    // overlay: 모달 백드롭 딤 bg-black/50 — 원본 shadcn DialogOverlay 원본값
+    // (이식 9조 #3). 사이클 90 후속부터 registry/lib 사본도 스캔 대상에 들어와
+    // 명시 허용으로 옮긴다.
+    "overlay.tsx": /^bg-black\/50$/,
   };
   const vs: Violation[] = [];
   let allowed = 0;

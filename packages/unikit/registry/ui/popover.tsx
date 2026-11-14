@@ -51,7 +51,7 @@ import {
 } from "@unikit-bridge/ui/primitives";
 import { cva } from "class-variance-authority";
 
-import { AnchoredOverlay, type OverlayAlign, type OverlayPlacement } from "../lib/overlay";
+import { AnchoredOverlay, type OverlayAlign, type OverlayPlacement } from "@/lib/overlay";
 import { cn } from "@/lib/utils";
 
 type PopoverContextValue = {

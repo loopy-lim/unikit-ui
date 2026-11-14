@@ -22,9 +22,15 @@
  * 직접 import하지 않아도 양 플랫폼에서 동작한다. web.tsx는 같은 이름의
  * DOM 폴백을 제공한다.
  *
+ * 사이클 90 확장（docs/sdd/92-design-plan §2）: Pressable onHoverIn/onHoverOut/
+ * onFocus/onBlur는 RN Pressable 고유 프로퍼티와 동일명이라 rest 전파로 동작
+ * （터치 기기에서는 hover가 발화하지 않는다）. View onLayout은 RN 관용
+ * 시그니처({nativeEvent:{layout}})를 {width,height}로 좁혀 전달.
+ *
  * 웹 전용 계약의 네이티브 한계（컴포넌트 머리 주석에 기록됨）:
  *   aria-currentaria-invalidaria-describedby → RN 계약 없음, 폐기
  *   Pressable onKeyDown → 폐기（웹 키보드 탐색 전용）
+ *   View onKeyDown·View onHoverIn/onHoverOut → 폐기（RN View 계약 — Pressable만 hover 보유）
  *   TextInput onKeyDown → RN onKeyPress（{key}）로 래핑（preventDefault는 no-op）
  *   useReposition → no-op（모달이 창 좌표에 고정, 재배치 불필요불가）
  */
@@ -206,6 +212,13 @@ const View = forwardRef<BridgeViewRef, ViewProps>(
       "aria-controls": _ariaControls, // 〃
       "aria-labelledby": _ariaLabelledBy, // 〃
       pointerEvents,
+      // 사이클 90 — onLayout은 RN 관용 시그니처({nativeEvent:{layout}})를
+      // {width,height}로 좁혀 전달. onKeyDown·hover 2종은 RN View 계약이
+      // 없어 폐기한다(웹 전용 — Pressable에는 hover/focus가 있다).
+      onLayout,
+      onKeyDown: _onKeyDown,
+      onHoverIn: _onHoverIn,
+      onHoverOut: _onHoverOut,
       ...rest
     },
     ref,
@@ -220,6 +233,15 @@ const View = forwardRef<BridgeViewRef, ViewProps>(
         ref={ref as Ref<ViewInstance>}
         nativeID={nativeID}
         testID={testID}
+        onLayout={
+          onLayout
+            ? (event) =>
+                onLayout({
+                  width: event.nativeEvent.layout.width,
+                  height: event.nativeEvent.layout.height,
+                })
+            : undefined
+        }
         accessibilityRole={toNativeRole(accessibilityRole)}
         accessibilityLabel={accessibilityLabel}
         aria-hidden={ariaHidden}
@@ -511,6 +533,8 @@ Image.displayName = "Image";
 // modal={false}（비모달 — 토스트 등）면 Modal이 배경 터치를 차단하는 문제를
 // 피하기 위해 RN Modal 대신 절대 배치 View로 렌더한다. 이 경로는 진짜
 // 포털이 아니므로 소비자를 화면 루트에 두는 것이 전제다（머리주석 안내）.
+// dismissViaDocument는 무시한다 — 문서 리스너 계약이 없는 네이티브는 hover
+// 재계산 문제(F-4)도 없어 배경 Pressable(cover) 방식을 유지한다.
 // ---------------------------------------------------------------------------
 const Portal = ({
   children,
@@ -573,6 +597,12 @@ const ScrollView = forwardRef<BridgeScrollViewRef, ScrollViewProps>(
       horizontal,
       pagingEnabled,
       onScroll,
+      // 사이클 90 — View 신규 계약의 ScrollView 전파 정리: onLayout은 RN 이벤트
+      // 시그니처를 좁혀 전달, onKeyDown·hover는 폐기(View와 동일 취급).
+      onLayout,
+      onKeyDown: _onKeyDown,
+      onHoverIn: _onHoverIn,
+      onHoverOut: _onHoverOut,
       ...rest
     },
     ref,
@@ -586,6 +616,15 @@ const ScrollView = forwardRef<BridgeScrollViewRef, ScrollViewProps>(
       horizontal={horizontal}
       pagingEnabled={pagingEnabled}
       onScroll={onScroll ? () => onScroll() : undefined}
+      onLayout={
+        onLayout
+          ? (event) =>
+              onLayout({
+                width: event.nativeEvent.layout.width,
+                height: event.nativeEvent.layout.height,
+              })
+          : undefined
+      }
       scrollEventThrottle={16}
       className={className}
       style={style as ViewStyle}
