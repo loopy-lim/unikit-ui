@@ -90,13 +90,14 @@ Or several at once:
 bunx shadcn@latest add https://ui.ll3.kr/r/button.json https://ui.ll3.kr/r/card.json https://ui.ll3.kr/r/checkbox.json https://ui.ll3.kr/r/tabs.json https://ui.ll3.kr/r/avatar.json -y
 ```
 
-67 registry items (UI 61 + utils 1 + theme 4 + animations 1): <https://ui.ll3.kr/r/registry.json>. Sources land under `components/unikit/`.
+69 registry items (UI 61 + lib 3 (utils · overlay · menu-nav) + theme 4 + animations 1): <https://ui.ll3.kr/r/registry.json>. Sources land under `components/unikit/`.
 
 > **Local registry** — while editing UniKit UI, run `cd apps/web && bun x next dev -p 3000` and use `http://localhost:3000/r/...` instead.
 
 > **shadcn CLI 4.23 notes**
 > - `lib/utils.ts` may be skipped as “already exists” — init’s `cn` is fine for UniKit UI.
 > - Leading source comments are stripped on copy — no functional impact.
+> - Overlay/menu components (dialog, popover, select, dropdown-menu, …) depend on the `overlay` / `menu-nav` libs — `add` copies them into `lib/` automatically.
 
 ### Step 3 — required consumer settings
 

@@ -400,19 +400,19 @@ shadcn 카탈로그 잔여 33종을 전량 이식해 UniKit UI는 61종 전부�
 
 | 이름 | 컴포넌트 | 요점 |
 |---|---|---|
-| `dropdown-menu` | `DropdownMenu` 외 14종 | 드롭다운 메뉴. 하위 메뉴 1단계 캐스케이드, 체크·라디오·구분 항목 포함 |
-| `context-menu` | `ContextMenu` 외 14종 | 우클릭 메뉴 — 웹 onContextMenu / 네이티브 길게 누르기(onLongPress) 매핑 |
+| `dropdown-menu` | `DropdownMenu` 외 14종 | 드롭다운 메뉴. 하위 메뉴 1단계 캐스케이드, 체크·라디오·구분 항목 포함, 웹 화살표키·Home/End·타입어헤드 탐색 |
+| `context-menu` | `ContextMenu` 외 14종 | 우클릭 메뉴 — 웹 onContextMenu / 네이티브 길게 누르기(onLongPress) 매핑, 웹 화살표키·Home/End·타입어헤드 탐색 |
 | `command` | `Command` 외 7종 | 명령 팔레트. 자체 필터 + 키보드 탐색(웹 방향키·엔터, 네이티브 onKeyPress 래핑) |
 | `combobox` | `Combobox` 외 14종+훅 | 검색 셀렉트. popover + command 조립(원본도 조립형), ▾ 트리거 개방 |
-| `menubar` | `Menubar` 외 15종 | 수평 메뉴 바. dropdown-menu 소비, 인접 트리거 hover 전환은 미지원(눌림 전환) |
-| `navigation-menu` | `NavigationMenu` 외 7종 | 내비게이션 메뉴. 링크+전개 패널, hover 지연 개방은 미지원 |
+| `menubar` | `Menubar` 외 15종 | 수평 메뉴 바. dropdown-menu 소비, 열린 상태에서 인접 트리거 hover 전환(사이클 90)·눌림 전환 |
+| `navigation-menu` | `NavigationMenu` 외 7종 | 내비게이션 메뉴. 링크+전개 패널, 트리거 hover 200ms 지연 개방·인접 전환(사이클 90) |
 
 ### 입력 확장 9종
 
 | 이름 | 컴포넌트 | 요점 |
 |---|---|---|
 | `native-select` | `NativeSelect` 외 2종 | 브리지 Select 프리미티브(옵션·옵션 그룹 포함) — 웹은 진짜 `<select>`, 네이티브는 폴백 목록 |
-| `select` | `Select` 외 9종 | 커스텀 셀렉트. popover 기반 목록, role=combobox/listbox/option |
+| `select` | `Select` 외 9종 | 커스텀 셀렉트. popover 기반 목록, role=combobox/listbox/option, 웹 화살표키·Home/End·타입어헤드 탐색 |
 | `input-otp` | `InputOTP` 외 3종 | OTP 입력. 숨은 TextInput 하나로 값 분배·자동 포커스 이동·붙여넣기 분배 |
 | `input-group` | `InputGroup` 외 5종 | 입력 묶음(애드온·버튼·텍스트 조립). 기존 input·field 재사용 |
 | `form` | `Form` 외 6종+훅 | react-hook-form 연동(선택 peer). FormField·FormItem 등 shadcn API 유지, 오류 메시지 aria 연결 |

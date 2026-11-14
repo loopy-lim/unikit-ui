@@ -99,7 +99,7 @@ export default function Home() {
 bunx shadcn@latest add https://ui.ll3.kr/r/button.json -y
 ```
 
-`transpilePackages` · `web:` / `@source` · `theme.json` — see [docs/install.en.md](docs/install.en.md). Registry items: 67 = UI 61 + utils 1 + theme 4 + animations 1.
+`transpilePackages` · `web:` / `@source` · `theme.json` — see [docs/install.en.md](docs/install.en.md). Registry items: 69 = UI 61 + lib 3 (utils · overlay · menu-nav) + theme 4 + animations 1.
 
 ## Contributing (add a component)
 

@@ -92,13 +92,14 @@ bunx shadcn@latest add https://ui.ll3.kr/r/button.json -y
 bunx shadcn@latest add https://ui.ll3.kr/r/button.json https://ui.ll3.kr/r/card.json https://ui.ll3.kr/r/checkbox.json https://ui.ll3.kr/r/tabs.json https://ui.ll3.kr/r/avatar.json -y
 ```
 
-등록된 아이템 67종(UI 61 + utils 1 + theme 4 + animations 1) 전체 목록은 <https://ui.ll3.kr/r/registry.json> 에서 확인할 수 있어요. `components/unikit/`에 소스가 복사되고 의존성이 자동으로 설치돼요.
+등록된 아이템 69종(UI 61 + lib 3(utils·overlay·menu-nav) + theme 4 + animations 1) 전체 목록은 <https://ui.ll3.kr/r/registry.json> 에서 확인할 수 있어요. `components/unikit/`에 소스가 복사되고 의존성이 자동으로 설치돼요.
 
 > **로컬 레지스트리** — UniKit UI 저장소를 고치는 중이면 `cd apps/web && bun x next dev -p 3000` 후 URL만 `http://localhost:3000/r/...`로 바꿔요.
 
-> **shadcn CLI 4.23 동작 참고** 두 가지:
+> **shadcn CLI 4.23 동작 참고** 세 가지:
 > - `lib/utils.ts`는 CLI가 특수 취급해요. `add`가 `lib/utils.ts`를 "이미 존재한다"며 건너뛰는 출력이 나오는데, init이 만든 표준 cn(`export { cn } from "cn"`)이 그대로 쓰인다는 뜻이에요. UniKit UI 컴포넌트가 쓰는 `cn`과 기능이 같으니 그대로 두면 됩니다.
 > - 복사된 컴포넌트 파일에서 원본 소스의 앞부분 주석은 CLI가 제거해요. 기능에는 영향이 없어요.
+> - 오버레이·메뉴 계열 컴포넌트(dialog·popover·select·dropdown-menu 등)는 lib 의존(`overlay`·`menu-nav`)을 가져요. 컴포넌트 하나를 `add`하면 이 lib 파일들이 자동으로 같이 `lib/`에 복사돼요.
 
 ### 3단계 — 소비자 프로젝트 필수 설정
 

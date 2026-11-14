@@ -21,7 +21,7 @@
 - 메시지(5): message, message-scroller, bubble, attachment, marker
 - 내비게이션·레이아웃(15): tabs, accordion, collapsible, breadcrumb, pagination, progress, separator, aspect-ratio, kbd, field, item, button-group, scroll-area, resizable, direction
 
-전체 목록·설명: `packages/unikit/registry.json`(67 아이템 = UI 61 + utils 1 + theme 4 + animations 1). 사용법·Props: `docs/components.md`.
+전체 목록·설명: `packages/unikit/registry.json`(69 아이템 = UI 61 + lib 3(utils·overlay·menu-nav) + theme 4 + animations 1). 사용법·Props: `docs/components.md`.
 
 ## 디자인 토큰 규칙 (컴포넌트 코드 작성·수정 시 준수)
 
@@ -34,9 +34,9 @@
 ## 주요 한계 (안내 시 참고)
 
 - 오버레이·전개 계열의 등장/퇴장 애니메이션은 즉시 전환(마운트/언마운트). 네이티브에서 skeleton 펄스·spinner 회전도 정적.
-- hover 개방 미지원(hover-card는 웹 지연·네이티브 탭 토글, navigation-menu·menubar는 눌림 전환만).
-- select·메뉴 계열의 화살표키·타입어헤드 탐색 일부 미지원. asChild 미지원(트리거는 Pressable 고정).
-- chart는 반응형(뷰포트 비례) 크기·다크 전환·recharts 고급 차트(스택·극좌표 등) 미지원. 시리즈 색은 소비자 앱의 `--chart-1..5` 토큰.
+- hover 개방은 웹에서 지원(tooltip·hover-card hover/focus 진입, navigation-menu 200ms 지연·인접 전환, menubar 열린 상태 hover 전환, dropdown·context 서브메뉴 hover). 터치 기기는 눌림 폴백(사이클 90).
+- select·메뉴 계열은 웹에서 화살표키·Home/End 탐색 지원(사이클 90)과 타입어헤드(글자 입력 점프 — radix getNextMatch 이식, 사이클 90 후속). 네이티브 카드 키보드 탐색은 미지원(RN View에 키 이벤트 없음). asChild 미지원(트리거는 Pressable 고정).
+- chart는 유동 폭(width="fluid") 양 플랫폼 지원(사이클 90). 뷰포트 비례 높이·다크 전환·recharts 고급 차트(스택·극좌표 등) 미지원. 시리즈 색은 소비자 앱의 `--chart-1..5` 토큰.
 - 전체 목록: `docs/roadmap-components.md`의 미지원 기능 로드맵. 각 컴포넌트 소스 머리 주석에 포팅 판단·한계가 기록돼 있어요.
 
 ## 소비 방식
