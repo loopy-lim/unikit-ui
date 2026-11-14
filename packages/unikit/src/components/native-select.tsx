@@ -94,7 +94,7 @@ const NativeSelect = forwardRef<BridgeViewRef, NativeSelectProps>(
     <View
       ref={ref}
       // 원본 group/native-select relative w-fit has-［select:disabled］:opacity-50 근사
-      className={cn("relative self-start", disabled && "opacity-50")}
+      className={cn("relative native:self-start web:w-fit", disabled && "opacity-50")}
     >
       <Select
         className={cn(

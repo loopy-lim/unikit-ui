@@ -235,10 +235,8 @@ const InputGroupText = forwardRef<BridgeViewRef, InputGroupTextProps>(
       className={cn("flex-row items-center gap-2", className)}
       {...props}
     >
-      {/* 이중 지정: 전경색은 내부 Text에（네이티브 색 상속 불가） */}
-      <Text className="font-sans text-sm text-muted-foreground">
-        {children}
-      </Text>
+      {/* 이중 지정: 문자열만 내부 Text로 감싼다（아이콘·커스텀 요소는 직접 자식 유지） */}
+      {wrapTextChildren(children, "font-sans text-sm text-muted-foreground")}
     </View>
   ),
 );

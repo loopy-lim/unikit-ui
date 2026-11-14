@@ -153,7 +153,7 @@ const Calendar = forwardRef<BridgeViewRef, CalendarProps>(
         ref={ref}
         accessibilityRole="grid"
         aria-labelledby={captionId}
-        className={cn("self-start bg-background p-3 web:w-fit", className)}
+        className={cn("native:self-start bg-background p-3 web:w-fit", className)}
         {...props}
       >
         {/* 상단 — 이전 월  캡션  다음 월（원본 nav absolute 구조는 평면화） */}

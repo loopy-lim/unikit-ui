@@ -32,8 +32,8 @@ import { cva, type VariantProps } from "class-variance-authority";
 import { cn } from "@/lib/utils";
 
 // 그룹 뼈대 — 원본의 방향 변형. 모서리 붙임 토큰은 아래 주입 로직으로 이동.
-// w-fit은 uniwind 미지원 — self-start 치환으로 양쪽 플랫폼 내용 폭을 맞춘다（M-2）.
-const buttonGroupVariants = cva("flex self-start items-stretch", {
+// w-fit은 네이티브(uniwind) 미지원일 수 있어 네이티브에만 self-start를 적용한다.
+const buttonGroupVariants = cva("flex native:self-start web:w-fit items-stretch", {
   variants: {
     orientation: {
       horizontal: "flex-row",
@@ -116,22 +116,30 @@ export type ButtonGroupTextProps = ViewProps & {
 };
 
 const ButtonGroupText = forwardRef<BridgeViewRef, ButtonGroupTextProps>(
-  ({ className, children, ...props }, ref) => (
-    <View
-      ref={ref}
-      className={cn(
-        // 원본 flex items-center gap-2 — 브리지 flex-col 기본이라 flex-row 명시.
-        "flex flex-row items-center gap-2 rounded-md border border-border bg-muted px-4",
-        className,
-      )}
-      {...props}
-    >
-      {/* 이중 지정 원칙: 배경·테두리는 View, 전경색은 내부 Text에 */}
-      <Text className="font-sans text-sm font-medium text-foreground">
-        {children}
-      </Text>
-    </View>
-  ),
+  ({ className, children, ...props }, ref) => {
+    const content = Children.map(children, (child) =>
+      typeof child === "string" || typeof child === "number" ? (
+        <Text className="font-sans text-sm font-medium text-foreground">
+          {child}
+        </Text>
+      ) : (
+        child
+      ),
+    );
+    return (
+      <View
+        ref={ref}
+        className={cn(
+          // 원본 flex items-center gap-2 — 브리지 flex-col 기본이라 flex-row 명시.
+          "flex flex-row items-center gap-2 rounded-md border border-border bg-muted px-4",
+          className,
+        )}
+        {...props}
+      >
+        {content}
+      </View>
+    );
+  },
 );
 ButtonGroupText.displayName = "ButtonGroupText";
 

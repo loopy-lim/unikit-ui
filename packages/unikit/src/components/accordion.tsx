@@ -16,6 +16,7 @@
 // - single 모드의 collapsible은 기본 true（shadcn 관용 — 원본 radix 기본값은 false）.
 // - aria-controls ↔ 콘텐츠 nativeID를 루트 useId 토대로 결정적으로 연결한다.
 import {
+  Children,
   createContext,
   forwardRef,
   useCallback,
@@ -190,6 +191,24 @@ export type AccordionTriggerProps = PressableProps & {
 const AccordionTrigger = forwardRef<BridgePressableRef, AccordionTriggerProps>(
   ({ className, children, disabled, onPress, ...props }, ref) => {
     const item = useAccordionItemContext("AccordionTrigger");
+    const content =
+      typeof children === "string" || typeof children === "number" ? (
+        <Text className="flex-1 font-sans text-left text-sm font-medium text-foreground web:hover:underline">
+          {children}
+        </Text>
+      ) : (
+        <View className="flex-1 flex-row items-center gap-2">
+          {Children.map(children, (child) =>
+            typeof child === "string" || typeof child === "number" ? (
+              <Text className="font-sans text-left text-sm font-medium text-foreground web:hover:underline">
+                {child}
+              </Text>
+            ) : (
+              child
+            ),
+          )}
+        </View>
+      );
     return (
       <Pressable
         ref={ref}
@@ -210,9 +229,7 @@ const AccordionTrigger = forwardRef<BridgePressableRef, AccordionTriggerProps>(
         {...props}
       >
         {/* 이중 지정: 전경색·밑줄은 내부 Text에（네이티브는 색 상속 불가） */}
-        <Text className="flex-1 font-sans text-left text-sm font-medium text-foreground web:hover:underline">
-          {children}
-        </Text>
+        {content}
         <ChevronDownIcon
           className={cn(
             "size-4 shrink-0 text-muted-foreground transition-transform duration-200",

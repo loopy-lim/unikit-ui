@@ -400,13 +400,13 @@ export function ThemeCustomizer() {
             onPress={copyThemeCli}
             className="w-full justify-between"
           >
-            <View className="flex flex-row items-center gap-1.5">
-              <Copy className="size-3.5" />
-              <Text className="font-sans text-xs font-medium text-foreground">
+            <View className="flex min-w-0 flex-1 flex-row items-center gap-1.5">
+              <Copy className="size-3.5 shrink-0" />
+              <Text className="truncate font-sans text-xs font-medium text-foreground">
                 {copiedCli ? "CLI 명령 복사됨" : `${activeMeta.label} 테마 CLI 복사`}
               </Text>
             </View>
-            <Text className="site-mono text-[11px] text-muted-foreground">
+            <Text className="site-mono shrink-0 text-[11px] text-muted-foreground">
               {activeMeta.registryName}
             </Text>
           </Button>

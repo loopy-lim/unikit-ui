@@ -248,11 +248,9 @@ const SheetContent = forwardRef<BridgeViewRef, SheetContentProps>(
           {showCloseButton && (
             <SheetClose
               accessibilityLabel="Close"
-              // 원본 data-[state=open]:bg-secondary — 닫기 버튼은 열린 상태에서만
-              // 보이므로 상시 적용과 동일. rounded-xs·무패딩 원본값.
               className={cn(
-                "absolute top-4 right-4 rounded-xs bg-secondary opacity-70",
-                "web:transition-opacity web:hover:opacity-100",
+                "absolute top-3 right-3 rounded-sm p-1 opacity-70",
+                "web:transition-opacity web:hover:bg-accent web:hover:opacity-100",
                 "web:focus-visible:ring-2 web:focus-visible:ring-ring web:focus-visible:ring-offset-2 web:focus-visible:ring-offset-background",
               )}
             >

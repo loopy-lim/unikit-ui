@@ -116,6 +116,12 @@ function useCommandContext(component: string): CommandContextValue {
 /** 그룹 소속 전달 — CommandGroup이 ID를 제공, 항목 등록 meta에 싣는다 */
 const CommandGroupContext = createContext<string | undefined>(undefined);
 
+/** CommandDialog 내부 여부 전달 — shadcn CommandDialog의 넉넉한 여백·입력 높이(h-12) 적용 */
+const CommandDialogContext = createContext<{
+  inDialog: boolean;
+  showCloseButton: boolean;
+} | null>(null);
+
 /** 필터 일치 — shouldFilter=false 또는 빈 검색어면 전체 매치, 그 외엔 모든
  *  공백 구분 토큰이 valuekeywords 결합 문자열에 포함돼야 한다 */
 function matchesFilter(
@@ -360,6 +366,7 @@ const CommandInput = forwardRef<BridgeTextInputRef, CommandInputProps>(
     ref,
   ) => {
     const command = useCommandContext("CommandInput");
+    const dialog = useContext(CommandDialogContext);
     // combobox aria 2종 — 브리지 ViewProps 미계약 속성. 웹 View은 rest를 div에
     // 그대로 실어 보내고（bridge/web.tsx） 네이티브 구현은 무시폐기한다.
     // 계약 확장（ViewProps에 aria-expandedaria-controls 추가） 필요 — 보고 예정.
@@ -375,9 +382,11 @@ const CommandInput = forwardRef<BridgeTextInputRef, CommandInputProps>(
         accessibilityRole="combobox"
         {...comboboxAria}
         className={cn(
-          // 원본 flex h-9 items-center gap-2 border-b px-3 — 높이는 양 플랫폼 공통이라
-          // web: 접두 없이 원본값을 그대로 쓴다.
-          "flex-none flex-row items-center gap-2 border-b border-border px-3 h-9",
+          // 원본 flex h-9 items-center gap-2 border-b px-3 — CommandDialog 내부에서는
+          // shadcn 규격(h-12)을 쓰고, 닫기 버튼 공간(pr-12)을 비워 충돌을 막는다.
+          "flex-none flex-row items-center gap-2 border-b border-border px-3",
+          dialog?.inDialog ? "h-12" : "h-9",
+          dialog?.inDialog && dialog.showCloseButton && "pr-12",
           className,
         )}
       >
@@ -411,12 +420,17 @@ export type CommandListProps = ScrollViewProps;
 const CommandList = forwardRef<BridgeScrollViewRef, CommandListProps>(
   ({ className, children, nativeID, ...props }, ref) => {
     const command = useCommandContext("CommandList");
+    const dialog = useContext(CommandDialogContext);
     return (
       <ScrollView
         ref={ref}
         accessibilityRole="listbox"
         nativeID={nativeID ?? command.listId}
-        className={cn("max-h-72 web:scroll-py-1", className)}
+        className={cn(
+          "max-h-72 web:scroll-py-1",
+          dialog?.inDialog && "pb-1",
+          className,
+        )}
         {...props}
       >
         {children}
@@ -461,6 +475,7 @@ export type CommandGroupProps = ViewProps & {
 const CommandGroup = forwardRef<BridgeViewRef, CommandGroupProps>(
   ({ heading, className, children, ...props }, ref) => {
     const command = useCommandContext("CommandGroup");
+    const dialog = useContext(CommandDialogContext);
     const groupId = useId();
     const hasVisible = command.items.some(
       (item) =>
@@ -479,7 +494,8 @@ const CommandGroup = forwardRef<BridgeViewRef, CommandGroupProps>(
           // 소속 항목 전부 비매칭 → hidden（언마운트 아님, 등록 유지）.
           // 마운트 전（version 0）엔 표시로 그린다（SSR초기 낙관 렌더）.
           className={cn(
-            "overflow-hidden p-1",
+            "overflow-hidden",
+            dialog?.inDialog ? "px-2 py-1" : "p-1",
             command.version > 0 && !hasVisible && "hidden",
             className,
           )}
@@ -523,6 +539,7 @@ const CommandItem = forwardRef<BridgePressableRef, CommandItemProps>(
     ref,
   ) => {
     const command = useCommandContext("CommandItem");
+    const dialog = useContext(CommandDialogContext);
     const groupId = useContext(CommandGroupContext);
     const id = useId();
     const resolvedValue = value ?? textValueOf(children);
@@ -589,7 +606,8 @@ const CommandItem = forwardRef<BridgePressableRef, CommandItemProps>(
           onPress?.();
         }}
         className={cn(
-          "relative flex-row items-center gap-2 rounded-sm px-2 py-1.5 web:cursor-default web:outline-none web:select-none",
+          "relative flex-row items-center gap-2 rounded-sm px-2 web:cursor-default web:outline-none web:select-none",
+          dialog?.inDialog ? "py-3" : "py-1.5",
           // 원본 data-［selected=true］data-［disabled=true］ 토큰
           selected && "bg-accent",
           disabled && "web:pointer-events-none opacity-50",
@@ -655,20 +673,28 @@ const CommandDialog = forwardRef<BridgeViewRef, CommandDialogProps>(
       ...props
     },
     ref,
-  ) => (
-    <Dialog {...props}>
-      <DialogContent
-        ref={ref}
-        // 원본의 sr-only DialogHeader（제목·설명） 근사 — 제목은 오버레이
-        // 접근성 이름으로 전달한다（DialogContent → ModalOverlay）.
-        accessibilityLabel={title}
-        className={cn("gap-0 overflow-hidden p-0", className)}
-        showCloseButton={showCloseButton}
-      >
-        {children}
-      </DialogContent>
-    </Dialog>
-  ),
+  ) => {
+    const dialogContext = useMemo(
+      () => ({ inDialog: true, showCloseButton }),
+      [showCloseButton],
+    );
+    return (
+      <Dialog {...props}>
+        <DialogContent
+          ref={ref}
+          // 원본의 sr-only DialogHeader（제목·설명） 근사 — 제목은 오버레이
+          // 접근성 이름으로 전달한다（DialogContent → ModalOverlay）.
+          accessibilityLabel={title}
+          className={cn("gap-0 overflow-hidden p-0", className)}
+          showCloseButton={showCloseButton}
+        >
+          <CommandDialogContext.Provider value={dialogContext}>
+            {children}
+          </CommandDialogContext.Provider>
+        </DialogContent>
+      </Dialog>
+    );
+  },
 );
 CommandDialog.displayName = "CommandDialog";
 

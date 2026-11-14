@@ -206,7 +206,7 @@ Tabs.displayName = "Tabs";
 // 정렬로 내용 폭 수축）로 치환, h-9는 수평 전용 고정값을 받았고 text-muted-foreground
 // 는 이중 지정 원칙（컨테이너 글자색 무의미）으로 제거한다.
 const tabsListVariants = cva(
-  "flex-row self-start items-center justify-center rounded-lg p-1 h-9",
+  "flex-row native:self-start web:w-fit items-center justify-center rounded-lg p-1 h-9",
   {
     variants: {
       variant: {

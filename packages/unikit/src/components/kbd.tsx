@@ -28,9 +28,9 @@ const kbdTextVariants = cva(
 );
 
 // 키 조합 그룹 — Kbd 여러 개를 묶는 인라인 컨테이너（원본 inline-flex gap-1）.
-// w-fit은 uniwind 미지원 — tabs.tsx와 동일하게 self-start（교차축 시작 정렬로
-// 내용 폭 수축）로 치환해 양쪽 플랫폼 폭을 맞춘다（M-2）.
-const kbdGroupVariants = cva("flex-row self-start items-center gap-1");
+// w-fit은 네이티브(uniwind) 미지원일 수 있어 네이티브에만 self-start를 적용하고
+// 웹에서는 w-fit을 써서 flex-row items-center 안에서도 세로 중앙 정렬이 깨지지 않게 한다.
+const kbdGroupVariants = cva("flex-row native:self-start web:w-fit items-center gap-1");
 
 export type KbdProps = ViewProps;
 export type KbdGroupProps = ViewProps;

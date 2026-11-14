@@ -36,7 +36,7 @@ export function Section({
 export const outlineTriggerClass = cn(
   buttonVariants({ variant: "outline" }),
   buttonTextVariants({ variant: "outline" }),
-  "self-start",
+  "w-fit",
 );
 
 /** 본문 안내 문구(상태 시나리오 힌트) — 섹션마다 1~2줄로 제약을 적는다. */

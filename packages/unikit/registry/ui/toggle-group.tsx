@@ -149,8 +149,8 @@ const ToggleGroup = forwardRef<BridgeViewRef, ToggleGroupProps>(
       <View
         ref={ref}
         className={cn(
-          // w-fit은 uniwind 미지원 — self-start 치환으로 양쪽 플랫폼 내용 폭（M-2）.
-          "flex self-start flex-row items-center gap-1 rounded-md",
+          // w-fit은 네이티브(uniwind) 미지원일 수 있어 네이티브에만 self-start를 적용한다.
+          "flex native:self-start web:w-fit flex-row items-center gap-1 rounded-md",
           className,
         )}
         {...props}

@@ -5,7 +5,7 @@
 // ［&>svg］:size-3（아이콘은 글리프 Text）·dark:*（다크는 토큰 값 전환 아키텍처）.
 // focus 링은 없다 — Badge는 Pressable이 아니어서 스스로 포커스를 받지 않고, 원본의
 // focus-visible:ring-［3px］도 포커스 가능 래퍼（a/button）를 통해서만 발동한다（사이클 72 정정）.
-import { forwardRef } from "react";
+import { Children, forwardRef } from "react";
 import {
   Text,
   View,
@@ -18,18 +18,18 @@ import { cva, type VariantProps } from "class-variance-authority";
 
 import { cn } from "@/lib/utils";
 
-// View（컨테이너） — 원본 w-fit은 uniwind 미지원 → self-start 치환（M-2 규약）.
+// View（컨테이너） — 웹은 w-fit으로 정렬 보존, 네이티브는 self-start 유지.
 const badgeVariants = cva(
-  "flex flex-row self-start shrink-0 items-center justify-center gap-1 overflow-hidden rounded-full border border-transparent px-2 py-0.5 web:transition-all",
+  "flex flex-row native:self-start web:w-fit shrink-0 items-center justify-center gap-1 overflow-hidden rounded-full border border-transparent px-2 py-0.5 text-xs font-medium web:transition-all",
   {
     variants: {
       variant: {
-        default: "bg-primary",
-        secondary: "bg-secondary",
-        destructive: "bg-destructive",
-        outline: "border-border",
-        ghost: "",
-        link: "",
+        default: "bg-primary text-primary-foreground",
+        secondary: "bg-secondary text-secondary-foreground",
+        destructive: "bg-destructive text-destructive-foreground",
+        outline: "border-border text-foreground",
+        ghost: "text-foreground",
+        link: "text-primary",
       },
     },
     defaultVariants: {
@@ -63,15 +63,25 @@ const badgeTextVariants = cva(
 export type BadgeProps = ViewProps & VariantProps<typeof badgeVariants>;
 
 const Badge = forwardRef<BridgeViewRef, BadgeProps>(
-  ({ className, variant, children, ...props }, ref) => (
-    <View
-      ref={ref}
-      className={cn(badgeVariants({ variant }), className)}
-      {...props}
-    >
-      <Text className={cn(badgeTextVariants({ variant }))}>{children}</Text>
-    </View>
-  ),
+  ({ className, variant, children, ...props }, ref) => {
+    const textClass = cn(badgeTextVariants({ variant }));
+    const content = Children.map(children, (child) =>
+      typeof child === "string" || typeof child === "number" ? (
+        <Text className={textClass}>{child}</Text>
+      ) : (
+        child
+      ),
+    );
+    return (
+      <View
+        ref={ref}
+        className={cn(badgeVariants({ variant }), className)}
+        {...props}
+      >
+        {content}
+      </View>
+    );
+  },
 );
 Badge.displayName = "Badge";
 

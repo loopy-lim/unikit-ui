@@ -267,7 +267,7 @@ Select.displayName = "Select";
 // 트리거 — 원본 토큰에서 data-size/셀렉터류를 cva size조건부 클래스로 전개.
 // w-fit → self-start（tabs.tsx 관행）, focus 링은 원본 규격（ring-3 무오프셋） 준수.
 const selectTriggerVariants = cva(
-  "flex-row items-center justify-between gap-2 self-start rounded-md border border-input bg-transparent px-3 py-2 web:whitespace-nowrap web:transition-all web:outline-none web:focus-visible:border-ring web:focus-visible:ring-3 web:focus-visible:ring-ring/50 web:aria-invalid:border-destructive web:aria-invalid:ring-destructive/20",
+  "flex-row items-center justify-between gap-2 native:self-start web:w-fit rounded-md border border-input bg-transparent px-3 py-2 web:whitespace-nowrap web:transition-all web:outline-none web:focus-visible:border-ring web:focus-visible:ring-3 web:focus-visible:ring-ring/50 web:aria-invalid:border-destructive web:aria-invalid:ring-destructive/20",
   {
     variants: {
       size: {

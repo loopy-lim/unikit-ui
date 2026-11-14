@@ -273,9 +273,8 @@ const DropdownMenu = forwardRef<BridgeViewRef, DropdownMenuProps>(
     );
     return (
       <DropdownMenuContext.Provider value={contextValue}>
-        {/* w-fit 미지원 — kbd.tsx 관행의 self-start（교차축 시작 정렬）로 트리거
-            폭 수축. 풀폭 트리거는 사용처 className(self-stretch)으로. */}
-        <View ref={ref} className={cn("self-start", className)} {...props}>
+        {/* 웹은 w-fit으로 정렬 보존, 네이티브는 self-start로 내용 폭 수축 */}
+        <View ref={ref} className={cn("native:self-start web:w-fit", className)} {...props}>
           {children}
         </View>
       </DropdownMenuContext.Provider>
