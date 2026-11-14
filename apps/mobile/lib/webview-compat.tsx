@@ -11,6 +11,7 @@ import WebViewDefault from "react-native-webview";
 
 export type WebViewHandle = {
   injectJavaScript: (javaScript: string) => void;
+  reload?: () => void;
 };
 
 export const WebView = WebViewDefault as unknown as FunctionComponent<

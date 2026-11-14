@@ -21,7 +21,7 @@ type RnToWebViewMessage =
 type WebViewToRnMessage =
   | { type: "ready" }
   | { type: "change"; markdown: string }
-  | { type: "state"; formats: string[] };
+  | { type: "state"; formats: string[]; canUndo: boolean; canRedo: boolean };
 
 declare global {
   interface Window {
@@ -39,7 +39,12 @@ const editor = new Editor({
   // placeholder는 Placeholder 확장의 옵션으로 지정해야 반영된다 —
   // editorProps의 data-placeholder 속성은 확장 기본값("Write something …")에 덮어씌워진다.
   extensions: [
-    StarterKit,
+    StarterKit.configure({
+      link: {
+        openOnClick: false,
+        markdownLinks: true,
+      },
+    }),
     Markdown,
     Placeholder.configure({ placeholder: "여기에 마크다운으로 적어 봐" }),
   ],
@@ -61,18 +66,28 @@ const FORMAT_CHECKS: [string, () => boolean][] = [
 const stateFormats = () =>
   FORMAT_CHECKS.filter(([, on]) => on()).map(([name]) => name);
 
-const sendState = () => {
-  post({ type: "state", formats: stateFormats() });
+let lastStateKey: string | null = null;
+const buildStateSnapshot = () => {
+  const formats = stateFormats();
+  const canUndo = editor.can().undo();
+  const canRedo = editor.can().redo();
+  const key = `${formats.join(",")}|${Number(canUndo)}|${Number(canRedo)}`;
+  return { formats, canUndo, canRedo, key };
 };
 
-// state는 활성 서식이 실제로 바뀔 때만 보낸다 — 매 transaction마다 보내면
-// 키 입력 하나하나가 RN 리렌더를 일으킨다(사이클 94 성능 개선).
-let lastStateKey: string | null = null;
+const sendState = () => {
+  const { formats, canUndo, canRedo, key } = buildStateSnapshot();
+  lastStateKey = key;
+  post({ type: "state", formats, canUndo, canRedo });
+};
+
+// state는 활성 서식이나 undo/redo 가능 여부가 바뀔 때만 보낸다 — 매 transaction마다
+// 보내면 키 입력 하나하나가 RN 리렌더를 일으킨다(사이클 94 성능 개선).
 const sendStateIfChanged = () => {
-  const key = stateFormats().join(",");
+  const { formats, canUndo, canRedo, key } = buildStateSnapshot();
   if (key === lastStateKey) return;
   lastStateKey = key;
-  sendState();
+  post({ type: "state", formats, canUndo, canRedo });
 };
 
 // change는 디바운스 없이 즉시 보낸다 — RN 쪽 저장 디바운스(500ms)가 있고,
@@ -124,7 +139,7 @@ const runCommand = (command: "undo" | "redo") => {
 // 문서 교체 직후 undo 히스토리 초기화 — setContent가 한 단계로 기록되어
 // 첫 undo가 불러오기 이전의 빈 문서로 되돌리는 것(오토세이브 유실)을 막는다.
 const replaceDoc = (markdown: string) => {
-  editor.commands.setContent(markdown, { contentType: "markdown" });
+  editor.commands.setContent(markdown, { contentType: "markdown", emitUpdate: false });
   editor.view.updateState(
     EditorState.create({ doc: editor.state.doc, plugins: editor.state.plugins }),
   );
@@ -134,25 +149,45 @@ const applyTheme = (dark: boolean) => {
   document.documentElement.classList.toggle("dark", dark);
 };
 
+let initialized = false;
 window.__mdReceive = (raw: string) => {
-  const msg = JSON.parse(raw) as RnToWebViewMessage;
-  switch (msg.type) {
-    case "init":
-      applyTheme(msg.dark);
-      if (msg.markdown) {
-        replaceDoc(msg.markdown);
-      }
-      sendState();
-      break;
-    case "theme":
-      applyTheme(msg.dark);
-      break;
-    case "format":
-      runFormat(msg.format);
-      break;
-    case "command":
-      runCommand(msg.command);
-      break;
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(raw);
+  } catch {
+    return;
+  }
+  if (!parsed || typeof parsed !== "object") return;
+  const msg = parsed as Partial<RnToWebViewMessage>;
+  try {
+    switch (msg.type) {
+      case "init":
+        if (typeof msg.dark !== "boolean") return;
+        initialized = true;
+        applyTheme(msg.dark);
+        if (typeof msg.markdown === "string" && (msg.markdown.length > 0 || !editor.isEmpty)) {
+          replaceDoc(msg.markdown);
+        }
+        sendState();
+        break;
+      case "theme":
+        if (typeof msg.dark === "boolean") {
+          applyTheme(msg.dark);
+        }
+        break;
+      case "format":
+        if (initialized && typeof msg.format === "string") {
+          runFormat(msg.format);
+        }
+        break;
+      case "command":
+        if (initialized && (msg.command === "undo" || msg.command === "redo")) {
+          runCommand(msg.command);
+        }
+        break;
+    }
+  } catch {
+    // 잘못된 마크다운이나 명령 예외가 에디터 브리지를 망가뜨리지 않도록 차단한다.
   }
 };
 

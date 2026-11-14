@@ -8,9 +8,20 @@ export const DOC_EXT = ".md";
 
 const docsDir = new Directory(Paths.document, "markdown");
 
-/** 문서 이름 규칙 — 확장자 .md, 경로 구분자 없음. 딥링크 파라미터 검증에도 쓴다. */
-export const isValidDocName = (name: string): boolean =>
-  name.endsWith(DOC_EXT) && !name.includes("/") && !name.includes("\\");
+const CONTROL_OR_INVALID_CHARS = /[<>:"/\\|?*\x00-\x1f\x7f]/;
+const CONTROL_OR_INVALID_CHARS_GLOBAL = /[<>:"/\\|?*\x00-\x1f\x7f]/g;
+const MAX_FILENAME_BYTES = 255;
+
+const utf8ByteLength = (text: string): number => new TextEncoder().encode(text).length;
+
+/** 문서 이름 규칙 — .md 확장자, 숨김/점 전용/제어/금지 문자·255B 초과 차단. */
+export const isValidDocName = (name: string): boolean => {
+  if (!name.endsWith(DOC_EXT)) return false;
+  const stem = name.slice(0, -DOC_EXT.length);
+  if (!stem || stem === "." || stem === ".." || stem.startsWith(".")) return false;
+  if (CONTROL_OR_INVALID_CHARS.test(name)) return false;
+  return utf8ByteLength(name) <= MAX_FILENAME_BYTES;
+};
 
 const docFile = (name: string): File => {
   if (!isValidDocName(name)) {
@@ -44,15 +55,21 @@ export function listDocs(): DocMeta[] {
   ensureDocsDir();
   return docsDir
     .list()
-    .filter((entry): entry is File => entry instanceof File && entry.name.endsWith(DOC_EXT))
-    .map((file) => {
-      const meta = file.info();
-      return {
-        name: file.name,
-        title: file.name.slice(0, -DOC_EXT.length),
-        mtimeMs: meta.modificationTime ?? 0,
-        preview: firstMeaningfulLine(file.textSync()),
-      };
+    .filter((entry): entry is File => entry instanceof File && isValidDocName(entry.name))
+    .flatMap((file): DocMeta[] => {
+      try {
+        const meta = file.info();
+        return [
+          {
+            name: file.name,
+            title: file.name.slice(0, -DOC_EXT.length),
+            mtimeMs: meta.modificationTime ?? 0,
+            preview: firstMeaningfulLine(file.textSync()),
+          },
+        ];
+      } catch {
+        return [];
+      }
     })
     .sort((a, b) => b.mtimeMs - a.mtimeMs);
 }
@@ -72,6 +89,67 @@ export function deleteDoc(name: string): void {
   if (file.exists) {
     file.delete();
   }
+}
+
+/** 제목 문자열에서 파일 이름에 안전한 문서 제목만 추린다. */
+export function sanitizeDocTitle(raw: string): string {
+  const cleaned = raw
+    .trim()
+    .replace(/\.md$/i, "")
+    .replace(CONTROL_OR_INVALID_CHARS_GLOBAL, "-")
+    .replace(/^\.+/, "")
+    .trim();
+  if (!cleaned || cleaned === "." || cleaned === "..") return "";
+  return cleaned;
+}
+
+export function docNameFromTitle(raw: string): string | null {
+  const title = sanitizeDocTitle(raw);
+  if (!title) return null;
+  const name = `${title}${DOC_EXT}`;
+  return isValidDocName(name) ? name : null;
+}
+
+export function docExists(name: string): boolean {
+  return docFile(name).exists;
+}
+
+export function renameDoc(
+  oldName: string,
+  nextRawTitle: string,
+): { name: string; title: string } {
+  const title = sanitizeDocTitle(nextRawTitle);
+  if (!title) {
+    throw new Error("문서 제목을 입력해 줘.");
+  }
+  const targetName = `${title}${DOC_EXT}`;
+  if (targetName === oldName) {
+    return { name: oldName, title };
+  }
+  const oldFile = docFile(oldName);
+  const targetFile = docFile(targetName);
+  const isCaseOnly = targetName.toLowerCase() === oldName.toLowerCase();
+  const exactTargetExists =
+    targetFile.exists &&
+    (!isCaseOnly || docsDir.list().some((entry) => entry.name === targetName));
+  if (exactTargetExists) {
+    throw new Error(`같은 이름의 문서가 이미 있어: ${title}`);
+  }
+  if (oldFile.exists) {
+    if (isCaseOnly) {
+      let tmpName = `__rename_${Date.now()}${DOC_EXT}`;
+      let counter = 0;
+      while (new File(docsDir, tmpName).exists) {
+        tmpName = `__rename_${Date.now()}_${++counter}${DOC_EXT}`;
+      }
+      const tmpFile = new File(docsDir, tmpName);
+      oldFile.moveSync(tmpFile);
+      tmpFile.moveSync(targetFile);
+    } else {
+      oldFile.moveSync(targetFile);
+    }
+  }
+  return { name: targetName, title };
 }
 
 /** 목록과 겹치지 않는 새 문서 이름 — "문서 N.md" */

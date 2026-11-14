@@ -13,7 +13,7 @@ import {
 } from "@unikit-bridge/ui";
 import { Pressable, ScrollView, Text, View } from "@unikit-bridge/ui/primitives";
 
-import { deleteDoc, listDocs, nextDocName, type DocMeta } from "../lib/storage";
+import { deleteDoc, listDocs, type DocMeta } from "../lib/storage";
 
 const formatMonthDay = (ms: number): string => {
   if (!ms) return "";
