@@ -64,7 +64,7 @@ export type RnToWebViewMessage =
 export type WebViewToRnMessage =
   | { type: "ready" }
   | { type: "change"; markdown: string }
-  | { type: "state"; formats: string[] };
+  | { type: "state"; formats: string[]; canUndo?: boolean; canRedo?: boolean };
 
 /** tiptap Editor의 isActive만 구조 타이핑 — 런타임 의존 없이 계약만 빌린다. */
 export type EditorFormatState = {
@@ -107,13 +107,26 @@ export type EditorToolbarProps = ViewProps & {
   onFormat?: (format: EditorFormat) => void;
   /** undo/redo 실행 */
   onCommand?: (command: EditorCommand) => void;
+  /** 실행 취소 가능 여부(기본 true — 하위 호환) */
+  canUndo?: boolean;
+  /** 다시 실행 가능 여부(기본 true — 하위 호환) */
+  canRedo?: boolean;
   /** 툴바 전체 차단 */
   disabled?: boolean;
 };
 
 const EditorToolbar = forwardRef<BridgeViewRef, EditorToolbarProps>(
   (
-    { className, formats = [], onFormat, onCommand, disabled, ...props },
+    {
+      className,
+      formats = [],
+      onFormat,
+      onCommand,
+      canUndo = true,
+      canRedo = true,
+      disabled,
+      ...props
+    },
     ref,
   ) => {
     // multiple 그룹의 value diff — 한 번 눌린 항목만 onFormat으로 흘린다.
@@ -139,7 +152,7 @@ const EditorToolbar = forwardRef<BridgeViewRef, EditorToolbarProps>(
         <Button
           variant="ghost"
           size="icon-sm"
-          disabled={disabled}
+          disabled={disabled || !canUndo}
           onPress={() => onCommand?.("undo")}
           accessibilityLabel="되돌리기"
         >
@@ -148,7 +161,7 @@ const EditorToolbar = forwardRef<BridgeViewRef, EditorToolbarProps>(
         <Button
           variant="ghost"
           size="icon-sm"
-          disabled={disabled}
+          disabled={disabled || !canRedo}
           onPress={() => onCommand?.("redo")}
           accessibilityLabel="다시 실행"
         >

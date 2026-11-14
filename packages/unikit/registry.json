@@ -936,7 +936,8 @@
         "utils",
         "button",
         "separator",
-        "toggle-group"
+        "toggle-group",
+        "editor-prose"
       ],
       "dependencies": [
         "@unikit-bridge/ui",
@@ -1715,6 +1716,9 @@
           "caret-color": "hsl(var(--primary))",
           "outline": "none"
         },
+        ".tiptap > :first-child": {
+          "margin-top": "0"
+        },
         ".tiptap p": {
           "line-height": "1.7",
           "margin": "0.75em 0"
@@ -1770,6 +1774,7 @@
           "background": "hsl(var(--muted))",
           "color": "hsl(var(--foreground))",
           "border-radius": "calc(var(--radius) - 4px)",
+          "font-family": "ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, \"Liberation Mono\", \"Courier New\", monospace",
           "font-size": "0.875em",
           "padding": "0.15em 0.4em"
         },
@@ -1777,12 +1782,16 @@
           "background": "hsl(var(--muted))",
           "border": "1px solid hsl(var(--border))",
           "border-radius": "calc(var(--radius) - 2px)",
+          "font-size": "0.875em",
+          "line-height": "1.6",
           "margin": "1em 0",
           "padding": "0.75em 1em",
           "overflow-x": "auto"
         },
         ".tiptap pre code": {
           "background": "transparent",
+          "border-radius": "0",
+          "font-size": "inherit",
           "padding": "0"
         },
         ".tiptap a": {
