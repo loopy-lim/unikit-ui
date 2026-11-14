@@ -261,6 +261,18 @@ export {
 } from "./components/empty";
 
 export {
+  EditorToolbar,
+  EDITOR_FORMATS,
+  activeFormats,
+  type EditorToolbarProps,
+  type EditorFormat,
+  type EditorFormatState,
+  type EditorCommand,
+  type RnToWebViewMessage,
+  type WebViewToRnMessage,
+} from "./components/editor-toolbar";
+
+export {
   Field,
   FieldLabel,
   FieldDescription,

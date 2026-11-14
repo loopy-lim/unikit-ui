@@ -73,7 +73,7 @@ import {
   type ViewInstance,
   type ViewStyle,
 } from "react-native";
-import { Uniwind } from "uniwind";
+import { Uniwind, useResolveClassNames } from "uniwind";
 import {
   AlertCircleIcon as LucideAlertCircleIcon,
   ArrowDownIcon as LucideArrowDownIcon,
@@ -929,13 +929,20 @@ function wrapNativeLucide(Icon: LucideIcon, defaultClassName = "size-4") {
   return function NativeIcon({
     className,
     size = 16,
-    color = "currentColor",
+    color,
     strokeWidth = 2,
     style,
     "aria-hidden": ariaHidden = true,
   }: IconProps) {
     const numericSize =
       typeof size === "string" ? Number(size) || 16 : size;
+    // className의 text-* 색을 uniwind 훅으로 실제 색값으로 해석해 lucide color에
+    // 넘긴다 — Svg는 RN 스타일 상속이 없어서 className→style 변환만으로는
+    // stroke에 색이 닿지 않는다(2026-11-14 사이클 94 G4 발견: currentColor가
+    // 검정으로 렌더돼 다크 모드에서 아이콘이 배경에 묻혔다).
+    const resolvedStyles = useResolveClassNames(className ?? "");
+    // 유니윈드 해석값은 처리된 색 문자열(토큰 → 테마별 실측값)이다.
+    const resolvedColor = color ?? (resolvedStyles.color as string | undefined);
     const rotate = className?.includes("rotate-180")
       ? "180deg"
       : className?.includes("rotate-90")
@@ -947,7 +954,6 @@ function wrapNativeLucide(Icon: LucideIcon, defaultClassName = "size-4") {
     const svgProps = className
       ? ({ className: cn(defaultClassName, className) } as Record<string, unknown>)
       : defaultSvgProps;
-    // className의 text-* 색은 lucide Svg에 넘겨 uniwind가 color로 바인딩하게 한다.
     // rotate-* 는 래퍼 View transform으로 처리（Svg 자체 rotate 클래스 의존 회피）.
     return (
       <RNView
@@ -957,7 +963,7 @@ function wrapNativeLucide(Icon: LucideIcon, defaultClassName = "size-4") {
       >
         <Icon
           size={numericSize}
-          color={color}
+          color={resolvedColor}
           strokeWidth={strokeWidth}
           {...svgProps}
         />

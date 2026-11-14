@@ -32,7 +32,8 @@
     "./chart": {
       "react-native": "./src/chart/native.tsx",
       "default": "./src/chart/web.tsx"
-    }
+    },
+    "./editor-prose.css": "./src/lib/editor-prose.css"
   },
   "main": "./src/index.ts",
   "types": "./src/index.ts",

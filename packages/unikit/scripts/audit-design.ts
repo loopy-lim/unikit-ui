@@ -175,6 +175,8 @@ function scanPattern(files: string[], pattern: RegExp, label: string): Violation
     "message", "native-select", "navigation-menu", "popover", "resizable",
     "scroll-area", "select", "sheet", "sidebar", "slider",
     "sonner", "spinner", "tooltip",
+    // 3차 배치(사이클 94)
+    "editor-toolbar",
   ];
   const srcFiles = readdirSync(path.join(PKG, "src", "components"))
     .filter((f) => f.endsWith(".tsx"))
