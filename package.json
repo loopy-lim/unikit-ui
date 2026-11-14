@@ -12,6 +12,6 @@
     "generate:design": "bun run --filter '@unikit-bridge/ui' generate:design",
     "audit:design": "bun run --filter '@unikit-bridge/ui' audit:design",
     "expo": "cd apps/expo && bun x expo",
-    "web": "cd apps/web && bun x next",
+    "web": "cd apps/web && bun x next"
   }
 }
