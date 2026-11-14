@@ -1,7 +1,9 @@
 "use client";
 
+import { useState } from "react";
 import {
   Checkbox,
+  EditorToolbar,
   RadioGroup,
   RadioGroupItem,
   Switch,
@@ -157,4 +159,50 @@ export const textareaDemo: ShowcaseDemo = {
   code: `import { Textarea } from "@unikit-bridge/ui";
 
 <Textarea placeholder="메모" />`,
+};
+
+export const editorToolbarDemo: ShowcaseDemo = {
+  Demo: function EditorToolbarDemo() {
+    // 툴바 계약 데모 — formats/onFormat/onCommand 콜백을 상태로 연결한다.
+    // 실제 에디터 연동(tiptap 엔진)은 도그푸딩 앱(UniKit Markdown)이 담당한다.
+    const [formats, setFormats] = useState<string[]>(["bold"]);
+    const [log, setLog] = useState("onFormat → bold");
+    return (
+      <View className="flex flex-col items-start gap-3">
+        <EditorToolbar
+          formats={formats}
+          onFormat={(format) => {
+            setFormats((prev) =>
+              prev.includes(format)
+                ? prev.filter((v) => v !== format)
+                : [...prev, format],
+            );
+            setLog(`onFormat → ${format}`);
+          }}
+          onCommand={(command) => setLog(`onCommand → ${command}`)}
+        />
+        <Text className="font-mono text-xs text-muted-foreground">{log}</Text>
+      </View>
+    );
+  },
+  code: `import { EditorToolbar, activeFormats } from "@unikit-bridge/ui";
+import { useEditorState } from "@tiptap/react";
+
+// tiptap 위지윅 에디터와 연결(엔진은 앱이 소유)
+// selector는 editor가 null로 넘어올 수 있어 방어한다(초기 렌더 지연).
+const state = useEditorState({
+  editor,
+  selector: ({ editor }) =>
+    editor ? { formats: activeFormats(editor).join(",") } : { formats: "" },
+});
+
+<EditorToolbar
+  formats={state.formats.split(",").filter(Boolean)}
+  onFormat={runFormat} // 포맷별 toggleBold()/toggleHeading(...) 체인 실행 — 앱 소유
+  onCommand={(command) =>
+    command === "undo"
+      ? editor.chain().focus().undo().run()
+      : editor.chain().focus().redo().run()
+  }
+/>`,
 };

@@ -1,5 +1,5 @@
 /**
- * 쇼케이스 카탈로그 — registry.json UI 61종 메타 + 사이드바 그룹.
+ * 쇼케이스 카탈로그 — registry.json UI 62종 메타 + 사이드바 그룹.
  * 설명은 소비자용 한 줄(레지스트리 description 축약).
  */
 export type ShowcaseCategory =
@@ -70,6 +70,7 @@ export const catalog: CatalogItem[] = [
   { name: "native-select", title: "Native Select", description: "네이티브 select 래퍼.", category: "forms" },
   { name: "select", title: "Select", description: "커스텀 셀렉트 메뉴.", category: "forms" },
   { name: "combobox", title: "Combobox", description: "검색 가능한 선택 상자.", category: "forms" },
+  { name: "editor-toolbar", title: "Editor Toolbar", description: "tiptap 위지윅 에디터 툴바.", category: "forms" },
   // feedback
   { name: "alert", title: "Alert", description: "상황 알림 박스.", category: "feedback" },
   { name: "progress", title: "Progress", description: "진행률 표시 바.", category: "feedback" },

@@ -13,7 +13,7 @@ import * as overlay from "./overlay-demos";
 
 export type { ShowcaseDemo } from "./types";
 
-/** Kebab-case keys match `packages/unikit/src/components/{name}.tsx` (61 total). */
+/** Kebab-case keys match `packages/unikit/src/components/{name}.tsx` (62 total). */
 export const demos: Record<string, ShowcaseDemo> = {
   accordion: disclosure.accordionDemo,
   alert: core.alertDemo,
@@ -40,6 +40,7 @@ export const demos: Record<string, ShowcaseDemo> = {
   drawer: overlay.drawerDemo,
   "dropdown-menu": overlay.dropdownMenuDemo,
   empty: core.emptyDemo,
+  "editor-toolbar": formControls.editorToolbarDemo,
   field: core.fieldDemo,
   form: formExtended.formDemo,
   "hover-card": overlay.hoverCardDemo,
