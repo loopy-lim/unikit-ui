@@ -8,6 +8,7 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
+    "@unikit-bridge/ui": "workspace:*",
     "@tiptap/core": "^3.0.0",
     "@tiptap/extensions": "^3.0.0",
     "@tiptap/markdown": "^3.0.0",

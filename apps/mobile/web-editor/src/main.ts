@@ -1,7 +1,11 @@
 /*
  * WebView 안에서 도는 tiptap 에디터 — RN(apps/mobile/app/editor.tsx)과 JSON 브리지로 통신.
- * 프로토콜은 apps/mobile/lib/protocol.ts와 한 쌍이다(의도적 복제 — 번들을 나눈다).
+ * 프로토콜·포맷 계약의 원본은 @unikit-bridge/ui의 editor-toolbar(modules)이고,
+ * 이 파일의 타입·검사 테이블은 독립 번들을 위한 의도적 복제다(vite 단일 HTML —
+ * 패키지 배럴을 끌어오면 react까지 번들에 들어온다).
+ * 본문 타이포그래피는 패키지 editor-prose.css를 그대로 쓴다(아래 import).
  */
+import "@unikit-bridge/ui/editor-prose.css";
 import { Editor } from "@tiptap/core";
 import { EditorState } from "@tiptap/pm/state";
 import { Placeholder } from "@tiptap/extensions";
@@ -54,8 +58,21 @@ const FORMAT_CHECKS: [string, () => boolean][] = [
   ["code", () => editor.isActive("codeBlock")],
 ];
 
+const stateFormats = () =>
+  FORMAT_CHECKS.filter(([, on]) => on()).map(([name]) => name);
+
 const sendState = () => {
-  post({ type: "state", formats: FORMAT_CHECKS.filter(([, on]) => on()).map(([name]) => name) });
+  post({ type: "state", formats: stateFormats() });
+};
+
+// state는 활성 서식이 실제로 바뀔 때만 보낸다 — 매 transaction마다 보내면
+// 키 입력 하나하나가 RN 리렌더를 일으킨다(사이클 94 성능 개선).
+let lastStateKey: string | null = null;
+const sendStateIfChanged = () => {
+  const key = stateFormats().join(",");
+  if (key === lastStateKey) return;
+  lastStateKey = key;
+  sendState();
 };
 
 // change는 디바운스 없이 즉시 보낸다 — RN 쪽 저장 디바운스(500ms)가 있고,
@@ -63,7 +80,7 @@ const sendState = () => {
 editor.on("update", () => {
   post({ type: "change", markdown: editor.getMarkdown() });
 });
-editor.on("transaction", sendState);
+editor.on("transaction", sendStateIfChanged);
 
 const runFormat = (format: string) => {
   const chain = editor.chain().focus();

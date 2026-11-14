@@ -1,43 +1,30 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { router, useLocalSearchParams } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { Toaster, toast, ToggleGroup, ToggleGroupItem, useUnikitTheme } from "@unikit-bridge/ui";
 import {
-  BoldIcon,
+  EditorToolbar,
+  Toaster,
+  toast,
+  useUnikitTheme,
+} from "@unikit-bridge/ui";
+import type {
+  EditorCommand,
+  EditorFormat,
+  RnToWebViewMessage,
+  WebViewToRnMessage,
+} from "@unikit-bridge/ui";
+import {
   ChevronLeftIcon,
-  CodeIcon,
-  Heading1Icon,
-  Heading2Icon,
-  ItalicIcon,
-  ListIcon,
-  ListOrderedIcon,
   Pressable,
-  Redo2Icon,
-  ScrollView,
-  StrikethroughIcon,
   Text,
-  TextQuoteIcon,
-  Undo2Icon,
   View,
 } from "@unikit-bridge/ui/primitives";
 
 import EDITOR_HTML from "../lib/editor-html";
-import type { EditorCommand, EditorFormat, RnToWebViewMessage, WebViewToRnMessage } from "../lib/protocol";
 import { isValidDocName, nextDocName, readDoc, writeDoc } from "../lib/storage";
 import { WebView, type WebViewHandle, type WebViewMessageEvent } from "../lib/webview-compat";
 
 const SAVE_DEBOUNCE_MS = 500;
-
-// 툴바 두 그룹 — 글자 서식과 블록 서식을 구분자로 나눠 보여준다.
-const TEXT_FORMATS: readonly EditorFormat[] = ["bold", "italic", "strike"];
-const BLOCK_FORMATS: readonly EditorFormat[] = [
-  "h1",
-  "h2",
-  "bulletList",
-  "orderedList",
-  "quote",
-  "code",
-];
 
 export default function EditorScreen() {
   const params = useLocalSearchParams<{ file?: string }>();
@@ -89,7 +76,9 @@ export default function EditorScreen() {
   }, []);
 
   const scheduleSave = useCallback(() => {
-    setSaveState("pending");
+    // 이미 pending이면 같은 값 재set — React가 재렌더를 건너뛴다(키 입력마다
+    // 리렌더가 쌓이던 이전 동작 개선, 사이클 94).
+    setSaveState((prev) => (prev === "pending" ? prev : "pending"));
     if (saveTimer.current) clearTimeout(saveTimer.current);
     saveTimer.current = setTimeout(flushSave, SAVE_DEBOUNCE_MS);
   }, [flushSave]);
@@ -114,7 +103,9 @@ export default function EditorScreen() {
         return;
       }
       if (msg.type === "state") {
-        setFormats(msg.formats);
+        // 웹 쪽에서 활성 서식이 바뀔 때만 보내지만, 이중으로 막아 둔다.
+        const key = msg.formats.join(",");
+        setFormats((prev) => (prev.join(",") === key ? prev : msg.formats));
       }
     },
     [colorScheme, scheduleSave, send],
@@ -141,20 +132,14 @@ export default function EditorScreen() {
     };
   }, [flushSave]);
 
-  // 툴바 — 그룹 value diff로 눌린 서식 하나만 커맨드로 보낸다.
-  // members 안에서만 diff를 본다(두 ToggleGroup이 같은 formats 상태를 나눠 쓴다).
-  const handleFormatsChange = useCallback(
-    (members: readonly EditorFormat[]) => (next: string[]) => {
-      const current = formats.filter((v) => members.includes(v as EditorFormat));
-      const added = next.find((v) => !current.includes(v));
-      const removed = current.find((v) => !next.includes(v));
-      const changed = (added ?? removed) as EditorFormat | undefined;
-      if (changed) send({ type: "format", format: changed });
+  const runFormat = useCallback(
+    (format: EditorFormat) => {
+      send({ type: "format", format });
     },
-    [formats, send],
+    [send],
   );
 
-  const sendCommand = useCallback(
+  const runCommand = useCallback(
     (command: EditorCommand) => {
       send({ type: "command", command });
     },
@@ -186,70 +171,12 @@ export default function EditorScreen() {
         </Text>
       </View>
 
-      <View className="border-b border-border py-1">
-        <ScrollView horizontal contentContainerClassName="flex-row items-center px-3 gap-1">
-          <Pressable
-            onPress={() => sendCommand("undo")}
-            aria-label="되돌리기"
-            className="rounded-md p-2 active:bg-accent"
-          >
-            <Undo2Icon className="text-foreground" />
-          </Pressable>
-          <Pressable
-            onPress={() => sendCommand("redo")}
-            aria-label="다시 실행"
-            className="rounded-md p-2 active:bg-accent"
-          >
-            <Redo2Icon className="text-foreground" />
-          </Pressable>
-          <View className="mx-1 h-6 w-px bg-border" />
-          <ToggleGroup
-            type="multiple"
-            variant="outline"
-            size="sm"
-            value={formats.filter((v) => TEXT_FORMATS.includes(v as EditorFormat))}
-            onValueChange={handleFormatsChange(TEXT_FORMATS)}
-            aria-label="글자 서식"
-          >
-            <ToggleGroupItem value="bold" aria-label="굵게">
-              <BoldIcon className="text-foreground" />
-            </ToggleGroupItem>
-            <ToggleGroupItem value="italic" aria-label="기울임">
-              <ItalicIcon className="text-foreground" />
-            </ToggleGroupItem>
-            <ToggleGroupItem value="strike" aria-label="취소선">
-              <StrikethroughIcon className="text-foreground" />
-            </ToggleGroupItem>
-          </ToggleGroup>
-          <View className="mx-1 h-6 w-px bg-border" />
-          <ToggleGroup
-            type="multiple"
-            variant="outline"
-            size="sm"
-            value={formats.filter((v) => BLOCK_FORMATS.includes(v as EditorFormat))}
-            onValueChange={handleFormatsChange(BLOCK_FORMATS)}
-            aria-label="블록 서식"
-          >
-            <ToggleGroupItem value="h1" aria-label="제목 1">
-              <Heading1Icon className="text-foreground" />
-            </ToggleGroupItem>
-            <ToggleGroupItem value="h2" aria-label="제목 2">
-              <Heading2Icon className="text-foreground" />
-            </ToggleGroupItem>
-            <ToggleGroupItem value="bulletList" aria-label="불릿 목록">
-              <ListIcon className="text-foreground" />
-            </ToggleGroupItem>
-            <ToggleGroupItem value="orderedList" aria-label="번호 목록">
-              <ListOrderedIcon className="text-foreground" />
-            </ToggleGroupItem>
-            <ToggleGroupItem value="quote" aria-label="인용">
-              <TextQuoteIcon className="text-foreground" />
-            </ToggleGroupItem>
-            <ToggleGroupItem value="code" aria-label="코드 블록">
-              <CodeIcon className="text-foreground" />
-            </ToggleGroupItem>
-          </ToggleGroup>
-        </ScrollView>
+      <View className="border-b border-border px-3 py-1">
+        <EditorToolbar
+          formats={formats}
+          onFormat={runFormat}
+          onCommand={runCommand}
+        />
       </View>
 
       <WebView

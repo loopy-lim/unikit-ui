@@ -5,35 +5,23 @@ import { readTextFile, writeTextFile } from "@tauri-apps/plugin-fs";
 import { Placeholder } from "@tiptap/extensions";
 import { Markdown } from "@tiptap/markdown";
 import { EditorState } from "@tiptap/pm/state";
-import { EditorContent, useEditor } from "@tiptap/react";
+import { EditorContent, useEditor, useEditorState } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
 import {
   Button,
+  EditorToolbar,
   Input,
   Separator,
   Toaster,
-  ToggleGroup,
-  ToggleGroupItem,
+  activeFormats,
   toast,
   useUnikitTheme,
 } from "@unikit-bridge/ui";
-import {
-  BoldIcon,
-  CodeIcon,
-  Heading1Icon,
-  Heading2Icon,
-  ItalicIcon,
-  ListIcon,
-  ListOrderedIcon,
-  Redo2Icon,
-  StrikethroughIcon,
-  TextQuoteIcon,
-  Undo2Icon,
-} from "@unikit-bridge/ui/primitives";
 
 /*
  * UniKit Markdown(데스크톱) — @unikit-bridge/ui 도그푸딩 앱.
  * tiptap v3(ProseMirror) + @tiptap/markdown으로 위지윅 ↔ 마크다운을 왕복한다.
+ * 툴바는 패키지 EditorToolbar, 본문 스타일은 editor-prose.css가 담당(사이클 94).
  */
 
 const WELCOME = `# UniKit Markdown
@@ -49,28 +37,6 @@ const WELCOME = `# UniKit Markdown
 > \`열기\`로 .md 파일을 불러오고 \`Ctrl+S\`로 저장해 봐.
 `;
 
-type Format =
-  | "bold"
-  | "italic"
-  | "strike"
-  | "h1"
-  | "h2"
-  | "bulletList"
-  | "orderedList"
-  | "quote"
-  | "code";
-
-// 툴바 두 그룹 — 글자 서식과 블록 서식을 구분자로 나눠 보여준다.
-const TEXT_FORMATS: readonly Format[] = ["bold", "italic", "strike"];
-const BLOCK_FORMATS: readonly Format[] = [
-  "h1",
-  "h2",
-  "bulletList",
-  "orderedList",
-  "quote",
-  "code",
-];
-
 // 문서 교체 직후 undo 히스토리 초기화 — setContent가 한 단계로 기록되어
 // 첫 undo가 교체 이전 문서로 되돌리는 것을 막는다(모바일 web-editor와 같은 결함).
 const replaceDoc = (editor: Editor, markdown: string) => {
@@ -85,8 +51,6 @@ function App() {
   const [title, setTitle] = useState("제목 없음");
   const [filePath, setFilePath] = useState<string | null>(null);
   const [dirty, setDirty] = useState(false);
-  const [charCount, setCharCount] = useState(WELCOME.length);
-  const [formats, setFormats] = useState<Format[]>([]);
 
   const editor = useEditor({
     extensions: [
@@ -96,43 +60,32 @@ function App() {
     ],
     content: WELCOME,
     contentType: "markdown",
-    onUpdate: ({ editor }) => {
-      setDirty(true);
-      setCharCount(editor.getMarkdown().length);
-    },
+    onUpdate: () => setDirty(true),
   });
 
-  // 활성 포맷 동기화 — 커서/선택이 바뀔 때마다 재계산한다.
-  useEffect(() => {
-    if (!editor) return;
-    const sync = () => {
-      setFormats(
-        (
-          [
-            ["bold", editor.isActive("bold")],
-            ["italic", editor.isActive("italic")],
-            ["strike", editor.isActive("strike")],
-            ["h1", editor.isActive("heading", { level: 1 })],
-            ["h2", editor.isActive("heading", { level: 2 })],
-            ["bulletList", editor.isActive("bulletList")],
-            ["orderedList", editor.isActive("orderedList")],
-            ["quote", editor.isActive("blockquote")],
-            ["code", editor.isActive("codeBlock")],
-          ] as const
-        )
-          .filter(([, on]) => on)
-          .map(([name]) => name as Format),
-      );
-    };
-    editor.on("transaction", sync);
-    sync();
-    return () => {
-      editor.off("transaction", sync);
-    };
-  }, [editor]);
+  // 툴바 상태 선택 구독 — transaction마다 selector가 돌지만, 결과가 같으면
+  // 리렌더가 없다(tiptap useEditorState의 circularDeepEqual). 이전 구조는
+  // 매 키 입력마다 getMarkdown() 직렬화(글자수) + formats 새 배열 set로
+  // 헤더 전체가 리렌더됐다.
+  const editorState = useEditorState({
+    editor,
+    selector: ({ editor }) =>
+      editor
+        ? {
+            // 배열 대신 join 문자열 — 깊은 비교 비용까지 아낀다.
+            formats: activeFormats(editor).join(","),
+            // getMarkdown() 직렬화 폐지 — doc 순회만으로 글자수.
+            chars: editor.state.doc.textContent.length,
+          }
+        : { formats: "", chars: 0 },
+  });
+  const formats = useMemo(
+    () => editorState.formats.split(",").filter(Boolean),
+    [editorState.formats],
+  );
 
   const runFormat = useCallback(
-    (format: Format) => {
+    (format: string) => {
       if (!editor) return;
       const chain = editor.chain().focus();
       switch (format) {
@@ -168,26 +121,15 @@ function App() {
     [editor],
   );
 
-  // multiple 그룹의 value diff — 한 번 눌린 항목만 커맨드로 실행한다.
-  // 그룹별 핸들러: members 안에서만 diff를 본다(두 ToggleGroup이 같은 formats 상태를 나눠 쓴다).
-  const handleFormatsChange = useCallback(
-    (members: readonly Format[]) => (next: string[]) => {
-      const current: string[] = formats.filter((v) => members.includes(v));
-      const added = next.find((v) => !current.includes(v));
-      const removed = current.find((v) => !next.includes(v));
-      const changed = (added ?? removed) as Format | undefined;
-      if (changed) runFormat(changed);
+  const runCommand = useCallback(
+    (command: "undo" | "redo") => {
+      if (!editor) return;
+      const chain = editor.chain().focus();
+      if (command === "undo") chain.undo().run();
+      else chain.redo().run();
     },
-    [formats, runFormat],
+    [editor],
   );
-
-  const undo = useCallback(() => {
-    editor?.chain().focus().undo().run();
-  }, [editor]);
-
-  const redo = useCallback(() => {
-    editor?.chain().focus().redo().run();
-  }, [editor]);
 
   const saveDocument = useCallback(async () => {
     if (!editor) return;
@@ -232,7 +174,6 @@ function App() {
       setTitle(name.replace(/\.(md|markdown)$/i, ""));
       setFilePath(path);
       setDirty(false);
-      setCharCount(editor.getMarkdown().length);
       toast.success(`불러왔어: ${name}`);
     } catch (err) {
       toast.error(`불러오기에 실패했어: ${String(err)}`);
@@ -252,7 +193,6 @@ function App() {
     setTitle("제목 없음");
     setFilePath(null);
     setDirty(false);
-    setCharCount(0);
   }, [dirty, editor]);
 
   // Ctrl+S 저장 — 브라우저 기본 저장 대화상자를 막는다.
@@ -281,6 +221,11 @@ function App() {
             onChangeText={setTitle}
             aria-label="문서 제목"
             className="h-8 max-w-80 border-none bg-transparent px-1 text-base web:md:text-base focus:ring-1"
+            // 제목란은 앱바의 글자처럼 보이게 하는 게 목적이라 채움을 원천 제거한다.
+            // 컴포넌트의 dark:bg-input/30은 shadcn 원본 클래스라 twMerge로는 못 이기고
+            // (변형 접두사가 달라 별도 그룹), 원본 훼손 없이 앱에서만 무력화하는
+            // 동적 style 계약으로 처리한다(사이클 94 G4 P2-3).
+            style={{ backgroundColor: "transparent" }}
           />
           {dirty && (
             <span aria-label="저장되지 않은 변경" className="text-muted-foreground">
@@ -303,63 +248,13 @@ function App() {
           </Button>
         </div>
         <div className="flex items-center gap-3">
-          <div className="flex items-center gap-1">
-            <Button variant="ghost" size="icon-sm" onPress={undo} aria-label="되돌리기">
-              <Undo2Icon className="text-foreground" />
-            </Button>
-            <Button variant="ghost" size="icon-sm" onPress={redo} aria-label="다시 실행">
-              <Redo2Icon className="text-foreground" />
-            </Button>
-          </div>
-          <Separator orientation="vertical" />
-          <ToggleGroup
-            type="multiple"
-            variant="outline"
-            size="sm"
-            value={formats.filter((v) => TEXT_FORMATS.includes(v))}
-            onValueChange={handleFormatsChange(TEXT_FORMATS)}
-            aria-label="글자 서식"
-          >
-            <ToggleGroupItem value="bold" aria-label="굵게">
-              <BoldIcon className="text-foreground" />
-            </ToggleGroupItem>
-            <ToggleGroupItem value="italic" aria-label="기울임">
-              <ItalicIcon className="text-foreground" />
-            </ToggleGroupItem>
-            <ToggleGroupItem value="strike" aria-label="취소선">
-              <StrikethroughIcon className="text-foreground" />
-            </ToggleGroupItem>
-          </ToggleGroup>
-          <Separator orientation="vertical" />
-          <ToggleGroup
-            type="multiple"
-            variant="outline"
-            size="sm"
-            value={formats.filter((v) => BLOCK_FORMATS.includes(v))}
-            onValueChange={handleFormatsChange(BLOCK_FORMATS)}
-            aria-label="블록 서식"
-          >
-            <ToggleGroupItem value="h1" aria-label="제목 1">
-              <Heading1Icon className="text-foreground" />
-            </ToggleGroupItem>
-            <ToggleGroupItem value="h2" aria-label="제목 2">
-              <Heading2Icon className="text-foreground" />
-            </ToggleGroupItem>
-            <ToggleGroupItem value="bulletList" aria-label="불릿 목록">
-              <ListIcon className="text-foreground" />
-            </ToggleGroupItem>
-            <ToggleGroupItem value="orderedList" aria-label="번호 목록">
-              <ListOrderedIcon className="text-foreground" />
-            </ToggleGroupItem>
-            <ToggleGroupItem value="quote" aria-label="인용">
-              <TextQuoteIcon className="text-foreground" />
-            </ToggleGroupItem>
-            <ToggleGroupItem value="code" aria-label="코드 블록">
-              <CodeIcon className="text-foreground" />
-            </ToggleGroupItem>
-          </ToggleGroup>
+          <EditorToolbar
+            formats={formats}
+            onFormat={runFormat}
+            onCommand={runCommand}
+          />
           <div className="flex-1" />
-          <span className="text-xs text-muted-foreground">{charCount}자</span>
+          <span className="text-xs text-muted-foreground">{editorState.chars}자</span>
         </div>
       </header>
 
