@@ -13,6 +13,5 @@
     "audit:design": "bun run --filter '@unikit-bridge/ui' audit:design",
     "expo": "cd apps/expo && bun x expo",
     "web": "cd apps/web && bun x next",
-    "rustra": "cd apps/rustra && bun x next"
   }
 }
