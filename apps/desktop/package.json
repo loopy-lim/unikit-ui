@@ -15,6 +15,7 @@
     "@tauri-apps/plugin-dialog": "^2.0.0",
     "@tauri-apps/plugin-fs": "^2.0.0",
     "@unikit-bridge/ui": "workspace:*",
+    "@tiptap/core": "^3.0.0",
     "@tiptap/pm": "^3.0.0",
     "@tiptap/extensions": "^3.0.0",
     "@tiptap/react": "^3.0.0",

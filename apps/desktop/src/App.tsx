@@ -1,7 +1,7 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { Editor } from "@tiptap/core";
 import { ask, open, save } from "@tauri-apps/plugin-dialog";
-import { readTextFile, writeTextFile } from "@tauri-apps/plugin-fs";
+import { exists, readTextFile, rename, writeTextFile } from "@tauri-apps/plugin-fs";
 import { Placeholder } from "@tiptap/extensions";
 import { Markdown } from "@tiptap/markdown";
 import { EditorState } from "@tiptap/pm/state";
@@ -24,6 +24,9 @@ import {
  * 툴바는 패키지 EditorToolbar, 본문 스타일은 editor-prose.css가 담당(사이클 94).
  */
 
+const DEFAULT_TITLE = "제목 없음";
+const WINDOWS_RESERVED_STEMS = /^(con|prn|aux|nul|com[1-9]|lpt[1-9])$/i;
+
 const WELCOME = `# UniKit Markdown
 
 **위지윅**으로 쓰고 마크다운으로 저장하는 데모 문서야.
@@ -40,27 +43,66 @@ const WELCOME = `# UniKit Markdown
 // 문서 교체 직후 undo 히스토리 초기화 — setContent가 한 단계로 기록되어
 // 첫 undo가 교체 이전 문서로 되돌리는 것을 막는다(모바일 web-editor와 같은 결함).
 const replaceDoc = (editor: Editor, markdown: string) => {
-  editor.commands.setContent(markdown, { contentType: "markdown" });
+  editor.commands.setContent(markdown, { contentType: "markdown", emitUpdate: false });
   editor.view.updateState(
     EditorState.create({ doc: editor.state.doc, plugins: editor.state.plugins }),
   );
 };
 
+const sanitizeFileStem = (raw: string): string => {
+  const cleaned = raw
+    .trim()
+    .replace(/\.(md|markdown)$/i, "")
+    .replace(/[<>:"/\\|?*\x00-\x1f\x7f]/g, "-")
+    .replace(/^\.+/, "")
+    .replace(/[. ]+$/, "")
+    .trim();
+  if (!cleaned || cleaned === "." || cleaned === "..") return "";
+  return WINDOWS_RESERVED_STEMS.test(cleaned) ? `${cleaned}_doc` : cleaned;
+};
+
+const splitPathParts = (
+  fullPath: string,
+): { dir: string; sep: string; hasDir: boolean; name: string; ext: string } => {
+  const slashIdx = fullPath.lastIndexOf("/");
+  const backslashIdx = fullPath.lastIndexOf("\\");
+  const sepIdx = Math.max(slashIdx, backslashIdx);
+  const hasDir = sepIdx >= 0;
+  const sep = hasDir ? fullPath[sepIdx] : "/";
+  const dir = hasDir ? fullPath.slice(0, sepIdx) : "";
+  const name = hasDir ? fullPath.slice(sepIdx + 1) : fullPath;
+  const extMatch = name.match(/\.(md|markdown)$/i);
+  const ext = extMatch ? extMatch[0] : ".md";
+  return { dir, sep, hasDir, name, ext };
+};
+
 function App() {
   const { colorScheme, toggleColorScheme } = useUnikitTheme();
-  const [title, setTitle] = useState("제목 없음");
+  const [title, setTitle] = useState(DEFAULT_TITLE);
   const [filePath, setFilePath] = useState<string | null>(null);
   const [dirty, setDirty] = useState(false);
+  const editSeqRef = useRef(0);
+  const bodyDirtyRef = useRef(false);
+  const ioBusyRef = useRef(false);
 
   const editor = useEditor({
     extensions: [
-      StarterKit,
+      StarterKit.configure({
+        link: {
+          openOnClick: false,
+          markdownLinks: true,
+        },
+      }),
       Markdown,
       Placeholder.configure({ placeholder: "여기에 마크다운으로 적어 봐" }),
     ],
     content: WELCOME,
     contentType: "markdown",
-    onUpdate: () => setDirty(true),
+    onUpdate: () => {
+      editSeqRef.current += 1;
+      bodyDirtyRef.current = true;
+      setDirty(true);
+    },
   });
 
   // 툴바 상태 선택 구독 — transaction마다 selector가 돌지만, 결과가 같으면
@@ -74,10 +116,12 @@ function App() {
         ? {
             // 배열 대신 join 문자열 — 깊은 비교 비용까지 아낀다.
             formats: activeFormats(editor).join(","),
+            canUndo: editor.can().undo(),
+            canRedo: editor.can().redo(),
             // getMarkdown() 직렬화 폐지 — doc 순회만으로 글자수.
             chars: editor.state.doc.textContent.length,
           }
-        : { formats: "", chars: 0 },
+        : { formats: "", canUndo: false, canRedo: false, chars: 0 },
   });
   const formats = useMemo(
     () => editorState.formats.split(",").filter(Boolean),
@@ -131,37 +175,138 @@ function App() {
     [editor],
   );
 
+  const savedStem = useMemo(() => {
+    if (!filePath) return DEFAULT_TITLE;
+    return splitPathParts(filePath).name.replace(/\.(md|markdown)$/i, "");
+  }, [filePath]);
+
+  const handleTitleChange = useCallback(
+    (next: string) => {
+      setTitle(next);
+      setDirty(bodyDirtyRef.current || next !== savedStem);
+    },
+    [savedStem],
+  );
+
   const saveDocument = useCallback(async () => {
-    if (!editor) return;
-    let path = filePath;
+    if (!editor || ioBusyRef.current) return;
+    ioBusyRef.current = true;
     try {
+      const snapshotSeq = editSeqRef.current;
+      const markdown = editor.getMarkdown();
+      let path = filePath;
+
       if (!path) {
+        const defaultStem = sanitizeFileStem(title) || DEFAULT_TITLE;
         path = await save({
           title: "마크다운 문서 저장",
-          defaultPath: `${title || "제목 없음"}.md`,
+          defaultPath: `${defaultStem}.md`,
           filters: [{ name: "Markdown", extensions: ["md", "markdown"] }],
         });
         if (!path) return;
+        await writeTextFile(path, markdown);
+      } else {
+        const { dir, sep, hasDir, name, ext } = splitPathParts(path);
+        const currentStem = name.replace(/\.(md|markdown)$/i, "");
+        const sanitizedTitle = sanitizeFileStem(title);
+        if (!sanitizedTitle) {
+          toast.error("문서 제목을 입력해 줘.");
+          setTitle(currentStem);
+          setDirty(bodyDirtyRef.current);
+          return;
+        }
+
+        if (sanitizedTitle === currentStem) {
+          await writeTextFile(path, markdown);
+        } else {
+          const nextName = `${sanitizedTitle}${ext}`;
+          const nextPath = hasDir ? `${dir}${sep}${nextName}` : nextName;
+          const isCaseOnly = sanitizedTitle.toLowerCase() === currentStem.toLowerCase();
+          const isLinux = typeof navigator !== "undefined" && /linux/i.test(navigator.userAgent);
+
+          // 먼저 현재 파일에 내용을 안전하게 저장해 이름 변경 실패 시에도 편집 내용을 잃지 않는다.
+          let targetExists = false;
+          let canScopeRename = true;
+          if (!isCaseOnly || isLinux) {
+            try {
+              targetExists = await exists(nextPath);
+            } catch {
+              canScopeRename = false;
+            }
+          }
+
+          if (canScopeRename && targetExists) {
+            const overwrite = await ask(
+              `같은 이름의 파일("${nextName}")이 이미 있어. 덮어쓸까?`,
+              { title: "확인", kind: "warning" },
+            );
+            if (!overwrite) return;
+          }
+
+          await writeTextFile(path, markdown);
+
+          if (canScopeRename) {
+            try {
+              if (isCaseOnly && !isLinux) {
+                const tmpName = `__rename_${Date.now()}${ext}`;
+                const tmpPath = hasDir ? `${dir}${sep}${tmpName}` : tmpName;
+                await rename(path, tmpPath);
+                try {
+                  await rename(tmpPath, nextPath);
+                } catch (err) {
+                  await rename(tmpPath, path).catch(() => {});
+                  throw err;
+                }
+              } else {
+                await rename(path, nextPath);
+              }
+              path = nextPath;
+            } catch {
+              canScopeRename = false;
+            }
+          }
+
+          if (!canScopeRename) {
+            const picked = await save({
+              title: "새 이름으로 저장",
+              defaultPath: nextPath,
+              filters: [{ name: "Markdown", extensions: ["md", "markdown"] }],
+            });
+            if (picked) {
+              await writeTextFile(picked, markdown);
+              path = picked;
+            }
+          }
+        }
       }
-      await writeTextFile(path, editor.getMarkdown());
+
+      const savedName = splitPathParts(path).name;
+      const savedNextStem = savedName.replace(/\.(md|markdown)$/i, "");
       setFilePath(path);
-      setDirty(false);
-      toast.success(`저장했어: ${path.split("/").pop() ?? path}`);
+      setTitle(savedNextStem);
+      if (editSeqRef.current === snapshotSeq) {
+        bodyDirtyRef.current = false;
+        setDirty(false);
+      }
+      toast.success(`저장했어: ${savedName}`);
     } catch (err) {
       toast.error(`저장에 실패했어: ${String(err)}`);
+    } finally {
+      ioBusyRef.current = false;
     }
   }, [editor, filePath, title]);
 
   const openDocument = useCallback(async () => {
-    if (!editor) return;
-    if (dirty) {
-      const proceed = await ask(
-        "저장하지 않은 변경이 있어. 저장하지 않고 불러올까?",
-        { title: "확인", kind: "warning" },
-      );
-      if (!proceed) return;
-    }
+    if (!editor || ioBusyRef.current) return;
+    ioBusyRef.current = true;
     try {
+      if (dirty) {
+        const proceed = await ask(
+          "저장하지 않은 변경이 있어. 저장하지 않고 불러올까?",
+          { title: "확인", kind: "warning" },
+        );
+        if (!proceed) return;
+      }
       const path = await open({
         title: "마크다운 문서 열기",
         multiple: false,
@@ -170,29 +315,38 @@ function App() {
       if (!path) return;
       const text = await readTextFile(path);
       replaceDoc(editor, text);
-      const name = path.split("/").pop() ?? path;
+      const name = splitPathParts(path).name;
+      bodyDirtyRef.current = false;
       setTitle(name.replace(/\.(md|markdown)$/i, ""));
       setFilePath(path);
       setDirty(false);
       toast.success(`불러왔어: ${name}`);
     } catch (err) {
       toast.error(`불러오기에 실패했어: ${String(err)}`);
+    } finally {
+      ioBusyRef.current = false;
     }
   }, [dirty, editor]);
 
   const newDocument = useCallback(async () => {
-    if (!editor) return;
-    if (dirty) {
-      const proceed = await ask(
-        "저장하지 않은 변경이 있어. 새 문서를 만들까?",
-        { title: "확인", kind: "warning" },
-      );
-      if (!proceed) return;
+    if (!editor || ioBusyRef.current) return;
+    ioBusyRef.current = true;
+    try {
+      if (dirty) {
+        const proceed = await ask(
+          "저장하지 않은 변경이 있어. 새 문서를 만들까?",
+          { title: "확인", kind: "warning" },
+        );
+        if (!proceed) return;
+      }
+      replaceDoc(editor, "");
+      bodyDirtyRef.current = false;
+      setTitle(DEFAULT_TITLE);
+      setFilePath(null);
+      setDirty(false);
+    } finally {
+      ioBusyRef.current = false;
     }
-    replaceDoc(editor, "");
-    setTitle("제목 없음");
-    setFilePath(null);
-    setDirty(false);
   }, [dirty, editor]);
 
   // Ctrl+S 저장 — 브라우저 기본 저장 대화상자를 막는다.
@@ -218,8 +372,8 @@ function App() {
         <div className="flex items-center gap-2">
           <Input
             value={title}
-            onChangeText={setTitle}
-            aria-label="문서 제목"
+            onChangeText={handleTitleChange}
+            accessibilityLabel="문서 제목"
             className="h-8 max-w-80 border-none bg-transparent px-1 text-base web:md:text-base focus:ring-1"
             // 제목란은 앱바의 글자처럼 보이게 하는 게 목적이라 채움을 원천 제거한다.
             // 컴포넌트의 dark:bg-input/30은 shadcn 원본 클래스라 twMerge로는 못 이기고
@@ -250,6 +404,9 @@ function App() {
         <div className="flex items-center gap-3">
           <EditorToolbar
             formats={formats}
+            canUndo={editorState.canUndo}
+            canRedo={editorState.canRedo}
+            disabled={!editor}
             onFormat={runFormat}
             onCommand={runCommand}
           />
