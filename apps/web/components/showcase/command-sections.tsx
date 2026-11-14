@@ -161,6 +161,16 @@ export function CommandNavigationSection() {
               </View>
             </NavigationMenuContent>
           </NavigationMenuItem>
+          <NavigationMenuItem value="blocks">
+            <NavigationMenuTrigger>블록</NavigationMenuTrigger>
+            <NavigationMenuContent>
+              <View className="flex w-56 flex-col gap-1">
+                <NavigationMenuLink onPress={() => {}}>로그인</NavigationMenuLink>
+                <NavigationMenuLink onPress={() => {}}>대시보드</NavigationMenuLink>
+                <NavigationMenuLink onPress={() => {}}>어시스턴트</NavigationMenuLink>
+              </View>
+            </NavigationMenuContent>
+          </NavigationMenuItem>
           <NavigationMenuItem value="guide">
             <NavigationMenuLink onPress={() => {}}>
               시작하기

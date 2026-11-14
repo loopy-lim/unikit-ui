@@ -62,7 +62,9 @@ export const CHART_ENTRIES: CatalogEntry[] = [
       {
         name: "막대(단일 시리즈)",
         element: (
-          <ChartContainer config={chartConfig} data={barData}>
+          // width="fluid" — 사이클 90 유동 폭 실증 슬라이드(브리지 onLayout:
+          // 네이티브 RN onLayout·웹 ResizeObserver). 회전 시 카드 폭을 따라간다.
+          <ChartContainer config={chartConfig} data={barData} width="fluid">
             <ChartGrid />
             <ChartXAxis />
             <ChartYAxis />
