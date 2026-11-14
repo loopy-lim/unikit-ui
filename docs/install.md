@@ -56,7 +56,7 @@ export default function Home() {
 }
 ```
 
-> **게시분 참고** — npm `@unikit-bridge/ui` 0.2.0은 1차 28종 시점이에요. 저장소의 61종 상태는 다음 게시까지 아래 방법 2(레지스트리 복사)로 쓸 수 있어요.
+> **게시분 참고** — npm `@unikit-bridge/ui` 0.3.0 게시분은 shadcn 카탈로그 61종 시점이에요. 저장소의 62종(EditorToolbar 포함) 상태는 다음 게시까지 아래 방법 2(레지스트리 복사)로 쓸 수 있어요.
 
 ## 방법 2 — shadcn CLI로 소스 복사
 
@@ -92,7 +92,7 @@ bunx shadcn@latest add https://ui.ll3.kr/r/button.json -y
 bunx shadcn@latest add https://ui.ll3.kr/r/button.json https://ui.ll3.kr/r/card.json https://ui.ll3.kr/r/checkbox.json https://ui.ll3.kr/r/tabs.json https://ui.ll3.kr/r/avatar.json -y
 ```
 
-등록된 아이템 69종(UI 61 + lib 3(utils·overlay·menu-nav) + theme 4 + animations 1) 전체 목록은 <https://ui.ll3.kr/r/registry.json> 에서 확인할 수 있어요. `components/unikit/`에 소스가 복사되고 의존성이 자동으로 설치돼요.
+등록된 아이템 71종(UI 62 + lib 3(utils·overlay·menu-nav) + theme 4 + style 2(animations·editor-prose)) 전체 목록은 <https://ui.ll3.kr/r/registry.json> 에서 확인할 수 있어요. `components/unikit/`에 소스가 복사되고 의존성이 자동으로 설치돼요.
 
 > **로컬 레지스트리** — UniKit UI 저장소를 고치는 중이면 `cd apps/web && bun x next dev -p 3000` 후 URL만 `http://localhost:3000/r/...`로 바꿔요.
 

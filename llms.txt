@@ -1,6 +1,6 @@
 # UniKit UI
 
-> UniKit UI는 import 하나로 React(웹)와 React Native 양쪽에서 같은 모습을 내는 shadcn/ui 형태의 UI 컴포넌트 라이브러리예요. 컴포넌트 61종(shadcn/ui new-york-v4 카탈로그 전량)을 한 벌 소스로 제공해요. npm 패키지명은 `@unikit-bridge/ui`(0.3.0 기준 61종 전량 제공).
+> UniKit UI는 import 하나로 React(웹)와 React Native 양쪽에서 같은 모습을 내는 shadcn/ui 형태의 UI 컴포넌트 라이브러리예요. 컴포넌트 62종(shadcn/ui new-york-v4 카탈로그 전량 61종 + 자작 editor-toolbar)을 한 벌 소스로 제공해요. npm 패키지명은 `@unikit-bridge/ui`(0.3.0 기준 카탈로그 61종 제공).
 
 ## 한 벌 소스 원칙 (가장 중요)
 
@@ -11,17 +11,17 @@
   - `@unikit-bridge/ui/chart` — 차트 렌더러(ChartSurface·ChartPath·ChartRect·ChartLine·ChartText·ChartCircle). 웹은 JSX `<svg>`, 네이티브는 react-native-svg(선택 peer). chart 컴포넌트(ChartContainer 등)는 배럴에서 제외되고 shadcn 레지스트리 복사로 소비해요.
 - 상태 관리는 React state + context(Radix·외부 엔진 없음). 오버레이 계열의 포털·앵커 위치 계산·포커스 트랙은 `packages/unikit/src/lib/overlay.tsx`가 담당해요.
 
-## 컴포넌트 61종
+## 컴포넌트 62종
 
 - 기초(5): button, card, input, label, badge
-- 폼 입력(13): checkbox, radio-group, switch, toggle, toggle-group, textarea, select, native-select, slider, calendar, input-otp, input-group, form(react-hook-form 선택 peer)
+- 폼 입력(14): checkbox, radio-group, switch, toggle, toggle-group, textarea, select, native-select, slider, calendar, input-otp, input-group, form(react-hook-form 선택 peer), editor-toolbar(tiptap 툴바 — 자작, 엔진은 앱 소유)
 - 오버레이·메뉴(13): dialog, alert-dialog, sheet, drawer, popover, hover-card, tooltip, dropdown-menu, context-menu, command, combobox, menubar, navigation-menu
 - 피드백·데이터(7): alert, avatar, empty, skeleton, table, spinner, sonner
 - 데이터 시각화·복합(3): chart, carousel, sidebar
 - 메시지(5): message, message-scroller, bubble, attachment, marker
 - 내비게이션·레이아웃(15): tabs, accordion, collapsible, breadcrumb, pagination, progress, separator, aspect-ratio, kbd, field, item, button-group, scroll-area, resizable, direction
 
-전체 목록·설명: `packages/unikit/registry.json`(69 아이템 = UI 61 + lib 3(utils·overlay·menu-nav) + theme 4 + animations 1). 사용법·Props: `docs/components.md`.
+전체 목록·설명: `packages/unikit/registry.json`(71 아이템 = UI 62 + lib 3(utils·overlay·menu-nav) + theme 4 + style 2(animations·editor-prose)). 사용법·Props: `docs/components.md`.
 
 ## 디자인 토큰 규칙 (컴포넌트 코드 작성·수정 시 준수)
 

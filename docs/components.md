@@ -1,6 +1,6 @@
 # UniKit UI 컴포넌트 사용법
 
-UniKit UI의 컴포넌트 61종(기초 5종 Button·Card·Input·Label·Badge + shadcn 카탈로그 1차 23종 + 2차 33종)과 테마를 다루는 법을 정리했어요. 모든 내용은 실제 소스(`packages/unikit/src/`)와 쇼케이스(`apps/expo/app/index.tsx`) 기준이에요. 기초 5종과 1차 23종은 아래에 상세(Props 표·변형)를 적었고, 2차 33종(2026-11-10 완료)은 계열별 표로 각 1줄 요점만 적어요 — 상세 포팅 판단(원본 대비 차이·미지원 항목)은 각 소스 파일의 머리 주석에 있어요.
+UniKit UI의 컴포넌트 62종(기초 5종 Button·Card·Input·Label·Badge + shadcn 카탈로그 1차 23종 + 2차 33종 + 자작 EditorToolbar)과 테마를 다루는 법을 정리했어요. 모든 내용은 실제 소스(`packages/unikit/src/`)와 쇼케이스(`apps/expo/app/index.tsx`) 기준이에요. 기초 5종과 1차 23종은 아래에 상세(Props 표·변형)를 적었고, 2차 33종(2026-11-10 완료)은 계열별 표로 각 1줄 요점만 적어요 — 상세 포팅 판단(원본 대비 차이·미지원 항목)은 각 소스 파일의 머리 주석에 있어요.
 
 ## import 방법
 
@@ -20,7 +20,7 @@ import { Label } from "@/components/unikit/label";
 import { Badge } from "@/components/unikit/badge";
 ```
 
-## 공통 규칙 (61종 모두 해당)
+## 공통 규칙 (62종 모두 해당)
 
 - **`className` 병합** — 모든 컴포넌트는 `className` prop을 받아 내부 스타일과 병합해요(`cn` = clsx + tailwind-merge). 같은 속성을 덮어쓰면 내가 준 클래스가 이겨요.
 - **cva 변형** — 색·크기 같은 변형은 `class-variance-authority`(cva)로 정의돼 있어요. 변형 함수 자체도 export돼서(`buttonVariants` 등) 다른 요소에 재활용할 수 있어요.
@@ -462,6 +462,52 @@ import { Dialog, DialogContent, DialogTrigger, DialogTitle } from "@unikit-bridg
 ```
 
 > 2차 컴포넌트도 전부 `"use client"`가 필요한 클라이언트 컴포넌트예요(열림·드래그 상태를 React state로 들고 있어요).
+
+---
+
+## 자작 컴포넌트 — EditorToolbar (사이클 94, 2026-11-14)
+
+shadcn 원본 없이 UniKit UI에서 직접 만든 62번째 컴포넌트예요. tiptap(ProseMirror) 위지윅 에디터의 **툴바 스킨과 포맷 계약**만 패키지가 갖고, 에디터 엔진(tiptap 인스턴스·WebView)은 앱이 소유해요 — DOM 전용인 ProseMirror를 라이브러리가 통째로 감싸면 네이티브용 WebView 번들까지 떠안게 되기 때문이에요(chart의 "엔진은 peerDep" 절충과 같은 결론).
+
+### 구성
+
+| export | 요점 |
+|---|---|
+| `EditorToolbar` | undo/redo 버튼 + 글자 서식(bold·italic·strike)·블록 서식(h1·h2·불릿·번호·인용·코드) 두 ToggleGroup. 두 그룹이 같은 `formats` 상태를 나눠 쓰기에 값 diff(눌린 항목 하나 산출)를 내부에서 처리해요 |
+| `activeFormats(editor)` | 커서 위치의 활성 서식 9종을 산출하는 순수 함수. 매개변수는 `isActive`만 구조 타이핑(tiptap 런타임 의존 0) |
+| `EDITOR_FORMATS`·`EditorFormat`·`EditorCommand` | 툴바↔엔진 계약 값·타입 |
+| `RnToWebViewMessage`·`WebViewToRnMessage` | RN↔WebView 에디터 브리지 메시지 타입(모바일 도그푸딩 앱이 사용) |
+
+### Props
+
+| prop | 타입 | 설명 |
+|---|---|---|
+| `formats` | `string[]` | 활성 포맷 — `activeFormats(editor)` 결과를 전달 |
+| `onFormat` | `(format: EditorFormat) => void` | 서식 항목 눌림(토글된 항목 하나) |
+| `onCommand` | `(command: "undo" \| "redo") => void` | 실행 취소·다시 실행 |
+| `disabled` | `boolean` | 툴바 전체 차단 |
+
+### 본문 타이포그래피 — editor-prose
+
+에디터 본문(제목·목록·인용·코드 블록 등) 스타일은 컴포넌트가 아니라 **`editor-prose` style 아이템**이 담당해요. `.tiptap` 선택자 규칙이 시맨틱 토큰(`hsl(var(--*))`)만으로 구성돼 있고, npm 사용자는 `import "@unikit-bridge/ui/editor-prose.css"` 한 줄로, 레지스트리 사용자는 `editor-prose` add로 받아요. 도그푸딩 앱(UniKit Markdown 데스크톱·모바일)이 같은 소스를 써서 두 앱의 본문 스타일이 어긋나지 않아요.
+
+```tsx
+import { EditorToolbar, activeFormats } from "@unikit-bridge/ui";
+import { useEditorState } from "@tiptap/react";
+
+// selector는 editor가 null로 넘어올 수 있어 방어한다(tiptap v3 — 초기 렌더 지연).
+const state = useEditorState({
+  editor,
+  selector: ({ editor }) =>
+    editor ? { formats: activeFormats(editor).join(",") } : { formats: "" },
+});
+
+<EditorToolbar
+  formats={state.formats.split(",").filter(Boolean)}
+  onFormat={runFormat}
+  onCommand={runCommand}
+/>
+```
 
 ---
 

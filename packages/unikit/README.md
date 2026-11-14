@@ -106,12 +106,12 @@ function ThemeToggle() {
 
 The provider holds the scheme and binds it to each engine: `Uniwind.setTheme()` on native, a `.dark` class on `<html>` on web. Prebuilt token presets (`themePresets`) and raw token access (`getThemeTokens`, `lightTokens`, `darkTokens`) are exported for advanced theming.
 
-## Components — 61 universal components
+## Components — 62 universal components
 
-The full shadcn/ui catalog (new-york-v4, 61 items) ported to one source that renders on web and native alike:
+The full shadcn/ui catalog (new-york-v4, 61 items) ported to one source that renders on web and native alike, plus one original component:
 
 - **Basics (5)** — `Button` · `Card` (+ Header / Title / Description / Content / Footer) · `Input` · `Label` · `Badge`
-- **Forms (13)** — `Checkbox` · `RadioGroup` · `Switch` · `Toggle` · `ToggleGroup` · `Textarea` · `Select` · `NativeSelect` · `Slider` · `Calendar` · `InputOTP` · `InputGroup` · `Form` (react-hook-form integration, optional peer)
+- **Forms (14)** — `Checkbox` · `RadioGroup` · `Switch` · `Toggle` · `ToggleGroup` · `Textarea` · `Select` · `NativeSelect` · `Slider` · `Calendar` · `InputOTP` · `InputGroup` · `Form` (react-hook-form integration, optional peer) · `EditorToolbar` (original — tiptap toolbar skin; the editor engine stays app-owned)
 - **Overlays & menus (13)** — `Dialog` · `AlertDialog` · `Sheet` · `Drawer` · `Popover` · `HoverCard` · `Tooltip` · `DropdownMenu` · `ContextMenu` · `Command` · `Combobox` · `Menubar` · `NavigationMenu` — portaled via the built-in overlay layer (`Portal`, anchored positioning, focus trap, dismiss)
 - **Feedback & data (7)** — `Alert` · `Avatar` · `Empty` · `Skeleton` · `Table` · `Spinner` · `Sonner` (toast)
 - **Data viz & composites (3)** — `Chart` (declarative bar/line/area series — see below) · `Carousel` · `Sidebar`

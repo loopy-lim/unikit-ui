@@ -9,7 +9,7 @@
 > "HeroUI처럼 한개의 import로 react, react-native에서 두개 같이 보이게 만들고 싶어.
 > 형태는 shad/cn 처럼 이루어지게 하면 좋을꺼 같아." — 이 프로젝트의 원 요청
 
-**import 하나**로 React(웹)와 React Native에서 같은 모습의 UI를 쓰는 컴포넌트 모음이에요. shadcn/ui(new-york-v4) 카탈로그 **61종**을 유니버설로 이식했고, 패키지명은 `@unikit-bridge/ui`예요.
+**import 하나**로 React(웹)와 React Native에서 같은 모습의 UI를 쓰는 컴포넌트 모음이에요. shadcn/ui(new-york-v4) 카탈로그 **61종**을 유니버설로 이식했고, 여기에 자작 **EditorToolbar**를 더해 **62종**이에요. 패키지명은 `@unikit-bridge/ui`예요.
 
 | | |
 |---|---|
@@ -91,7 +91,7 @@ export default function Home() {
 }
 ```
 
-> npm `@unikit-bridge/ui` 0.3.0부터 61종 전량(배럴 60종 + `@unikit-bridge/ui/chart`)을 제공해요. 소스를 직접 소유하려면 **방법 2(레지스트리 복사)** 를 쓰세요.
+> npm `@unikit-bridge/ui` 0.3.0 게시분은 shadcn 카탈로그 **61종**(배럴 60종 + `@unikit-bridge/ui/chart`) 시점이에요. 자작 `EditorToolbar`(62번째)는 다음 게시에 반영돼요 — 그 전까지는 **방법 2(레지스트리 복사)**로 쓰세요. 컴포넌트 소스를 직접 소유·수정하고 싶을 때도 이 방법이 해당돼요.
 
 **방법 2 — 소스 복사 (요약)**
 
@@ -99,7 +99,7 @@ export default function Home() {
 bunx shadcn@latest add https://ui.ll3.kr/r/button.json -y
 ```
 
-`transpilePackages` · `web:`/`@source` · `theme.json` 설정은 [docs/install.md](docs/install.md). 레지스트리 아이템 69종 = UI 61 + lib 3(utils·overlay·menu-nav) + theme 4 + animations 1.
+`transpilePackages` · `web:`/`@source` · `theme.json` 설정은 [docs/install.md](docs/install.md). 레지스트리 아이템 71종 = UI 62 + lib 3(utils·overlay·menu-nav) + theme 4 + style 2(animations·editor-prose).
 
 ## 기여 (저장소에 컴포넌트 추가)
 
@@ -138,7 +138,7 @@ unikit-ui/
 |---|---|
 | [docs/install.md](docs/install.md) | 소비자 설치(npm·레지스트리 복사) 상세 |
 | [README.md](README.md) / [docs/install.en.md](docs/install.en.md) | 영어 빠른 시작·설치 |
-| [docs/components.md](docs/components.md) | 61종 Props·변형·접근성 |
+| [docs/components.md](docs/components.md) | 62종 Props·변형·접근성 |
 | [docs/roadmap-components.md](docs/roadmap-components.md) | 이식 이력·미지원 로드맵·경쟁 현황 |
 | [docs/expo-go.md](docs/expo-go.md) | 스마트폰 Expo Go 실물 확인 |
 | [packages/unikit/README.md](packages/unikit/README.md) | npm 패키지 문서(영어) |

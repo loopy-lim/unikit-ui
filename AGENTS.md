@@ -13,7 +13,7 @@ unikit-ui/  (bun 워크스페이스: apps/*, apps/mobile/web-editor, packages/*)
 │   └── web-editor/             # WebView용 tiptap 단일 HTML 번들(vite-plugin-singlefile — bun run build:editor)
 ├── packages/unikit/            # @unikit-bridge/ui — 본체
 │   ├── src/bridge/             # 브리지 — web.tsx(default 조건)·native.tsx(react-native 조건)·types.ts(공통 계약)
-│   ├── src/components/         # 컴포넌트 61종(배럴 진입 대상 60종 + chart)
+│   ├── src/components/         # 컴포넌트 62종(배럴 진입 대상 61종 + chart; shadcn 이식 61 + 자작 editor-toolbar)
 │   ├── src/chart/              # 차트 렌더러(web.tsx·native.tsx·types.ts) — @unikit-bridge/ui/chart 진입점
 │   ├── src/lib/overlay.tsx     # 통합 오버레이 훈(포털·백드롭·포커스 관리·앵커 위치 계산)
 │   ├── src/lib/utils.ts        # cn(clsx + tailwind-merge)
@@ -21,7 +21,7 @@ unikit-ui/  (bun 워크스페이스: apps/*, apps/mobile/web-editor, packages/*)
 │   ├── src/index.ts            # npm 배럴(chart는 제외)
 │   ├── registry/ui/            # 소비자 복사용 소스 트리 — 본문은 src와 동일, import만 @/lib/utils 기준
 │   ├── registry/lib/           # 소비자 복사용 라이브러리 사본(utils·overlay·menu-nav) — src/lib와 본문 동일
-│   ├── registry.json           # shadcn 규격 레지스트리(69 아이템 = UI 61 + lib 3(utils·overlay·menu-nav) + theme 4 + animations 1)
+│   ├── registry.json           # shadcn 규격 레지스트리(71 아이템 = UI 62 + lib 3(utils·overlay·menu-nav) + theme 4 + style 2(animations·editor-prose))
 │   ├── scripts/                # generate:design·audit:design·check:consumer
 │   └── docs/tokens.md          # 생성된 토큰 카탈로그(직접 편집 금지)
 ├── shadcn-ref/                 # shadcn 원본 참조(이식 원본 — 수정 금지)
@@ -88,5 +88,5 @@ shadcn 컴포넌트를 이식·수정할 때 지키는 공통 규칙이에요. �
 
 - 문서는 한국어가 기본이에요. 예외: 루트 [README.md](README.md)(영어 우선, 한국어는 [README.ko.md](README.ko.md))·[packages/unikit/README.md](packages/unikit/README.md)(영어)·[docs/install.en.md](docs/install.en.md). 한국어 문체는 해요체 설명체를 따라요.
 - 기존 문서를 고칠 때는 내용을 지우지 말고 병합해요(보존 원칙). 수치·날짜는 저장소에서 재검증 후 기입해요.
-- 컴포넌트 수·상태 표기의 기준: `src/components`(61종)·`registry/ui`(61종)·`registry.json`(69 아이템 = UI 61 + lib 3(utils·overlay·menu-nav) + theme 4 + animations 1). 미지원 기능은 각 컴포넌트 머리 주석의 "로드맵" 기록이 근거예요.
+- 컴포넌트 수·상태 표기의 기준: `src/components`(62종)·`registry/ui`(62종)·`registry.json`(71 아이템 = UI 62 + lib 3(utils·overlay·menu-nav) + theme 4 + style 2(animations·editor-prose)). 미지원 기능은 각 컴포넌트 머리 주석의 "로드맵" 기록이 근거예요.
 - 사람용 설치·소비 상세는 [docs/install.md](docs/install.md), 루트 [README.md](README.md)(영)·[README.ko.md](README.ko.md)(한)는 빠른 시작·요약만 담아요.

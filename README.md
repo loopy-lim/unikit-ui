@@ -9,7 +9,7 @@
 > "I want one import that looks the same on React and React Native, like HeroUI.
 > The shape should be like shad/cn." — original request
 
-**One import** for UI that looks the same on React (web) and React Native. The full shadcn/ui (new-york-v4) catalog — **61 components** — ported universally. Package name: `@unikit-bridge/ui`.
+**One import** for UI that looks the same on React (web) and React Native. The full shadcn/ui (new-york-v4) catalog — **61 components** — ported universally, plus the original **EditorToolbar** (62 total). Package name: `@unikit-bridge/ui`.
 
 | | |
 |---|---|
@@ -91,7 +91,7 @@ export default function Home() {
 }
 ```
 
-> npm `@unikit-bridge/ui` 0.3.0 ships the full 61 components (60 barrel + `@unikit-bridge/ui/chart`). Use **option 2 (registry copy)** if you want to own and edit the component source directly.
+> npm `@unikit-bridge/ui` 0.3.0 ships the shadcn catalog **61** (60 barrel + `@unikit-bridge/ui/chart`). The original `EditorToolbar` (62nd) lands in the next release — until then use **option 2 (registry copy)**, which also applies if you want to own and edit the component source directly.
 
 **Option 2 — source copy (summary)**
 
@@ -99,7 +99,7 @@ export default function Home() {
 bunx shadcn@latest add https://ui.ll3.kr/r/button.json -y
 ```
 
-`transpilePackages` · `web:` / `@source` · `theme.json` — see [docs/install.en.md](docs/install.en.md). Registry items: 69 = UI 61 + lib 3 (utils · overlay · menu-nav) + theme 4 + animations 1.
+`transpilePackages` · `web:` / `@source` · `theme.json` — see [docs/install.en.md](docs/install.en.md). Registry items: 71 = UI 62 + lib 3 (utils · overlay · menu-nav) + theme 4 + style 2 (animations · editor-prose).
 
 ## Contributing (add a component)
 

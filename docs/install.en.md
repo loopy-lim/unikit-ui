@@ -56,7 +56,7 @@ export default function Home() {
 }
 ```
 
-> **Publish note** — npm `@unikit-bridge/ui` 0.2.0 is the first 28-component cut. Use option 2 for the full 61 until the next publish.
+> **Publish note** — npm `@unikit-bridge/ui` 0.3.0 ships the 61-component shadcn catalog. Use option 2 for the full 62 (including `EditorToolbar`) until the next publish.
 
 ## Option 2 — copy sources with shadcn CLI
 
@@ -90,7 +90,7 @@ Or several at once:
 bunx shadcn@latest add https://ui.ll3.kr/r/button.json https://ui.ll3.kr/r/card.json https://ui.ll3.kr/r/checkbox.json https://ui.ll3.kr/r/tabs.json https://ui.ll3.kr/r/avatar.json -y
 ```
 
-69 registry items (UI 61 + lib 3 (utils · overlay · menu-nav) + theme 4 + animations 1): <https://ui.ll3.kr/r/registry.json>. Sources land under `components/unikit/`.
+71 registry items (UI 62 + lib 3 (utils · overlay · menu-nav) + theme 4 + style 2 (animations · editor-prose)): <https://ui.ll3.kr/r/registry.json>. Sources land under `components/unikit/`.
 
 > **Local registry** — while editing UniKit UI, run `cd apps/web && bun x next dev -p 3000` and use `http://localhost:3000/r/...` instead.
 
