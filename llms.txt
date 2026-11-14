@@ -6,7 +6,7 @@
 
 - 컴포넌트는 브리지 프리미티브(`View`·`Text`·`Pressable`·`TextInput`·`Image`)와 `className`으로만 작성돼요. 플랫폼 분기(`.web.tsx`·`Platform.select`)는 없어요.
 - 진입점 3개:
-  - `@unikit-bridge/ui` — 컴포넌트 배럴(60종 export).
+  - `@unikit-bridge/ui` — 컴포넌트 배럴(61종 export — `chart` 제외).
   - `@unikit-bridge/ui/primitives` — 브리지 프리미티브. package exports 조건이 플랫폼을 갈라요(`react-native` 조건 → RN 프리미티브 + uniwind, `default` → div/span/button/input DOM + 표준 Tailwind CSS v4). 렌더 프리미티브(View·Text·Pressable·TextInput·Image·ScrollView·SectionList·Select·Portal)와 앱 API(Platform·Dimensions·Share·KeyboardAvoidingView — 웹 폴백/RN 재노출)를 같이 내서 화면 코드가 react-native를 직접 import하지 않아도 돼요.
   - `@unikit-bridge/ui/chart` — 차트 렌더러(ChartSurface·ChartPath·ChartRect·ChartLine·ChartText·ChartCircle). 웹은 JSX `<svg>`, 네이티브는 react-native-svg(선택 peer). chart 컴포넌트(ChartContainer 등)는 배럴에서 제외되고 shadcn 레지스트리 복사로 소비해요.
 - 상태 관리는 React state + context(Radix·외부 엔진 없음). 오버레이 계열의 포털·앵커 위치 계산·포커스 트랙은 `packages/unikit/src/lib/overlay.tsx`가 담당해요.
@@ -46,6 +46,6 @@
 
 ## 기여·검증 (에이전트용 상세 지침: AGENTS.md)
 
-- 검증: 루트에서 `bun run typecheck`(워크스페이스 3패키지)와 `bun run audit:design`(일관성 검사 8종).
+- 검증: 루트에서 `bun run typecheck`(워크스페이스 전체)와 `bun run audit:design`(일관성 검사 10종).
 - 패키지 매니저는 bun만(pnpm 금지). 소스는 `src/`(배럴)와 `registry/`(복사용) 두 트리가 있고 본문은 같아야 해요(import 문만 다름).
 - 문서: README.md(빠른 시작, 영어) · README.ko.md(한국어) · docs/install.md(소비자 설치) · docs/components.md(사용법) · docs/roadmap-components.md(로드맵·경쟁) · packages/unikit/docs/tokens.md(토큰 값) · docs/sdd/(개발 과정 문서).

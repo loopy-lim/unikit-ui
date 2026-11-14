@@ -9,7 +9,7 @@
 // - SafeAreaView는 Expo 전용 포장 — 웹은 min-h-screen 배경 래퍼로 대응.
 // - 모든 Text에 명시 색·크기·font-sans.
 import Link from "next/link";
-import { useRef, type ReactNode } from "react";
+import { useRef, useState, type ReactNode } from "react";
 import { Inbox, Plus, Star } from "lucide-react";
 import {
   Text,
@@ -26,6 +26,7 @@ import {
   CardFooter,
   CardHeader,
   CardTitle,
+  EditorToolbar,
   Input,
   Label,
   Accordion,
@@ -347,6 +348,7 @@ function BadgeSection() {
 /** Section: 폼 컨트롤 6종 — Checkbox·RadioGroup·Switch·Toggle·ToggleGroup·Textarea
  *  (비제어 초기값 중심 — 컨트롤을 직접 눌러 상태가 바뀌는지 확인) */
 function FormControlsSection() {
+  const [editorFormats, setEditorFormats] = useState<string[]>(["bold"]);
   return (
     <Section
       title="폼 컨트롤 — Checkbox, Radio, Switch, Toggle"
@@ -403,6 +405,17 @@ function FormControlsSection() {
             <ToggleGroupItem value="map">지도</ToggleGroupItem>
           </ToggleGroup>
         </View>
+        {/* EditorToolbar */}
+        <EditorToolbar
+          formats={editorFormats}
+          onFormat={(format) =>
+            setEditorFormats((prev) =>
+              prev.includes(format)
+                ? prev.filter((v) => v !== format)
+                : [...prev, format],
+            )
+          }
+        />
         {/* Textarea */}
         <Textarea placeholder="여러 줄 메모를 입력해 보세요." />
       </View>

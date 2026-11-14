@@ -1,7 +1,7 @@
 /**
  * audit:design — 디자인 일관성 자동 감사 (T-14, AC-10·AC-12(f) / 3차 T-18, AC-13·AC-15 확장).
  *
- * 요구 기준 8종 (a)~(h) / 내부 검사 9건((a1)(a2) 분해). 위반 1건 이상이면 exit 1.
+ * 요구 기준 9종 (a)~(i) / 내부 검사 10건((a1)(a2) 분해). 위반 1건 이상이면 exit 1.
  * 생성 기준 포맷터·THEME_ITEMS·VALUE_SOURCES·대비 산수는 generate-design.ts와 공유한다
  * (설계 원칙: 검사는 생성의 역). (a2)는 type 기반으로 theme 항목 전수(기본+프리셋 3)를
  * 값·형식·WCAG 대비(라이트 ≥4.5:1)로 검사한다.
@@ -327,5 +327,83 @@ function scanPattern(files: string[], pattern: RegExp, label: string): Violation
   );
 }
 
-console.log(failures.length === 0 ? "\naudit:design PASS — 9/9 검사 통과" : `\naudit:design FAIL — 위반: ${failures.join(", ")}`);
+// ── (i) editor-prose.css 시맨틱 토큰 전용 · registry.json editor-prose 1:1 일치 ──
+{
+  const PROSE_CSS = path.join(PKG, "src", "lib", "editor-prose.css");
+  const vs: Violation[] = [];
+  if (!existsSync(PROSE_CSS)) {
+    report("i", false, "src/lib/editor-prose.css 없음");
+  } else {
+    const rawCss = readFileSync(PROSE_CSS, "utf8");
+    const stripped = rawCss.replace(/\/\*[\s\S]*?\*\//g, "");
+    const rawColorStrict = /#[0-9a-fA-F]{3,8}\b|\brgba\((?!var\(--)|\brgb\((?!var\(--)|\bhsla\((?!var\(--)|\bhsl\((?!var\(--)|\boklch\(|\bcolor-mix\(/;
+    rawCss.split("\n").forEach((row, idx) => {
+      const t = row.trim();
+      if (t.startsWith("/*") || t.startsWith("*")) return;
+      if (rawColorStrict.test(row)) {
+        vs.push({ file: rel(PROSE_CSS), line: idx + 1, detail: `원색 리터럴 발견: ${t.slice(0, 90)}` });
+      }
+    });
+
+    const parsedCss: Record<string, Record<string, string>> = {};
+    const ruleRegex = /([^{}]+)\{([^{}]*)\}/g;
+    let m: RegExpExecArray | null;
+    while ((m = ruleRegex.exec(stripped)) !== null) {
+      const selectors = m[1]
+        .split(",")
+        .map((s) => s.trim().replace(/\s+/g, " "))
+        .filter(Boolean);
+      const decls: Record<string, string> = {};
+      for (const part of m[2].split(";")) {
+        const trimmed = part.trim();
+        if (!trimmed) continue;
+        const colon = trimmed.indexOf(":");
+        if (colon === -1) continue;
+        const prop = trimmed.slice(0, colon).trim();
+        const val = trimmed.slice(colon + 1).trim();
+        decls[prop] = val;
+      }
+      for (const sel of selectors) {
+        parsedCss[sel] = { ...(parsedCss[sel] ?? {}), ...decls };
+      }
+    }
+
+    const reg = JSON.parse(readFileSync(REGISTRY_JSON, "utf8")) as {
+      items: { name?: string; type?: string; css?: Record<string, Record<string, string>> }[];
+    };
+    const proseItem = reg.items.find((i) => i.name === "editor-prose" && i.type === "registry:style");
+    if (!proseItem || !proseItem.css) {
+      vs.push({ file: rel(REGISTRY_JSON), detail: "registry:style 'editor-prose' 항목 또는 css 누락" });
+    } else {
+      const cssKeys = Object.keys(parsedCss);
+      const regKeys = Object.keys(proseItem.css);
+      for (const k of cssKeys) {
+        if (!proseItem.css[k]) {
+          vs.push({ file: rel(REGISTRY_JSON), detail: `editor-prose 선택자 누락: ${k}` });
+        } else {
+          const srcProps = parsedCss[k];
+          const dstProps = proseItem.css[k];
+          for (const [p, v] of Object.entries(srcProps)) {
+            if (dstProps[p] !== v) {
+              vs.push({ file: rel(REGISTRY_JSON), detail: `editor-prose '${k}' ${p}: registry='${dstProps[p] ?? "(없음)"}' / css='${v}'` });
+            }
+          }
+          for (const p of Object.keys(dstProps)) {
+            if (!(p in srcProps)) {
+              vs.push({ file: rel(REGISTRY_JSON), detail: `editor-prose '${k}' 잉여 속성: ${p}` });
+            }
+          }
+        }
+      }
+      for (const k of regKeys) {
+        if (!parsedCss[k]) {
+          vs.push({ file: rel(REGISTRY_JSON), detail: `editor-prose 소스에 없는 선택자: ${k}` });
+        }
+      }
+    }
+    report("i", vs.length === 0, `editor-prose.css 토큰 전용 · registry.json 1:1 일치(${Object.keys(parsedCss).length}규칙)`, vs);
+  }
+}
+
+console.log(failures.length === 0 ? "\naudit:design PASS — 10/10 검사 통과" : `\naudit:design FAIL — 위반: ${failures.join(", ")}`);
 process.exit(failures.length === 0 ? 0 : 1);

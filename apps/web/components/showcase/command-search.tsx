@@ -86,7 +86,7 @@ export function CommandSearch({
     [onOpenChange, router],
   );
 
-  // 첫 오픈 전에는 61종 CommandItem 트리를 마운트하지 않아 초기 부하를 제거한다.
+  // 첫 오픈 전에는 62종 CommandItem 트리를 마운트하지 않아 초기 부하를 제거한다.
   if (!hasOpened && !open) return null;
 
   return (
@@ -119,7 +119,7 @@ export function CommandSearch({
             ))}
           </CommandGroup>
           <CommandSeparator />
-          <CommandGroup heading="컴포넌트 (61)">
+          <CommandGroup heading={`컴포넌트 (${catalog.length})`}>
             {catalog.map((item) => (
               <CommandItem
                 key={item.name}

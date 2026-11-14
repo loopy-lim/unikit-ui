@@ -163,23 +163,38 @@ export const textareaDemo: ShowcaseDemo = {
 
 export const editorToolbarDemo: ShowcaseDemo = {
   Demo: function EditorToolbarDemo() {
-    // 툴바 계약 데모 — formats/onFormat/onCommand 콜백을 상태로 연결한다.
+    // 툴바 계약 데모 — formats/onFormat/onCommand/canUndo/canRedo를 상태로 연결한다.
     // 실제 에디터 연동(tiptap 엔진)은 도그푸딩 앱(UniKit Markdown)이 담당한다.
-    const [formats, setFormats] = useState<string[]>(["bold"]);
+    const [history, setHistory] = useState<string[][]>([["bold"]]);
+    const [cursor, setCursor] = useState(0);
     const [log, setLog] = useState("onFormat → bold");
+    const formats = history[cursor] ?? [];
+    const canUndo = cursor > 0;
+    const canRedo = cursor < history.length - 1;
+
     return (
       <View className="flex flex-col items-start gap-3">
         <EditorToolbar
           formats={formats}
+          canUndo={canUndo}
+          canRedo={canRedo}
           onFormat={(format) => {
-            setFormats((prev) =>
-              prev.includes(format)
-                ? prev.filter((v) => v !== format)
-                : [...prev, format],
-            );
+            const next = formats.includes(format)
+              ? formats.filter((v) => v !== format)
+              : [...formats, format];
+            const nextHistory = [...history.slice(0, cursor + 1), next];
+            setHistory(nextHistory);
+            setCursor(nextHistory.length - 1);
             setLog(`onFormat → ${format}`);
           }}
-          onCommand={(command) => setLog(`onCommand → ${command}`)}
+          onCommand={(command) => {
+            if (command === "undo" && canUndo) {
+              setCursor((c) => c - 1);
+            } else if (command === "redo" && canRedo) {
+              setCursor((c) => c + 1);
+            }
+            setLog(`onCommand → ${command}`);
+          }}
         />
         <Text className="font-mono text-xs text-muted-foreground">{log}</Text>
       </View>
@@ -193,16 +208,33 @@ import { useEditorState } from "@tiptap/react";
 const state = useEditorState({
   editor,
   selector: ({ editor }) =>
-    editor ? { formats: activeFormats(editor).join(",") } : { formats: "" },
+    editor
+      ? {
+          formats: activeFormats(editor).join(","),
+          canUndo: editor.can().undo(),
+          canRedo: editor.can().redo(),
+        }
+      : { formats: "", canUndo: false, canRedo: false },
 });
 
 <EditorToolbar
   formats={state.formats.split(",").filter(Boolean)}
+  canUndo={state.canUndo}
+  canRedo={state.canRedo}
+  disabled={!editor}
   onFormat={runFormat} // 포맷별 toggleBold()/toggleHeading(...) 체인 실행 — 앱 소유
   onCommand={(command) =>
     command === "undo"
-      ? editor.chain().focus().undo().run()
-      : editor.chain().focus().redo().run()
+      ? editor?.chain().focus().undo().run()
+      : editor?.chain().focus().redo().run()
   }
 />`,
+  examples: [
+    {
+      title: "Disabled",
+      Demo: function EditorToolbarDisabled() {
+        return <EditorToolbar disabled formats={["bold", "h1"]} />;
+      },
+    },
+  ],
 };

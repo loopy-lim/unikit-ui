@@ -7,6 +7,7 @@ import { toast } from "@unikit-bridge/ui";
 import { Text, View } from "@unikit-bridge/ui/primitives";
 import {
   Button,
+  EditorToolbar,
   Form,
   FormControl,
   FormDescription,
@@ -182,6 +183,44 @@ function FormDemo() {
   );
 }
 
+/** EditorToolbar — 서식 토글 · undo/redo 이력 · 비활성 상태 */
+function EditorToolbarDemo() {
+  const [history, setHistory] = useState<string[][]>([["bold"]]);
+  const [cursor, setCursor] = useState(0);
+  const [log, setLog] = useState("onFormat → bold");
+  const formats = history[cursor] ?? [];
+  const canUndo = cursor > 0;
+  const canRedo = cursor < history.length - 1;
+
+  return (
+    <View className="flex flex-col gap-3">
+      <EditorToolbar
+        formats={formats}
+        canUndo={canUndo}
+        canRedo={canRedo}
+        onFormat={(format) => {
+          const next = formats.includes(format)
+            ? formats.filter((v) => v !== format)
+            : [...formats, format];
+          const nextHistory = [...history.slice(0, cursor + 1), next];
+          setHistory(nextHistory);
+          setCursor(nextHistory.length - 1);
+          setLog(`onFormat → ${format}`);
+        }}
+        onCommand={(command) => {
+          if (command === "undo" && canUndo) {
+            setCursor((c) => c - 1);
+          } else if (command === "redo" && canRedo) {
+            setCursor((c) => c + 1);
+          }
+          setLog(`onCommand → ${command}`);
+        }}
+      />
+      <Hint>{log}</Hint>
+    </View>
+  );
+}
+
 /** 폼 확장 엔트리 */
 export const FORM_ENTRIES: CatalogEntry[] = [
   {
@@ -223,5 +262,16 @@ export const FORM_ENTRIES: CatalogEntry[] = [
     category: "폼",
     description: "react-hook-form과 연결되는 폼 뼈대예요.",
     slides: [{ name: "오류와 제출 중", element: <FormDemo /> }],
+  },
+  {
+    slug: "editor-toolbar",
+    title: "EditorToolbar",
+    subtitle: "에디터 툴바",
+    category: "폼",
+    description: "tiptap 위지윅 에디터용 서식·히스토리 툴바예요.",
+    slides: [
+      { name: "서식 토글 · undo/redo", element: <EditorToolbarDemo /> },
+      { name: "비활성 상태", element: <EditorToolbar disabled formats={["bold", "h1"]} /> },
+    ],
   },
 ];

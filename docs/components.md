@@ -1,6 +1,6 @@
 # UniKit UI 컴포넌트 사용법
 
-UniKit UI의 컴포넌트 62종(기초 5종 Button·Card·Input·Label·Badge + shadcn 카탈로그 1차 23종 + 2차 33종 + 자작 EditorToolbar)과 테마를 다루는 법을 정리했어요. 모든 내용은 실제 소스(`packages/unikit/src/`)와 쇼케이스(`apps/expo/app/index.tsx`) 기준이에요. 기초 5종과 1차 23종은 아래에 상세(Props 표·변형)를 적었고, 2차 33종(2026-11-10 완료)은 계열별 표로 각 1줄 요점만 적어요 — 상세 포팅 판단(원본 대비 차이·미지원 항목)은 각 소스 파일의 머리 주석에 있어요.
+UniKit UI의 컴포넌트 62종(기초 5종 Button·Card·Input·Label·Badge + shadcn 카탈로그 1차 23종 + 2차 33종 + 자작 EditorToolbar)과 테마를 다루는 법을 정리했어요. 모든 내용은 실제 소스(`packages/unikit/src/`)와 쇼케이스(`apps/expo/components/showcase/`) 기준이에요. 기초 5종과 1차 23종은 아래에 상세(Props 표·변형)를 적었고, 2차 33종(2026-11-10 완료)은 계열별 표로 각 1줄 요점만 적어요 — 상세 포팅 판단(원본 대비 차이·미지원 항목)은 각 소스 파일의 머리 주석에 있어요.
 
 ## import 방법
 
@@ -31,7 +31,7 @@ import { Badge } from "@/components/unikit/badge";
 
 ## Button
 
-`Pressable` + 내부 `Text` 기반이에요. 변형 6종 × 크기 4종이에요.
+`Pressable` + 내부 `Text` 기반이에요. 변형 6종 × 크기 8종이에요.
 
 ```tsx
 import { Button } from "@unikit-bridge/ui";   // 모노레포
@@ -45,7 +45,7 @@ import { Button } from "@/components/unikit/button";  // 복사본
 | Prop | 타입 | 기본값 | 설명 |
 |---|---|---|---|
 | `variant` | `"default" \| "secondary" \| "destructive" \| "outline" \| "ghost" \| "link"` | `"default"` | 버튼 스타일 6종 |
-| `size` | `"default" \| "sm" \| "lg" \| "icon"` | `"default"` | 크기 4종 |
+| `size` | `"default" \| "xs" \| "sm" \| "lg" \| "icon" \| "icon-xs" \| "icon-sm" \| "icon-lg"` | `"default"` | 크기 8종 |
 | `disabled` | `boolean` | — | 비활성(반투명 + press 무반응 + `aria-disabled`) |
 | `className` | `string` | — | 컨테이너(Pressable) 클래스 병합 |
 | `children` | `ReactNode` | — | 버튼 라벨. 내부 `Text`로 감싸 렌더링(문자열 권장) |
@@ -63,14 +63,18 @@ import { Button } from "@/components/unikit/button";  // 복사본
 | `ghost` | 배경 없음, 누르면 배경이 accent로 |
 | `link` | 배경 없음 + 밑줄 친 primary 색 글자 |
 
-### 크기(size) 4종
+### 크기(size) 8종
 
 | 값 | 크기 | 터치 타깃 보정(hitSlop) |
 |---|---|---|
-| `sm` | 높이 36px, 좌우 여백 12px | 각 방향 4px |
-| `default` | 높이 40px, 좌우 여백 16px | 각 방향 2px |
-| `lg` | 높이 44px, 좌우 여백 32px | 0px(이미 44px) |
-| `icon` | 40×40 정사각(아이콘·"+" 넣는 용) | 각 방향 2px |
+| `xs` | 높이 24px(`h-6`), 좌우 여백 8px | 각 방향 10px |
+| `sm` | 높이 32px(`h-8`), 좌우 여백 12px | 각 방향 6px |
+| `default` | 높이 36px(`h-9`), 좌우 여백 16px | 각 방향 4px |
+| `lg` | 높이 40px(`h-10`), 좌우 여백 24px | 각 방향 2px |
+| `icon` | 36×36 정사각(`size-9`) | 각 방향 4px |
+| `icon-xs` | 24×24 정사각(`size-6`) | 각 방향 10px |
+| `icon-sm` | 32×32 정사각(`size-8`) | 각 방향 6px |
+| `icon-lg` | 40×40 정사각(`size-10`) | 각 방향 2px |
 
 시각 크기와 무관하게 실제 터치 영역이 최소 44px가 되도록 `hitSlop`이 자동 지정돼요.
 
@@ -81,7 +85,7 @@ import { Button } from "@/components/unikit/button";  // 복사본
 - **비활성**: `disabled`를 주면 반투명(50%)이 되고 `role="button"` + `aria-disabled="true"`로 렌더링돼요.
 - `accessibilityRole="button"`이 항상 지정돼 있어요. 라벨이 필요하면 `accessibilityLabel`을 넘겨 주세요.
 
-### 사용 예 (apps/expo/app/index.tsx 발췌)
+### 사용 예 (apps/expo/components/showcase/basic-sections.tsx 발췌)
 
 ```tsx
 <View className="flex flex-wrap gap-3">
@@ -485,11 +489,13 @@ shadcn 원본 없이 UniKit UI에서 직접 만든 62번째 컴포넌트예요. 
 | `formats` | `string[]` | 활성 포맷 — `activeFormats(editor)` 결과를 전달 |
 | `onFormat` | `(format: EditorFormat) => void` | 서식 항목 눌림(토글된 항목 하나) |
 | `onCommand` | `(command: "undo" \| "redo") => void` | 실행 취소·다시 실행 |
+| `canUndo` | `boolean` | 실행 취소 가능 여부(기본 `true` — `false`면 undo 버튼 비활성) |
+| `canRedo` | `boolean` | 다시 실행 가능 여부(기본 `true` — `false`면 redo 버튼 비활성) |
 | `disabled` | `boolean` | 툴바 전체 차단 |
 
 ### 본문 타이포그래피 — editor-prose
 
-에디터 본문(제목·목록·인용·코드 블록 등) 스타일은 컴포넌트가 아니라 **`editor-prose` style 아이템**이 담당해요. `.tiptap` 선택자 규칙이 시맨틱 토큰(`hsl(var(--*))`)만으로 구성돼 있고, npm 사용자는 `import "@unikit-bridge/ui/editor-prose.css"` 한 줄로, 레지스트리 사용자는 `editor-prose` add로 받아요. 도그푸딩 앱(UniKit Markdown 데스크톱·모바일)이 같은 소스를 써서 두 앱의 본문 스타일이 어긋나지 않아요.
+에디터 본문(제목·목록·인용·코드 블록 등) 스타일은 컴포넌트가 아니라 **`editor-prose` style 아이템**이 담당해요. `.tiptap` 선택자 규칙이 시맨틱 토큰(`hsl(var(--*))`)만으로 구성돼 있고, npm 사용자는 `import "@unikit-bridge/ui/editor-prose.css"` 한 줄로, 레지스트리 사용자는 `editor-prose` add로 받아요(`editor-toolbar` 레지스트리 항목에도 포함되어 있어요). 도그푸딩 앱(UniKit Markdown 데스크톱·모바일)이 같은 소스를 써서 두 앱의 본문 스타일이 어긋나지 않아요.
 
 ```tsx
 import { EditorToolbar, activeFormats } from "@unikit-bridge/ui";
@@ -499,11 +505,20 @@ import { useEditorState } from "@tiptap/react";
 const state = useEditorState({
   editor,
   selector: ({ editor }) =>
-    editor ? { formats: activeFormats(editor).join(",") } : { formats: "" },
+    editor
+      ? {
+          formats: activeFormats(editor).join(","),
+          canUndo: editor.can().undo(),
+          canRedo: editor.can().redo(),
+        }
+      : { formats: "", canUndo: false, canRedo: false },
 });
 
 <EditorToolbar
   formats={state.formats.split(",").filter(Boolean)}
+  canUndo={state.canUndo}
+  canRedo={state.canRedo}
+  disabled={!editor}
   onFormat={runFormat}
   onCommand={runCommand}
 />

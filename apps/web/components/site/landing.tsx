@@ -204,10 +204,10 @@ function TeaserSection() {
     <section className="py-14 sm:py-16 lg:py-20">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <h2 className="site-display text-2xl font-semibold tracking-tight text-foreground sm:text-3xl">
-          컴포넌트 61종
+          컴포넌트 62종
         </h2>
         <p className="mt-4 max-w-2xl text-base leading-relaxed text-muted-foreground">
-          버튼, 카드, 다이얼로그부터 폼 입력, 차트까지 — 웹과 React Native에서 검증된 61종 컴포넌트예요. 아래는 전부 실제 컴포넌트예요. 눌러 보세요.
+          버튼, 카드, 다이얼로그부터 폼 입력, 차트까지 — 웹과 React Native에서 검증된 62종 컴포넌트예요. 아래는 전부 실제 컴포넌트예요. 눌러 보세요.
         </p>
         <div className="mt-8 grid grid-cols-1 gap-4 md:grid-cols-2">
           <PreviewScene label="폼">

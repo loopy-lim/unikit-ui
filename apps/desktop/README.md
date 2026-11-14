@@ -13,8 +13,8 @@ bun run tauri build          # 데스크톱 패키징 (deb·rpm·AppImage)
 
 ## 구조
 
-- `src/App.tsx` — 편집기 본체. `useEditor` + StarterKit·`@tiptap/markdown`(v3 공식)·Placeholder, `contentType: "markdown"`으로 마크다운을 직접 주고받아요. 서식 툴바는 ToggleGroup, 저장·열기는 Button·Dialog 토스트.
-- `src/styles.css` — Tailwind v4 진입 + 유니킷 토큰(수동 수집: `generate:design`은 apps/web만 관리) + `.tiptap` 타이포그래피.
+- `src/App.tsx` — 편집기 본체. `useEditor` + StarterKit(`link: { openOnClick: false, markdownLinks: true }`)·`@tiptap/markdown`(v3 공식)·Placeholder, `contentType: "markdown"`으로 마크다운을 직접 주고받아요. 서식 툴바는 패키지 `EditorToolbar`(`canUndo`/`canRedo`/`disabled` 연동), 저장·열기는 Button·Dialog·Sonner 토스트, 문서 교체 시 `@tiptap/pm` `EditorState.create`로 undo 히스토리를 초기화해요.
+- `src/styles.css` — Tailwind v4 진입 + 유니킷 토큰(수동 수집: `generate:design`은 apps/web만 관리). `.tiptap` 본문 타이포그래피는 `src/main.tsx`가 `@unikit-bridge/ui/editor-prose.css`를 직접 import해요.
 - `src-tauri/` — Rust 셸. plugin-dialog·plugin-fs 등록, capabilities는 `$HOME/**`·`$DOCUMENT/**` 읽기·쓰기로 한정.
 
 ## 도그푸딩 메모
