@@ -1,27 +1,30 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import type { Editor } from "@tiptap/core";
 import { ask, open, save } from "@tauri-apps/plugin-dialog";
 import { exists, readTextFile, rename, writeTextFile } from "@tauri-apps/plugin-fs";
-import { Placeholder } from "@tiptap/extensions";
-import { Markdown } from "@tiptap/markdown";
-import { EditorState } from "@tiptap/pm/state";
-import { EditorContent, useEditor, useEditorState } from "@tiptap/react";
-import StarterKit from "@tiptap/starter-kit";
 import {
   Button,
   EditorToolbar,
   Input,
   Separator,
   Toaster,
-  activeFormats,
   toast,
   useUnikitTheme,
 } from "@unikit-bridge/ui";
+import type {
+  EditorCommand,
+  EditorFormat,
+} from "@unikit-bridge/ui";
+import {
+  MarkdownEditor,
+  type MarkdownEditorHandle,
+  type MarkdownEditorState,
+} from "@unikit-bridge/ui/editor";
 
 /*
  * UniKit Markdown(데스크톱) — @unikit-bridge/ui 도그푸딩 앱.
- * tiptap v3(ProseMirror) + @tiptap/markdown으로 위지윅 ↔ 마크다운을 왕복한다.
- * 툴바는 패키지 EditorToolbar, 본문 스타일은 editor-prose.css가 담당(사이클 94).
+ * 에디터 엔진은 패키지 진입점 @unikit-bridge/ui/editor(MarkdownEditor — tiptap v3 +
+ * @tiptap/markdown)이 소유한다(사이클 95 이관). 앱은 파일 입출력·제목·저장 상태만
+ * 담당하고, 툴바는 패키지 EditorToolbar를 앱 헤더에 직접 꾸린다(toolbar={false}).
  */
 
 const DEFAULT_TITLE = "제목 없음";
@@ -40,14 +43,8 @@ const WELCOME = `# UniKit Markdown
 > \`열기\`로 .md 파일을 불러오고 \`Ctrl+S\`로 저장해 봐.
 `;
 
-// 문서 교체 직후 undo 히스토리 초기화 — setContent가 한 단계로 기록되어
-// 첫 undo가 교체 이전 문서로 되돌리는 것을 막는다(모바일 web-editor와 같은 결함).
-const replaceDoc = (editor: Editor, markdown: string) => {
-  editor.commands.setContent(markdown, { contentType: "markdown", emitUpdate: false });
-  editor.view.updateState(
-    EditorState.create({ doc: editor.state.doc, plugins: editor.state.plugins }),
-  );
-};
+// 문서 교체는 에디터 ref 명령이 담당한다(undo 히스토리 초기화 포함 — 사이클 95).
+// setMarkdown은 onChange를 발화하지 않으므로 앱의 markdownRef를 함께 갱신한다.
 
 const sanitizeFileStem = (raw: string): string => {
   const cleaned = raw
@@ -85,95 +82,47 @@ function App() {
   const bodyDirtyRef = useRef(false);
   const ioBusyRef = useRef(false);
 
-  const editor = useEditor({
-    extensions: [
-      StarterKit.configure({
-        link: {
-          openOnClick: false,
-          markdownLinks: true,
-        },
-      }),
-      Markdown,
-      Placeholder.configure({ placeholder: "여기에 마크다운으로 적어 봐" }),
-    ],
-    content: WELCOME,
-    contentType: "markdown",
-    onUpdate: () => {
-      editSeqRef.current += 1;
-      bodyDirtyRef.current = true;
-      setDirty(true);
-    },
-  });
+  // 에디터 엔진·상태는 MarkdownEditor가 소유 — 앱은 ref 명령과 onStateChange로.
+  const editorRef = useRef<MarkdownEditorHandle | null>(null);
+  // 저장 시점의 본문 — onChange로 항상 최신을 유지한다(브리지와 달리 웹은
+  // 키 입력마다 즉시 온다).
+  const markdownRef = useRef(WELCOME);
 
-  // 툴바 상태 선택 구독 — transaction마다 selector가 돌지만, 결과가 같으면
-  // 리렌더가 없다(tiptap useEditorState의 circularDeepEqual). 이전 구조는
-  // 매 키 입력마다 getMarkdown() 직렬화(글자수) + formats 새 배열 set로
-  // 헤더 전체가 리렌더됐다.
-  const editorState = useEditorState({
-    editor,
-    selector: ({ editor }) =>
-      editor
-        ? {
-            // 배열 대신 join 문자열 — 깊은 비교 비용까지 아낀다.
-            formats: activeFormats(editor).join(","),
-            canUndo: editor.can().undo(),
-            canRedo: editor.can().redo(),
-            // getMarkdown() 직렬화 폐지 — doc 순회만으로 글자수.
-            chars: editor.state.doc.textContent.length,
-          }
-        : { formats: "", canUndo: false, canRedo: false, chars: 0 },
-  });
-  const formats = useMemo(
-    () => editorState.formats.split(",").filter(Boolean),
-    [editorState.formats],
-  );
+  const [ready, setReady] = useState(false);
+  const [formats, setFormats] = useState<string[]>([]);
+  const [canUndo, setCanUndo] = useState(false);
+  const [canRedo, setCanRedo] = useState(false);
+  const [chars, setChars] = useState(0);
 
-  const runFormat = useCallback(
-    (format: string) => {
-      if (!editor) return;
-      const chain = editor.chain().focus();
-      switch (format) {
-        case "bold":
-          chain.toggleBold().run();
-          break;
-        case "italic":
-          chain.toggleItalic().run();
-          break;
-        case "strike":
-          chain.toggleStrike().run();
-          break;
-        case "h1":
-          chain.toggleHeading({ level: 1 }).run();
-          break;
-        case "h2":
-          chain.toggleHeading({ level: 2 }).run();
-          break;
-        case "bulletList":
-          chain.toggleBulletList().run();
-          break;
-        case "orderedList":
-          chain.toggleOrderedList().run();
-          break;
-        case "quote":
-          chain.toggleBlockquote().run();
-          break;
-        case "code":
-          chain.toggleCodeBlock().run();
-          break;
-      }
-    },
-    [editor],
-  );
+  const handleStateChange = useCallback((state: MarkdownEditorState) => {
+    const key = state.formats.join(",");
+    setFormats((prev) => (prev.join(",") === key ? prev : state.formats));
+    setCanUndo((prev) => (prev === state.canUndo ? prev : state.canUndo));
+    setCanRedo((prev) => (prev === state.canRedo ? prev : state.canRedo));
+    setReady((prev) => (prev === state.ready ? prev : state.ready));
+    setChars((prev) => (prev === state.chars ? prev : state.chars));
+  }, []);
 
-  const runCommand = useCallback(
-    (command: "undo" | "redo") => {
-      if (!editor) return;
-      const chain = editor.chain().focus();
-      if (command === "undo") chain.undo().run();
-      else chain.redo().run();
-    },
-    [editor],
-  );
+  const handleChange = useCallback((markdown: string) => {
+    markdownRef.current = markdown;
+    editSeqRef.current += 1;
+    bodyDirtyRef.current = true;
+    setDirty(true);
+  }, []);
+
+  /** 문서 교체(열기·새 문서) — ref 명령 + 앱 스냅샷 동기 갱신. */
+  const applyDoc = useCallback((markdown: string) => {
+    markdownRef.current = markdown;
+    editorRef.current?.setMarkdown(markdown);
+  }, []);
+
+  const runFormat = useCallback((format: EditorFormat) => {
+    editorRef.current?.runFormat(format);
+  }, []);
+
+  const runCommand = useCallback((command: EditorCommand) => {
+    editorRef.current?.runCommand(command);
+  }, []);
 
   const savedStem = useMemo(() => {
     if (!filePath) return DEFAULT_TITLE;
@@ -189,11 +138,11 @@ function App() {
   );
 
   const saveDocument = useCallback(async () => {
-    if (!editor || ioBusyRef.current) return;
+    if (ioBusyRef.current) return;
     ioBusyRef.current = true;
     try {
       const snapshotSeq = editSeqRef.current;
-      const markdown = editor.getMarkdown();
+      const markdown = markdownRef.current;
       let path = filePath;
 
       if (!path) {
@@ -294,10 +243,10 @@ function App() {
     } finally {
       ioBusyRef.current = false;
     }
-  }, [editor, filePath, title]);
+  }, [filePath, title]);
 
   const openDocument = useCallback(async () => {
-    if (!editor || ioBusyRef.current) return;
+    if (ioBusyRef.current) return;
     ioBusyRef.current = true;
     try {
       if (dirty) {
@@ -314,7 +263,7 @@ function App() {
       });
       if (!path) return;
       const text = await readTextFile(path);
-      replaceDoc(editor, text);
+      applyDoc(text);
       const name = splitPathParts(path).name;
       bodyDirtyRef.current = false;
       setTitle(name.replace(/\.(md|markdown)$/i, ""));
@@ -326,10 +275,10 @@ function App() {
     } finally {
       ioBusyRef.current = false;
     }
-  }, [dirty, editor]);
+  }, [dirty, applyDoc]);
 
   const newDocument = useCallback(async () => {
-    if (!editor || ioBusyRef.current) return;
+    if (ioBusyRef.current) return;
     ioBusyRef.current = true;
     try {
       if (dirty) {
@@ -339,7 +288,7 @@ function App() {
         );
         if (!proceed) return;
       }
-      replaceDoc(editor, "");
+      applyDoc("");
       bodyDirtyRef.current = false;
       setTitle(DEFAULT_TITLE);
       setFilePath(null);
@@ -347,7 +296,7 @@ function App() {
     } finally {
       ioBusyRef.current = false;
     }
-  }, [dirty, editor]);
+  }, [dirty, applyDoc]);
 
   // Ctrl+S 저장 — 브라우저 기본 저장 대화상자를 막는다.
   useEffect(() => {
@@ -404,20 +353,26 @@ function App() {
         <div className="flex items-center gap-3">
           <EditorToolbar
             formats={formats}
-            canUndo={editorState.canUndo}
-            canRedo={editorState.canRedo}
-            disabled={!editor}
+            canUndo={canUndo}
+            canRedo={canRedo}
+            disabled={!ready}
             onFormat={runFormat}
             onCommand={runCommand}
           />
           <div className="flex-1" />
-          <span className="text-xs text-muted-foreground">{editorState.chars}자</span>
+          <span className="text-xs text-muted-foreground">{chars}자</span>
         </div>
       </header>
 
       <main className="flex-1 overflow-y-auto">
         <div className="mx-auto max-w-3xl px-6 py-8">
-          <EditorContent editor={editor} className="tiptap" />
+          <MarkdownEditor
+            ref={editorRef}
+            toolbar={false}
+            initialMarkdown={WELCOME}
+            onChange={handleChange}
+            onStateChange={handleStateChange}
+          />
         </div>
       </main>
 

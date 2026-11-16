@@ -5,14 +5,16 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import {
   EditorToolbar,
   toast,
-  useUnikitTheme,
 } from "@unikit-bridge/ui";
 import type {
   EditorCommand,
   EditorFormat,
-  RnToWebViewMessage,
-  WebViewToRnMessage,
 } from "@unikit-bridge/ui";
+import {
+  MarkdownEditor,
+  type MarkdownEditorHandle,
+  type MarkdownEditorState,
+} from "@unikit-bridge/ui/editor";
 import {
   ChevronLeftIcon,
   KeyboardAvoidingView,
@@ -23,7 +25,6 @@ import {
   View,
 } from "@unikit-bridge/ui/primitives";
 
-import EDITOR_HTML from "../lib/editor-html";
 import {
   docExists,
   docNameFromTitle,
@@ -34,14 +35,12 @@ import {
   sanitizeDocTitle,
   writeDoc,
 } from "../lib/storage";
-import { WebView, type WebViewHandle, type WebViewMessageEvent } from "../lib/webview-compat";
 
 const SAVE_DEBOUNCE_MS = 500;
 const NEW_DOC_DEFAULT_TITLE = "새 문서";
 
 export default function EditorScreen() {
   const params = useLocalSearchParams<{ file?: string }>();
-  const { colorScheme } = useUnikitTheme();
   // 엣지투엣지 창 — 상단·하단 여백은 상태 표시줄·제스처 바 실측 insets로 잡는다.
   const insets = useSafeAreaInsets();
 
@@ -60,10 +59,11 @@ export default function EditorScreen() {
   const titleRef = useRef(initialTitle);
   const saveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  const webRef = useRef<WebViewHandle | null>(null);
-  const readyRef = useRef(false);
+  // 에디터 엔진은 패키지 진입점(@unikit-bridge/ui/editor)이 소유한다(사이클 95) —
+  // 앱은 저장·제목 편집만 담당하고, 서식 실행은 ref 명령으로, 상태는 onStateChange로.
+  const editorRef = useRef<MarkdownEditorHandle | null>(null);
 
-  const [ready, setReady] = useState(false);
+  const [editorReady, setEditorReady] = useState(false);
   const [formats, setFormats] = useState<string[]>([]);
   const [canUndo, setCanUndo] = useState(false);
   const [canRedo, setCanRedo] = useState(false);
@@ -79,12 +79,6 @@ export default function EditorScreen() {
       showSub.remove();
       hideSub.remove();
     };
-  }, []);
-
-  const send = useCallback((msg: RnToWebViewMessage) => {
-    webRef.current?.injectJavaScript(
-      `window.__mdReceive?.(${JSON.stringify(JSON.stringify(msg))}); true;`,
-    );
   }, []);
 
   const commitExistingRename = useCallback((): boolean => {
@@ -188,63 +182,24 @@ export default function EditorScreen() {
     saveTimer.current = setTimeout(flushSave, SAVE_DEBOUNCE_MS);
   }, [flushSave]);
 
-  const onMessage = useCallback(
-    (event: WebViewMessageEvent) => {
-      let parsed: unknown;
-      try {
-        parsed = JSON.parse(event.nativeEvent.data);
-      } catch {
-        return;
-      }
-      if (!parsed || typeof parsed !== "object") return;
-      const msg = parsed as Partial<WebViewToRnMessage>;
+  // onStateChange는 글자수(chars)까지 포함해 키 입력마다 온다 — 앱이 안 쓰는 필드의
+  // setStates가 같은 값으로 bail하므로 리렌더는 일어나지 않는다(사이클 94 계약).
+  const handleStateChange = useCallback((state: MarkdownEditorState) => {
+    const key = state.formats.join(",");
+    setFormats((prev) => (prev.join(",") === key ? prev : state.formats));
+    setCanUndo((prev) => (prev === state.canUndo ? prev : state.canUndo));
+    setCanRedo((prev) => (prev === state.canRedo ? prev : state.canRedo));
+    setEditorReady((prev) => (prev === state.ready ? prev : state.ready));
+  }, []);
 
-      if (msg.type === "ready") {
-        readyRef.current = true;
-        setReady(true);
-        // contentRef.current를 보낸다(초기값은 initial과 같다) — WebView 프로세스가
-        // 재시작해 ready가 다시 와도 편집 중 분량을 되살린다(옛 스냅샷 롤백 방지).
-        send({
-          type: "init",
-          markdown: contentRef.current,
-          dark: colorScheme === "dark",
-        });
-        return;
-      }
-      if (msg.type === "change") {
-        if (typeof msg.markdown !== "string") return;
-        contentRef.current = msg.markdown;
-        dirtyRef.current = true;
-        scheduleSave();
-        return;
-      }
-      if (msg.type === "state") {
-        if (!Array.isArray(msg.formats) || !msg.formats.every((f) => typeof f === "string")) {
-          return;
-        }
-        // 웹 쪽에서 활성 서식이나 undo/redo 여부가 바뀔 때만 보내지만, 이중으로 막아 둔다.
-        const nextFormats = msg.formats;
-        const key = nextFormats.join(",");
-        setFormats((prev) => (prev.join(",") === key ? prev : nextFormats));
-        if (typeof msg.canUndo === "boolean") {
-          const nextCanUndo = msg.canUndo;
-          setCanUndo((prev) => (prev === nextCanUndo ? prev : nextCanUndo));
-        }
-        if (typeof msg.canRedo === "boolean") {
-          const nextCanRedo = msg.canRedo;
-          setCanRedo((prev) => (prev === nextCanRedo ? prev : nextCanRedo));
-        }
-      }
+  const handleChange = useCallback(
+    (markdown: string) => {
+      contentRef.current = markdown;
+      dirtyRef.current = true;
+      scheduleSave();
     },
-    [colorScheme, scheduleSave, send],
+    [scheduleSave],
   );
-
-  // 테마 전환 동기화 — ready 전이라면 init이 곧 최신 값을 보낸다.
-  useEffect(() => {
-    if (readyRef.current) {
-      send({ type: "theme", dark: colorScheme === "dark" });
-    }
-  }, [colorScheme, send]);
 
   // 언마운트(시스템 뒤로 가기 포함) 직전 미저장 변경과 제목 변경을 확정 저장한다.
   // goBack()이 이미 저장을 끝냈다면 dirtyRef·saveTimer가 비어 중복 저장하지 않고,
@@ -271,18 +226,16 @@ export default function EditorScreen() {
 
   const runFormat = useCallback(
     (format: EditorFormat) => {
-      if (!readyRef.current) return;
-      send({ type: "format", format });
+      editorRef.current?.runFormat(format);
     },
-    [send],
+    [],
   );
 
   const runCommand = useCallback(
     (command: EditorCommand) => {
-      if (!readyRef.current) return;
-      send({ type: "command", command });
+      editorRef.current?.runCommand(command);
     },
-    [send],
+    [],
   );
 
   const handleTitleChange = useCallback((next: string) => {
@@ -303,12 +256,6 @@ export default function EditorScreen() {
     if (!flushSave()) return;
     router.back();
   }, [flushSave]);
-
-  const handleWebViewCrash = useCallback(() => {
-    readyRef.current = false;
-    setReady(false);
-    webRef.current?.reload?.();
-  }, []);
 
   return (
     <KeyboardAvoidingView
@@ -345,35 +292,19 @@ export default function EditorScreen() {
           formats={formats}
           canUndo={canUndo}
           canRedo={canRedo}
-          disabled={!ready}
+          disabled={!editorReady}
           onFormat={runFormat}
           onCommand={runCommand}
         />
       </View>
 
-      <WebView
-        ref={webRef}
-        source={{ html: EDITOR_HTML }}
-        onMessage={onMessage}
-        onLoadStart={() => {
-          readyRef.current = false;
-          setReady(false);
-        }}
-        onContentProcessDidTerminate={handleWebViewCrash}
-        onRenderProcessGone={handleWebViewCrash}
+      <MarkdownEditor
+        ref={editorRef}
         className="flex-1"
-        style={{
-          flex: 1,
-          backgroundColor: colorScheme === "dark" ? "#09090b" : "#ffffff",
-        }}
-        originWhitelist={["about:blank"]}
-        dataDetectorTypes="none"
-        allowFileAccess={false}
-        allowFileAccessFromFileURLs={false}
-        allowUniversalAccessFromFileURLs={false}
-        javaScriptCanOpenWindowsAutomatically={false}
-        setSupportMultipleWindows={false}
-        onShouldStartLoadWithRequest={(req) => req.url === "about:blank"}
+        initialMarkdown={initialRef.current.markdown}
+        toolbar={false}
+        onChange={handleChange}
+        onStateChange={handleStateChange}
       />
     </KeyboardAvoidingView>
   );
