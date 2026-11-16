@@ -1,9 +1,9 @@
 /*
- * WebView 안에서 도는 tiptap 에디터 — RN(apps/mobile/app/editor.tsx)과 JSON 브리지로 통신.
- * 프로토콜·포맷 계약의 원본은 @unikit-bridge/ui의 editor-toolbar(modules)이고,
- * 이 파일의 타입·검사 테이블은 독립 번들을 위한 의도적 복제다(vite 단일 HTML —
- * 패키지 배럴을 끌어오면 react까지 번들에 들어온다).
- * 본문 타이포그래피는 패키지 editor-prose.css를 그대로 쓴다(아래 import).
+ * WebView 안에서 도는 tiptap 에디터 — 네이티브 렌더러(@unikit-bridge/ui/editor의
+ * src/editor/native.tsx)와 JSON 브리지로 통신. 프로토콜·포맷 계약의 원본은
+ * @unikit-bridge/ui의 editor-toolbar(components)이고, 이 파일의 타입·검사 테이블은
+ * 독립 번들을 위한 의도적 복제다(vite 단일 HTML — 패키지 배럴을 끌어오면 react까지
+ * 번들에 들어온다). 본문 타이포그래피는 패키지 editor-prose.css를 그대로 쓴다(아래 import).
  */
 import "@unikit-bridge/ui/editor-prose.css";
 import { Editor } from "@tiptap/core";
@@ -13,15 +13,17 @@ import { Markdown } from "@tiptap/markdown";
 import StarterKit from "@tiptap/starter-kit";
 
 type RnToWebViewMessage =
-  | { type: "init"; markdown: string; dark: boolean }
+  | { type: "init"; markdown: string; dark: boolean; placeholder?: string }
+  | { type: "set"; markdown: string }
   | { type: "theme"; dark: boolean }
+  | { type: "placeholder"; placeholder: string }
   | { type: "format"; format: string }
   | { type: "command"; command: "undo" | "redo" };
 
 type WebViewToRnMessage =
   | { type: "ready" }
-  | { type: "change"; markdown: string }
-  | { type: "state"; formats: string[]; canUndo: boolean; canRedo: boolean };
+  | { type: "change"; markdown: string; chars: number }
+  | { type: "state"; formats: string[]; canUndo: boolean; canRedo: boolean; chars: number };
 
 declare global {
   interface Window {
@@ -32,6 +34,17 @@ declare global {
 
 const post = (msg: WebViewToRnMessage) => {
   window.ReactNativeWebView?.postMessage(JSON.stringify(msg));
+};
+
+// 플레이스홀더 — Placeholder 확장의 function 형태로 늦게(브리지 init 시) 바꾼다.
+// 장식(decoration)은 문서 상태가 바뀔 때 다시 만들어지므로, 텍스트만 바꾸고
+// replaceDoc을 거치면 새 문구가 반영된다.
+const DEFAULT_PLACEHOLDER = "여기에 마크다운으로 적어 봐";
+let placeholderText = DEFAULT_PLACEHOLDER;
+const setPlaceholder = (text: string): boolean => {
+  if (!text || text === placeholderText) return false;
+  placeholderText = text;
+  return true;
 };
 
 const editor = new Editor({
@@ -46,7 +59,7 @@ const editor = new Editor({
       },
     }),
     Markdown,
-    Placeholder.configure({ placeholder: "여기에 마크다운으로 적어 봐" }),
+    Placeholder.configure({ placeholder: () => placeholderText }),
   ],
   content: "",
 });
@@ -78,7 +91,15 @@ const buildStateSnapshot = () => {
 const sendState = () => {
   const { formats, canUndo, canRedo, key } = buildStateSnapshot();
   lastStateKey = key;
-  post({ type: "state", formats, canUndo, canRedo });
+  // chars를 함께 실어 보낸다(문서 교체 직후 글자수 동기화) — 다만 디듀프 키는
+  // 서식·undo/redo만 본다(buildStateSnapshot).
+  post({
+    type: "state",
+    formats,
+    canUndo,
+    canRedo,
+    chars: editor.state.doc.textContent.length,
+  });
 };
 
 // state는 활성 서식이나 undo/redo 가능 여부가 바뀔 때만 보낸다 — 매 transaction마다
@@ -87,13 +108,25 @@ const sendStateIfChanged = () => {
   const { formats, canUndo, canRedo, key } = buildStateSnapshot();
   if (key === lastStateKey) return;
   lastStateKey = key;
-  post({ type: "state", formats, canUndo, canRedo });
+  post({
+    type: "state",
+    formats,
+    canUndo,
+    canRedo,
+    chars: editor.state.doc.textContent.length,
+  });
 };
 
 // change는 디바운스 없이 즉시 보낸다 — RN 쪽 저장 디바운스(500ms)가 있고,
 // 웹 쪽 지연 큐는 뒤로 가기(WebView 파괴) 시 마지막 입력 유실 창을 만든다.
+// chars(본문 글자 수 — doc.textContent.length)를 얹어 보낸다: 키 입력마다 이미
+// 가는 메시지에 실으므로 추가 브리지 트래픽은 0건(사이클 94 성능 설계 유지).
 editor.on("update", () => {
-  post({ type: "change", markdown: editor.getMarkdown() });
+  post({
+    type: "change",
+    markdown: editor.getMarkdown(),
+    chars: editor.state.doc.textContent.length,
+  });
 });
 editor.on("transaction", sendStateIfChanged);
 
@@ -165,14 +198,41 @@ window.__mdReceive = (raw: string) => {
         if (typeof msg.dark !== "boolean") return;
         initialized = true;
         applyTheme(msg.dark);
-        if (typeof msg.markdown === "string" && (msg.markdown.length > 0 || !editor.isEmpty)) {
-          replaceDoc(msg.markdown);
+        {
+          // 플레이스홀더가 바뀌었으면 문서 교체를 함께 거쳐 장식을 다시 그린다.
+          const placeholderChanged =
+            typeof msg.placeholder === "string" && setPlaceholder(msg.placeholder);
+          if (
+            placeholderChanged ||
+            (typeof msg.markdown === "string" && (msg.markdown.length > 0 || !editor.isEmpty))
+          ) {
+            replaceDoc(typeof msg.markdown === "string" ? msg.markdown : "");
+          }
         }
         sendState();
+        break;
+      case "set":
+        // 문서 교체(외부 파일 열기 등) — undo 히스토리를 초기화해 첫 undo가
+        // 교체 이전 문서로 되돌아가지 못하게 한다(replaceDoc 내부).
+        if (initialized && typeof msg.markdown === "string") {
+          replaceDoc(msg.markdown);
+          sendState();
+        }
         break;
       case "theme":
         if (typeof msg.dark === "boolean") {
           applyTheme(msg.dark);
+        }
+        break;
+      case "placeholder":
+        // 장식 문구만 바꾼다 — 문서·히스토리는 그대로(빈 트랜잭션 dispatch로
+        // Placeholder 장식이 다시 만들어진다).
+        if (
+          initialized &&
+          typeof msg.placeholder === "string" &&
+          setPlaceholder(msg.placeholder)
+        ) {
+          editor.view.dispatch(editor.state.tr);
         }
         break;
       case "format":

@@ -8,7 +8,7 @@
     "android": "expo run:android",
     "ios": "expo run:ios",
     "typecheck": "tsc --noEmit",
-    "build:editor": "bun run --filter @unikit/mobile-web-editor build && bun scripts/sync-editor-html.ts"
+    "build:editor": "bun run --filter @unikit-bridge/ui build:editor"
   },
   "dependencies": {
     "@unikit-bridge/ui": "workspace:*",

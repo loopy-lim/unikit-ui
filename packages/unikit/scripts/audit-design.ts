@@ -137,13 +137,21 @@ function scanPattern(files: string[], pattern: RegExp, label: string): Violation
   report("a2", vs.length === 0, `theme 항목 ${themes.length}/${expectedNames.length}종 — 값 ${schemes}스킴 전수·형식·대비(≥4.5) 일치`, vs);
 }
 
-// ── (b) 원색 리터럴 0건 (src 전체 — 값 정의 파일 VALUE_SOURCES 제외, F-32 일반화) ──
+// ── (b) 원색 리터럴 0건 (src 전체 — 값 정의 파일 VALUE_SOURCES·생성물 제외, F-32 일반화) ──
 {
-  const excluded = new Set(VALUE_SOURCES.map((s) => path.join(PKG, s)));
+  // 제외 대상 — ① 값 정의(VALUE_SOURCES) ② 값 성형: src/editor/colors.ts는 HSL 채널
+  // 토큰을 RN 인라인 색으로 조립하는 지점(원색 리터럴이 아니나 정규식이 hsl( 조립을
+  // 잡는다) ③ 생성물: editor-html.ts는 WebView용 tiptap 번들 인라인(build:editor
+  // 산출 — 원본은 editor-web-view 워크스페이스). 사이클 95.
+  const excluded = new Set([
+    ...VALUE_SOURCES.map((s) => path.join(PKG, s)),
+    path.join(PKG, "src", "editor", "colors.ts"),
+    path.join(PKG, "src", "editor", "editor-html.ts"),
+  ]);
   const files = walk(path.join(PKG, "src"), [".ts", ".tsx"]).filter((f) => !excluded.has(f));
   const pattern = /#[0-9a-fA-F]{3,8}\b|\brgba?\(|\bhsla?\(|\boklch\(|\bcolor-mix\(/;
   const vs = scanPattern(files, pattern, "원색 리터럴");
-  report("b", vs.length === 0, `원색 리터럴 0건 (대상 ${files.length}파일, 값 정의 ${VALUE_SOURCES.length}파일 제외)`, vs);
+  report("b", vs.length === 0, `원색 리터럴 0건 (대상 ${files.length}파일, 값 정의 ${VALUE_SOURCES.length}·값 성형 1·생성물 1파일 제외)`, vs);
 }
 
 // ── (c) 임의값 클래스 0건 (컴포넌트 + registry 사본) ─────────────────────────

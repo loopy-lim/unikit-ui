@@ -1,5 +1,5 @@
 {
-  "name": "@unikit/mobile-web-editor",
+  "name": "@unikit/editor-web-view",
   "private": true,
   "version": "0.1.0",
   "type": "module",

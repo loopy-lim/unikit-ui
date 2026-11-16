@@ -10,6 +10,11 @@
 //   항목 하나를 뽑는 로직을 내부에 둔다(도그푸딩 앱 2종에 중복이던 로직의 단일 출처).
 // - 본문 타이포그래피(제목·목록·인용·코드 스타일)는 이 컴포넌트 범위 밖 —
 //   패키지 export editor-prose.css(hsl(var(--*)) 시맨틱 토큰만 사용)가 담당한다.
+// - 사이클 95: 엔진 진입점 @unikit-bridge/ui/editor(MarkdownEditor — 웹=tiptap
+//   직접, 네이티브=WebView+동봉 번들)가 이 계약(포맷·브리지 메시지)을 소비한다.
+//   체인 실행 헬퍼 applyEditorFormat/applyEditorCommand를 함께 둔다(구조 타이핑).
+//   브리지에 set(문서 교체)·placeholder(장식 문구 교체) 메시지와 change·state의
+//   chars 동반을 추가했다(placeholder는 문서를 보존한 채 장식만 갱신).
 import { forwardRef } from "react";
 import {
   View,
@@ -56,15 +61,81 @@ export type EditorCommand = "undo" | "redo";
 
 /** RN ↔ WebView 에디터 브리지 메시지 — WebView 안 tiptap 앱과 한 쌍으로 쓴다. */
 export type RnToWebViewMessage =
-  | { type: "init"; markdown: string; dark: boolean }
+  | { type: "init"; markdown: string; dark: boolean; placeholder?: string }
+  | { type: "set"; markdown: string }
   | { type: "theme"; dark: boolean }
+  | { type: "placeholder"; placeholder: string }
   | { type: "format"; format: EditorFormat }
   | { type: "command"; command: EditorCommand };
 
 export type WebViewToRnMessage =
   | { type: "ready" }
-  | { type: "change"; markdown: string }
-  | { type: "state"; formats: string[]; canUndo?: boolean; canRedo?: boolean };
+  | { type: "change"; markdown: string; chars: number }
+  | { type: "state"; formats: string[]; canUndo?: boolean; canRedo?: boolean; chars?: number };
+
+/**
+ * tiptap 체인 명령의 구조 타이핑 — 런타임 의존 없이 계약만 빌린다(activeFormats와
+ * 같은 방식). editor.chain().focus() 결과가 이 인터페이스를 만족한다.
+ */
+export type EditorCommandChain = {
+  focus(): EditorCommandChain;
+  toggleBold(): EditorCommandChain;
+  toggleItalic(): EditorCommandChain;
+  toggleStrike(): EditorCommandChain;
+  toggleHeading(attributes: { level: number }): EditorCommandChain;
+  toggleBulletList(): EditorCommandChain;
+  toggleOrderedList(): EditorCommandChain;
+  toggleBlockquote(): EditorCommandChain;
+  toggleCodeBlock(): EditorCommandChain;
+  undo(): EditorCommandChain;
+  redo(): EditorCommandChain;
+  run(): boolean | void;
+};
+
+/** 서식 토글 실행 — 계약 9종을 체인에 매핑한다(웹 렌더러·소비자 앱 공용). */
+export const applyEditorFormat = (
+  chain: EditorCommandChain,
+  format: EditorFormat,
+): void => {
+  switch (format) {
+    case "bold":
+      chain.toggleBold().run();
+      break;
+    case "italic":
+      chain.toggleItalic().run();
+      break;
+    case "strike":
+      chain.toggleStrike().run();
+      break;
+    case "h1":
+      chain.toggleHeading({ level: 1 }).run();
+      break;
+    case "h2":
+      chain.toggleHeading({ level: 2 }).run();
+      break;
+    case "bulletList":
+      chain.toggleBulletList().run();
+      break;
+    case "orderedList":
+      chain.toggleOrderedList().run();
+      break;
+    case "quote":
+      chain.toggleBlockquote().run();
+      break;
+    case "code":
+      chain.toggleCodeBlock().run();
+      break;
+  }
+};
+
+/** undo/redo 실행 — applyEditorFormat의 커맨드 쌍. */
+export const applyEditorCommand = (
+  chain: EditorCommandChain,
+  command: EditorCommand,
+): void => {
+  if (command === "undo") chain.undo().run();
+  else chain.redo().run();
+};
 
 /** tiptap Editor의 isActive만 구조 타이핑 — 런타임 의존 없이 계약만 빌린다. */
 export type EditorFormatState = {

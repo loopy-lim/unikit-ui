@@ -117,14 +117,21 @@ const Toggle = forwardRef<BridgePressableRef, ToggleProps>(
         )}
         {...props}
       >
-        <Text
-          className={cn(
-            toggleTextVariants({ variant }),
-            isPressed && "text-accent-foreground",
-          )}
-        >
-          {children}
-        </Text>
+        {/* 문자 children만 이중 지정(전경색)을 위한 Text 래핑 대상이다 — 아이콘 등
+            뷰 children을 Text 안에 두면 RN이 객체 치환 문자(￼) 텍스트 노드로 감싸
+            a11y 트리에 무의미한 포커스 대상을 남긴다(2026-11-15 사이클 95 G4). */}
+        {typeof children === "string" || typeof children === "number" ? (
+          <Text
+            className={cn(
+              toggleTextVariants({ variant }),
+              isPressed && "text-accent-foreground",
+            )}
+          >
+            {children}
+          </Text>
+        ) : (
+          children
+        )}
       </Pressable>
     );
   },
