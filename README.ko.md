@@ -100,6 +100,14 @@ bunx shadcn@latest add https://ui.ll3.kr/r/button.json -y
 
 `transpilePackages` · `web:`/`@source` · `theme.json` 설정은 [docs/install.md](docs/install.md). 레지스트리 아이템 71종 = UI 62 + lib 3(utils·overlay·menu-nav) + theme 4 + style 2(animations·editor-prose).
 
+**AI 에이전트 — MCP 서버**
+
+```bash
+claude mcp add unikit-bridge -- npx -y @unikit-bridge/mcp
+```
+
+`@unikit-bridge/mcp`는 제품군 공용 서버예요(소스는 [unikit-bridge 포털 저장소](https://github.com/loopy-lim/unikit)의 `packages/mcp`에 있어요). UniKit UI 대상으로는 레지스트리 스냅샷(71아이템 전문 — 소스와 theme 토큰·style CSS 포함)과 이 저장소의 llms.txt를 패키지에 동봉해 실행 시 네트워크가 0이에요. 도구: `search_items` · `view_item` · `get_install_command` · `get_docs`.
+
 ## 기여 (저장소에 컴포넌트 추가)
 
 소스는 **두 벌**이에요 — `packages/unikit/src/`(모노레포)와 `registry/`(소비자 복사). 본문은 같고 import만 달라야 해요.

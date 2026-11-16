@@ -15,6 +15,7 @@ unikit-ui/  (bun 워크스페이스: apps/*, packages/*, packages/unikit/editor-
 │   ├── src/components/         # 컴포넌트 62종(배럴 진입 대상 61종 + chart; shadcn 이식 61 + 자작 editor-toolbar)
 │   ├── src/chart/              # 차트 렌더러(web.tsx·native.tsx·types.ts) — @unikit-bridge/ui/chart 진입점
 │   ├── src/editor/             # 마크다운 에디터 엔진(web.tsx·native.tsx·types.ts·colors.ts) — @unikit-bridge/ui/editor 진입점(npm 전용, 배럴·registry 미등록)
+│   ├── src/behaviors/          # 행동 훈 재노출(index.ts 단일 파일) — @unikit-bridge/ui/behaviors 진입점(npm 전용, 배럴·registry 미등록)
 │   ├── src/lib/overlay.tsx     # 통합 오버레이 훈(포털·백드롭·포커스 관리·앵커 위치 계산)
 │   ├── src/lib/utils.ts        # cn(clsx + tailwind-merge)
 │   ├── src/theme/              # tokens.ts(디자인 토큰 단일 출처)·Provider
@@ -40,6 +41,8 @@ bun run typecheck                  # 워크스페이스 전체 tsc --noEmit (루
 bun run audit:design               # 디자인 일관성 검사 9종(임의값 클래스·registry files 실재·WCAG 대비·브리지 flex 방향 등)
 bun run generate:design            # 토큰 변경 시에만: globals.css·registry theme·tokens.md 재생성
 ```
+
+- MCP 서버 `@unikit-bridge/mcp`: 이 저장소가 아닌 제품군 포털 저장소(`../unikit`의 `packages/mcp`)에 살아요(scriptca·rustra까지 아우르는 제품군 서버). 이 저장소의 llms.txt·registry.json·컴포넌트 소스를 고치면 포털에서 `bun run sync:data`로 동봉 데이터(src/data.ts 생성물)를 재생성해야 해요.
 
 - 도그푸딩 앱(UniKit Markdown): 웹 UI 확인은 `cd apps/desktop && bun x vite preview` 후 브라우저. 데스크톱 패키징은 `cd apps/desktop && bun run tauri build`(Rust 필요).
 - 에디터 번들 재생성: `packages/unikit`의 `bun run build:editor`(editor-web-view 빌드 → dist/index.html을 src/editor/editor-html.ts로 인라인 — 생성물이므로 직접 편집 금지). apps/mobile의 `build:editor`는 이 명령의 alias예요.

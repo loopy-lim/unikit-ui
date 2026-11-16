@@ -146,6 +146,14 @@ import { MarkdownEditor } from "@unikit-bridge/ui/editor";
 
 Web mounts tiptap directly (`@tiptap/react`, `@tiptap/starter-kit`, `@tiptap/markdown`, `@tiptap/extensions`, `@tiptap/pm` — optional peers). Native hosts a bundled single-file tiptap HTML inside a `react-native-webview` (optional peer): ProseMirror is DOM-only, so native cannot render it in RN views directly — the WebView bridge is the supported path. `toolbar` (default `true`) renders the built-in `EditorToolbar`; set it to `false` and use `onStateChange({ ready, formats, canUndo, canRedo, chars })` plus the ref commands (`setMarkdown`, `runFormat`, `runCommand`) to build your own chrome. The prose typography ships via `editor-prose.css` (auto-imported by the web renderer). This entry is npm-only — the registry distributes the toolbar skin (`editor-toolbar`), not the engine bundle.
 
+### Behaviors — composable interaction hooks
+
+`@unikit-bridge/ui/behaviors` (npm-only, not in the registry) re-exports the interaction skeletons the components themselves use — no behavior change, same web + native contract — so you (or an agent) can compose custom overlays, menus, and drag interactions:
+
+- **Overlay** — `ModalOverlay`, `AnchoredOverlay`, `computeOverlayPosition`, `useOverlayPlacement`: portal + backdrop + anchor positioning (12-way placement, collision flip, 8px viewport clamp).
+- **Menu nav** — `useMenuNav`, `composeMenuNavKeyDown`, `useMenuItemRef`, `composeMenuItemHoverIn`, `composeMenuItemFocus`: arrow/Home/End navigation, submenu open/back, typeahead (radix `getNextMatch` port).
+- **Bridge hooks** — `useDrag` (web Pointer Events / native PanResponder), `useOverlayFocus` (focus move/trap/restore), `useDismiss` (outside press + Escape), `useReposition` (scroll/resize recompute), `useScrollLock`.
+
 ### Optional peer dependencies
 
 - **Icons (platform)**: web → `lucide-react`, native → `lucide-react-native` (bridged through `/primitives`).

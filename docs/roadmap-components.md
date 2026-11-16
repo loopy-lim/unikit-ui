@@ -111,18 +111,18 @@ shadcn/ui(new-york-v4)의 `registry:ui` 61종을 UniKit UI 유니버설(한 벌 
 | 카탈로그 | 61종(ui 디렉터리)·66(문서) | 코어 122 디렉터리 | 32종(+인증 폼 14) | **61종 — 전량 유니버설** |
 | 플랫폼 범위 | 웹(3엔진) | 웹 안정 + SwiftUI 실험(canary) | RN 중심 | **웹+RN 단일 소스** |
 | 레지스트리 | 커뮤니티 디렉터리 548 | npm+CLI | 공개 r/ 2엔진(nativewind·uniwind) | 공개 호스팅 <https://ui.ll3.kr/r/registry.json>（shadcn 디렉터리 등재는 과제） |
-| AI 계층 | MCP 7도구·skills/ | "agent ready"·AGENTS.md | — | llms.txt·AGENTS.md(이번 사이클) → MCP 과제 |
+| AI 계층 | MCP 7도구·skills/ | "agent ready"·AGENTS.md | — | llms.txt·AGENTS.md·`@unikit-bridge/mcp`(도구 4종·데이터 동봉, 사이클 100) |
 
 - **shadcn/ui** — 2026-10 Trace·Code Block 추가, AI Elements 21 패턴. RN 공식 지원은 여전히 없어요.
 - **Astryx**(Meta) — ★20,252·주간 다운로드 약 66만. `@astryxdesign/native` v0.1.0(canary)은 SwiftUI 네이티브 뷰 + JS 코어(JSON 브리지) 실험 — "React Native and Android bindings are not built yet". UniKit UI(React 단일 소스 + RN 브리지)과는 접근 자체가 달라요.
 - **react-native-reusables** — ★8,720, 마지막 푸시 2026-09-27(약 6주 공백). nativewind·uniwind 이중 발행, 인증 폼 패턴 14항목이 컴포넌트와 혼재.
 - **@aniui·@tetra-ui**(신규 확인) — shadcn 커뮤니티 디렉터리에 등재된 RN 전용 경쟁자예요. @aniui는 93종(uniwind/NativeWind)이지만 현재 디렉터리 헬스 unavailable(30일 가용성 3%)·숨김 처리, @tetra-ui는 45종 healthy예요. 둘 다 RN 전용이라 웹+RN 단일 소스 포지션엔 영향이 없어요(2026-11-10 실측 — docs/sdd/51-research.md §4.6).
-- **UniKit UI 위치** — "shadcn 카탈로그 전량 + 웹·네이티브 단일 소스" 주장이 카탈로그 규모(61/61)에서 실제로 성립하는 시점이 됐어요. 레지스트리 공개 호스팅은 <https://ui.ll3.kr>에 올라가 있어요. 남은 갭은 shadcn 디렉터리 등재·AI 계층이에요(게시 물량은 npm 0.4.0이 62종·editor 진입점까지 반영 — 2026-11-16 게시).
+- **UniKit UI 위치** — "shadcn 카탈로그 전량 + 웹·네이티브 단일 소스" 주장이 카탈로그 규모(61/61)에서 실제로 성립하는 시점이 됐어요. 레지스트리 공개 호스팅은 <https://ui.ll3.kr>에 올라가 있고, MCP 서버 `@unikit-bridge/mcp`(도구 4종·레지스트리 스냅샷 동봉)와 행동 훈 진입점 `@unikit-bridge/ui/behaviors`가 사이클 100(2026-11-16)에 추가됐어요. MCP 서버 소스는 같은 날 제품군 포털 저장소(loopy-lim/unikit)의 packages/mcp로 이관됐어요(scriptca·rustra까지 아우르는 제품군 서버). 남은 갭은 shadcn 디렉터리 등재예요(게시 물량은 npm 0.4.0이 62종·editor 진입점까지 반영 — 2026-11-16 게시).
 
 ## 다음 사이클 제안
 
 1. **패키지 재게시(62종) — 완료(0.4.0, 2026-11-16)** — npm 게시분은 0.2.0(28종)을 거쳐 0.3.0에서 shadcn 카탈로그 61종(2026-11-14 실측), 0.4.0에서 62종(EditorToolbar 포함)과 에디터 엔진 진입점 `@unikit-bridge/ui/editor`까지 반영했어요. 레지스트리 공개 호스팅·`homepage`(`https://ui.ll3.kr/r/registry.json`)는 반영됨.
 2. **쇼케이스 전시 확장** — 웹 `/showcase`는 62종 카탈로그·사이드바 TOC·컴포넌트별 Preview/Code/설치 스니펫(`/showcase/[name]`)으로 전환했어요. Expo는 기존 전체 스크롤 데모를 유지하고, 웹 kitchen-sink(`/showcase/kitchen-sink`)가 그와 같은 구성을 보존해요. → 2026-11-15 폐지: 카탈로그가 그 역할을 대신하게 되어 `/components/kitchen-sink` 페이지와 내비게이션·문서 링크를 삭제했어요(전체 구성 데모는 Expo 쇼케이스가 유지).
-3. **AI 계층** — llms.txt·AGENTS.md는 이번 사이클에 정비됐어요. shadcn MCP(7도구) 대응 MCP 서버 착수 여부 결정.
+3. **AI 계층 — 완료(사이클 100, 2026-11-16)** — `@unikit-bridge/mcp` stdio 서버를 만들었어요. 도구 4종(search_items·view_item·get_install_command·get_docs)이 레지스트리 스냅샷(71아이템 전문 — UI·lib 소스와 theme 토큰·style CSS)과 llms.txt를 패키지에 동봉해 런타임 네트워크 0으로 동작해요(데이터는 sync:data 생성 — ui.ll3.kr 정적 JSON과 동일 원천). 서버는 제품군 포털 저장소(loopy-lim/unikit)의 packages/mcp에 있어요 — unikit-ui에서 만들어 같은 날 이관했고, 포털의 sync:data가 이 저장소의 레지스트리·llms.txt를 읽어요(get_docs는 제품 구분 지원). 행동 훈 재노출 진입점 `@unikit-bridge/ui/behaviors`(overlay·menu-nav·브리지 훈)도 같은 사이클에 추가.
 4. **미지원 기능 중 수요 상위** — 오버레이 애니메이션(웹 한정 `web:` 클래스), 네이티브 카드 키보드 탐색(사이클 90 잔여). select·메뉴 화살표키 탐색·타입어헤드·chart 유동 폭은 사이클 90과 그 후속에서 해소됐어요.
 5. **shadcn 2026-10 신규(trace·code-block)·문서 전용 항목**의 편성 결정(카탈로그 61종은 완료 — 신규 항목은 별도 티어 판단).

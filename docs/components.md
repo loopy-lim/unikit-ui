@@ -566,6 +566,20 @@ ref(`MarkdownEditorHandle`)는 `setMarkdown(markdown)`(문서 교체 — 히스�
 
 ---
 
+## 행동 훅 — behaviors (`@unikit-bridge/ui/behaviors`, 사이클 100)
+
+UniKit 컴포넌트의 상호작용 골격을 조립용으로 재노출하는 **npm 전용 진입점**이에요(기능 변경 없음 · registry 미등록 — 복사 소비는 기존처럼 `overlay`·`menu-nav` 레지스트리 lib 아이템으로). 컴포넌트가 쓰는 것과 같은 구현이라 웹·네이티브에서 같은 계약으로 동작해요.
+
+| 계열 | export | 하는 일 |
+|---|---|---|
+| 오버레이 | `ModalOverlay` · `AnchoredOverlay` · `computeOverlayPosition(WithPlacement)` · `useOverlayPlacement` | 포털 모달·앵커 팝업 골격, 12방 배치·충돌 플립·8px 뷰포트 클램프 위치 계산 |
+| 메뉴 탐색 | `useMenuNav` · `composeMenuNavKeyDown` · `useMenuItemRef` · `composeMenuItemHoverIn` · `composeMenuItemFocus` · `useMenuNavContext` | 방향키·Home/End 탐색, 서브메뉴 개방/복귀, 타입어헤드(radix `getNextMatch` 이식) |
+| 브리지 훅 | `useDrag` · `useOverlayFocus` · `useDismiss` · `useReposition` · `useScrollLock` | 드래그(웹 Pointer Events/RN PanResponder), 포커스 이동·트랩·복귀, 바깥 눌림·ESC 닫기, 스크롤·리사이즈 재계산, 배경 스크롤 잠금 |
+
+한계도 원본과 같아요 — 네이티브 카드 키보드 탐색은 RN View에 키 이벤트가 없어 미지원이에요(웹만). 계약 상세는 `packages/unikit/src/lib/overlay.tsx`·`menu-nav.tsx`·`src/bridge` 머리 주석에 있어요.
+
+---
+
 ## 테마 — 라이트/다크 토큰
 
 UniKit UI의 모든 색은 CSS 변수 토큰이에요. 값의 단일 출처는 `packages/unikit/src/theme/tokens.ts`이고, 소비자 프로젝트에서는 [README](../README.md)의 "토큰 받기" 절(`theme` 항목 add 한 줄)로 같은 토큰을 받아요.

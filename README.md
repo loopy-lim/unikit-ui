@@ -100,6 +100,14 @@ bunx shadcn@latest add https://ui.ll3.kr/r/button.json -y
 
 `transpilePackages` · `web:` / `@source` · `theme.json` — see [docs/install.en.md](docs/install.en.md). Registry items: 71 = UI 62 + lib 3 (utils · overlay · menu-nav) + theme 4 + style 2 (animations · editor-prose).
 
+**Agents — MCP server**
+
+```bash
+claude mcp add unikit-bridge -- npx -y @unikit-bridge/mcp
+```
+
+`@unikit-bridge/mcp` is the family server (it lives in the [unikit-bridge portal repo](https://github.com/loopy-lim/unikit), `packages/mcp`). For UniKit UI it bundles the registry snapshot (71 items — full sources plus theme tokens & CSS) and this repo's `llms.txt`, so it runs with zero network at runtime. Tools: `search_items` · `view_item` · `get_install_command` · `get_docs`.
+
 ## Contributing (add a component)
 
 Sources are **two trees** — `packages/unikit/src/` (monorepo) and `registry/` (copy for consumers). Bodies must match; only imports differ.

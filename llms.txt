@@ -5,11 +5,12 @@
 ## 한 벌 소스 원칙 (가장 중요)
 
 - 컴포넌트는 브리지 프리미티브(`View`·`Text`·`Pressable`·`TextInput`·`Image`)와 `className`으로만 작성돼요. 플랫폼 분기(`.web.tsx`·`Platform.select`)는 없어요.
-- 진입점 4개:
+- 진입점 5개:
   - `@unikit-bridge/ui` — 컴포넌트 배럴(61종 export — `chart` 제외).
   - `@unikit-bridge/ui/primitives` — 브리지 프리미티브. package exports 조건이 플랫폼을 갈라요(`react-native` 조건 → RN 프리미티브 + uniwind, `default` → div/span/button/input DOM + 표준 Tailwind CSS v4). 렌더 프리미티브(View·Text·Pressable·TextInput·Image·ScrollView·SectionList·Select·Portal)와 앱 API(Platform·Dimensions·Share·KeyboardAvoidingView — 웹 폴백/RN 재노출)를 같이 내서 화면 코드가 react-native를 직접 import하지 않아도 돼요.
   - `@unikit-bridge/ui/chart` — 차트 렌더러(ChartSurface·ChartPath·ChartRect·ChartLine·ChartText·ChartCircle). 웹은 JSX `<svg>`, 네이티브는 react-native-svg(선택 peer). chart 컴포넌트(ChartContainer 등)는 배럴에서 제외되고 shadcn 레지스트리 복사로 소비해요.
   - `@unikit-bridge/ui/editor` — 마크다운 위지윅 에디터 엔진 `MarkdownEditor`(사이클 95). 웹은 tiptap v3을 직접 마운트(@tiptap/react·starter-kit·markdown·extensions·pm 선택 peer), 네이티브는 WebView에 동봉된 단일 HTML 번들(react-native-webview 선택 peer). props는 initialMarkdown·onChange(markdown)·onStateChange(ready·formats·canUndo·canRedo·chars)·placeholder·toolbar(기본 true — 내장 EditorToolbar), ref는 setMarkdown·runFormat·runCommand. tiptap(ProseMirror)는 DOM 전용이라 네이티브는 WebView 경유예요 — 레지스트리 미등록 npm 전용 진입점.
+  - `@unikit-bridge/ui/behaviors` — 컴포넌트의 상호작용 골격을 재노출하는 조립용 진입점(사이클 100, npm 전용·registry 미등록). overlay 계열(ModalOverlay·AnchoredOverlay·computeOverlayPosition·useOverlayPlacement), menu-nav 계열(useMenuNav·composeMenuNavKeyDown·useMenuItemRef — 방향키·Home/End·타입어헤드 탐색), 브리지 훅(useDrag·useOverlayFocus·useDismiss·useReposition·useScrollLock). 기능 변경 없는 재노출이라 컴포넌트와 같은 웹·네이티브 계약으로 동작해요.
 - 상태 관리는 React state + context(Radix·외부 엔진 없음). 오버레이 계열의 포털·앵커 위치 계산·포커스 트랙은 `packages/unikit/src/lib/overlay.tsx`가 담당해요.
 
 ## 컴포넌트 62종
@@ -45,6 +46,12 @@
 
 - npm 설치: `bun add @unikit-bridge/ui class-variance-authority clsx tailwind-merge` + 엔진(웹 tailwindcss v4 + lucide-react / 네이티브 uniwind·react-native + lucide-react-native). editor 사용 시 웹은 @tiptap/react·starter-kit·markdown·extensions·pm, 네이티브는 react-native-webview를 추가로 설치해요.
 - 소스 복사: shadcn CLI로 로컬 레지스트리에서 add(복사본의 cn은 `@/lib/utils`, 브리지는 `@unikit-bridge/ui/primitives` import). 자세한 절차는 `docs/install.md`.
+
+## MCP 서버 (AI 에이전트 연동)
+
+- `@unikit-bridge/mcp`(별도 npm 패키지) — unikit-bridge 제품군 공용 stdio MCP 서버. UniKit UI 대상으로 레지스트리 스냅샷(71아이템 전문 — UI·lib 소스와 theme 토큰·style CSS 포함)과 이 llms.txt를 번들 동봉해 실행 시 네트워크 접근이 0이에요. 서버 소스는 제품군 포털 저장소(github.com/loopy-lim/unikit)의 packages/mcp에 있어요.
+- 연결: `claude mcp add unikit-bridge -- npx -y @unikit-bridge/mcp`
+- 도구 4종: `search_items`(검색·목록) · `view_item`(소스 전문) · `get_install_command`(npm/복사 두 모드 설치 명령) · `get_docs`(제품 문서 — `{"product":"unikit-ui"}` 지정 시 이 문서 전문).
 
 ## 기여·검증 (에이전트용 상세 지침: AGENTS.md)
 
