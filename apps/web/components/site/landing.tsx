@@ -324,7 +324,7 @@ function Footer() {
   return (
     <footer className="border-t border-border/60 py-10">
       <div className="mx-auto max-w-7xl px-4 text-center text-xs text-muted-foreground sm:px-6 lg:px-8">
-        UniKit UI v0.3 — React, React Native, shadcn-shaped
+        UniKit UI v0.4 — React, React Native, shadcn-shaped
       </div>
     </footer>
   );
