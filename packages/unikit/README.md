@@ -131,11 +131,28 @@ import { ChartSurface, ChartPath, ChartRect } from "@unikit-bridge/ui/chart";
 
 The declarative component itself (`ChartContainer`, `ChartBarSeries`, `ChartTooltip`, …) is consumed via the shadcn registry copy (`components/unikit/chart.tsx`), which imports the renderer above. Web renders standard JSX `<svg>`; native renders through `react-native-svg` (optional peer dependency — install it only when you use charts). Series colors come from the `--chart-1..5` tokens (consumer-owned, shadcn chart standard).
 
+### Editor — separate entry point (engine included)
+
+`@unikit-bridge/ui/editor` ships a full markdown WYSIWYG engine, `MarkdownEditor`, built on tiptap v3 with the same contract as `EditorToolbar` (formats, undo/redo, bridge messages):
+
+```tsx
+import { MarkdownEditor } from "@unikit-bridge/ui/editor";
+
+<MarkdownEditor
+  initialMarkdown="# Hello"
+  onChange={(markdown) => save(markdown)}
+/>;
+```
+
+Web mounts tiptap directly (`@tiptap/react`, `@tiptap/starter-kit`, `@tiptap/markdown`, `@tiptap/extensions`, `@tiptap/pm` — optional peers). Native hosts a bundled single-file tiptap HTML inside a `react-native-webview` (optional peer): ProseMirror is DOM-only, so native cannot render it in RN views directly — the WebView bridge is the supported path. `toolbar` (default `true`) renders the built-in `EditorToolbar`; set it to `false` and use `onStateChange({ ready, formats, canUndo, canRedo, chars })` plus the ref commands (`setMarkdown`, `runFormat`, `runCommand`) to build your own chrome. The prose typography ships via `editor-prose.css` (auto-imported by the web renderer). This entry is npm-only — the registry distributes the toolbar skin (`editor-toolbar`), not the engine bundle.
+
 ### Optional peer dependencies
 
 - **Icons (platform)**: web → `lucide-react`, native → `lucide-react-native` (bridged through `/primitives`).
 - **Form** → `react-hook-form`
 - **Chart** → `react-native-svg`
+- **Editor (web)** → `@tiptap/react`, `@tiptap/starter-kit`, `@tiptap/markdown`, `@tiptap/extensions`, `@tiptap/pm`
+- **Editor (native)** → `react-native-webview`
 
 Install only the peers your platform / features need.
 

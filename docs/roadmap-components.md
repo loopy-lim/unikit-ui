@@ -122,7 +122,7 @@ shadcn/ui(new-york-v4)의 `registry:ui` 61종을 UniKit UI 유니버설(한 벌 
 ## 다음 사이클 제안
 
 1. **패키지 재게시(62종)** — npm 게시분은 0.2.0(28종)을 거쳐 0.3.0에서 shadcn 카탈로그 61종까지 반영했어요(2026-11-14 실측). 레지스트리 공개 호스팅·`homepage`(`https://ui.ll3.kr/r/registry.json`)는 반영됨. 다음 게시에 자작 `EditorToolbar`를 포함한 62종 상태를 npm에 맞추면 돼요.
-2. **쇼케이스 전시 확장** — 웹 `/showcase`는 62종 카탈로그·사이드바 TOC·컴포넌트별 Preview/Code/설치 스니펫(`/showcase/[name]`)으로 전환했어요. Expo는 기존 전체 스크롤 데모를 유지하고, 웹 kitchen-sink(`/showcase/kitchen-sink`)가 그와 같은 구성을 보존해요.
+2. **쇼케이스 전시 확장** — 웹 `/showcase`는 62종 카탈로그·사이드바 TOC·컴포넌트별 Preview/Code/설치 스니펫(`/showcase/[name]`)으로 전환했어요. Expo는 기존 전체 스크롤 데모를 유지하고, 웹 kitchen-sink(`/showcase/kitchen-sink`)가 그와 같은 구성을 보존해요. → 2026-11-15 폐지: 카탈로그가 그 역할을 대신하게 되어 `/components/kitchen-sink` 페이지와 내비게이션·문서 링크를 삭제했어요(전체 구성 데모는 Expo 쇼케이스가 유지).
 3. **AI 계층** — llms.txt·AGENTS.md는 이번 사이클에 정비됐어요. shadcn MCP(7도구) 대응 MCP 서버 착수 여부 결정.
 4. **미지원 기능 중 수요 상위** — 오버레이 애니메이션(웹 한정 `web:` 클래스), 네이티브 카드 키보드 탐색(사이클 90 잔여). select·메뉴 화살표키 탐색·타입어헤드·chart 유동 폭은 사이클 90과 그 후속에서 해소됐어요.
 5. **shadcn 2026-10 신규(trace·code-block)·문서 전용 항목**의 편성 결정(카탈로그 61종은 완료 — 신규 항목은 별도 티어 판단).

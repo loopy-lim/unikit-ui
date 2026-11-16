@@ -5,16 +5,17 @@
 ## 한 벌 소스 원칙 (가장 중요)
 
 - 컴포넌트는 브리지 프리미티브(`View`·`Text`·`Pressable`·`TextInput`·`Image`)와 `className`으로만 작성돼요. 플랫폼 분기(`.web.tsx`·`Platform.select`)는 없어요.
-- 진입점 3개:
+- 진입점 4개:
   - `@unikit-bridge/ui` — 컴포넌트 배럴(61종 export — `chart` 제외).
   - `@unikit-bridge/ui/primitives` — 브리지 프리미티브. package exports 조건이 플랫폼을 갈라요(`react-native` 조건 → RN 프리미티브 + uniwind, `default` → div/span/button/input DOM + 표준 Tailwind CSS v4). 렌더 프리미티브(View·Text·Pressable·TextInput·Image·ScrollView·SectionList·Select·Portal)와 앱 API(Platform·Dimensions·Share·KeyboardAvoidingView — 웹 폴백/RN 재노출)를 같이 내서 화면 코드가 react-native를 직접 import하지 않아도 돼요.
   - `@unikit-bridge/ui/chart` — 차트 렌더러(ChartSurface·ChartPath·ChartRect·ChartLine·ChartText·ChartCircle). 웹은 JSX `<svg>`, 네이티브는 react-native-svg(선택 peer). chart 컴포넌트(ChartContainer 등)는 배럴에서 제외되고 shadcn 레지스트리 복사로 소비해요.
+  - `@unikit-bridge/ui/editor` — 마크다운 위지윅 에디터 엔진 `MarkdownEditor`(사이클 95). 웹은 tiptap v3을 직접 마운트(@tiptap/react·starter-kit·markdown·extensions·pm 선택 peer), 네이티브는 WebView에 동봉된 단일 HTML 번들(react-native-webview 선택 peer). props는 initialMarkdown·onChange(markdown)·onStateChange(ready·formats·canUndo·canRedo·chars)·placeholder·toolbar(기본 true — 내장 EditorToolbar), ref는 setMarkdown·runFormat·runCommand. tiptap(ProseMirror)는 DOM 전용이라 네이티브는 WebView 경유예요 — 레지스트리 미등록 npm 전용 진입점.
 - 상태 관리는 React state + context(Radix·외부 엔진 없음). 오버레이 계열의 포털·앵커 위치 계산·포커스 트랙은 `packages/unikit/src/lib/overlay.tsx`가 담당해요.
 
 ## 컴포넌트 62종
 
 - 기초(5): button, card, input, label, badge
-- 폼 입력(14): checkbox, radio-group, switch, toggle, toggle-group, textarea, select, native-select, slider, calendar, input-otp, input-group, form(react-hook-form 선택 peer), editor-toolbar(tiptap 툴바 — 자작, 엔진은 앱 소유)
+- 폼 입력(14): checkbox, radio-group, switch, toggle, toggle-group, textarea, select, native-select, slider, calendar, input-otp, input-group, form(react-hook-form 선택 peer), editor-toolbar(tiptap 툴바 — 자작. 엔진은 `@unikit-bridge/ui/editor` 진입점 또는 앱 소유)
 - 오버레이·메뉴(13): dialog, alert-dialog, sheet, drawer, popover, hover-card, tooltip, dropdown-menu, context-menu, command, combobox, menubar, navigation-menu
 - 피드백·데이터(7): alert, avatar, empty, skeleton, table, spinner, sonner
 - 데이터 시각화·복합(3): chart, carousel, sidebar
@@ -37,11 +38,12 @@
 - hover 개방은 웹에서 지원(tooltip·hover-card hover/focus 진입, navigation-menu 200ms 지연·인접 전환, menubar 열린 상태 hover 전환, dropdown·context 서브메뉴 hover). 터치 기기는 눌림 폴백(사이클 90).
 - select·메뉴 계열은 웹에서 화살표키·Home/End 탐색 지원(사이클 90)과 타입어헤드(글자 입력 점프 — radix getNextMatch 이식, 사이클 90 후속). 네이티브 카드 키보드 탐색은 미지원(RN View에 키 이벤트 없음). asChild 미지원(트리거는 Pressable 고정).
 - chart는 유동 폭(width="fluid") 양 플랫폼 지원(사이클 90). 뷰포트 비례 높이·다크 전환·recharts 고급 차트(스택·극좌표 등) 미지원. 시리즈 색은 소비자 앱의 `--chart-1..5` 토큰.
+- editor(MarkdownEditor): 네이티브는 WebView 경유(tiptap이 DOM 전용이라 네이티브 뷰 직접 렌더 불가). 확장 구성은 고정(StarterKit+Markdown+Placeholder — 소비자 확장 주입 미지원), 네이티브 캔버스 빈 곳 탭 삽입은 tiptap 맵핑 로드맵(사이클 94 잔여).
 - 전체 목록: `docs/roadmap-components.md`의 미지원 기능 로드맵. 각 컴포넌트 소스 머리 주석에 포팅 판단·한계가 기록돼 있어요.
 
 ## 소비 방식
 
-- npm 설치: `bun add @unikit-bridge/ui class-variance-authority clsx tailwind-merge` + 엔진(웹 tailwindcss v4 + lucide-react / 네이티브 uniwind·react-native + lucide-react-native).
+- npm 설치: `bun add @unikit-bridge/ui class-variance-authority clsx tailwind-merge` + 엔진(웹 tailwindcss v4 + lucide-react / 네이티브 uniwind·react-native + lucide-react-native). editor 사용 시 웹은 @tiptap/react·starter-kit·markdown·extensions·pm, 네이티브는 react-native-webview를 추가로 설치해요.
 - 소스 복사: shadcn CLI로 로컬 레지스트리에서 add(복사본의 cn은 `@/lib/utils`, 브리지는 `@unikit-bridge/ui/primitives` import). 자세한 절차는 `docs/install.md`.
 
 ## 기여·검증 (에이전트용 상세 지침: AGENTS.md)

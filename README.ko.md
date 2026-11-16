@@ -43,7 +43,6 @@ cd apps/web && bun run dev -p 3000
 | <http://localhost:3000/> | 소개 랜딩 |
 | <http://localhost:3000/components> | 컴포넌트 카탈로그 |
 | <http://localhost:3000/components/button> | 컴포넌트 문서 예 |
-| <http://localhost:3000/components/kitchen-sink> | 전체 스크롤 데모 |
 | <http://localhost:3000/blocks> | 블록(조합 화면) |
 | <http://localhost:3000/r/registry.json> | shadcn 레지스트리 |
 

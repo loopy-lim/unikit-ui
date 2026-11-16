@@ -5,24 +5,25 @@ UniKit UI 저장소에서 작업하는 코딩 에이전트(Claude Code 등)를 �
 ## 저장소 구조
 
 ```text
-unikit-ui/  (bun 워크스페이스: apps/*, apps/mobile/web-editor, packages/*)
+unikit-ui/  (bun 워크스페이스: apps/*, packages/*, packages/unikit/editor-web-view)
 ├── apps/expo/                  # Expo 데모 앱(쇼케이스·블록, uniwind 엔진)
 ├── apps/web/                   # Next.js 데모 앱(랜딩 /, /components, /blocks, 레지스트리 /r/)
 ├── apps/desktop/               # Tauri 2 도그푸딩 앱(UniKit Markdown — tiptap 위지윅, tauri fs·dialog)
-├── apps/mobile/                # Expo RN 도그푸딩 앱(UniKit Markdown — WebView↔tiptap 브리지, expo-file-system)
-│   └── web-editor/             # WebView용 tiptap 단일 HTML 번들(vite-plugin-singlefile — bun run build:editor)
+├── apps/mobile/                # Expo RN 도그푸딩 앱(UniKit Markdown — MarkdownEditor 진입점 소비, expo-file-system)
 ├── packages/unikit/            # @unikit-bridge/ui — 본체
 │   ├── src/bridge/             # 브리지 — web.tsx(default 조건)·native.tsx(react-native 조건)·types.ts(공통 계약)
 │   ├── src/components/         # 컴포넌트 62종(배럴 진입 대상 61종 + chart; shadcn 이식 61 + 자작 editor-toolbar)
 │   ├── src/chart/              # 차트 렌더러(web.tsx·native.tsx·types.ts) — @unikit-bridge/ui/chart 진입점
+│   ├── src/editor/             # 마크다운 에디터 엔진(web.tsx·native.tsx·types.ts·colors.ts) — @unikit-bridge/ui/editor 진입점(npm 전용, 배럴·registry 미등록)
 │   ├── src/lib/overlay.tsx     # 통합 오버레이 훈(포털·백드롭·포커스 관리·앵커 위치 계산)
 │   ├── src/lib/utils.ts        # cn(clsx + tailwind-merge)
 │   ├── src/theme/              # tokens.ts(디자인 토큰 단일 출처)·Provider
-│   ├── src/index.ts            # npm 배럴(chart는 제외)
+│   ├── src/index.ts            # npm 배럴(chart·editor는 제외)
 │   ├── registry/ui/            # 소비자 복사용 소스 트리 — 본문은 src와 동일, import만 @/lib/utils 기준
 │   ├── registry/lib/           # 소비자 복사용 라이브러리 사본(utils·overlay·menu-nav) — src/lib와 본문 동일
 │   ├── registry.json           # shadcn 규격 레지스트리(71 아이템 = UI 62 + lib 3(utils·overlay·menu-nav) + theme 4 + style 2(animations·editor-prose))
-│   ├── scripts/                # generate:design·audit:design·check:consumer
+│   ├── editor-web-view/        # 네이티브 WebView용 tiptap 단일 HTML 번들(vite-plugin-singlefile — 루트 bun run --filter @unikit-bridge/ui build:editor가 dist/index.html을 src/editor/editor-html.ts로 인라인)
+│   ├── scripts/                # generate:design·audit:design·check:consumer·sync-editor-html
 │   └── docs/tokens.md          # 생성된 토큰 카탈로그(직접 편집 금지)
 ├── shadcn-ref/                 # shadcn 원본 참조(이식 원본 — 수정 금지)
 └── docs/                       # install.md·components.md·roadmap-components.md·expo-go.md·sdd/
@@ -41,7 +42,8 @@ bun run generate:design            # 토큰 변경 시에만: globals.css·regis
 ```
 
 - 도그푸딩 앱(UniKit Markdown): 웹 UI 확인은 `cd apps/desktop && bun x vite preview` 후 브라우저. 데스크톱 패키징은 `cd apps/desktop && bun run tauri build`(Rust 필요).
-- 모바일 에뮬레이터 실행: `cd apps/mobile && bun run build:editor` 후 `cd android && ./gradlew assembleDebug -PreactNativeArchitectures=x86_64` → `adb -s emulator-5554 install -r app/build/outputs/apk/debug/app-debug.apk` → Metro `bun x expo start --dev-client` + `adb -s emulator-5554 reverse tcp:8081 tcp:8081`. 주의: 폰 등 여러 기기가 붙어 있으면 `expo run:android`의 ANDROID_SERIAL 지정이 gradle 설치를 못 막아 실제 기기에 설치될 수 있다(2026-11-14 학습) — 빌드와 설치를 분리해 실행한다.
+- 에디터 번들 재생성: `packages/unikit`의 `bun run build:editor`(editor-web-view 빌드 → dist/index.html을 src/editor/editor-html.ts로 인라인 — 생성물이므로 직접 편집 금지). apps/mobile의 `build:editor`는 이 명령의 alias예요.
+- 모바일 에뮬레이터 실행: `cd packages/unikit && bun run build:editor` 후 `cd apps/mobile`의 `cd android && ./gradlew assembleDebug -PreactNativeArchitectures=x86_64` → `adb -s emulator-5554 install -r app/build/outputs/apk/debug/app-debug.apk` → Metro `bun x expo start --dev-client` + `adb -s emulator-5554 reverse tcp:8081 tcp:8081`. 주의: 폰 등 여러 기기가 붙어 있으면 `expo run:android`의 ANDROID_SERIAL 지정이 gradle 설치를 못 막아 실제 기기에 설치될 수 있다(2026-11-14 학습) — 빌드와 설치를 분리해 실행한다.
 
 - `audit:design`은 위반 1건이면 exit 1로 실패해요. 머리 주석의 원본 클래스 인용은 주석 라인 제외로 스캔해요(오탐 방지).
 - 웹 데모 빌드 확인: `cd apps/web && bun run build`(prebuild가 `public/r/*.json` 정적 생성 + `output: "export"`). 레지스트리 확인: `bun x next dev -p 3000` 후 `/r/registry.json`. Cloudflare Pages 배포는 `apps/web/DEPLOY.md`.

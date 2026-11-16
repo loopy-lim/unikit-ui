@@ -21,6 +21,15 @@ bun add lucide-react
 bun add lucide-react-native
 ```
 
+마크다운 에디터 엔진(`@unikit-bridge/ui/editor` 진입점의 `MarkdownEditor`)을 쓸 때만 플랫폼별 엔진 peer를 추가해요(전부 선택 의존 — [components.md](components.md) «에디터 엔진» 절 참고):
+
+```bash
+# 웹
+bun add @tiptap/react @tiptap/starter-kit @tiptap/markdown @tiptap/extensions @tiptap/pm
+# 네이티브(Expo 등)
+bun add react-native-webview
+```
+
 그다음 내 앱의 스타일링 엔진 쪽을 준비해요.
 
 - **웹(Next.js 등)** — Tailwind CSS v4가 설정된 프로젝트면 돼요(create-next-app 기본). 전역 CSS(예: `app/globals.css`)에 아래를 추가하고:

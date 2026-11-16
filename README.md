@@ -43,7 +43,6 @@ cd apps/web && bun run dev -p 3000
 | <http://localhost:3000/> | Landing |
 | <http://localhost:3000/components> | Component catalog |
 | <http://localhost:3000/components/button> | Component docs example |
-| <http://localhost:3000/components/kitchen-sink> | Full scroll demo |
 | <http://localhost:3000/blocks> | Blocks (composed screens) |
 | <http://localhost:3000/r/registry.json> | shadcn registry |
 

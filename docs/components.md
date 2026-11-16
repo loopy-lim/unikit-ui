@@ -471,7 +471,7 @@ import { Dialog, DialogContent, DialogTrigger, DialogTitle } from "@unikit-bridg
 
 ## 자작 컴포넌트 — EditorToolbar (사이클 94, 2026-11-14)
 
-shadcn 원본 없이 UniKit UI에서 직접 만든 62번째 컴포넌트예요. tiptap(ProseMirror) 위지윅 에디터의 **툴바 스킨과 포맷 계약**만 패키지가 갖고, 에디터 엔진(tiptap 인스턴스·WebView)은 앱이 소유해요 — DOM 전용인 ProseMirror를 라이브러리가 통째로 감싸면 네이티브용 WebView 번들까지 떠안게 되기 때문이에요(chart의 "엔진은 peerDep" 절충과 같은 결론).
+shadcn 원본 없이 UniKit UI에서 직접 만든 62번째 컴포넌트예요. tiptap(ProseMirror) 위지윅 에디터의 **툴바 스킨과 포맷 계약**만 패키지가 갖고, 에디터 엔진(tiptap 인스턴스·WebView)은 앱이 소유해요 — DOM 전용인 ProseMirror를 라이브러리가 통째로 감싸면 네이티브용 WebView 번들까지 떠안게 되기 때문이에요(chart의 "엔진은 peerDep" 절충과 같은 결론). 사이클 95부터는 이 절충을 한 단계 진화시킨 **`@unikit-bridge/ui/editor` 진입점**(아래 절)이 엔진까지 패키지가 제공해요 — 엔진을 직접 소유하던 기존 경로와 툴바 스킨 단독 경로 모두 유효해요.
 
 ### 구성
 
@@ -480,7 +480,7 @@ shadcn 원본 없이 UniKit UI에서 직접 만든 62번째 컴포넌트예요. 
 | `EditorToolbar` | undo/redo 버튼 + 글자 서식(bold·italic·strike)·블록 서식(h1·h2·불릿·번호·인용·코드) 두 ToggleGroup. 두 그룹이 같은 `formats` 상태를 나눠 쓰기에 값 diff(눌린 항목 하나 산출)를 내부에서 처리해요 |
 | `activeFormats(editor)` | 커서 위치의 활성 서식 9종을 산출하는 순수 함수. 매개변수는 `isActive`만 구조 타이핑(tiptap 런타임 의존 0) |
 | `EDITOR_FORMATS`·`EditorFormat`·`EditorCommand` | 툴바↔엔진 계약 값·타입 |
-| `RnToWebViewMessage`·`WebViewToRnMessage` | RN↔WebView 에디터 브리지 메시지 타입(모바일 도그푸딩 앱이 사용) |
+| `RnToWebViewMessage`·`WebViewToRnMessage` | RN↔WebView 에디터 브리지 메시지 타입(사이클 95에 `set` 문서 교체·`chars` 동반을 추가 — `@unikit-bridge/ui/editor` 네이티브 렌더러와 도그푸딩 앱이 사용) |
 
 ### Props
 
@@ -495,7 +495,7 @@ shadcn 원본 없이 UniKit UI에서 직접 만든 62번째 컴포넌트예요. 
 
 ### 본문 타이포그래피 — editor-prose
 
-에디터 본문(제목·목록·인용·코드 블록 등) 스타일은 컴포넌트가 아니라 **`editor-prose` style 아이템**이 담당해요. `.tiptap` 선택자 규칙이 시맨틱 토큰(`hsl(var(--*))`)만으로 구성돼 있고, npm 사용자는 `import "@unikit-bridge/ui/editor-prose.css"` 한 줄로, 레지스트리 사용자는 `editor-prose` add로 받아요(`editor-toolbar` 레지스트리 항목에도 포함되어 있어요). 도그푸딩 앱(UniKit Markdown 데스크톱·모바일)이 같은 소스를 써서 두 앱의 본문 스타일이 어긋나지 않아요.
+에디터 본문(제목·목록·인용·코드 블록 등) 스타일은 컴포넌트가 아니라 **`editor-prose` style 아이템**이 담당해요. `.tiptap` 선택자 규칙이 시맨틱 토큰(`hsl(var(--*))`)만으로 구성돼 있고, npm 사용자는 `import "@unikit-bridge/ui/editor-prose.css"` 한 줄로, 레지스트리 사용자는 `editor-prose` add로 받아요(`editor-toolbar` 레지스트리 항목에도 포함되어 있어요). `@unikit-bridge/ui/editor`의 웹 렌더러는 이 CSS를 자동으로 import해요(엔진 진입점 사용자는 별도 import가 불필요해요). 도그푸딩 앱(UniKit Markdown 데스크톱·모바일)이 같은 소스를 써서 두 앱의 본문 스타일이 어긋나지 않아요.
 
 ```tsx
 import { EditorToolbar, activeFormats } from "@unikit-bridge/ui";
@@ -523,6 +523,46 @@ const state = useEditorState({
   onCommand={runCommand}
 />
 ```
+
+---
+
+## 에디터 엔진 — MarkdownEditor (`@unikit-bridge/ui/editor`, 사이클 95, 2026-11-15)
+
+마크다운 위지윅 에디터 엔진 전체를 패키지가 제공하는 **npm 전용 진입점**이에요(chart 진입점과 같은 exports 조건 분기 구조를 따라요). 웹은 tiptap v3을 직접 마운트하고, 네이티브는 동봉된 단일 파일 HTML 번들을 WebView에 띄워요 — ProseMirror가 DOM 전용이라 네이티브 뷰로 직접 렌더하는 방법은 없어요(이 경유가 10tap 등 상용 에디터의 표준 경로예요).
+
+```tsx
+import { MarkdownEditor } from "@unikit-bridge/ui/editor";
+
+<MarkdownEditor
+  ref={editorRef}                     // 선택 — setMarkdown·runFormat·runCommand
+  initialMarkdown="# 제목"
+  placeholder="내용을 입력하세요"
+  onChange={(markdown) => save(markdown)}
+  onStateChange={({ ready, formats, canUndo, canRedo, chars }) => …}
+/>;
+```
+
+### Props
+
+| prop | 타입 | 설명 |
+|---|---|---|
+| `initialMarkdown` | `string` | 초깃값(마운트 시 1회 — 이후 변경은 ref의 `setMarkdown` 사용) |
+| `onChange` | `(markdown: string) => void` | 본문 변경마다 호출(저장 트리거용) |
+| `onStateChange` | `(state: MarkdownEditorState) => void` | `ready`·`formats`(활성 서식)·`canUndo`·`canRedo`·`chars` — 커스텀 툴바·글자 수 표시에 사용 |
+| `placeholder` | `string` | 빈 문서 안내 문구(교체 시 에디터를 다시 만들지 않고 장식만 갱신) |
+| `toolbar` | `boolean` | 기본 `true` — 내장 `EditorToolbar` 렌더. `false`면 본문만(도그푸딩 앱처럼 앱 소유 크롬) |
+| `className` | `string` | 루트 래퍼 추가 클래스 |
+
+ref(`MarkdownEditorHandle`)는 `setMarkdown(markdown)`(문서 교체 — 히스토리 초기화, `onChange` 미발화), `runFormat(format)`(bold·h1 등 9종 토글), `runCommand("undo"|"redo")` 세 가지예요. 포맷·명령 값은 `EditorToolbar`와 같은 `EDITOR_FORMATS` 계약을 공유해요.
+
+### 성능 계약
+
+네이티브 브리지는 사이클 94의 잦은 통신 최적화를 그대로 이어받아요 — `change`(markdown+`chars` 동반)는 키 입력마다, `state`(서식·undo/redo 변화 시만, 디듀프)는 상태가 바뀔 때만 건너요. 글자 수(`chars`)는 매 입력 동반되므로 추가 메시지 없이 최신값을 유지해요.
+
+### 소비·한계
+
+- 설치: npm만 가능해요(엔진 HTML 번들은 빌드 산출물이라 레지스트리 소스 복사로 배포할 수 없어요 — 웹 카탈로그의 editor 항목은 "npm 전용"으로 표기돼요). 웹은 `@tiptap/react`·`@tiptap/starter-kit`·`@tiptap/markdown`·`@tiptap/extensions`·`@tiptap/pm`, 네이티브는 `react-native-webview`를 추가 설치해요(전부 선택 peer — [install.md](install.md) 참고).
+- 확장 구성은 고정(StarterKit + Markdown + Placeholder)이에요. 소비자 확장 주입은 미지원이고, 네이티브 캔버스 빈 곳 탭 삽입은 tiptap 맵핑 로드맵이에요.
 
 ---
 
