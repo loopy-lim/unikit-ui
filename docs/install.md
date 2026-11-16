@@ -65,7 +65,7 @@ export default function Home() {
 }
 ```
 
-> **게시분 참고** — npm `@unikit-bridge/ui` 0.3.0 게시분은 shadcn 카탈로그 61종 시점이에요. 저장소의 62종(EditorToolbar 포함) 상태는 다음 게시까지 아래 방법 2(레지스트리 복사)로 쓸 수 있어요.
+> **게시분 참고** — npm `@unikit-bridge/ui` 0.4.0 게시분(2026-11-16)은 62종(EditorToolbar 포함)과 에디터 엔진 진입점 `@unikit-bridge/ui/editor`까지 반영했어요. 컴포넌트 소스를 직접 소유·수정하고 싶을 때는 아래 방법 2(레지스트리 복사)를 쓰세요 — 에디터 진입점은 엔진 HTML 번들이 빌드 산출물이라 npm 설치로만 제공돼요.
 
 ## 방법 2 — shadcn CLI로 소스 복사
 

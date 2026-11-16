@@ -56,7 +56,7 @@ export default function Home() {
 }
 ```
 
-> **Publish note** — npm `@unikit-bridge/ui` 0.3.0 ships the 61-component shadcn catalog. Use option 2 for the full 62 (including `EditorToolbar`) until the next publish.
+> **Publish note** — npm `@unikit-bridge/ui` 0.4.0 (2026-11-16) ships all 62 components (including `EditorToolbar`) plus the `@unikit-bridge/ui/editor` engine entry point. Use option 2 (registry copy) when you want to own the component source — the editor entry point is npm-only, since its engine HTML bundle is a build artifact.
 
 ## Option 2 — copy sources with shadcn CLI
 

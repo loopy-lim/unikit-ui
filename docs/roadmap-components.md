@@ -117,11 +117,11 @@ shadcn/ui(new-york-v4)의 `registry:ui` 61종을 UniKit UI 유니버설(한 벌 
 - **Astryx**(Meta) — ★20,252·주간 다운로드 약 66만. `@astryxdesign/native` v0.1.0(canary)은 SwiftUI 네이티브 뷰 + JS 코어(JSON 브리지) 실험 — "React Native and Android bindings are not built yet". UniKit UI(React 단일 소스 + RN 브리지)과는 접근 자체가 달라요.
 - **react-native-reusables** — ★8,720, 마지막 푸시 2026-09-27(약 6주 공백). nativewind·uniwind 이중 발행, 인증 폼 패턴 14항목이 컴포넌트와 혼재.
 - **@aniui·@tetra-ui**(신규 확인) — shadcn 커뮤니티 디렉터리에 등재된 RN 전용 경쟁자예요. @aniui는 93종(uniwind/NativeWind)이지만 현재 디렉터리 헬스 unavailable(30일 가용성 3%)·숨김 처리, @tetra-ui는 45종 healthy예요. 둘 다 RN 전용이라 웹+RN 단일 소스 포지션엔 영향이 없어요(2026-11-10 실측 — docs/sdd/51-research.md §4.6).
-- **UniKit UI 위치** — "shadcn 카탈로그 전량 + 웹·네이티브 단일 소스" 주장이 카탈로그 규모(61/61)에서 실제로 성립하는 시점이 됐어요. 레지스트리 공개 호스팅은 <https://ui.ll3.kr>에 올라가 있어요. 남은 갭은 shadcn 디렉터리 등재·AI 계층·게시 물량(npm 0.3.0이 61종까지 반영 — 자작 `EditorToolbar`는 다음 게시 대기)이에요.
+- **UniKit UI 위치** — "shadcn 카탈로그 전량 + 웹·네이티브 단일 소스" 주장이 카탈로그 규모(61/61)에서 실제로 성립하는 시점이 됐어요. 레지스트리 공개 호스팅은 <https://ui.ll3.kr>에 올라가 있어요. 남은 갭은 shadcn 디렉터리 등재·AI 계층이에요(게시 물량은 npm 0.4.0이 62종·editor 진입점까지 반영 — 2026-11-16 게시).
 
 ## 다음 사이클 제안
 
-1. **패키지 재게시(62종)** — npm 게시분은 0.2.0(28종)을 거쳐 0.3.0에서 shadcn 카탈로그 61종까지 반영했어요(2026-11-14 실측). 레지스트리 공개 호스팅·`homepage`(`https://ui.ll3.kr/r/registry.json`)는 반영됨. 다음 게시에 자작 `EditorToolbar`를 포함한 62종 상태를 npm에 맞추면 돼요.
+1. **패키지 재게시(62종) — 완료(0.4.0, 2026-11-16)** — npm 게시분은 0.2.0(28종)을 거쳐 0.3.0에서 shadcn 카탈로그 61종(2026-11-14 실측), 0.4.0에서 62종(EditorToolbar 포함)과 에디터 엔진 진입점 `@unikit-bridge/ui/editor`까지 반영했어요. 레지스트리 공개 호스팅·`homepage`(`https://ui.ll3.kr/r/registry.json`)는 반영됨.
 2. **쇼케이스 전시 확장** — 웹 `/showcase`는 62종 카탈로그·사이드바 TOC·컴포넌트별 Preview/Code/설치 스니펫(`/showcase/[name]`)으로 전환했어요. Expo는 기존 전체 스크롤 데모를 유지하고, 웹 kitchen-sink(`/showcase/kitchen-sink`)가 그와 같은 구성을 보존해요. → 2026-11-15 폐지: 카탈로그가 그 역할을 대신하게 되어 `/components/kitchen-sink` 페이지와 내비게이션·문서 링크를 삭제했어요(전체 구성 데모는 Expo 쇼케이스가 유지).
 3. **AI 계층** — llms.txt·AGENTS.md는 이번 사이클에 정비됐어요. shadcn MCP(7도구) 대응 MCP 서버 착수 여부 결정.
 4. **미지원 기능 중 수요 상위** — 오버레이 애니메이션(웹 한정 `web:` 클래스), 네이티브 카드 키보드 탐색(사이클 90 잔여). select·메뉴 화살표키 탐색·타입어헤드·chart 유동 폭은 사이클 90과 그 후속에서 해소됐어요.
