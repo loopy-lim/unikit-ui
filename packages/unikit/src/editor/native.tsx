@@ -19,6 +19,7 @@ import {
   useCallback,
   useEffect,
   useImperativeHandle,
+  useMemo,
   useRef,
   useState,
 } from "react";
@@ -261,6 +262,18 @@ const MarkdownEditor = forwardRef<MarkdownEditorHandle, MarkdownEditorProps>(
     // 배경색은 토큰에서 조립(lib/editor 값 성형 — 원색 리터럴 금지, audit b).
     const backgroundColor = editorBackground(colorScheme);
 
+    // 첫 페인트 다크 — 번들 HTML의 :root는 라이트 기본값이라 init 왕복 전에 흰
+    // 문서가 그려진다(다크 모드 화이트 플래시, 2026-11-16 이미지 계측으로 확정).
+    // 마운트 시점에 <html>에 dark 클래스를 심어 문서 첫 페인트부터 테마색이 나오게
+    // 한다. 이후 전환은 theme 메시지(applyTheme과 같은 클래스라 멱등)가 담당.
+    const html = useMemo(
+      () =>
+        colorScheme === "dark"
+          ? EDITOR_HTML.replace("<html ", '<html class="dark" ')
+          : EDITOR_HTML,
+      [colorScheme],
+    );
+
     return (
       <View className={cn("flex flex-col", className)}>
         {toolbar ? (
@@ -275,7 +288,7 @@ const MarkdownEditor = forwardRef<MarkdownEditorHandle, MarkdownEditorProps>(
         ) : null}
         <WebView
           ref={webRef}
-          source={{ html: EDITOR_HTML }}
+          source={{ html }}
           onMessage={onMessage}
           onLoadStart={() => patchState({ ready: false })}
           onContentProcessDidTerminate={handleWebViewCrash}
