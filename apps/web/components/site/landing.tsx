@@ -314,9 +314,6 @@ function TeaserSection() {
           <Link href="/blocks" className={CTA_SECONDARY_CLASS}>
             블록 데모 보기
           </Link>
-          <Link href="/components/kitchen-sink" className={CTA_SECONDARY_CLASS}>
-            한 페이지 전체 데모
-          </Link>
         </div>
       </div>
     </section>

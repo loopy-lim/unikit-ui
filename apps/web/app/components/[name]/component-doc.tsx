@@ -128,15 +128,19 @@ export function ComponentDoc({ name }: { name: string }) {
           <View className="flex flex-row flex-wrap items-center gap-2 pt-1">
             <Badge variant="secondary">{CATEGORY_LABEL[item.category]}</Badge>
             <Badge variant="outline">웹 · RN 공용</Badge>
-            <a
-              href={`/r/${item.name}.json`}
-              target="_blank"
-              rel="noreferrer"
-              className="site-focusable inline-flex items-center gap-1 rounded-md border border-border px-2.5 py-0.5 font-sans text-xs font-medium text-muted-foreground transition-colors hover:border-foreground/25 hover:text-foreground"
-            >
-              <span>Registry JSON</span>
-              <ExternalLink className="size-3" />
-            </a>
+            {item.install !== "npm" ? (
+              <a
+                href={`/r/${item.name}.json`}
+                target="_blank"
+                rel="noreferrer"
+                className="site-focusable inline-flex items-center gap-1 rounded-md border border-border px-2.5 py-0.5 font-sans text-xs font-medium text-muted-foreground transition-colors hover:border-foreground/25 hover:text-foreground"
+              >
+                <span>Registry JSON</span>
+                <ExternalLink className="size-3" />
+              </a>
+            ) : (
+              <Badge variant="outline">npm 전용</Badge>
+            )}
           </View>
         </View>
 
@@ -170,7 +174,7 @@ export function ComponentDoc({ name }: { name: string }) {
           )}
         </section>
 
-        <InstallSnippet name={item.name} />
+        <InstallSnippet name={item.name} install={item.install} />
 
         {examples.length > 0 ? (
           <section

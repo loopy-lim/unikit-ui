@@ -29,6 +29,7 @@ const DEMO_LOADERS: Record<string, DemoLoader> = {
   drawer: () => import("./overlay-demos").then((m) => m.drawerDemo),
   "dropdown-menu": () => import("./overlay-demos").then((m) => m.dropdownMenuDemo),
   "editor-toolbar": () => import("./form-controls-demos").then((m) => m.editorToolbarDemo),
+  editor: () => import("./editor-demos").then((m) => m.editorDemo),
   empty: () => import("./core-demos").then((m) => m.emptyDemo),
   field: () => import("./core-demos").then((m) => m.fieldDemo),
   form: () => import("./form-extended-demos").then((m) => m.formDemo),

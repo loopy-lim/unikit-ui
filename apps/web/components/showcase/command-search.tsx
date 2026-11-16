@@ -23,7 +23,6 @@ import { PRESET_META, useSiteTheme, type SiteThemePreset } from "../site/site-th
 
 const BLOCK_ITEMS = [
   { href: "/components", label: "전체 컴포넌트 목록", keywords: ["components", "catalog"] },
-  { href: "/components/kitchen-sink", label: "Kitchen sink", keywords: ["kitchen", "all", "demo"] },
   { href: "/blocks", label: "Blocks 목록", keywords: ["blocks", "templates"] },
   { href: "/blocks/assistant", label: "AI 어시스턴트 블록", keywords: ["assistant", "chat", "ai"] },
   { href: "/blocks/login", label: "로그인 블록", keywords: ["login", "auth"] },

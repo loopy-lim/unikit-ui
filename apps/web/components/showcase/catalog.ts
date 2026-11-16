@@ -1,5 +1,5 @@
 /**
- * 쇼케이스 카탈로그 — registry.json UI 62종 메타 + 사이드바 그룹.
+ * 쇼케이스 카탈로그 — registry.json UI 62종 메타 + 사이드바 그룹 + npm 전용 진입점.
  * 설명은 소비자용 한 줄(레지스트리 description 축약).
  */
 export type ShowcaseCategory =
@@ -17,6 +17,11 @@ export type CatalogItem = {
   title: string;
   description: string;
   category: ShowcaseCategory;
+  /**
+   * 설치 경로 — "registry"(기본)는 shadcn add, "npm"은 패키지 설치.
+   * npm 전용 진입점(editor — 엔진 번들은 소스 복사로 배포할 수 없다)만 지정한다.
+   */
+  install?: "registry" | "npm";
 };
 
 export const CATEGORY_LABEL: Record<ShowcaseCategory, string> = {
@@ -71,6 +76,7 @@ export const catalog: CatalogItem[] = [
   { name: "select", title: "Select", description: "커스텀 셀렉트 메뉴.", category: "forms" },
   { name: "combobox", title: "Combobox", description: "검색 가능한 선택 상자.", category: "forms" },
   { name: "editor-toolbar", title: "Editor Toolbar", description: "tiptap 위지윅 에디터 툴바.", category: "forms" },
+  { name: "editor", title: "Editor", description: "마크다운 위지윅 에디터 엔진(npm 전용).", category: "forms", install: "npm" },
   // feedback
   { name: "alert", title: "Alert", description: "상황 알림 박스.", category: "feedback" },
   { name: "progress", title: "Progress", description: "진행률 표시 바.", category: "feedback" },

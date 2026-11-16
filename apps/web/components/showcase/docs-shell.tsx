@@ -85,12 +85,6 @@ function DocsHeader({ children }: { children: ReactNode }) {
             <Link href="/blocks" className={navLinkClass(onBlocks)}>
               Blocks
             </Link>
-            <Link
-              href="/components/kitchen-sink"
-              className={navLinkClass(pathname === "/components/kitchen-sink")}
-            >
-              Kitchen sink
-            </Link>
           </View>
         </View>
         <View className="flex flex-row items-center gap-2 sm:gap-3">
@@ -227,7 +221,6 @@ function DocsMobileNav({
               ["/", "소개"],
               ["/components", "Components"],
               ["/blocks", "Blocks"],
-              ["/components/kitchen-sink", "Kitchen sink"],
             ] as const
           ).map(([href, label]) => (
             <Link
@@ -358,14 +351,26 @@ export function CodeBlock({
 
 type PackageManager = "bun" | "npm" | "pnpm";
 
-export function InstallSnippet({ name }: { name: string }) {
+export function InstallSnippet({
+  name,
+  install = "registry",
+}: {
+  name: string;
+  /** "npm" — 레지스트리 복사가 아닌 패키지 설치로 얻는 진입점(editor). */
+  install?: "registry" | "npm";
+}) {
   const [pm, setPm] = useState<PackageManager>("bun");
   const [copied, setCopied] = useState(false);
   const [failed, setFailed] = useState(false);
 
   const runner =
     pm === "bun" ? "bunx --bun" : pm === "pnpm" ? "pnpm dlx" : "npx";
-  const cmd = `${runner} shadcn@latest add https://ui.ll3.kr/r/${name}.json -y`;
+  // npm 전용 진입점 — 엔진 번들(WebView용 단일 HTML)은 소스 복사로 배포할 수
+  // 없어 패키지 설치로만 얻는다. 웹용 peer(@tiptap/*)를 함께 적는다.
+  const cmd =
+    install === "npm"
+      ? `${pm === "bun" ? "bun add" : pm === "pnpm" ? "pnpm add" : "npm install"} @unikit-bridge/ui @tiptap/react @tiptap/starter-kit @tiptap/markdown @tiptap/extensions @tiptap/pm`
+      : `${runner} shadcn@latest add https://ui.ll3.kr/r/${name}.json -y`;
 
   async function copy() {
     try {
@@ -414,6 +419,12 @@ export function InstallSnippet({ name }: { name: string }) {
           <code>{cmd}</code>
         </pre>
       </View>
+      {install === "npm" ? (
+        <Text className="font-sans text-xs leading-5 text-muted-foreground">
+          React Native에서는 선택 peer react-native-webview를 추가로 설치해요. 사용은
+          `import &#123; MarkdownEditor &#125; from "@unikit-bridge/ui/editor"`.
+        </Text>
+      ) : null}
     </section>
   );
 }
