@@ -37,6 +37,7 @@
       "react-native": "./src/editor/native.tsx",
       "default": "./src/editor/web.tsx"
     },
+    "./behaviors": "./src/behaviors/index.ts",
     "./editor-prose.css": "./src/lib/editor-prose.css"
   },
   "main": "./src/index.ts",
