@@ -316,6 +316,12 @@ export type BridgeKeyEvent = {
   ctrlKey?: boolean;
   altKey?: boolean;
   metaKey?: boolean;
+  /** 시프트 눌림（사이클 101 후속 — ui-sdk 범위 선택 등 시프트 조합 전달,
+   *  이슈 #13）. 웹은 DOM KeyboardEvent가 구조적으로 제공하고, 네이티브
+   *  TextInput 래핑은 RN onKeyPress가 key만 주는 관계로 시프트된 글자
+   *  대문자에서 유도한다(CapsLock·자동 대문화 오탐, 이름키·기호 미탐의
+   *  근사 — ctrl·alt·meta는 이 신호조차 없어 생략과 다른 취급). */
+  shiftKey?: boolean;
 };
 
 /** 포털 — 부모 레이아웃을 벗어난 최상위 렌더（dialogpopovertoast 등）.
