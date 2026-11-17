@@ -38,6 +38,7 @@
       "default": "./src/editor/web.tsx"
     },
     "./behaviors": "./src/behaviors/index.ts",
+    "./behaviors/ui-sdk": "./src/behaviors/ui-sdk.ts",
     "./editor-prose.css": "./src/lib/editor-prose.css"
   },
   "main": "./src/index.ts",
@@ -76,7 +77,8 @@
     "@tiptap/pm": "^3.0.0",
     "@tiptap/react": "^3.0.0",
     "@tiptap/starter-kit": "^3.0.0",
-    "react-native-webview": "^14.0.0"
+    "react-native-webview": "^14.0.0",
+    "@ui-sdk/core": "^0.1.0-beta.6"
   },
   "peerDependenciesMeta": {
     "react-dom": {
@@ -116,6 +118,9 @@
       "optional": true
     },
     "react-native-webview": {
+      "optional": true
+    },
+    "@ui-sdk/core": {
       "optional": true
     }
   },
