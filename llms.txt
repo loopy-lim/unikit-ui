@@ -1,60 +1,41 @@
 # UniKit UI
 
-> UniKit UI는 import 하나로 React(웹)와 React Native 양쪽에서 같은 모습을 내는 shadcn/ui 형태의 UI 컴포넌트 라이브러리예요. 컴포넌트 62종(shadcn/ui new-york-v4 카탈로그 전량 61종 + 자작 editor-toolbar)을 한 벌 소스로 제공해요. npm 패키지명은 `@unikit-bridge/ui`(0.4.1 기준 62종 제공 — chart·editor·behaviors는 별도 진입점).
+> UniKit UI는 import 하나로 React(웹)와 React Native 양쪽에서 같은 모습을 내는 shadcn/ui 형태의 UI 컴포넌트 라이브러리예요. shadcn new-york-v4 카탈로그 전량 61종 + 자작 editor-toolbar = 62종을 한 벌 소스로 제공해요. npm 패키지명은 `@unikit-bridge/ui`(0.4.1).
 
 ## 한 벌 소스 원칙 (가장 중요)
 
 - 컴포넌트는 브리지 프리미티브(`View`·`Text`·`Pressable`·`TextInput`·`Image`)와 `className`으로만 작성돼요. 플랫폼 분기(`.web.tsx`·`Platform.select`)는 없어요.
-- 진입점 5개:
-  - `@unikit-bridge/ui` — 컴포넌트 배럴(61종 export — `chart` 제외).
-  - `@unikit-bridge/ui/primitives` — 브리지 프리미티브. package exports 조건이 플랫폼을 갈라요(`react-native` 조건 → RN 프리미티브 + uniwind, `default` → div/span/button/input DOM + 표준 Tailwind CSS v4). 렌더 프리미티브(View·Text·Pressable·TextInput·Image·ScrollView·SectionList·Select·Portal)와 앱 API(Platform·Dimensions·Share·KeyboardAvoidingView — 웹 폴백/RN 재노출)를 같이 내서 화면 코드가 react-native를 직접 import하지 않아도 돼요.
-  - `@unikit-bridge/ui/chart` — 차트 렌더러(ChartSurface·ChartPath·ChartRect·ChartLine·ChartText·ChartCircle). 웹은 JSX `<svg>`, 네이티브는 react-native-svg(선택 peer). chart 컴포넌트(ChartContainer 등)는 배럴에서 제외되고 shadcn 레지스트리 복사로 소비해요.
-  - `@unikit-bridge/ui/editor` — 마크다운 위지윅 에디터 엔진 `MarkdownEditor`(사이클 95). 웹은 tiptap v3을 직접 마운트(@tiptap/react·starter-kit·markdown·extensions·pm 선택 peer), 네이티브는 WebView에 동봉된 단일 HTML 번들(react-native-webview 선택 peer). props는 initialMarkdown·onChange(markdown)·onStateChange(ready·formats·canUndo·canRedo·chars)·placeholder·toolbar(기본 true — 내장 EditorToolbar), ref는 setMarkdown·runFormat·runCommand. tiptap(ProseMirror)는 DOM 전용이라 네이티브는 WebView 경유예요 — 레지스트리 미등록 npm 전용 진입점.
-  - `@unikit-bridge/ui/behaviors` — 컴포넌트의 상호작용 골격을 재노출하는 조립용 진입점(사이클 100, npm 전용·registry 미등록). overlay 계열(ModalOverlay·AnchoredOverlay·computeOverlayPosition·useOverlayPlacement), menu-nav 계열(useMenuNav·composeMenuNavKeyDown·useMenuItemRef — 방향키·Home/End·타입어헤드 탐색), 브리지 훅(useDrag·useOverlayFocus·useDismiss·useReposition·useScrollLock). 기능 변경 없는 재노출이라 컴포넌트와 같은 웹·네이티브 계약으로 동작해요.
 - 상태 관리는 React state + context(Radix·외부 엔진 없음). 오버레이 계열의 포털·앵커 위치 계산·포커스 트랙은 `packages/unikit/src/lib/overlay.tsx`가 담당해요.
-
-## 컴포넌트 62종
-
-- 기초(5): button, card, input, label, badge
-- 폼 입력(14): checkbox, radio-group, switch, toggle, toggle-group, textarea, select, native-select, slider, calendar, input-otp, input-group, form(react-hook-form 선택 peer), editor-toolbar(tiptap 툴바 — 자작. 엔진은 `@unikit-bridge/ui/editor` 진입점 또는 앱 소유)
-- 오버레이·메뉴(13): dialog, alert-dialog, sheet, drawer, popover, hover-card, tooltip, dropdown-menu, context-menu, command, combobox, menubar, navigation-menu
-- 피드백·데이터(7): alert, avatar, empty, skeleton, table, spinner, sonner
-- 데이터 시각화·복합(3): chart, carousel, sidebar
-- 메시지(5): message, message-scroller, bubble, attachment, marker
-- 내비게이션·레이아웃(15): tabs, accordion, collapsible, breadcrumb, pagination, progress, separator, aspect-ratio, kbd, field, item, button-group, scroll-area, resizable, direction
-
-전체 목록·설명: `packages/unikit/registry.json`(71 아이템 = UI 62 + lib 3(utils·overlay·menu-nav) + theme 4 + style 2(animations·editor-prose)). 사용법·Props: `docs/components.md`.
+- 진입점 5개 — `@unikit-bridge/ui`(컴포넌트 배럴, chart 제외) · `/primitives`(브리지 프리미티브·앱 API — package exports 조건이 웹/RN을 갈라요) · `/chart`(차트 렌더러, react-native-svg 선택 peer) · `/editor`(MarkdownEditor 엔진 — 웹은 tiptap 직접 마운트, 네이티브는 WebView) · `/behaviors`(오버레이·메뉴 탐색 훅 재노출, npm 전용).
+- API는 shadcn 원본을 따라요(`defaultChecked`·`onCheckedChange` 등) — Radix가 하던 상태 관리만 내부 React로 옮겨졌어요.
 
 ## 디자인 토큰 규칙 (컴포넌트 코드 작성·수정 시 준수)
 
-- **토큰 클래스만 사용** — 색·간격은 CSS 변수 토큰 클래스(`bg-background`·`text-foreground`·`border-border`·`bg-chart-1` 등). 스키마는 zinc 계열, 라이트/다크 값은 `packages/unikit/src/theme/tokens.ts`가 단일 출처.
-- **임의값 클래스 금지** — `max-w-[calc(100%-2rem)]` 같은 `[...]` 임의값은 금지(`bun run audit:design` 검사 (c)가 실패해요). 동적 값(진행률 폭 등)은 동적 `style` 계약으로.
-- **`web:` 접두** — 웹 전용 효과(호버·전환 애니메이션·펄스·스핀)는 `web:animate-pulse`처럼 접두를 붙여요. 네이티브에서는 정적으로 렌더돼요.
-- **`dark:` 변형 금지** — 다크 모드는 토큰 값 전환(`.dark` 블록)으로만. 컴포넌트 코드에 `dark:` 클래스를 넣지 않아요(사이클 40 이식분부터 전면 제거 관행).
-- **아이콘은 lucide（브리지 경유）** — 컴포넌트는 `@unikit-bridge/ui/primitives`의 `*Icon`만 사용. 웹 `lucide-react` / 네이티브 `lucide-react-native`는 브리지가 감싸요. 컴포넌트에서 lucide 직접 import 금지.
+- 색·간격은 CSS 변수 토큰 클래스만(`bg-background`·`text-foreground`·`bg-chart-1` 등 — 라이트/다크 값의 단일 출처는 `packages/unikit/src/theme/tokens.ts`).
+- 임의값 클래스(`[...]`) 금지 — 동적 값은 동적 `style` 계약으로(`bun run audit:design`이 검사).
+- 웹 전용 효과(호버·전환 애니메이션·펄스·스핀)는 `web:` 접두로만. `dark:` 변형 금지 — 다크 모드는 토큰 값 전환(`.dark` 블록)으로만.
+- 아이콘은 `@unikit-bridge/ui/primitives`의 `*Icon`만 사용(브리지가 웹 lucide-react / 네이티브 lucide-react-native로 연결) — 컴포넌트에서 lucide 직접 import 금지.
 
 ## 주요 한계 (안내 시 참고)
 
 - 오버레이·전개 계열의 등장/퇴장 애니메이션은 즉시 전환(마운트/언마운트). 네이티브에서 skeleton 펄스·spinner 회전도 정적.
-- hover 개방은 웹에서 지원(tooltip·hover-card hover/focus 진입, navigation-menu 200ms 지연·인접 전환, menubar 열린 상태 hover 전환, dropdown·context 서브메뉴 hover). 터치 기기는 눌림 폴백(사이클 90).
-- select·메뉴 계열은 웹에서 화살표키·Home/End 탐색 지원(사이클 90)과 타입어헤드(글자 입력 점프 — radix getNextMatch 이식, 사이클 90 후속). 네이티브 카드 키보드 탐색은 미지원(RN View에 키 이벤트 없음). asChild 미지원(트리거는 Pressable 고정).
-- chart는 유동 폭(width="fluid") 양 플랫폼 지원(사이클 90). 뷰포트 비례 높이·다크 전환·recharts 고급 차트(스택·극좌표 등) 미지원. 시리즈 색은 소비자 앱의 `--chart-1..5` 토큰.
-- editor(MarkdownEditor): 네이티브는 WebView 경유(tiptap이 DOM 전용이라 네이티브 뷰 직접 렌더 불가). 확장 구성은 고정(StarterKit+Markdown+Placeholder — 소비자 확장 주입 미지원), 네이티브 캔버스 빈 곳 탭 삽입은 tiptap 맵핑 로드맵(사이클 94 잔여).
-- 전체 목록: `docs/roadmap-components.md`의 미지원 기능 로드맵. 각 컴포넌트 소스 머리 주석에 포팅 판단·한계가 기록돼 있어요.
+- hover 개방은 웹 전용(터치는 눌림 폴백). select·메뉴 계열은 웹에서 화살표키·Home/End·타입어헤드 지원, 네이티브 키보드 탐색 미지원(RN View에 키 이벤트 없음). asChild 미지원(트리거는 Pressable 고정).
+- chart: 유동 폭은 지원 — 뷰포트 비례 높이·recharts 고급 차트(스택·극좌표) 미지원. 시리즈 색은 소비자 앱의 `--chart-1..5` 토큰.
+- editor(MarkdownEditor): 네이티브는 WebView 경유(tiptap이 DOM 전용). 확장 구성 고정(소비자 확장 주입 미지원).
+- 미지원 기능 로드맵: `docs/roadmap-components.md`. 각 컴포넌트 소스 머리 주석에 포팅 판단·한계가 기록돼 있어요.
 
 ## 소비 방식
 
-- npm 설치: `bun add @unikit-bridge/ui class-variance-authority clsx tailwind-merge` + 엔진(웹 tailwindcss v4 + lucide-react / 네이티브 uniwind·react-native + lucide-react-native). editor 사용 시 웹은 @tiptap/react·starter-kit·markdown·extensions·pm, 네이티브는 react-native-webview를 추가로 설치해요.
-- 소스 복사: shadcn CLI로 로컬 레지스트리에서 add(복사본의 cn은 `@/lib/utils`, 브리지는 `@unikit-bridge/ui/primitives` import). 자세한 절차는 `docs/install.md`.
+- npm: `bun add @unikit-bridge/ui class-variance-authority clsx tailwind-merge` + 플랫폼 엔진(웹 tailwindcss v4 + lucide-react / 네이티브 uniwind·react-native + lucide-react-native). import는 배럴에서, 복사본이면 `@/components/unikit/<이름>`. 절차: docs/install.md.
+- 소스 복사: shadcn CLI로 레지스트리에서 add — MCP `get_install_command`가 명령을 만들어 줘요.
 
 ## MCP 서버 (AI 에이전트 연동)
 
-- `@unikit-bridge/mcp`(별도 npm 패키지) — unikit-bridge 제품군 공용 stdio MCP 서버. UniKit UI 대상으로 레지스트리 스냅샷(71아이템 전문 — UI·lib 소스와 theme 토큰·style CSS 포함)과 이 llms.txt를 번들 동봉해 실행 시 네트워크 접근이 0이에요. 서버 소스는 제품군 포털 저장소(github.com/loopy-lim/unikit)의 packages/mcp에 있어요.
+- `@unikit-bridge/mcp`(별도 npm 패키지, stdio) — 레지스트리 스냅샷(71아이템 전문)과 제품 llms.txt·컴포넌트별 사용법을 번들 동봉해 실행 시 네트워크 접근이 0이에요. 서버 소스는 제품군 포털 저장소(github.com/loopy-lim/unikit)의 packages/mcp에 있어요.
 - 연결: `claude mcp add unikit-bridge -- npx -y @unikit-bridge/mcp`
-- 도구 4종: `search_items`(검색·목록) · `view_item`(소스 전문) · `get_install_command`(npm/복사 두 모드 설치 명령) · `get_docs`(제품 문서 — `{"product":"unikit-ui"}` 지정 시 이 문서 전문).
+- 도구 4종: `search_items`(검색·목록) · `view_item`(소스 전문 + 그 컴포넌트의 사용법 발췌) · `get_install_command`(npm/복사 두 모드 설치 명령) · `get_docs`(제품 문서 — `{"product":"unikit-ui"}`).
 
 ## 기여·검증 (에이전트용 상세 지침: AGENTS.md)
 
-- 검증: 루트에서 `bun run typecheck`(워크스페이스 전체)와 `bun run audit:design`(일관성 검사 10종).
-- 패키지 매니저는 bun만(pnpm 금지). 소스는 `src/`(배럴)와 `registry/`(복사용) 두 트리가 있고 본문은 같아야 해요(import 문만 다름).
-- 문서: README.md(빠른 시작, 영어) · README.ko.md(한국어) · docs/install.md(소비자 설치) · docs/components.md(사용법) · docs/roadmap-components.md(로드맵·경쟁) · packages/unikit/docs/tokens.md(토큰 값) · docs/sdd/(개발 과정 문서).
+- 루트에서 `bun run typecheck`(워크스페이스 전체)와 `bun run audit:design`(일관성 검사 10종). 패키지 매니저는 bun만(pnpm 금지).
+- `src/`(배럴)와 `registry/`(복사용) 두 트리의 본문은 같아야 해요(import 문만 다름).
