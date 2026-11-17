@@ -56,7 +56,7 @@ export default function Home() {
 }
 ```
 
-> **Publish note** — npm `@unikit-bridge/ui` 0.4.0 (2026-11-16) ships all 62 components (including `EditorToolbar`) plus the `@unikit-bridge/ui/editor` engine entry point. Use option 2 (registry copy) when you want to own the component source — the editor entry point is npm-only, since its engine HTML bundle is a build artifact.
+> **Publish note** — npm `@unikit-bridge/ui` 0.4.1 (2026-11-17) ships all 62 components (including `EditorToolbar`) plus the `@unikit-bridge/ui/editor` engine entry point and the `@unikit-bridge/ui/behaviors` interaction-hooks entry point. Use option 2 (registry copy) when you want to own the component source — the editor entry point is npm-only, since its engine HTML bundle is a build artifact.
 
 ## Option 2 — copy sources with shadcn CLI
 

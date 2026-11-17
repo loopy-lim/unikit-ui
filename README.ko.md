@@ -90,7 +90,7 @@ export default function Home() {
 }
 ```
 
-> npm `@unikit-bridge/ui` 0.4.0 게시분은 **62종**(배럴 61종 + `@unikit-bridge/ui/chart`)과 에디터 엔진 진입점 `@unikit-bridge/ui/editor`(웹=tiptap 직접, 네이티브=동봉 WebView 번들)을 담고 있어요. 컴포넌트 소스를 직접 소유·수정하고 싶을 때는 **방법 2(레지스트리 복사)**를 쓰세요 — 에디터 진입점은 엔진 HTML 번들이 빌드 산출물이라 npm 설치로만 제공돼요.
+> npm `@unikit-bridge/ui` 0.4.1 게시분은 **62종**(배럴 61종 + `@unikit-bridge/ui/chart`)과 에디터 엔진 진입점 `@unikit-bridge/ui/editor`(웹=tiptap 직접, 네이티브=동봉 WebView 번들), 행동 훈 진입점 `@unikit-bridge/ui/behaviors`를 담고 있어요. 컴포넌트 소스를 직접 소유·수정하고 싶을 때는 **방법 2(레지스트리 복사)**를 쓰세요 — 에디터 진입점은 엔진 HTML 번들이 빌드 산출물이라 npm 설치로만 제공돼요.
 
 **방법 2 — 소스 복사 (요약)**
 

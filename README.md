@@ -90,7 +90,7 @@ export default function Home() {
 }
 ```
 
-> npm `@unikit-bridge/ui` 0.4.0 ships all **62** components (61 barrel + `@unikit-bridge/ui/chart`) plus the `@unikit-bridge/ui/editor` engine entry point (web: tiptap directly, native: bundled WebView). **Option 2 (registry copy)** still applies when you want to own and edit the component source — the editor entry point is npm-only, since its engine HTML bundle is a build artifact.
+> npm `@unikit-bridge/ui` 0.4.1 ships all **62** components (61 barrel + `@unikit-bridge/ui/chart`) plus the `@unikit-bridge/ui/editor` engine entry point (web: tiptap directly, native: bundled WebView) and the `@unikit-bridge/ui/behaviors` interaction-hooks entry point. **Option 2 (registry copy)** still applies when you want to own and edit the component source — the editor entry point is npm-only, since its engine HTML bundle is a build artifact.
 
 **Option 2 — source copy (summary)**
 
