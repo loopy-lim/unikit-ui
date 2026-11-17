@@ -262,3 +262,43 @@ export function installDomStubs(): void {
     };
   }
 }
+
+/**
+ * window.visualViewport를 live getter 객체로 교체하고 되돌리는 함수를 돌려줘요.
+ *
+ * position()은 뷰포트를 visualViewport(offsetLeft·offsetTop·width·height)에서
+ * 읽어요(없으면 documentElement 치수로 전체 창). 화면이 «팝업이 살아도 되는
+ * 세계»를 알려 주려면(예: 상단 컨트롤 아래 대역 — 웹에서 키보드가 열려
+ * visualViewport가 줄어드는 것과 같은 의미) 그 대역을 매 프레임 최신값으로
+ * 돌려주는 이 훅으로 교체해요. 플립·클램프·available 판정은 전부 코어가 이
+ * 뷰포트 기준으로 내려요(이슈 #12). 되돌림 함수로 화면 언마운트 시 원래대로
+ * (null = 전체 창) 복구해 다른 소비 화면에 새는 것을 막아요.
+ */
+export function bindVisualViewport(
+  read: () => { offsetLeft: number; offsetTop: number; width: number; height: number },
+): () => void {
+  const g = globalThis as Record<string, unknown>;
+  const win = (g.window ?? g) as Record<string, unknown>;
+  const previous = win.visualViewport;
+  win.visualViewport = {
+    get offsetLeft() {
+      return read().offsetLeft;
+    },
+    get offsetTop() {
+      return read().offsetTop;
+    },
+    get width() {
+      return read().width;
+    },
+    get height() {
+      return read().height;
+    },
+    // moves.js가 [visualViewport, ["resize","scroll"]]에 addEventListener를
+    // 붙여요. null이면 선택 체인으로 건너뛰지만 객체면 메서드가 필요해요.
+    addEventListener() {},
+    removeEventListener() {},
+  };
+  return () => {
+    win.visualViewport = previous;
+  };
+}
