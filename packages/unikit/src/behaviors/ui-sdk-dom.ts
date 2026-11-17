@@ -71,15 +71,16 @@ export function pxToNumber(value: unknown): number | null {
   return Number.isFinite(n) ? n : null;
 }
 
-/** CSSStyleDeclaration 모양 — position()의 계산 결과가 setProperty로 흘러와요. */
+/**
+ * CSSStyleDeclaration 모양 — position()의 계산 결과가 setProperty로 흘러와요.
+ * 쓰기 기록 계측(`writes` 링 버퍼·`writeCount`)은 PR #27 사후 리뷰 F-1에서
+ * 제품 export에서 제거했어요(sdd/100 «디버그 텔레메트리 경계»: 스파이크 화면이
+ * setProperty를 감싸 자체 기록). observer 훅은 제품 계약으로 유지해요.
+ */
 export class FakeStyle {
   [key: string]: unknown;
   transformOrigin = "0px 0px";
   transform = "none";
-  /** setProperty 호출 기록("left: 100px" 형태) — 화면 증거 표시용(최근 12건). */
-  writes: string[] = [];
-  /** setProperty 총 횟수 — 추종 중 갱신 빈도 증거용. */
-  writeCount = 0;
   /** 값이 실제로 바뀐 setProperty마다 호출 — 계산 결과를 RN 화면으로 옮기는 훅. */
   observer?: (key: string, value: string) => void;
   setProperty(key: string, value: string) {
@@ -87,11 +88,6 @@ export class FakeStyle {
       this.observer?.(key, value);
     }
     this[key] = value;
-    this.writeCount += 1;
-    this.writes.push(`${key}: ${value}`);
-    if (this.writes.length > 12) {
-      this.writes.splice(0, this.writes.length - 12);
-    }
   }
   getPropertyValue(key: string) {
     return typeof this[key] === "string" ? (this[key] as string) : "";
@@ -202,6 +198,10 @@ export class FakeElement {
  *
  * documentElement·window 치수는 Dimensions를 live getter로 읽어 회전·
  * 리사이즈를 반영해요. RN(Hermes)은 requestAnimationFrame을 이미 제공해요.
+ *
+ * 주의(부작용): 이 함수는 `globalThis.document`·`MutationObserver`·
+ * `getComputedStyle`을 프로세스 전역으로 패치해요 — 영향이 앱 전역에
+ * 퍼지므로 실험·스파이크 범위에서 쓰세요(PR #27 사후 리뷰 F-3 기록).
  */
 export function installDomStubs(): void {
   const g = globalThis as Record<string, unknown>;
@@ -239,8 +239,14 @@ export function installDomStubs(): void {
   // 화면 밖으로 튕겨요(스크롤 추종 시 사라짐). 요소 자신의 style을 돌려줘요.
   const computedOf = (el?: { style?: FakeStyle }) =>
     el?.style instanceof FakeStyle ? el.style : new FakeStyle();
-  win.getComputedStyle = computedOf;
-  g.getComputedStyle = computedOf;
+  // 다른 전역 멤버와 같은 «미존재 시에만 설치» 가드 — 이미 함수 구현이 있으면
+  // 덮어쓰지 않아요(PR #27 사후 리뷰 F-3).
+  if (typeof win.getComputedStyle !== "function") {
+    win.getComputedStyle = computedOf;
+  }
+  if (typeof g.getComputedStyle !== "function") {
+    g.getComputedStyle = computedOf;
+  }
   if (typeof win.visualViewport === "undefined") win.visualViewport = null;
   if (!("innerWidth" in win)) {
     Object.defineProperty(win, "innerWidth", {

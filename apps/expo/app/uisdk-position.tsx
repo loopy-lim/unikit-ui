@@ -29,6 +29,7 @@ import {
   pxToNumber,
   rectFrom,
   type FakeRect,
+  type FakeStyle,
 } from "@unikit-bridge/ui/behaviors/ui-sdk-dom";
 import { position } from "@ui-sdk/core";
 
@@ -66,6 +67,22 @@ const measure = (ref: RefObject<HostView | null>): Promise<FakeRect> =>
     });
   });
 
+// 스파이크 화면 전용 계측(sdd/100 «디버그 텔레메트리 경계») — 제품 FakeStyle에서
+// 쓰기 기록이 제거됐으므로(PR #27 사후 리뷰 F-1), 화면이 style의 setProperty를
+// 감싸 «key: value» 기록(최근 12건)을 로컬로 남겨요.
+function trackStyleWrites(style: FakeStyle) {
+  const log = { writes: [] as string[] };
+  const setProperty = style.setProperty.bind(style);
+  style.setProperty = (key: string, value: string) => {
+    log.writes.push(`${key}: ${value}`);
+    if (log.writes.length > 12) {
+      log.writes.splice(0, log.writes.length - 12);
+    }
+    setProperty(key, value);
+  };
+  return log;
+}
+
 export default function UisdkPosition() {
   const insets = useSafeAreaInsets();
   const containerRef = useRef<HostView>(null);
@@ -92,6 +109,7 @@ export default function UisdkPosition() {
         try {
         const anchorEl = new FakeElement("anchor", anchor);
         const popupEl = new FakeElement("popup", popup);
+        const writesLog = trackStyleWrites(popupEl.style);
         // position()의 공개 계약은 DOM HTMLElement 타입 — 어댑터 요소를
         // 구조적으로 캐스팅해 전달해요(프로브·스파이크와 같은 방식).
         const stop = position(
@@ -117,7 +135,7 @@ export default function UisdkPosition() {
           side: popupEl.attrs["data-side"] ?? "?",
           align: popupEl.attrs["data-align"] ?? "?",
           anchorRect: anchor,
-          writes: popupEl.style.writes,
+          writes: writesLog.writes,
         });
         setPending(null);
         stop();

@@ -39,6 +39,7 @@ import {
   rectFrom,
   updateRect,
   type FakeRect,
+  type FakeStyle,
 } from "@unikit-bridge/ui/behaviors/ui-sdk-dom";
 import { position } from "@ui-sdk/core";
 
@@ -84,6 +85,19 @@ const measure = (ref: RefObject<HostView | null>): Promise<FakeRect> =>
     });
   });
 
+// 스파이크 화면 전용 계측(sdd/100 «디버그 텔레메트리 경계») — 제품 FakeStyle에서
+// 쓰기 카운터가 제거됐으므로(PR #27 사후 리뷰 F-1), 화면이 style의 setProperty를
+// 감싸 총 쓰기 횟수를 로컬로 세요(추종 중 갱신 빈도 증거).
+function countStyleWrites(style: FakeStyle) {
+  const log = { writeCount: 0 };
+  const setProperty = style.setProperty.bind(style);
+  style.setProperty = (key: string, value: string) => {
+    log.writeCount += 1;
+    setProperty(key, value);
+  };
+  return log;
+}
+
 export default function UisdkPopup() {
   const insets = useSafeAreaInsets();
   const containerRef = useRef<HostView>(null);
@@ -104,6 +118,8 @@ export default function UisdkPopup() {
   const anchorRectRef = useRef<FakeRect | null>(null);
   const popupElRef = useRef<FakeElement | null>(null);
   const arrowElRef = useRef<FakeElement | null>(null);
+  // 스파이크 화면 전용 쓰기 카운터(위 countStyleWrites) — popupEl과 생명주기 동일.
+  const writeCountRef = useRef<{ writeCount: number } | null>(null);
   const stopRef = useRef<StopHandle | null>(null);
   const originRef = useRef({ x: 0, y: 0 });
   const modeRef = useRef<AnchorMode | null>(null);
@@ -136,7 +152,7 @@ export default function UisdkPopup() {
         availableHeight: pxToNumber(
           popupEl.style.getPropertyValue("--available-height"),
         ),
-        writeCount: popupEl.style.writeCount,
+        writeCount: writeCountRef.current?.writeCount ?? 0,
         anchorRect,
       });
     });
@@ -148,6 +164,7 @@ export default function UisdkPopup() {
     popupElRef.current = null;
     arrowElRef.current = null;
     anchorRectRef.current = null;
+    writeCountRef.current = null;
     modeRef.current = null;
     setMode(null);
     setPlaced(null);
@@ -182,6 +199,7 @@ export default function UisdkPopup() {
             const arrowEl = new FakeElement("arrow", rectFrom(0, 0, ARROW_SIZE, ARROW_SIZE));
             popupElRef.current = popupEl;
             arrowElRef.current = arrowEl;
+            writeCountRef.current = countStyleWrites(popupEl.style);
             popupEl.style.observer = () => scheduleSync();
             popupEl.attrObserver = () => scheduleSync();
             arrowEl.style.observer = () => scheduleSync();

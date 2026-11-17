@@ -61,7 +61,7 @@ export default function Home() {
 **Experimental npm-only sub-entry points** — two more entry points exist outside the barrel and the registry (Vercel UI SDK `@ui-sdk/core` integration experiments — see docs/sdd/100).
 
 - `@unikit-bridge/ui/behaviors/ui-sdk` — selective re-export of the helpers that work without a DOM (typeahead, text matching, tree data engine) plus `toSdkKeyEvent`, which adapts bridge key events to the ui-sdk event shape.
-- `@unikit-bridge/ui/behaviors/ui-sdk-dom` — the adapter that fills the DOM surface `position()` (the popup placement engine) requires from RN measurements (`FakeElement`, `installDomStubs`, …). Native-only (imports react-native).
+- `@unikit-bridge/ui/behaviors/ui-sdk-dom` — the adapter that fills the DOM surface `position()` (the popup placement engine) requires from RN measurements (`FakeElement`, `installDomStubs`, …). Native-only (imports react-native). Note: `installDomStubs` patches `document`, `MutationObserver`, and `getComputedStyle` on the process global (`globalThis`) as a side effect — the impact is app-wide, so keep it to experimental/spike usage.
 
 `@ui-sdk/core` is an optional peer (peerDependenciesMeta), so consumers who never import these entry points need nothing extra; to use them, also `bun add @ui-sdk/core`. They exist on main and are not in the 0.4.1 npm release yet — they ship with the next publish.
 

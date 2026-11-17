@@ -70,7 +70,7 @@ export default function Home() {
 **npm 전용 서브진입점(실험)** — 배럴·레지스트리에 등록되지 않은 진입점 세 가지가 더 있어요(Vercel UI SDK `@ui-sdk/core` 연동 실험 — docs/sdd/100 참조).
 
 - `@unikit-bridge/ui/behaviors/ui-sdk` — DOM 없이 성립하는 순수 헬퍼만 선택 재수출해요(타입어헤드·텍스트 매칭·트리 데이터 엔진) + 브리지 키 이벤트를 ui-sdk 모양으로 바꾸는 `toSdkKeyEvent`.
-- `@unikit-bridge/ui/behaviors/ui-sdk-dom` — position()(팝업 배치 엔진)이 요구하는 DOM 표면을 RN 측정값으로 채우는 어댑터예요(`FakeElement`·`installDomStubs` 등). 네이티브 전용이에요(react-native import).
+- `@unikit-bridge/ui/behaviors/ui-sdk-dom` — position()(팝업 배치 엔진)이 요구하는 DOM 표면을 RN 측정값으로 채우는 어댑터예요(`FakeElement`·`installDomStubs` 등). 네이티브 전용이에요(react-native import). 주의: `installDomStubs`는 `document`·`MutationObserver`·`getComputedStyle`을 프로세스 전역(globalThis)에 패치하는 부작용이 있어요 — 영향이 앱 전역에 퍼지므로 실험·스파이크 범위에서 쓰세요.
 - `@unikit-bridge/ui/overlay-position` — 제품 오버레이(popover·dropdown·tooltip·select 등 앵커 팝업 전 계열)의 배치를 position() 엔진으로 교체하는 `installUiSdkOverlayPosition()`이에요. 앱 부트에서 1회 호출하면 이후 오버레이의 배치·플립·스크롤 추종이 ui-sdk 코어로 돌아요(미호출 시 기존 내장 배치 그대로 — 웹은 실제 DOM 구동, 네이티브는 ui-sdk-dom 어댑터 경유. package exports 조건이 웹/RN을 갈라요).
 
 `@ui-sdk/core`는 선택 peer(peerDependenciesMeta optional)라 이 진입점을 import하지 않는 소비자는 의존을 추가하지 않아도 돼요. 쓰려면 `bun add @ui-sdk/core`를 함께 설치하세요. 저장소 main 기준으로 제공되며 npm 게시분(0.4.1)에는 아직 없어요 — 다음 게시에 반영돼요.
