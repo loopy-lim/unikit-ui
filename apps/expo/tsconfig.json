@@ -4,6 +4,9 @@
     "paths": {
       "@unikit-bridge/ui/primitives": [
         "../../packages/unikit/src/bridge/native.tsx"
+      ],
+      "@unikit-bridge/ui/overlay-position": [
+        "../../packages/unikit/src/lib/overlay-position/native.ts"
       ]
     }
   },

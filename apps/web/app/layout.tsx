@@ -3,6 +3,7 @@ import { IBM_Plex_Mono, Public_Sans, Syne } from "next/font/google";
 import "./globals.css";
 import "./site.css";
 
+import { OverlayPositionEngineInstaller } from "../components/site/overlay-position-engine";
 import { SiteThemeProvider } from "../components/site/site-theme";
 
 const syne = Syne({
@@ -63,6 +64,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
     >
       <body className="site-body antialiased">
         <script dangerouslySetInnerHTML={{ __html: THEME_INIT_SCRIPT }} />
+        <OverlayPositionEngineInstaller />
         <SiteThemeProvider>{children}</SiteThemeProvider>
       </body>
     </html>

@@ -13,6 +13,16 @@
 //   （래퍼가 pointerEvents="box-none" → CSS none 치환 상속 때문）. 네이티브는
 //   box-none이 자동으로 자식 수신을 허용한다.
 // - 네이티브 useReposition은 no-op — 스크롤 중 앵커 팝업 재배치는 웹 전용.
+//
+// 배치 엔진 게이트(이슈 #15, docs/sdd/100 §7 후속): AnchoredOverlay의 배치는
+// 기본적으로 아래 내장 computeOverlayPositionWithPlacement 경로를 써요.
+// 앱이 installUiSdkOverlayPosition()(@unikit-bridge/ui/overlay-position —
+// 웹·네이티브 조건 분기 진입점, npm 전용)을 부트에서 호출하면 모듈 레지스트
+// 리에 @ui-sdk/core position() 엔진이 등록돼, 이 파일을 수정하지 않고 모든
+// 앵커 팝업(popover·dropdown·tooltip·select 등)의 배치·플립·스크롤 추종이
+// ui-sdk 코어로 교체돼요. @ui-sdk/core는 선택 peer라 이 파일은 그것을 정적
+// import하지 않아요(미설치 소비자의 번들이 깨지지 않게 — 주입 방향은
+// overlay-position → overlay 단방향).
 import {
   createContext,
   useCallback,
@@ -268,6 +278,57 @@ export function computeOverlayPosition(
   return { left, top };
 }
 
+// ---------------------------------------------------------------------------
+// 배치 엔진 계약 — 내장 compute 경로를 앱이 외부 엔진으로 교체하는 주입점
+// ---------------------------------------------------------------------------
+
+/** 엔진→AnchoredOverlay 배치 결과(뷰포트 좌표). maxWidth/maxHeight는 ui-sdk
+ *  --available-* 계약(메인 축 비클램프 — «콘텐츠가 스스로 줄어들라»)의 전달.
+ *  미제공 엔진은 null. */
+export type OverlayPositionState = {
+  left: number;
+  top: number;
+  /** 충돌 플립이 적용된 확정 방향 — OverlayPlacementContext(arrow 등)로 흐른다 */
+  placement: OverlayPlacement;
+  maxWidth: number | null;
+  maxHeight: number | null;
+};
+
+/** 배치 엔진 세션 — 오버레이 닫힘·언마운트 시 stop()으로 rAF 루프·리스너를
+ *  정리한다(호출은 세션당 정확히 1회 — 오버레이 쪽 cleanup이 보장). */
+export type OverlayPositionSession = { stop: () => void };
+
+/** 앵커 팝업 배치 엔진 계약 — installUiSdkOverlayPosition
+ *  (@unikit-bridge/ui/overlay-position)이 구현해 setOverlayPositionEngine으로
+ *  등록한다. 내장 계약(computeOverlayPositionWithPlacement)과 같은 배치 값
+ *  (placement·align·offset)을 받아 같은 형태의 결과를 onPlace로 보고한다. */
+export type OverlayPositionEngine = {
+  attach(args: {
+    /** 앵커(트리거) — ref 객체 또는 브리지 요소 */
+    anchorRef: unknown;
+    /** 배치 대상 콘텐츠 카드 — ref 객체 또는 브리지 요소(attach 시점에 마운트돼 있음) */
+    contentRef: unknown;
+    /** 열린 채 변경되는 배치 옵션 — 엔진은 매 계산마다 다시 읽는다 */
+    getOptions(): { placement: OverlayPlacement; align: OverlayAlign; offset: number };
+    /** 배치 확정 통보 — 첫 통보 전 AnchoredOverlay는 카드를 숨긴다(opacity 0) */
+    onPlace(next: OverlayPositionState): void;
+  }): OverlayPositionSession;
+};
+
+// 모듈 레지스트리(앱당 하나 — 배치 엔진은 전역 선택). null이면 내장 계산 경로.
+let overlayPositionEngine: OverlayPositionEngine | null = null;
+
+/** 배치 엔진 교체(등록 해제는 null). 앱 부트에서 1회 호출하는 정상 경로는
+ *  installUiSdkOverlayPosition(@unikit-bridge/ui/overlay-position). */
+export function setOverlayPositionEngine(engine: OverlayPositionEngine | null): void {
+  overlayPositionEngine = engine;
+}
+
+/** 등록된 배치 엔진(미등록 null — 내장 계산 경로). */
+export function getOverlayPositionEngine(): OverlayPositionEngine | null {
+  return overlayPositionEngine;
+}
+
 /**
  * 앵커 팝업 골격（popoverdropdowntooltipselect 목록 등）. 열릴 때와 웹
  * 스크롤/리사이즈 때 앵커를 다시 측정해 위치를 잡는다（콘텐츠 크기는 첫 렌더
@@ -289,8 +350,15 @@ export function AnchoredOverlay({
 }: AnchoredOverlayProps) {
   const [anchorRect, setAnchorRect] = useState<Rect | null>(null);
   const [contentSize, setContentSize] = useState<{ w: number; h: number } | null>(null);
+  // 엔진 경로(등록 시)의 배치 결과 — 내장 경로는 렌더마다 compute로 파생한다.
+  const [placed, setPlaced] = useState<OverlayPositionState | null>(null);
   const contentRef = useRef<HTMLElement | null>(null);
+  const engine = getOverlayPositionEngine();
   const ready = anchorRect !== null;
+  // 배치 옵션 최신값 — 엔진 attach는 세션을 재시작하지 않고 getter로 열린 채
+  // 반영한다(position()이 옵션 getter를 매 계산마다 다시 읽는 계약).
+  const optionsRef = useRef({ placement, align, offset });
+  optionsRef.current = { placement, align, offset };
 
   const measure = useCallback(() => {
     measureRef(anchorRef, (x, y, width, height) =>
@@ -321,6 +389,23 @@ export function AnchoredOverlay({
     measure();
   }, [visible, ready, measure]);
   useReposition(measure, visible);
+  // 배치 엔진 경로 — 등록된 엔진이 있을 때만 attach. 첫 앵커 측정(ready)으로
+  // Portal이 마운트된 뒤 실행돼 contentRef.current가 보장된다. 세션 수명은
+  // visible·ready(앵커 측정)·엔진 등록에만 묶이고 placement/align/offset 변경은
+  // getOptions(getter)로 열린 채 흐른다 — 세션 재시작 없이 다음 계산에 반영.
+  useEffect(() => {
+    if (!visible || !ready || !engine) return;
+    const session = engine.attach({
+      anchorRef,
+      contentRef,
+      getOptions: () => optionsRef.current,
+      onPlace: setPlaced,
+    });
+    return () => {
+      session.stop();
+      setPlaced(null);
+    };
+  }, [visible, ready, engine, anchorRef]);
   useDismiss(onClose, visible);
   // focus 이동의 active는 visible&&ready — visible만 쓰면 첫 커밋(카드 마운트
   // 전, contentRef null)에서 이펙트가 no-op로 끝나 ready 반전에도 재실행되지
@@ -329,21 +414,49 @@ export function AnchoredOverlay({
   // 자체를 생략(hover 개방 계열 — 포커스 뺏지 않음).
   useOverlayFocus(contentRef, visible && ready && focusOnOpen, triggerRef);
 
-  const position = computeOverlayPositionWithPlacement(anchorRect, contentSize, {
-    placement,
-    align,
-    offset,
-  });
-  const positionedStyle = useMemo(
-    () => ({
+  // 내장 계산은 엔진 미등록 시만 수행(엔진 경로는 onPlace 결과 placed로 받는다).
+  const builtinPosition = engine
+    ? null
+    : computeOverlayPositionWithPlacement(anchorRect, contentSize, {
+        placement,
+        align,
+        offset,
+      });
+  const resolvedPlacement = engine
+    ? (placed?.placement ?? placement)
+    : (builtinPosition?.placement ?? placement);
+  const positionedStyle = useMemo(() => {
+    if (engine) {
+      // 엔진 경로: 첫 onPlace 통보 전엔 숨긴다(내장의 contentSize 미측정 숨김과
+      // 같은 시맨틱). maxWidth/maxHeight는 ui-sdk --available-* 계약(메인 축은
+      // 클램프 대신 «콘텐츠가 스스로 줄어들라»는 통보)의 시각 max — 시각만
+      // 깎고 엔진의 측정 rect는 고유 크기를 유지한다(줄어든 값을 되먹이면
+      // 다음 계산에서 available이 0으로 붕괴 — §7 P3 실측).
+      return {
+        position: "fixed" as const,
+        left: placed?.left ?? 0,
+        top: placed?.top ?? 0,
+        ...(placed?.maxWidth != null ? { maxWidth: placed.maxWidth } : {}),
+        ...(placed?.maxHeight != null ? { maxHeight: placed.maxHeight } : {}),
+        opacity: placed === null ? 0 : 1,
+      };
+    }
+    return {
       position: "fixed" as const,
-      left: position.left,
-      top: position.top,
+      left: builtinPosition?.left ?? 0,
+      top: builtinPosition?.top ?? 0,
       // 콘텐츠 크기 미측정 첫 프레임은 깜빡임 방지로 숨긴다
       opacity: contentSize === null ? 0 : 1,
-    }),
-    [position.left, position.top, contentSize],
-  );
+    };
+    // builtinPosition은 매 렌더 새 객체이므로 값 의존으로 비교한다(기존 관행).
+  }, [
+    engine,
+    placed,
+    builtinPosition?.left,
+    builtinPosition?.top,
+    contentSize,
+    placement,
+  ]);
   return (
     // onBackdropPress: 바깥 탭/클릭을 잡아 닫는다. 네이티브는 RN Modal 배경
     // Pressable이 담당한다. 웹은 dismissViaDocument — 문서 수준 pointerdown
@@ -369,7 +482,7 @@ export function AnchoredOverlay({
         className={className ? cn("pointer-events-auto", className) : "pointer-events-auto"}
         style={positionedStyle}
       >
-        <OverlayPlacementContext.Provider value={position.placement}>
+        <OverlayPlacementContext.Provider value={resolvedPlacement}>
           {children}
         </OverlayPlacementContext.Provider>
       </View>
