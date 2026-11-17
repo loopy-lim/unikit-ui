@@ -1,0 +1,24 @@
+# SDD Issue-to-Merge Autopilot — loopy-lim/skills automation (t3-webhook → loopy-desktop)
+# Trigger: label `sdd:ready` on issues, label `sdd:pr` on PRs.
+# Secrets: T3_WEBHOOK_URL, T3_WEBHOOK_SECRET (HMAC X-Hub-Signature-256)
+name: SDD Issue-to-Merge Autopilot
+
+on:
+  issues:
+    types: [opened, labeled]
+  pull_request:
+    types: [opened, synchronize, labeled]
+
+jobs:
+  sdd:
+    if: >-
+      (github.event_name == 'issues' && contains(github.event.issue.labels.*.name, 'sdd:ready')) ||
+      (github.event_name == 'pull_request' &&
+        github.event.pull_request.head.repo.full_name == github.repository &&
+        contains(github.event.pull_request.labels.*.name, 'sdd:pr'))
+    uses: loopy-lim/skills/.github/workflows/sdd-autopilot.yml@main
+    with:
+      driver: t3-webhook
+      runner: ubuntu-latest
+      max_retries: 2
+    secrets: inherit
