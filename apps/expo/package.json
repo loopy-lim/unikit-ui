@@ -4,6 +4,7 @@
   "main": "expo-router/entry",
   "dependencies": {
     "@expo/ui": "~58.0.27",
+    "@ui-sdk/core": "^0.1.0-beta.6",
     "@unikit-bridge/ui": "workspace:*",
     "buffer": "^6.0.3",
     "expo": "~58.0.23",
