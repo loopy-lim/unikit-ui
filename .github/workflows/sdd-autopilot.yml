@@ -1,5 +1,9 @@
-# SDD Issue-to-Merge Autopilot — loopy-lim/skills automation (t3-webhook → loopy-desktop)
-# Trigger: label `sdd:ready` on issues, label `sdd:pr` on PRs.
+# SDD autopilot relay — label → T3 webhook → loopy-desktop
+# loopy-lim/skills reusable workflow는 private이라 public 저장소에서 uses: 불가.
+# Actions가 권한·포크 가드 후 T3_WEBHOOK_URL로 중계하고, 실제 SDD는
+# loopy-desktop의 schedule_task(webhook)가 수행해요(loopy-lim/skills automation).
+#
+# Labels: sdd:ready (issue implement) · sdd:pr (PR review)
 # Secrets: T3_WEBHOOK_URL, T3_WEBHOOK_SECRET (HMAC X-Hub-Signature-256)
 name: SDD Issue-to-Merge Autopilot
 
@@ -9,16 +13,122 @@ on:
   pull_request:
     types: [opened, synchronize, labeled]
 
+permissions:
+  contents: read
+  issues: read
+  pull-requests: read
+
 jobs:
-  sdd:
+  relay:
     if: >-
       (github.event_name == 'issues' && contains(github.event.issue.labels.*.name, 'sdd:ready')) ||
       (github.event_name == 'pull_request' &&
         github.event.pull_request.head.repo.full_name == github.repository &&
         contains(github.event.pull_request.labels.*.name, 'sdd:pr'))
-    uses: loopy-lim/skills/.github/workflows/sdd-autopilot.yml@main
-    with:
-      driver: t3-webhook
-      runner: ubuntu-latest
-      max_retries: 2
-    secrets: inherit
+    runs-on: ubuntu-latest
+    steps:
+      - name: Actor permission guard
+        env:
+          GH_TOKEN: ${{ github.token }}
+          ACTOR: ${{ github.actor }}
+          REPO: ${{ github.repository }}
+          ALLOWED: loopy-lim
+        run: |
+          set -euo pipefail
+          perm="$(gh api "repos/${REPO}/collaborators/${ACTOR}/permission" --jq '.permission')"
+          case "$perm" in
+            admin|maintain|write) echo "actor=${ACTOR} permission=${perm}" ;;
+            *)
+              if [[ ",${ALLOWED}," == *",${ACTOR},"* ]]; then
+                echo "actor=${ACTOR} allowlisted"
+              else
+                echo "::error::Actor ${ACTOR} lacks write permission (${perm})"
+                exit 1
+              fi
+              ;;
+          esac
+
+      - name: Fork PR guard
+        if: github.event_name == 'pull_request'
+        run: |
+          set -euo pipefail
+          head='${{ github.event.pull_request.head.repo.full_name }}'
+          base='${{ github.repository }}'
+          if [[ "$head" != "$base" ]]; then
+            echo "::error::Cross-repository (fork) PR blocked: ${head}"
+            exit 1
+          fi
+
+      - name: Dispatch T3 webhook (loopy-desktop)
+        env:
+          T3_WEBHOOK_URL: ${{ secrets.T3_WEBHOOK_URL }}
+          T3_WEBHOOK_SECRET: ${{ secrets.T3_WEBHOOK_SECRET }}
+          EVENT_NAME: ${{ github.event_name }}
+          REPO: ${{ github.repository }}
+          ACTOR: ${{ github.actor }}
+          ISSUE_NUMBER: ${{ github.event.issue.number }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+        run: |
+          set -euo pipefail
+          if [[ -z "${T3_WEBHOOK_URL:-}" ]]; then
+            echo "::error::T3_WEBHOOK_URL secret is missing"
+            exit 1
+          fi
+
+          if [[ "${EVENT_NAME}" == "issues" ]]; then
+            export STAGE=implement
+            export ISSUE_NUMBER="${ISSUE_NUMBER:-}"
+            export PR_NUMBER=""
+          else
+            export STAGE=review
+            export ISSUE_NUMBER=""
+            export PR_NUMBER="${PR_NUMBER:-}"
+          fi
+
+          export PROMPT="SDD ${STAGE} for ${REPO}. Actor=${ACTOR}. Follow loopy-lim/skills automation/t3-webhook-prompt.md on loopy-desktop (preferredEnvironment loopy-desktop)."
+
+          python3 <<'PY'
+          import hashlib, hmac, json, os, urllib.error, urllib.request
+
+          stage = os.environ["STAGE"]
+
+          def parse_int(v):
+              v = (v or "").strip()
+              return int(v) if v.isdigit() else None
+
+          payload = {
+              "event": f"sdd.{stage}",
+              "stage": stage,
+              "repository": os.environ["REPO"],
+              "issueNumber": parse_int(os.environ.get("ISSUE_NUMBER")),
+              "prNumber": parse_int(os.environ.get("PR_NUMBER")),
+              "actor": os.environ["ACTOR"],
+              "autoMergeAllowed": True,
+              "prompt": os.environ["PROMPT"],
+          }
+          body = json.dumps(payload, ensure_ascii=False).encode("utf-8")
+          headers = {
+              "Content-Type": "application/json",
+              "X-SDD-Event": f"sdd.{stage}",
+          }
+          secret = os.environ.get("T3_WEBHOOK_SECRET") or ""
+          if secret:
+              digest = hmac.new(secret.encode("utf-8"), body, hashlib.sha256).hexdigest()
+              sig = f"sha256={digest}"
+              headers["X-Hub-Signature-256"] = sig
+              headers["X-T3-Signature"] = sig
+
+          req = urllib.request.Request(
+              os.environ["T3_WEBHOOK_URL"],
+              data=body,
+              headers=headers,
+              method="POST",
+          )
+          try:
+              with urllib.request.urlopen(req, timeout=60) as resp:
+                  print(f"webhook status={resp.status}")
+                  print(resp.read()[:500].decode("utf-8", errors="replace"))
+          except urllib.error.HTTPError as err:
+              print(f"webhook HTTP {err.code}: {err.read()[:500]!r}")
+              raise
+          PY
