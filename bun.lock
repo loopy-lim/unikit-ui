@@ -42,6 +42,7 @@
       "version": "1.0.0",
       "dependencies": {
         "@expo/ui": "~58.0.27",
+        "@ui-sdk/core": "^0.1.0-beta.6",
         "@unikit-bridge/ui": "workspace:*",
         "buffer": "^6.0.3",
         "expo": "~58.0.23",
@@ -173,6 +174,7 @@
         "@tiptap/pm": "^3.0.0",
         "@tiptap/react": "^3.0.0",
         "@tiptap/starter-kit": "^3.0.0",
+        "@ui-sdk/core": "^0.1.0-beta.6",
         "class-variance-authority": "^0.7.0",
         "clsx": "^2.1.0",
         "lucide-react": "^1.71.0",
@@ -192,6 +194,7 @@
         "@tiptap/pm",
         "@tiptap/react",
         "@tiptap/starter-kit",
+        "@ui-sdk/core",
         "lucide-react",
         "lucide-react-native",
         "react-dom",
@@ -908,6 +911,8 @@
     "@types/yargs": ["@types/yargs@17.0.35", "", { "dependencies": { "@types/yargs-parser": "*" } }, "sha512-qUHkeCyQFxMXg79wQfTtfndEC+N9ZZg76HJftDJp+qH2tV7Gj4OJi7l+PiWwJ+pWtW8GwSmqsDj/oymhrTWXjg=="],
 
     "@types/yargs-parser": ["@types/yargs-parser@21.0.3", "", {}, "sha512-I4q9QU9MQv4oEOz4tAHJtNz1cwuLxn2F3xcc2iV5WdqLPpUnj30aUuxt1mAxYTG+oe8CZMV/+6rU4S4gRDzqtQ=="],
+
+    "@ui-sdk/core": ["@ui-sdk/core@0.1.0-beta.6", "", {}, "sha512-4JDArOSaTDRArUs+XXojXVNS1kf1D/aOMan6GIp8J9+cwAdijCypbClApS2jBc4SxgZbJCIDHsMlFOIPyEv8+g=="],
 
     "@ungap/structured-clone": ["@ungap/structured-clone@1.4.0", "", {}, "sha512-1mEZtMKPM09vDmQt5y7YvmN2+DFTP7Tg0EWXdic8/C6VRnpb33e4ghisCIE3WZjsE2N8mf+QV1Zqh7ZFYLWInQ=="],
 

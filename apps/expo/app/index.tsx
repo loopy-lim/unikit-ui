@@ -280,7 +280,50 @@ export default function Index() {
   const listFooter = useMemo(
     () => (
       <View className="pt-8">
-        <Text className="text-center font-sans text-xs text-muted-foreground">
+        {/** 실험 진입 — Vercel UI SDK(@ui-sdk/core) RN 슬라이스(docs/sdd/100 §7) */}
+        <Text className="px-1 pb-2 font-sans text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+          실험 — Vercel UI SDK
+        </Text>
+        <Link href="/uisdk-position" asChild>
+          <Pressable
+            className="mb-2 rounded-2xl border border-border/50 bg-card px-4 py-3 active:bg-muted/50 active:opacity-85"
+            accessibilityLabel="ui-sdk position 팝업 배치 슬라이스 열기"
+          >
+            <Text className="font-sans text-sm font-semibold text-foreground">
+              position() — 팝업 배치를 RN에서 구동
+            </Text>
+            <Text className="mt-0.5 font-sans text-xs text-muted-foreground">
+              ui-sdk가 계산한 좌표로 진짜 팝업이 열려요(계약 어댑터 슬라이스)
+            </Text>
+          </Pressable>
+        </Link>
+        <Link href="/uisdk-popup" asChild>
+          <Pressable
+            className="mb-2 rounded-2xl border border-border/50 bg-card px-4 py-3 active:bg-muted/50 active:opacity-85"
+            accessibilityLabel="ui-sdk 추종 팝업 화면 열기"
+          >
+            <Text className="font-sans text-sm font-semibold text-foreground">
+              position() — 지속 추종 팝업(P3 확장)
+            </Text>
+            <Text className="mt-0.5 font-sans text-xs text-muted-foreground">
+              side/align 전환·화살표·스크롤 추종을 열린 채로 구동
+            </Text>
+          </Pressable>
+        </Link>
+        <Link href="/uisdk-spike" asChild>
+          <Pressable
+            className="rounded-2xl border border-border/50 bg-card px-4 py-3 active:bg-muted/50 active:opacity-85"
+            accessibilityLabel="ui-sdk 순수 로직 헬퍼 스파이크 열기"
+          >
+            <Text className="font-sans text-sm font-semibold text-foreground">
+              순수 로직 헬퍼 — RN 런타임 스파이크
+            </Text>
+            <Text className="mt-0.5 font-sans text-xs text-muted-foreground">
+              isTypeaheadKey·fuzzyScore 계산을 화면에서 확인
+            </Text>
+          </Pressable>
+        </Link>
+        <Text className="mt-8 text-center font-sans text-xs text-muted-foreground">
           UniKit UI v0.3 — Expo와 Next.js에서 같은 화면을 보고 있어요.
         </Text>
       </View>
