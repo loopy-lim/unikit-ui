@@ -1,7 +1,7 @@
 # Issue #17: 층2 definePrimitive / parts 렌더러 RN 어댑터 — 경계 재실측·스파이크·판정
 
 - **관련 이슈**: [#17](https://github.com/loopy-lim/unikit-ui/issues/17) (상위 에픽 [#11](https://github.com/loopy-lim/unikit-ui/issues/11)) · 판정 반영: [#18](https://github.com/loopy-lim/unikit-ui/issues/18)
-- **기준일**: 2026-11-18 (기준 커밋 `f895b25` = main)
+- **기준일**: 2026-11-18 (기준 커밋 `bdcccdd` = main, PR #32 반영)
 - **판정**: **전면 도입(51종) no-go · 소수 primitive(toggle/checkbox/switch급)는 기술적 조건부 go — 제품 수요 발생 전까지 미도입 유지. #18의 A 판정(층 1 헬퍼+position 경계, PR #32)과 정합.**
 
 ## 1. 경계 재실측 — renderer/parts 공개 표면 vs 비공개 경계 (체크박스 1)
@@ -49,7 +49,7 @@
 전부 npm 타르볼 4세트(beta.4~7)와 Metro 번들·기기에서의 실측이에요.
 
 - **릴리스 케이던스**: beta.4(2026-11-15T08:37Z)→beta.7(2026-11-17T00:07Z) — **3일 4릴리스**. npm dist-tags: latest=beta.6, beta=beta.7.
-- **전체 churn(b6→b7)**: core dist `.js` 388파일 중 **39파일(10.1%)** 내용 변동, react는 3파일(field·preferences·render-element — render-element는 `resolveLazy`의 중첩 lazy 지원 7줄).
+- **전체 churn(b6→b7)**: core dist 전체 777파일 중 **39파일(5.0%)** 내용 변동(내역: `.js` 388파일 중 27파일=7.0% · `.d.ts` 388파일 중 12파일), react는 3파일(field·preferences·render-element — render-element는 `resolveLazy`의 중첩 lazy 지원 7줄).
 - **어댑터 의존군 churn(b4→b7, 3구간)**: `renderer.d.ts`(export 목록)·`renderer.js`·react `use-primitive.js`/`.d.ts`·kernel `part.js`·`keep.js`·`primitive.js`·`store.js`·`platform/button.js`·`components/toggle/toggle.js` — **전부 0줄 변화**. 유일 변동은 `forms/form.js` +4줄(신규 헬퍼 `typedBeforeBind` export — 토글 바인드 경로인 `watchFieldsets`/`fieldsetDisabled`와 무관). 즉 지금까지는 안정적이지만 이는 **계약이 아니라 관찰**이에요 — renderer 머리 선언(«릴리스마다 변경 가능»)이 우선하고, 베타 3일차~5일차 구간이라 통계적 근거도 약해요.
 - **번역 층 유지 규모**: 웹 `use-primitive.js` 681줄 + `render-element.js` 109줄 중 RN판 최소 렌더러는 스파이크 기준 약 150줄(번역표·수명·구독·가짜 요소). 웹이 하는 최적화(읽은 키 좁은 구독·lazy resolve·mergeProps 체인)를 갖추면 규모는 웹판에 수렴해요.
 - **컴포넌트당 DOM 표면 편차(확장 비용의 핵심)**: toggle은 요소 실측 3멤버·전역 0이지만, 팝업 계열은 요소 10멤버+전역 6종(docs/sdd/100 §7 실측), 폼 계열은 `ElementInternals`(`attachFormInternals` — RN에 등가 없음), focus 계열은 키 이벤트(§7 3벽). **«컴포넌트를 더 넓힐수록 어댑터는 얇아지지 않고 두꺼워져요.**
