@@ -1,6 +1,8 @@
 # 100 — Vercel UI SDK(vercel-labs/ui) 분석: 행동 계층 대조·스킬 배포 검토
 
-조사 문서(관문 대상 아님 — 51-research.md와 같은 장르). 기준일 2026-11-17, 실측 기반.
+조사 문서(관문 대상 아님 — 51-research.md와 같은 장르). 기준일 2026-11-17(§7 일부 2026-11-18 재실측), 실측 기반.
+
+> **참고(2026-11-18, 이슈 [#21](https://github.com/loopy-lim/unikit-ui/issues/21) 문서 정리 반영 시점)**: 이 문서가 main에 들어가는 시점에 main 기준선에는 아직 사이클 101의 코드 산물(`packages/unikit/src/behaviors/ui-sdk.ts`·`apps/expo` 스파이크 부속·`@ui-sdk/core` 의존)이 병합되지 않았어요. 아래의 파일 경로·화면은 기기 실측을 수행한 작업 체크아웃 기준이고, 코드 반영은 그 뒤를 따라요(docs/sdd/issue-22-ui-sdk-excluded-helpers.md의 참고 주석과 같은 취지). — 이후(같은 날) 첫 코드 산물이 PR [#27](https://github.com/loopy-lim/unikit-ui/pull/27)(이슈 #14 어댑터 제품화)로 따라왔어요(§7 «제품화» 문단 참조).
 
 - 원 요청: «Vercel lab의 ui도구가 나왔는데, 이것도 여기에서 진행해볼 수 있어?» — 사용자 선택: 갭 분석 + 스킬 배포 검토 + 웹 데모 체험 3종 병행.
 - 핵심 결론: **의존성·이식 대상이 아니라 참조 이웃**. 웹 전용(DOM·ARIA 전제)이라 브리지 단일 계약 원칙과 양립 불가. 대신 (a) 순수 로직 행동의 브리지 이식 후보, (b) npm 문서 동봉·스킬 배포 아이디어를 얻었어요.
@@ -125,11 +127,22 @@ UI SDK의 `createAgent` 계층은 **소비자 앱 런타임**에서 페이지 �
 **층 3 — 완성 컴포넌트 51종의 RN 구동: 업스트림 지원 전엔 불가.**
 - 컴포넌트들이 `definePrimitive` 안에서 DOM 행동을 직접 조립해요(forms의 `attachFormInternals`는 `ElementInternals` 전용 API·keydown 기반 roving focus·top layer·visual viewport). RN View에 키 이벤트가 없다는 건 우리 menu-nav 실측과 같은 벽이에요.
 
-**권고 경로**: P1 완료(사이클 101 — behaviors/ui-sdk 진입점) → P2 완료(같은 사이클 — position() 기기 구동 슬라이스, 위 검증) → P3 완료(같은 사이클 — position() 전체 API 상시 구동: 열린 채 side/align 전환·충돌 플립·화살표·스크롤 추종·available 리사이즈 계약, 위 검증) → 다음 후보: P3 업스트림(Vercel) RN 어댑터 논의 — createPopup 계열은 비공개 커널 API라 얇은 어댑터 밖이고, 외부 활동이라 사용자 결정. 층 2(definePrimitive RN 어댑터)·층 3(완성 컴포넌트 51종)은 여전히 리스크 문단 참조.
+**권고 경로**: P1 완료(사이클 101 — behaviors/ui-sdk 진입점) → P2 완료(같은 사이클 — position() 기기 구동 슬라이스, 위 검증) → P3 완료(같은 사이클 — position() 전체 API 상시 구동: 열린 채 side/align 전환·충돌 플립·화살표·스크롤 추종·available 리사이즈 계약, 위 검증) → 다음 후보: P3 업스트림(Vercel) RN 어댑터 논의 — createPopup 계열은 비공개 커널 API라 얇은 어댑터 밖이고, 외부 활동이라 사용자 결정. 층 2(definePrimitive RN 어댑터)·층 3(완성 컴포넌트 51종)은 여전히 리스크 문단 참조. 잔여 추적은 에픽 [#11](https://github.com/loopy-lim/unikit-ui/issues/11) 자식 이슈로 옮겨갔어요(2026-11-18 기준 #22만 완료): [#12](https://github.com/loopy-lim/unikit-ui/issues/12) 열린 채 side 전환 모서리 겹침·[#13](https://github.com/loopy-lim/unikit-ui/issues/13) BridgeKeyEvent.shiftKey·[#14](https://github.com/loopy-lim/unikit-ui/issues/14) 어댑터 제품화·[#15](https://github.com/loopy-lim/unikit-ui/issues/15) UniKit overlay/popover 소비·[#16](https://github.com/loopy-lim/unikit-ui/issues/16) createPopup 업스트림·[#17](https://github.com/loopy-lim/unikit-ui/issues/17) 층 2 어댑터 조사·[#18](https://github.com/loopy-lim/unikit-ui/issues/18) 층 3 범위 재정의·[#19](https://github.com/loopy-lim/unikit-ui/issues/19) 키보드·모달리티 벽·[#20](https://github.com/loopy-lim/unikit-ui/issues/20) (선택) TurboModule 동기 측정·[#21](https://github.com/loopy-lim/unikit-ui/issues/21) 스파이크·로드맵 문서 정리·[#22](https://github.com/loopy-lim/unikit-ui/issues/22) 제외 헬퍼 재평가(완료 — 보류 판정, docs/sdd/issue-22-ui-sdk-excluded-helpers.md).
 
 **스파이크 부속**(철회 가능): apps/expo에 `@ui-sdk/core` 의존(실험 목적)·`apps/expo/app/uisdk-spike.tsx`(P1 진입점 경유 임포트·toSdkKeyEvent·계산 표시 화면)·`apps/expo/uisdk-adapter.ts`(DOM 계약 어댑터 — P3에서 updateRect·observer·style 유도 bbox 확장)·`apps/expo/app/uisdk-position.tsx`(P2 기기 구동 슬라이스 화면)·`apps/expo/app/uisdk-popup.tsx`(P3 상시 추종 팝업 화면 — 목록 «실험» 섹션에서 진입). 계약 프로브 `uisdk-probe.mts`는 실측 후 제거(머리 주석 «임시»대로 — 결과는 §7 기록). 저장소 쪽: `packages/unikit/src/behaviors/ui-sdk.ts` + package.json exports `./behaviors/ui-sdk`·선택 peer. 검증: 루트 typecheck 전부 exit 0·audit:design 10/10 통과·기기 4화면 전부 실증(위 참조).
 
-**제품화(이슈 #14, 2026-11-18)** — P2·P3 어댑터를 스파이크 부속에서 패키지 진입점으로 옮겼어요(소비 앱이 복제하지 않고 npm 진입점으로 쓰는 것이 목적). `apps/expo/uisdk-adapter.ts` → `packages/unikit/src/behaviors/ui-sdk-dom.ts`로 이동(git mv — 본문은 기기 실증 원본 그대로, 머리 주석에 진입점 선언만 추가), package.json exports에 `./behaviors/ui-sdk-dom` 추가(단일 경로 매핑 — 구현이 하나뿐이라 웹/RN 조건 분기 불필요, peer `@ui-sdk/core`는 기존 선택 peer 그대로 정합). 위치 근거: P1 헬퍼 진입점 `./behaviors/ui-sdk`와 같은 behaviors 디렉터리·같은 `ui-sdk` 접두로 ui-sdk 패밀리를 이루고(이슈가 제시한 두 후보 중 `src/lib/ui-sdk-adapter.ts`를 버린 이유 — lib는 컴포넌트 내부 골격 overlay·menu-nav의 자리), npm 전용 서브진입점 선례(ui-sdk.ts)와 같은 패턴이에요. 스파이크 화면 `uisdk-position.tsx`·`uisdk-popup.tsx`는 `@unikit-bridge/ui/behaviors/ui-sdk-dom` import로 전환했어요(이동+경로 정합만 — 화면 로직 불변). 검증: 루트 typecheck 전부 exit 0·audit:design 10/10 통과. 기기 재실증은 생략(본문이 기기 실증 원본 그대로라 무의미 — 정적 계약 export·import 해석 확인으로 갈음, 이슈 AC와 합의).
+**제품화(이슈 #14, 2026-11-18 — PR [#27](https://github.com/loopy-lim/unikit-ui/pull/27))** — P2·P3 어댑터를 스파이크 부속에서 패키지 진입점으로 옮겼어요(소비 앱이 복제하지 않고 npm 진입점으로 쓰는 것이 목적). `apps/expo/uisdk-adapter.ts` → `packages/unikit/src/behaviors/ui-sdk-dom.ts`로 이동(git mv — 본문은 기기 실증 원본 그대로, 머리 주석에 진입점 선언만 추가), package.json exports에 `./behaviors/ui-sdk-dom` 추가(단일 경로 매핑 — 구현이 하나뿐이라 웹/RN 조건 분기 불필요, peer `@ui-sdk/core`는 기존 선택 peer 그대로 정합). 위치 근거: P1 헬퍼 진입점 `./behaviors/ui-sdk`와 같은 behaviors 디렉터리·같은 `ui-sdk` 접두로 ui-sdk 패밀리를 이루고(이슈가 제시한 두 후보 중 `src/lib/ui-sdk-adapter.ts`를 버린 이유 — lib는 컴포넌트 내부 골격 overlay·menu-nav의 자리), npm 전용 서브진입점 선례(ui-sdk.ts)와 같은 패턴이에요. 스파이크 화면 `uisdk-position.tsx`·`uisdk-popup.tsx`는 `@unikit-bridge/ui/behaviors/ui-sdk-dom` import로 전환했어요(이동+경로 정합만 — 화면 로직 불변). 검증: 루트 typecheck 전부 exit 0·audit:design 10/10 통과. 기기 재실증은 생략(본문이 기기 실증 원본 그대로 — 정적 계약 export·import 해석 확인으로 갈음, 이슈 AC와 합의). «실험 화면 정책»(아래)의 디버그 텔레메트리 경계와의 정합은 열려 있어요 — 원본 보존 원칙(재작기 금지)으로 FakeStyle의 계측 필드(`writes`·`writeCount`)도 원문 그대로 이관됐고, 제품 진입점 export에서의 축소 여부는 이 PR의 독립 리뷰가 판정해요.
+
+**실험 화면 정책(2026-11-18 결정 — 이슈 [#21](https://github.com/loopy-lim/unikit-ui/issues/21))** — 목록 «실험» 섹션 진입 화면 3종의 keep·graduate·delete를 정했어요. 근거는 각 화면 머리 주석의 자기 규정과 §7 실측 기록이에요.
+
+| 화면 | 역할(유일성) | 결정 | 졸업·제거 트리거 |
+|---|---|---|---|
+| `uisdk-spike.tsx`(P1) | npm 전용 진입점(`behaviors/ui-sdk`)의 Metro 통과·런타임 계산 기기 실증 — 진입점이 배럴·registry 밖이라 이 화면이 유일한 기기 소비 경로 | **keep** | `@ui-sdk/core`가 주간 단위 베타라 재검증 가치가 있어요. 진입점이 안정화돼 카탈로그 데모로 흡수되면 delete |
+| `uisdk-position.tsx`(P2) | 1회 계산 + `stop()` 계약(개방 시 단발 배치)의 참조 구현 — 제품화(#14)가 단발 배치 옵션을 포함하므로 계약 증거로 유효. 계산 근거(앵커 rect·스타일 쓰기 기록)를 화면에 그대로 보여요 | **keep** | #14 제품화 시 제품 데모로 흡수 후 delete |
+| `uisdk-popup.tsx`(P3) | 상시 추종·열린 채 side/align 전환·arrow·available 계약의 참조 구현 — #12(side=right 겹침)의 재현·검증 화면이자 #15(overlay 소비)의 입력 | **keep(graduate 후보)** | #12·#14·#15 완료 시 오버레이 제품 데모로 graduate |
+
+- 공통 원칙: «실험» 섹션은 제품 안내가 아니라 **계약 증거 보관소**예요. 스파이크 부속은 철회 가능(위 문단)을 유지하되, 근거가 §7에 기록됐으므로 삭제는 대응 이슈(#14·#15 등) 완료 시점에 함께 판단해요.
+- **디버그 텔레메트리 경계(제품/스파이크)**: 쓰기 N회(`FakeStyle.writeCount`·`writes` 링 버퍼 — uisdk-adapter.ts)와 «앵커 y→top» 판독(uisdk-popup.tsx 팝업 카드 하단 텍스트)은 **스파이크 화면 전용 계측**이에요. 되먹임·origin-drift 함정 방어 검증에 계속 필요하므로 실험 화면에는 남기되, #14 제품화에서 어댑터가 `@unikit-bridge/ui`로 올라갈 때 이 계측은 제품 표면으로 넘어가지 않아요(제품 진입점 export에서 제외 — 제품 데모는 사용자 가치 문구로 대체).
 
 ## §8 참조
 
