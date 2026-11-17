@@ -29,7 +29,7 @@ import {
   pxToNumber,
   rectFrom,
   type FakeRect,
-} from "../uisdk-adapter";
+} from "@unikit-bridge/ui/behaviors/ui-sdk-dom";
 import { position } from "@ui-sdk/core";
 
 // position()은 호출 시점에만 전역을 읽어요(모듈 평가는 DOM 없이 안전 — §7

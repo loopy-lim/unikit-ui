@@ -58,6 +58,13 @@ export default function Home() {
 
 > **Publish note** — npm `@unikit-bridge/ui` 0.4.1 (2026-11-17) ships all 62 components (including `EditorToolbar`) plus the `@unikit-bridge/ui/editor` engine entry point and the `@unikit-bridge/ui/behaviors` interaction-hooks entry point. Use option 2 (registry copy) when you want to own the component source — the editor entry point is npm-only, since its engine HTML bundle is a build artifact.
 
+**Experimental npm-only sub-entry points** — two more entry points exist outside the barrel and the registry (Vercel UI SDK `@ui-sdk/core` integration experiments — see docs/sdd/100).
+
+- `@unikit-bridge/ui/behaviors/ui-sdk` — selective re-export of the helpers that work without a DOM (typeahead, text matching, tree data engine) plus `toSdkKeyEvent`, which adapts bridge key events to the ui-sdk event shape.
+- `@unikit-bridge/ui/behaviors/ui-sdk-dom` — the adapter that fills the DOM surface `position()` (the popup placement engine) requires from RN measurements (`FakeElement`, `installDomStubs`, …). Native-only (imports react-native).
+
+`@ui-sdk/core` is an optional peer (peerDependenciesMeta), so consumers who never import these entry points need nothing extra; to use them, also `bun add @ui-sdk/core`. They exist on main and are not in the 0.4.1 npm release yet — they ship with the next publish.
+
 ## Option 2 — copy sources with shadcn CLI
 
 Public registry base: <https://ui.ll3.kr/r/> (catalog: [registry.json](https://ui.ll3.kr/r/registry.json)). While hacking UniKit UI itself, swap in `http://localhost:3000/r/`.

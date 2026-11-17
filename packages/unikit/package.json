@@ -39,6 +39,7 @@
     },
     "./behaviors": "./src/behaviors/index.ts",
     "./behaviors/ui-sdk": "./src/behaviors/ui-sdk.ts",
+    "./behaviors/ui-sdk-dom": "./src/behaviors/ui-sdk-dom.ts",
     "./editor-prose.css": "./src/lib/editor-prose.css"
   },
   "main": "./src/index.ts",

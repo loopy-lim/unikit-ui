@@ -39,7 +39,7 @@ import {
   rectFrom,
   updateRect,
   type FakeRect,
-} from "../uisdk-adapter";
+} from "@unikit-bridge/ui/behaviors/ui-sdk-dom";
 import { position } from "@ui-sdk/core";
 
 installDomStubs();

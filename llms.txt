@@ -6,7 +6,7 @@
 
 - 컴포넌트는 브리지 프리미티브(`View`·`Text`·`Pressable`·`TextInput`·`Image`)와 `className`으로만 작성돼요. 플랫폼 분기(`.web.tsx`·`Platform.select`)는 없어요.
 - 상태 관리는 React state + context(Radix·외부 엔진 없음). 오버레이 계열의 포털·앵커 위치 계산·포커스 트랙은 `packages/unikit/src/lib/overlay.tsx`가 담당해요.
-- 진입점 5개 — `@unikit-bridge/ui`(컴포넌트 배럴, chart 제외) · `/primitives`(브리지 프리미티브·앱 API — package exports 조건이 웹/RN을 갈라요) · `/chart`(차트 렌더러, react-native-svg 선택 peer) · `/editor`(MarkdownEditor 엔진 — 웹은 tiptap 직접 마운트, 네이티브는 WebView) · `/behaviors`(오버레이·메뉴 탐색 훅 재노출, npm 전용).
+- 진입점 7개 — `@unikit-bridge/ui`(컴포넌트 배럴, chart 제외) · `/primitives`(브리지 프리미티브·앱 API — package exports 조건이 웹/RN을 갈라요) · `/chart`(차트 렌더러, react-native-svg 선택 peer) · `/editor`(MarkdownEditor 엔진 — 웹은 tiptap 직접 마운트, 네이티브는 WebView) · `/behaviors`(오버레이·메뉴 탐색 훅 재노출, npm 전용) · `/behaviors/ui-sdk`·`/behaviors/ui-sdk-dom`(Vercel UI SDK 연동 실험, npm 전용 — 순수 헬퍼 재수출과 position() DOM 계약 어댑터. 선택 peer `@ui-sdk/core`라 미설치 소비자는 영향 없음. 어댑터 쪽은 네이티브 전용).
 - API는 shadcn 원본을 따라요(`defaultChecked`·`onCheckedChange` 등) — Radix가 하던 상태 관리만 내부 React로 옮겨졌어요.
 
 ## 디자인 토큰 규칙 (컴포넌트 코드 작성·수정 시 준수)

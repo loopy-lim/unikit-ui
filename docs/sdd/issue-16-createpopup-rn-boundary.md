@@ -4,7 +4,7 @@
 - **기준일**: 2026-11-18
 - **판정**: **UniKit 경계 — `createPopup` 비도입 확정(wontfix): `position()` + 자체 포털(`src/lib/overlay.tsx`) 경계 채택. 업스트림 제기 — 보류(사용자 승인 대기).**
 
-> **병합 안내**: 이 기록은 `docs/sdd/100-vercel-ui-sdk-research.md`가 `main`에 커밋되면 해당 문서 §7의 후속 관문 기록으로 병합한다(문서 보존 원칙). 100번 문서가 아직 다른 세션의 진행 중 작업(untracked)이라 이슈 #16의 산출물은 별도 파일로 남긴다.
+> **병합 안내**: 이 기록은 `docs/sdd/100-vercel-ui-sdk-research.md` §7의 후속 관문 기록으로 병합해요(문서 보존 원칙). 작성 시점(2026-11-18)에는 100번 문서가 다른 세션의 진행 중 작업(untracked)이라 이슈 #16의 산출물을 별도 파일로 남겼고, 이후 100번 문서가 main에 반영 완료됐어요(PR #24). 병합은 §7 추적 줄의 #16 항목이 이 문서를 참조하는 방식으로 이어져요.
 
 ## 1. 조사 범위와 기준
 
@@ -12,7 +12,7 @@
 
 - **`createPopup` 계약 실측**: 업스트림 얕은 클론 스냅샷 `/tmp/uisdk-ref/ui`(커밋 `cf6c86f`, 2026-11-17 — docs/sdd/100 §8와 같은 스냅샷)의 `packages/core/src/foundation/popups/create-popup.ts` · `foundation/kernel/primitive-types.ts`(PrimitiveContext 정의) · `src/renderer.ts` · `foundation/popups/popup-slots.ts`.
 - **업스트림 이슈 검색**: 2026-11-18, GitHub 검색(`gh search issues` · REST API). 키워드와 결과는 §2에.
-- **UniKit 쪽 사실**: `main`(3956d1d)의 `packages/unikit/src/lib/overlay.tsx` · `src/components/`(오버레이 골격 소비 컴포넌트 실측). 사이클 101의 `position()` 기기 실증 결과는 docs/sdd/100 §7 P2·P3(메인 체크아웃의 미커밋 문서 — 읽기 전용 참조).
+- **UniKit 쪽 사실**: `main`(3956d1d)의 `packages/unikit/src/lib/overlay.tsx` · `src/components/`(오버레이 골격 소비 컴포넌트 실측). 사이클 101의 `position()` 기기 실증 결과는 docs/sdd/100 §7 P2·P3(작성 당시 메인 체크아웃의 미커밋 문서 — 2026-11-18 현재 main 반영 완료, PR #24).
 
 ## 2. 업스트림 조사 — RN/헤드리스 렌더러 논의 (체크박스 1)
 
@@ -36,12 +36,12 @@
 ### 충족 가능 — `position()` + 자체 포털로 이미 성립
 
 - **팝업 배치 전부**: `computeOverlayPositionWithPlacement`(overlay.tsx — 4방향 × 3정렬 · 충돌 플립 · 뷰포트 클램프)에 더해, 사이클 101 P3가 `position()` 계열(«팝업 배치의 전부» — docs/sdd/100 §7 판정)을 기기로 확보했어요: 열린 채 side/align 전환 · 충돌 플립 재판정 · 화살표 배치(`--arrow-offset` · `data-arrow-clamped`) · `--available-width/height` 메인축 수축 계약 · rAF 상시 스크롤 추종(VirtualAnchor + rect 캐시 제자리 갱신).
-- **오버레이 골격(자체 포털)**: `ModalOverlay`(백드롭 · `useOverlayFocus` 포커스 트랩/복귀 · `useDismiss` ESC · `useScrollLock`)과 `AnchoredOverlay`(앵커 측정 · 배치 위임)이 브리지 `Portal` 위에서 웹·네이티브 같은 계약으로 동작해요. 소비 컴포넌트 실측(2026-11-18, `src/components/` grep): `AnchoredOverlay` 9종(combobox · context-menu · dropdown-menu · hover-card · menubar · navigation-menu · popover · select · tooltip), `ModalOverlay` 6종(alert-dialog · command · dialog · drawer · sheet · sonner).
+- **오버레이 골격(자체 포털)**: `ModalOverlay`(백드롭 · `useOverlayFocus` 포커스 트랩/복귀 · `useDismiss` ESC · `useScrollLock`)과 `AnchoredOverlay`(앵커 측정 · 배치 위임)이 브리지 `Portal` 위에서 웹·네이티브 같은 계약으로 동작해요. 소비 컴포넌트 실측(2026-11-18 재실측, `src/components/` JSX 직접 소비 기준 — 앞선 grep 문자열 히트 집계는 주석·타입까지 세어 오집계였어요): `AnchoredOverlay` 직접 소비 6종(context-menu · dropdown-menu · hover-card · navigation-menu · popover · tooltip — combobox·select는 `Popover` 경유, menubar는 `DropdownMenu` 경유 간접 소비), `ModalOverlay` 직접 소비 4종(alert-dialog · dialog · drawer · sheet — command는 `Dialog` 경유 간접 소비). `sonner`는 오버레이 골격을 소비하지 않고 브리지 `Portal`을 직접 소비해요(비모달 — sonner.tsx 머리 주석·`<Portal modal={false}>` 실측).
 - **열림/닫힘 상태**: 각 컴포넌트가 React state + context로 직접 관리(브리지 분기 원칙) — `createPopup`의 상태기계 없이 이미 전 컴포넌트가 동작 중이에요.
 
 ### 충족 불가 — 현재 UniKit에 없는 영역과 그 성격
 
-1. **등장/퇴장 애니메이션 presence**: docs/sdd/100 §3 Motion 갭과 같은 지점으로, roadmap-components «오버레이 등장/퇴장 애니메이션 — `web:` 클래스 도입 검토»에 이미 별도 항목으로 있어요. `createPopup` 없이도 접근 가능한 과제예요.
+1. **등장/퇴장 애니메이션 presence**: docs/sdd/100 §3 Motion 갭과 같은 지점으로, roadmap-components «오버레이·애니메이션» 절의 «등장/퇴장 애니메이션» 항목(«로드맵: 웹 전용 애니메이션 클래스(`web:` 접두) 도입 검토»)에 이미 별도로 다뤄요. `createPopup` 없이도 접근 가능한 과제예요.
 2. **네이티브 스크롤 추종의 `AnchoredOverlay` 통합**: overlay.tsx 머리 주석대로 네이티브 `useReposition`은 no-op이에요(웹 전용). 다만 P3가 `position()` 기반 추종의 실현 가능성을 기기로 증명했으므로, 필요해지면 overlay.tsx 쪽 계약 확장이 경로예요 — `createPopup`이 필요한 지점이 아니에요.
 3. **시트 프레젠테이션·스냅포인트**(ui-sdk `sheet` 계열): 소비 수요 미관찰(관찰 유지).
 4. **모달 팝업**(페이지 inert · persistent 요소): 소비 수요 미관찰. UniKit의 모달은 `ModalOverlay`가 담당하고 있어요.
