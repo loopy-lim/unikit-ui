@@ -7,6 +7,9 @@
 // 2. toSdkKeyEvent 래퍼 — 브리지 BridgeKeyEvent 모양({key, preventDefault})을
 //    ui-sdk 이벤트 모양으로 바꿔 계산하는가(캐스팅 없이 타입으로 성립).
 // 3. 순수 로직 헬퍼가 RN 런타임(에뮬레이터)에서 실제 계산하는가.
+// 4. shiftKey 전달(이슈 #13) — 시프트 조합(선택 엔진 범위 선택 등)이
+//    래퍼를 통과하는가. shift+글자는 여전히 타입어헤드(게이트는
+//    ctrl·meta·alt만 본다)임도 함께 확인.
 //
 // 계약 메모(실측): isTypeaheadKey는 문자열이 아니라 DOM 이벤트 모양
 // ({key, ctrlKey, metaKey, altKey})을 받아요 — P1 진입점의 toSdkKeyEvent가
@@ -20,7 +23,13 @@ import {
 } from "@unikit-bridge/ui/behaviors/ui-sdk";
 
 // 브리지 BridgeKeyEvent 최소 형태 — 웹은 DOM KeyboardEvent가 그대로 이 모양.
-const bridgeEvent = (key: string) => ({ key, preventDefault: () => {} });
+// shiftKey는 이슈 #13 계약 — 웹은 DOM이 실측값을 주고, 네이티브 TextInput은
+// 시프트된 글자 대문자에서 유도한다.
+const bridgeEvent = (key: string, shiftKey = false) => ({
+  key,
+  shiftKey,
+  preventDefault: () => {},
+});
 
 export default function UisdkSpike() {
   const results = [
@@ -31,6 +40,18 @@ export default function UisdkSpike() {
     ],
     ["fuzzyScore(abcd, abc)", String(fuzzyScore("abcd", "abc"))],
     ["fuzzyScore(xyz, abc)", String(fuzzyScore("xyz", "abc"))],
+    [
+      "toSdkKeyEvent(ArrowDown, shift).shiftKey",
+      String(toSdkKeyEvent(bridgeEvent("ArrowDown", true)).shiftKey),
+    ],
+    [
+      "toSdkKeyEvent(ArrowDown).shiftKey",
+      String(toSdkKeyEvent(bridgeEvent("ArrowDown")).shiftKey),
+    ],
+    [
+      "isTypeaheadKey(shift+k)",
+      String(isTypeaheadKey(toSdkKeyEvent(bridgeEvent("k", true)))),
+    ],
   ];
 
   return (

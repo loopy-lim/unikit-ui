@@ -31,7 +31,8 @@
  *   aria-currentaria-invalidaria-describedby → RN 계약 없음, 폐기
  *   Pressable onKeyDown → 폐기（웹 키보드 탐색 전용）
  *   View onKeyDown·View onHoverIn/onHoverOut → 폐기（RN View 계약 — Pressable만 hover 보유）
- *   TextInput onKeyDown → RN onKeyPress（{key}）로 래핑（preventDefault는 no-op）
+ *   TextInput onKeyDown → RN onKeyPress（{key}）로 래핑（preventDefault는 no-op,
+ *   shiftKey는 시프트된 글자 대문자에서 유도 — 근사 한계는 bridge/types.ts）
  *   useReposition → no-op（모달이 창 좌표에 고정, 재배치 불필요불가）
  */
 import {
@@ -429,7 +430,8 @@ Pressable.displayName = "Pressable";
 // TextInput — RN TextInput 재노출. 웹 관용 disabled는 네이티브 표준 속성이
 // 아니므로 여기서는 버린다（입력 차단 치환 editable={false}는 Input이 수행）.
 // onKeyDown（웹）은 RN onKeyPress（{key}）로 래핑 — 변환 불가 키는 미발화,
-// preventDefault는 no-op（RN이 입력을 사전 차단하지 않는 한계）.
+// preventDefault는 no-op（RN이 입력을 사전 차단하지 않는 한계）. shiftKey는
+// 시프트된 글자 대문자에서 유도(이슈 #13 — 근사 한계는 bridge/types.ts).
 // aria-invalidaria-describedby는 RN 계약 없음（폐기）.
 // ---------------------------------------------------------------------------
 const TextInput = forwardRef<BridgeTextInputRef, TextInputProps>(
@@ -477,11 +479,17 @@ const TextInput = forwardRef<BridgeTextInputRef, TextInputProps>(
       maxLength={maxLength}
       onKeyPress={
         onKeyDown
-          ? (event) =>
+          ? (event) => {
+              const key = event.nativeEvent.key;
               onKeyDown({
-                key: event.nativeEvent.key,
+                key,
                 preventDefault: () => {}, // RN 미지원 — no-op(한계)
-              })
+                // 시프트 유도(이슈 #13) — RN onKeyPress는 key만 주고 수정자
+                // 상태가 없어 시프트된 글자(대문자)에서 판정한다(근사 한계는
+                // bridge/types.ts).
+                shiftKey: key.length === 1 && key !== key.toLowerCase(),
+              });
+            }
           : undefined
       }
       {...rest}

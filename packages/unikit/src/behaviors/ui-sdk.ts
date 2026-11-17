@@ -25,8 +25,10 @@
 // toSdkKeyEvent: 브리지 BridgeKeyEvent(웹 DOM KeyboardEvent·네이티브 래핑의
 // 공통 최소 형태 — bridge/types.ts)를 ui-sdk 헬퍼가 읽는 이벤트 모양으로
 // 바꿔요. ui-sdk의 공개 타입은 DOM lib KeyboardEvent라 구조적 최소형을
-// 캐스팅해 돌려줘요. shiftKey는 BridgeKeyEvent에 없어서 이 래퍼 경로로는
-// 시프트 계열 조합(범위 선택 등)에 도달하지 못해요(한계 — 계약 확장 필요).
+// 캐스팅해 돌려줘요. shiftKey는 이슈 #13으로 BridgeKeyEvent 계약에 추가돼
+// 시프트 계열 조합(선택 엔진의 범위 선택 등)이 이 래퍼 경로로 도달해요
+// — 웹은 DOM 이벤트가 실측값을 주고, 네이티브 TextInput은 시프트된 글자
+// 대문자 유도 근사(한계는 bridge/types.ts 참조).
 import type { BridgeKeyEvent } from "../bridge/types";
 
 // isTypeaheadKey의 매개변수 타입에서 ui-sdk가 기대하는 이벤트 형태를 도출
@@ -61,6 +63,7 @@ export function toSdkKeyEvent(event: BridgeKeyEvent): SdkKeyEvent {
     ctrlKey: event.ctrlKey ?? false,
     metaKey: event.metaKey ?? false,
     altKey: event.altKey ?? false,
+    shiftKey: event.shiftKey ?? false,
     preventDefault: event.preventDefault,
     stopPropagation: event.stopPropagation ?? (() => {}),
   } as unknown as SdkKeyEvent;
