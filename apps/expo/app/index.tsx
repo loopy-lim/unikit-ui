@@ -312,7 +312,7 @@ export default function Index() {
         </Link>
         <Link href="/uisdk-spike" asChild>
           <Pressable
-            className="rounded-2xl border border-border/50 bg-card px-4 py-3 active:bg-muted/50 active:opacity-85"
+            className="mb-2 rounded-2xl border border-border/50 bg-card px-4 py-3 active:bg-muted/50 active:opacity-85"
             accessibilityLabel="ui-sdk 순수 로직 헬퍼 스파이크 열기"
           >
             <Text className="font-sans text-sm font-semibold text-foreground">
@@ -320,6 +320,19 @@ export default function Index() {
             </Text>
             <Text className="mt-0.5 font-sans text-xs text-muted-foreground">
               isTypeaheadKey·fuzzyScore 계산을 화면에서 확인
+            </Text>
+          </Pressable>
+        </Link>
+        <Link href="/uisdk-toggle" asChild>
+          <Pressable
+            className="rounded-2xl border border-border/50 bg-card px-4 py-3 active:bg-muted/50 active:opacity-85"
+            accessibilityLabel="ui-sdk 층2 파트 렌더러 스파이크 열기"
+          >
+            <Text className="font-sans text-sm font-semibold text-foreground">
+              층2 parts 렌더러 — toggle RN 스파이크
+            </Text>
+            <Text className="mt-0.5 font-sans text-xs text-muted-foreground">
+              definePrimitive 상태 기계를 RN 어댑터로 구동(이슈 #17)
             </Text>
           </Pressable>
         </Link>
