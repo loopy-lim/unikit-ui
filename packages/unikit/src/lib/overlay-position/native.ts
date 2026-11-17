@@ -20,7 +20,14 @@
 //   제자리 갱신(updateRect)한다 — rAF 루프가 나머지를 따라간다. 매 프레임
 //   measureInWindow(브리지 왕복)는 비용이 커 폴링으로 근사했어요. 기본 200ms는
 //   설계값(기기 실측 아님 — 증거 문서 참조), 0 이하로 끌 수 있어요.
+// - 측정 좌표 시맨틱(PR #31 리뷰 F-1 정정): 브리지 measureInWindow는 RN
+//   instance.measure 위임이라 콜백의 앞 4인자 x,y는 부모 뷰 기준 상대 좌표,
+//   5·6번째 pageX,pageY가 창 기준 절대 좌표(getBoundingClientRect 시맨틱)예요.
+//   FakeRect는 pageX/pageY로 채운다. P3 스파이크(apps/expo/app/uisdk-popup.tsx)
+//   는 RN el.measureInWindow를 직접 호출해 앞 4인자가 이미 창 좌표였다 —
+//   브리지 경유로 시맨틱이 달라지는 점이 결함의 근원이었어요.
 import { measureInWindow } from "@unikit-bridge/ui/primitives";
+import type { InstallUiSdkOverlayPositionOptions } from "./types";
 
 import {
   FakeElement,
@@ -57,7 +64,9 @@ function elementOf(ref: unknown): unknown {
     : ref;
 }
 
-/** 브리지 measureInWindow(비동기)를 얇게 감싼 측정 — 요소 없으면 즉시 null. */
+/** 브리지 measureInWindow(비동기) 측정 — 요소 없으면 즉시 null. 창 좌표는
+ *  콜백 5·6번째 pageX,pageY(머리 주석 «측정 좌표 시맨틱» 참조. 4인자 스텁
+ *  대비 x,y로의 nullish 폴백 유지). */
 function measureElement(
   ref: unknown,
   callback: (rect: FakeRect | null) => void,
@@ -67,8 +76,10 @@ function measureElement(
     callback(null);
     return;
   }
-  measureInWindow(el, (x, y, width, height) => {
-    callback(rectFrom(x ?? 0, y ?? 0, width ?? 0, height ?? 0));
+  measureInWindow(el, (x, y, width, height, pageX, pageY) => {
+    callback(
+      rectFrom(pageX ?? x ?? 0, pageY ?? y ?? 0, width ?? 0, height ?? 0),
+    );
   });
 }
 
@@ -82,10 +93,9 @@ function stateKey(state: OverlayPositionState | null): string {
 /** position()이 data-side에 기록하는 물리 면 4종(OverlayPlacement와 같은 집합). */
 const SIDES: readonly OverlayPlacement[] = ["top", "bottom", "left", "right"];
 
-export type InstallUiSdkOverlayPositionOptions = {
-  /** 앵커 재측정 폴링 주기 ms(기본 200). 0 이하면 추종 폴링을 끈다. */
-  followIntervalMs?: number;
-};
+// 공개 옵션 계약 — web.ts와 같은 이름·같은 본문으로 재노출(정의는 플랫폼
+// 비의존 공용 파일 ./types — 양쪽 조건이 같은 타입에 닿게).
+export type { InstallUiSdkOverlayPositionOptions } from "./types";
 
 /**
  * ui-sdk position() 엔진을 오버레이 배치 엔진으로 등록한다(앱 부트 1회).

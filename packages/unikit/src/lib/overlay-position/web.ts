@@ -23,7 +23,14 @@
 // - 충돌 플립·정렬 축 클램프는 position() 계약을 따른다(메인 축은 클램프 대신
 //   --available-* 통보 → AnchoredOverlay가 maxWidth/maxHeight로 시각만 깎음).
 // - stop()은 rAF 폴링과 position() cleanup을 함께 정리한다.
+//
+// 옵션 계약(PR #31 리뷰 F-2): native.ts와 같은 시그니처 — 옵션 타입을 같은
+// 이름으로 재노출하고 installUiSdkOverlayPosition(options?)를 수용한다(정의는
+// 플랫폼 비의존 공용 파일 ./types). followIntervalMs는 네이티브 전용(재측정
+// 폴링 주기) — 웹은 position() 내부 watchMoves·rAF 구동이라 이 옵션을
+// 무시해요(유니버설 소비가 default 조건에서만 TS2554/TS2305로 깨지던 비대칭).
 import { position } from "@ui-sdk/core";
+import type { InstallUiSdkOverlayPositionOptions } from "./types";
 
 import {
   setOverlayPositionEngine,
@@ -77,11 +84,20 @@ function stateKey(state: OverlayPositionState | null): string {
     : "";
 }
 
+// 공개 옵션 계약 — native.ts와 같은 이름·같은 본문으로 재노출(정의는 플랫폼
+// 비의존 공용 파일 ./types — 양쪽 조건이 같은 타입에 닿게).
+export type { InstallUiSdkOverlayPositionOptions } from "./types";
+
 /**
  * ui-sdk position() 엔진을 오버레이 배치 엔진으로 등록한다(앱 부트 1회).
  * 되돌리기는 setOverlayPositionEngine(null)(아래 재노출).
+ * 옵션은 native.ts와 같은 계약으로 수용하지만 followIntervalMs는 네이티브
+ * 전용(재측정 폴링 주기) — 웹은 position() 내부 watchMoves·rAF 구동이라
+ * 무시한다.
  */
-export function installUiSdkOverlayPosition(): void {
+export function installUiSdkOverlayPosition(
+  _options?: InstallUiSdkOverlayPositionOptions,
+): void {
   setOverlayPositionEngine({
     attach({ anchorRef, contentRef, getOptions, onPlace }) {
       const anchorEl = domElementOf(anchorRef);
