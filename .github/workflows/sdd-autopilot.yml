@@ -1,10 +1,10 @@
 # SDD autopilot relay — label → T3 webhook → loopy-desktop
-# loopy-lim/skills reusable workflow는 private이라 public 저장소에서 uses: 불가.
-# Actions가 권한·포크 가드 후 T3_WEBHOOK_URL로 중계하고, 실제 SDD는
-# loopy-desktop의 schedule_task(webhook)가 수행해요(loopy-lim/skills automation).
 #
-# Labels: sdd:ready (issue implement) · sdd:pr (PR review)
-# Secrets: T3_WEBHOOK_URL, T3_WEBHOOK_SECRET (HMAC X-Hub-Signature-256)
+# relay.t3.codes is behind Cloudflare. GitHub-hosted runners get CF 1010.
+# This job runs on a self-hosted runner on loopy-desktop.
+#
+# Labels: sdd:ready (issue → implement) · sdd:pr (PR → review)
+# Secrets: T3_WEBHOOK_URL, T3_WEBHOOK_SECRET
 name: SDD Issue-to-Merge Autopilot
 
 on:
@@ -12,6 +12,16 @@ on:
     types: [opened, labeled]
   pull_request:
     types: [opened, synchronize, labeled]
+  workflow_dispatch:
+    inputs:
+      issue_number:
+        description: "Issue number → sdd.implement"
+        required: false
+        type: string
+      pr_number:
+        description: "PR number → sdd.review"
+        required: false
+        type: string
 
 permissions:
   contents: read
@@ -21,13 +31,15 @@ permissions:
 jobs:
   relay:
     if: >-
+      github.event_name == 'workflow_dispatch' ||
       (github.event_name == 'issues' && contains(github.event.issue.labels.*.name, 'sdd:ready')) ||
       (github.event_name == 'pull_request' &&
         github.event.pull_request.head.repo.full_name == github.repository &&
         contains(github.event.pull_request.labels.*.name, 'sdd:pr'))
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, linux, loopy-desktop]
     steps:
       - name: Actor permission guard
+        if: github.event_name != 'workflow_dispatch'
         env:
           GH_TOKEN: ${{ github.token }}
           ACTOR: ${{ github.actor }}
@@ -66,36 +78,38 @@ jobs:
           EVENT_NAME: ${{ github.event_name }}
           REPO: ${{ github.repository }}
           ACTOR: ${{ github.actor }}
-          ISSUE_NUMBER: ${{ github.event.issue.number }}
-          PR_NUMBER: ${{ github.event.pull_request.number }}
+          ISSUE_NUMBER: ${{ github.event.issue.number || inputs.issue_number }}
+          PR_NUMBER: ${{ github.event.pull_request.number || inputs.pr_number }}
         run: |
           set -euo pipefail
-          if [[ -z "${T3_WEBHOOK_URL:-}" ]]; then
-            echo "::error::T3_WEBHOOK_URL secret is missing"
-            exit 1
-          fi
+          : "${T3_WEBHOOK_URL:?T3_WEBHOOK_URL secret missing}"
+          : "${T3_WEBHOOK_SECRET:?T3_WEBHOOK_SECRET secret missing}"
 
-          if [[ "${EVENT_NAME}" == "issues" ]]; then
-            export STAGE=implement
-            export ISSUE_NUMBER="${ISSUE_NUMBER:-}"
-            export PR_NUMBER=""
+          if [[ "${EVENT_NAME}" == "pull_request" ]]; then
+            STAGE=review
+            ISSUE_NUMBER=""
+            PR_NUMBER="${PR_NUMBER:-}"
+          elif [[ "${EVENT_NAME}" == "workflow_dispatch" && -n "${PR_NUMBER:-}" && -z "${ISSUE_NUMBER:-}" ]]; then
+            STAGE=review
+            ISSUE_NUMBER=""
           else
-            export STAGE=review
-            export ISSUE_NUMBER=""
-            export PR_NUMBER="${PR_NUMBER:-}"
+            STAGE=implement
+            PR_NUMBER=""
+            ISSUE_NUMBER="${ISSUE_NUMBER:-}"
           fi
 
-          export PROMPT="SDD ${STAGE} for ${REPO}. Actor=${ACTOR}. Follow loopy-lim/skills automation/t3-webhook-prompt.md on loopy-desktop (preferredEnvironment loopy-desktop)."
+          export STAGE ISSUE_NUMBER PR_NUMBER
+          export PROMPT="SDD ${STAGE} for ${REPO}. Actor=${ACTOR}. Follow loopy-lim/skills automation/t3-webhook-prompt.md on loopy-desktop."
 
-          python3 <<'PY'
-          import hashlib, hmac, json, os, urllib.error, urllib.request
-
+          BODY_PATH=$(mktemp)
+          SIG_PATH=$(mktemp)
+          export BODY_PATH SIG_PATH
+          python3 - <<'PY'
+          import hashlib, hmac, json, os
           stage = os.environ["STAGE"]
-
           def parse_int(v):
               v = (v or "").strip()
               return int(v) if v.isdigit() else None
-
           payload = {
               "event": f"sdd.{stage}",
               "stage": stage,
@@ -107,28 +121,20 @@ jobs:
               "prompt": os.environ["PROMPT"],
           }
           body = json.dumps(payload, ensure_ascii=False).encode("utf-8")
-          headers = {
-              "Content-Type": "application/json",
-              "X-SDD-Event": f"sdd.{stage}",
-          }
-          secret = os.environ.get("T3_WEBHOOK_SECRET") or ""
-          if secret:
-              digest = hmac.new(secret.encode("utf-8"), body, hashlib.sha256).hexdigest()
-              sig = f"sha256={digest}"
-              headers["X-Hub-Signature-256"] = sig
-              headers["X-T3-Signature"] = sig
-
-          req = urllib.request.Request(
-              os.environ["T3_WEBHOOK_URL"],
-              data=body,
-              headers=headers,
-              method="POST",
-          )
-          try:
-              with urllib.request.urlopen(req, timeout=60) as resp:
-                  print(f"webhook status={resp.status}")
-                  print(resp.read()[:500].decode("utf-8", errors="replace"))
-          except urllib.error.HTTPError as err:
-              print(f"webhook HTTP {err.code}: {err.read()[:500]!r}")
-              raise
+          digest = hmac.new(os.environ["T3_WEBHOOK_SECRET"].encode(), body, hashlib.sha256).hexdigest()
+          open(os.environ["BODY_PATH"], "wb").write(body)
+          open(os.environ["SIG_PATH"], "w", encoding="utf-8").write(f"sha256={digest}")
+          print(json.dumps(payload, ensure_ascii=False))
           PY
+
+          SIG=$(cat "$SIG_PATH")
+          curl -fsSL -X POST "$T3_WEBHOOK_URL" \
+            -H "Content-Type: application/json" \
+            -H "User-Agent: unikit-ui-sdd-relay/1.0 (self-hosted; loopy-desktop)" \
+            -H "X-SDD-Event: sdd.${STAGE}" \
+            -H "X-Hub-Signature-256: ${SIG}" \
+            -H "X-T3-Signature: ${SIG}" \
+            --data-binary @"$BODY_PATH"
+          echo
+          echo "<!-- sdd-status: WEBHOOK_DISPATCHED stage=${STAGE} -->"
+          rm -f "$BODY_PATH" "$SIG_PATH"
