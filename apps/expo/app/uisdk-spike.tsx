@@ -14,7 +14,8 @@
 // 계약 메모(실측): isTypeaheadKey는 문자열이 아니라 DOM 이벤트 모양
 // ({key, ctrlKey, metaKey, altKey})을 받아요 — P1 진입점의 toSdkKeyEvent가
 // 그 변환을 맡아요(브리지 이벤트에는 수정자가 선택 멤버라 없으면 false).
-import { View, Text } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { Text, View } from "@unikit-bridge/ui/primitives";
 
 import {
   fuzzyScore,
@@ -32,6 +33,8 @@ const bridgeEvent = (key: string, shiftKey = false) => ({
 });
 
 export default function UisdkSpike() {
+  const insets = useSafeAreaInsets();
+
   const results = [
     ["isTypeaheadKey(k)", String(isTypeaheadKey(toSdkKeyEvent(bridgeEvent("k"))))],
     [
@@ -55,12 +58,15 @@ export default function UisdkSpike() {
   ];
 
   return (
-    <View style={{ padding: 24, gap: 8 }}>
-      <Text style={{ fontWeight: "bold" }}>
+    <View
+      className="flex-1 bg-background gap-2 px-6"
+      style={{ paddingTop: insets.top + 20, paddingBottom: insets.bottom + 24 }}
+    >
+      <Text className="font-sans text-xl font-bold tracking-tight text-foreground">
         @ui-sdk/core RN 스파이크 — behaviors/ui-sdk 경유
       </Text>
       {results.map(([label, value]) => (
-        <Text key={label}>
+        <Text key={label} className="font-sans text-sm leading-5 text-foreground">
           {label} = {value}
         </Text>
       ))}

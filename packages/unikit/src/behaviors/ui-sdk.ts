@@ -64,7 +64,10 @@ export function toSdkKeyEvent(event: BridgeKeyEvent): SdkKeyEvent {
     metaKey: event.metaKey ?? false,
     altKey: event.altKey ?? false,
     shiftKey: event.shiftKey ?? false,
-    preventDefault: event.preventDefault,
-    stopPropagation: event.stopPropagation ?? (() => {}),
+    // 화살표로 감싸 원본 이벤트에 바인딩해 호출한다 — 메서드 참조를 그대로
+    // 넘기면 this가 유실돼 DOM KeyboardEvent는 TypeError, React SyntheticEvent
+    // 는 nativeEvent를 잃고 무음 실패한다(PR #26 리뷰 F-1).
+    preventDefault: () => event.preventDefault(),
+    stopPropagation: () => event.stopPropagation?.(),
   } as unknown as SdkKeyEvent;
 }
