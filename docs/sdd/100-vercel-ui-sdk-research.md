@@ -129,6 +129,8 @@ UI SDK의 `createAgent` 계층은 **소비자 앱 런타임**에서 페이지 �
 
 **스파이크 부속**(철회 가능): apps/expo에 `@ui-sdk/core` 의존(실험 목적)·`apps/expo/app/uisdk-spike.tsx`(P1 진입점 경유 임포트·toSdkKeyEvent·계산 표시 화면)·`apps/expo/uisdk-adapter.ts`(DOM 계약 어댑터 — P3에서 updateRect·observer·style 유도 bbox 확장)·`apps/expo/app/uisdk-position.tsx`(P2 기기 구동 슬라이스 화면)·`apps/expo/app/uisdk-popup.tsx`(P3 상시 추종 팝업 화면 — 목록 «실험» 섹션에서 진입). 계약 프로브 `uisdk-probe.mts`는 실측 후 제거(머리 주석 «임시»대로 — 결과는 §7 기록). 저장소 쪽: `packages/unikit/src/behaviors/ui-sdk.ts` + package.json exports `./behaviors/ui-sdk`·선택 peer. 검증: 루트 typecheck 전부 exit 0·audit:design 10/10 통과·기기 4화면 전부 실증(위 참조).
 
+**제품화(이슈 #14, 2026-11-18)** — P2·P3 어댑터를 스파이크 부속에서 패키지 진입점으로 옮겼어요(소비 앱이 복제하지 않고 npm 진입점으로 쓰는 것이 목적). `apps/expo/uisdk-adapter.ts` → `packages/unikit/src/behaviors/ui-sdk-dom.ts`로 이동(git mv — 본문은 기기 실증 원본 그대로, 머리 주석에 진입점 선언만 추가), package.json exports에 `./behaviors/ui-sdk-dom` 추가(단일 경로 매핑 — 구현이 하나뿐이라 웹/RN 조건 분기 불필요, peer `@ui-sdk/core`는 기존 선택 peer 그대로 정합). 위치 근거: P1 헬퍼 진입점 `./behaviors/ui-sdk`와 같은 behaviors 디렉터리·같은 `ui-sdk` 접두로 ui-sdk 패밀리를 이루고(이슈가 제시한 두 후보 중 `src/lib/ui-sdk-adapter.ts`를 버린 이유 — lib는 컴포넌트 내부 골격 overlay·menu-nav의 자리), npm 전용 서브진입점 선례(ui-sdk.ts)와 같은 패턴이에요. 스파이크 화면 `uisdk-position.tsx`·`uisdk-popup.tsx`는 `@unikit-bridge/ui/behaviors/ui-sdk-dom` import로 전환했어요(이동+경로 정합만 — 화면 로직 불변). 검증: 루트 typecheck 전부 exit 0·audit:design 10/10 통과. 기기 재실증은 생략(본문이 기기 실증 원본 그대로라 무의미 — 정적 계약 export·import 해석 확인으로 갈음, 이슈 AC와 합의).
+
 ## §8 참조
 
 - 저장소: <https://github.com/vercel-labs/ui> · 문서: <https://ui-sdk.dev> · 공개 보도: MarkTechPost 2026-11-13 <https://www.marktechpost.com/2026/11/13/vercel-ui-sdk-agent-ui-behaviors>

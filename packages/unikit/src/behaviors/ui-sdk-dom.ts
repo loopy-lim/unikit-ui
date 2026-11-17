@@ -1,4 +1,8 @@
-// ui-sdk DOM 계약 어댑터 — P2 수직 슬라이스(사이클 101, docs/sdd/100 §7).
+// @unikit-bridge/ui/behaviors/ui-sdk-dom 진입점 — ui-sdk DOM 계약 어댑터
+// (P2·P3 슬라이스, 사이클 101, docs/sdd/100 §7). npm 전용(배럴·registry
+// 미등록)이고 네이티브 전용이에요(react-native의 Dimensions를 import — 웹
+// 소비자는 이 진입점을 쓰지 않아요). 이슈 #14 제품화: apps/expo/
+// uisdk-adapter.ts 스파이크를 그대로 이관(본문은 기기 실증 원본 보존).
 // @ui-sdk/core 팝업 계열 행동이 요구하는 DOM 표면(요소 10멤버 + 전역 6종 —
 // 2026-11-17 계약 프로브 실측, 결과는 docs/sdd/100 §7에 기록)을 RN 데이터로
 // 채우는 얇은 어댑터예요.

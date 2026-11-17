@@ -67,6 +67,13 @@ export default function Home() {
 
 > **게시분 참고** — npm `@unikit-bridge/ui` 0.4.1 게시분(2026-11-17)은 62종(EditorToolbar 포함)과 에디터 엔진 진입점 `@unikit-bridge/ui/editor`, 행동 훈 진입점 `@unikit-bridge/ui/behaviors`까지 반영했어요. 컴포넌트 소스를 직접 소유·수정하고 싶을 때는 아래 방법 2(레지스트리 복사)를 쓰세요 — 에디터 진입점은 엔진 HTML 번들이 빌드 산출물이라 npm 설치로만 제공돼요.
 
+**npm 전용 서브진입점(실험)** — 배럴·레지스트리에 등록되지 않은 진입점 두 가지가 더 있어요(Vercel UI SDK `@ui-sdk/core` 연동 실험 — docs/sdd/100 참조).
+
+- `@unikit-bridge/ui/behaviors/ui-sdk` — DOM 없이 성립하는 순수 헬퍼만 선택 재수출해요(타입어헤드·텍스트 매칭·트리 데이터 엔진) + 브리지 키 이벤트를 ui-sdk 모양으로 바꾸는 `toSdkKeyEvent`.
+- `@unikit-bridge/ui/behaviors/ui-sdk-dom` — position()(팝업 배치 엔진)이 요구하는 DOM 표면을 RN 측정값으로 채우는 어댑터예요(`FakeElement`·`installDomStubs` 등). 네이티브 전용이에요(react-native import).
+
+`@ui-sdk/core`는 선택 peer(peerDependenciesMeta optional)라 이 진입점을 import하지 않는 소비자는 의존을 추가하지 않아도 돼요. 쓰려면 `bun add @ui-sdk/core`를 함께 설치하세요. 저장소 main 기준으로 제공되며 npm 게시분(0.4.1)에는 아직 없어요 — 다음 게시에 반영돼요.
+
 ## 방법 2 — shadcn CLI로 소스 복사
 
 공개 레지스트리 기준 URL은 <https://ui.ll3.kr/r/> 예요(카탈로그: [registry.json](https://ui.ll3.kr/r/registry.json)). UniKit UI를 고치면서 로컬 서버를 쓸 때는 `http://localhost:3000/r/`로 바꾸면 돼요.
