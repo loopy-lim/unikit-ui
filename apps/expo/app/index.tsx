@@ -56,31 +56,27 @@ const INDEXED_CATALOG: IndexedCatalogEntry[] = CATALOG.map((entry) => ({
 const SAFE_AREA_STYLE = { flex: 1 } as const;
 const BRAND_IMAGE_STYLE = { width: 44, height: 44, borderRadius: 10 } as const;
 
-/** 카탈로그 항목 — 미니멀 인셋 리스트 행 */
+/**
+ * 카탈로그 항목 — 미니멀 인셋 리스트 행.
+ * 바깥 테두리·모서리는 섹션 래퍼가 한 겹으로 그린다. 행마다 border-x를 주면
+ * 행 이음새에서 세로선이 2px 끊겨 점선처럼 보이므로(에뮬 실측) 구분선만 담당한다.
+ */
 const CatalogRow = memo(function CatalogRow({
   entry,
-  isFirst,
-  isLast,
+  showDivider,
   chevronColor,
 }: {
   entry: CatalogEntry;
-  isFirst: boolean;
-  isLast: boolean;
+  showDivider: boolean;
   chevronColor: string;
 }) {
   return (
     <Link href={`/component/${entry.slug}`} asChild>
       <Pressable
         className={cn(
-          "flex-row items-center justify-between px-4 py-3 bg-card active:bg-muted/50 active:opacity-85",
-          isFirst && isLast
-            ? "rounded-2xl border border-border/50"
-            : isFirst
-              ? "rounded-t-2xl border-t border-x border-border/50"
-              : isLast
-                ? "rounded-b-2xl border-b border-x border-border/50"
-                : "border-x border-border/50",
-          !isLast && "border-b border-border/40",
+          "flex-row items-center justify-between bg-card px-4 py-3 active:bg-muted/50 active:opacity-85",
+          // /40은 라이트에서 대비가 너무 낮아 선이 끊긴 것처럼 보인다.
+          showDivider && "border-b border-border/70",
         )}
         accessibilityLabel={`${entry.title} ${entry.subtitle} 데모 열기`}
       >
@@ -100,6 +96,28 @@ const CatalogRow = memo(function CatalogRow({
         <ChevronRight size={15} color={chevronColor} />
       </Pressable>
     </Link>
+  );
+});
+
+/** 카테고리 묶음 — 단일 카드 테두리로 세로선을 연속 유지 */
+const CatalogSectionCard = memo(function CatalogSectionCard({
+  entries,
+  chevronColor,
+}: {
+  entries: readonly CatalogEntry[];
+  chevronColor: string;
+}) {
+  return (
+    <View className="overflow-hidden rounded-2xl border border-border bg-card">
+      {entries.map((entry, index) => (
+        <CatalogRow
+          key={entry.slug}
+          entry={entry}
+          showDivider={index < entries.length - 1}
+          chevronColor={chevronColor}
+        />
+      ))}
+    </View>
   );
 });
 
@@ -198,30 +216,27 @@ export default function Index() {
         grouped.set(entry.category, [entry]);
       }
     }
-    return CATEGORIES.map((category) => ({
-      title: category,
-      data: grouped.get(category) ?? [],
-    })).filter((section) => section.data.length > 0);
+    // SectionList는 섹션 래퍼를 못 그리므로, 카테고리당 data를
+    // [entries[]] 한 칸으로 묶어 CatalogSectionCard가 테두리를 맡는다.
+    return CATEGORIES.map((category) => {
+      const entries = grouped.get(category) ?? [];
+      return {
+        title: category,
+        data: entries.length > 0 ? [entries] : [],
+        count: entries.length,
+      };
+    }).filter((section) => section.count > 0);
   }, [deferredQuery]);
 
-  const keyExtractor = useCallback((entry: CatalogEntry) => entry.slug, []);
+  const keyExtractor = useCallback(
+    (entries: readonly CatalogEntry[]) =>
+      entries[0]?.slug ?? "empty-section",
+    [],
+  );
 
   const renderItem = useCallback(
-    ({
-      item,
-      index,
-      section,
-    }: {
-      item: CatalogEntry;
-      index: number;
-      section: { data: readonly CatalogEntry[] };
-    }) => (
-      <CatalogRow
-        entry={item}
-        isFirst={index === 0}
-        isLast={index === section.data.length - 1}
-        chevronColor={icons.muted}
-      />
+    ({ item }: { item: readonly CatalogEntry[] }) => (
+      <CatalogSectionCard entries={item} chevronColor={icons.muted} />
     ),
     [icons.muted],
   );
@@ -230,14 +245,14 @@ export default function Index() {
     ({
       section,
     }: {
-      section: { title?: string; data: readonly CatalogEntry[] };
+      section: { title?: string; count: number };
     }) => (
-      <View className="flex-row items-baseline justify-between pb-2 pt-6 px-1">
+      <View className="flex-row items-baseline justify-between px-1 pb-2 pt-6">
         <Text className="font-sans text-xs font-semibold uppercase tracking-wider text-muted-foreground">
           {section.title}
         </Text>
         <Text className="font-sans text-xs text-muted-foreground/60">
-          {section.data.length}종
+          {section.count}종
         </Text>
       </View>
     ),

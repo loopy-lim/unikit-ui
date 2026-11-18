@@ -615,7 +615,19 @@ export const BASIC_ENTRIES: CatalogEntry[] = [
     subtitle: "구분선",
     category: "기초",
     description: "내용 사이를 나눠요.",
-    slides: [{ name: "기본", element: <Separator /> }],
+    slides: [
+      {
+        name: "기본",
+        // 단독 h-px는 빈 카드 한가운데 떠 보여서, 위·아래 문맥을 둔다.
+        element: (
+          <View className="w-full gap-3">
+            <Text className="font-sans text-sm text-foreground">위쪽 내용</Text>
+            <Separator />
+            <Text className="font-sans text-sm text-foreground">아래쪽 내용</Text>
+          </View>
+        ),
+      },
+    ],
   },
   {
     slug: "skeleton",

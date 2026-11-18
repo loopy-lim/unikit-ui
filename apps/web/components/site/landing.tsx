@@ -67,7 +67,7 @@ function ThemeToggle() {
 
 function SiteNav() {
   return (
-    <header className="border-b border-border/80">
+    <header className="border-b border-border/80 bg-background">
       <div className="mx-auto flex h-16 w-full max-w-7xl items-center justify-between gap-4 px-4 sm:px-6 lg:px-8">
         <SiteBrand />
         <nav className="flex items-center gap-2.5 text-sm sm:gap-3">
@@ -102,7 +102,7 @@ function SiteNav() {
 
 function Hero() {
   return (
-    <section className="border-b border-border/60 py-14 sm:py-16 lg:py-20">
+    <section className="py-14 sm:py-16 lg:py-20">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <div className="flex items-center gap-4 sm:gap-5">
           <UnikitMark
@@ -135,7 +135,7 @@ function Hero() {
 
 function ValueSection() {
   return (
-    <section className="border-b border-border/60 py-14 sm:py-16 lg:py-20">
+    <section className="py-14 sm:py-16 lg:py-20">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <h2 className="site-display text-2xl font-semibold tracking-tight text-foreground sm:text-3xl">
           한 벌 소스, 두 플랫폼
@@ -154,7 +154,7 @@ function ValueSection() {
 
 function InstallSection() {
   return (
-    <section id="install" className="scroll-mt-20 border-b border-border/60 py-14 sm:py-16 lg:py-20">
+    <section id="install" className="scroll-mt-20 py-14 sm:py-16 lg:py-20">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <h2 className="site-display text-2xl font-semibold tracking-tight text-foreground sm:text-3xl">
           설치
