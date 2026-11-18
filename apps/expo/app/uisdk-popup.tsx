@@ -9,12 +9,24 @@
 // - ScrollView onScroll → measureInWindow로 rect 캐시를 제자리 갱신(updateRect)
 //   → 스크롤하는 동안 팝업이 앵커를 따라감. 충돌 플립도 매 프레임 재판정.
 //
+// 이슈 #12 수정(2026-11-18 재실증 후):
+// - 팝업의 세계를 visualViewport로 헤더(제목·side/align/닫기 컨트롤) 아래
+//   대역으로 알려줘요(bindVisualViewport). 웹에서 키보드가 열려 visualViewport가
+//   줄어들면 팝업이 플립되는 것과 같은 계약 — 플립·클램프·available 전부
+//   코어가 이 대역 기준으로 판정해 side=top·align=end가 컨트롤을 덮지 않아요.
+// - 레이어 분리: 헤더 zIndex 20 > 팝업 zIndex 10. 전환 직후 1프레임 배치
+//   지연에 팝업이 대역을 넘어도 컨트롤 hit 영역이 살아 있어요(RN 형제
+//   zIndex는 그리기·터치 순서 모두에 적용).
+//
 // 흐름: 앵커 눌림 → 팝업 투명 렌더(크기 측정) → measureInWindow → position()에
 // 앵커 getter·옵션 getter 전달 → rAF 루프 상시 가동 → style/attr 쓰기가
 // observer 훅으로 화면 상태에 반영. stop()은 닫을 때만(루프·인터벌 정리).
 //
 // 보는 포인트:
-// - side 버튼 순환: 요청 side대로 붙고, 공간이 부족하면 ui-sdk가 스스로 플립.
+// - side 버튼 순환: 요청 side대로 붙고, 대역(헤더 아래~화면 끝)이 부족하면
+//   ui-sdk가 스스로 플립. 스크롤 앵커는 헤더 바로 아래(위 공간 12dp)라
+//   side=top이 즉시 bottom으로 플립돼요(data-side로 확인). 정적 앵커는
+//   위 공간이 187dp라 플립 없이 대역 안에 올라가요.
 // - align 버튼 순환: start/center/end 정렬이 열린 채로 이동.
 // - 화살표: 매 배치마다 앵커 쪽 가장자리에 정렬(computeArrow · --arrow-offset).
 // - 스크롤 앵커로 열고 리스트를 스크롤: 팝업이 실시간 추종(쓰기 횟수 증가).
@@ -28,11 +40,12 @@ import {
   type ComponentRef,
   type RefObject,
 } from "react";
-import { View as RNView } from "react-native";
+import { Dimensions, View as RNView } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Pressable, ScrollView, Text, View } from "@unikit-bridge/ui/primitives";
 
 import {
+  bindVisualViewport,
   FakeElement,
   installDomStubs,
   pxToNumber,
@@ -101,6 +114,7 @@ function countStyleWrites(style: FakeStyle) {
 export default function UisdkPopup() {
   const insets = useSafeAreaInsets();
   const containerRef = useRef<HostView>(null);
+  const headerRef = useRef<HostView>(null);
   const staticAnchorRef = useRef<HostView>(null);
   const scrollAnchorRef = useRef<HostView>(null);
   const popupRef = useRef<HostView>(null);
@@ -124,6 +138,8 @@ export default function UisdkPopup() {
   const originRef = useRef({ x: 0, y: 0 });
   const modeRef = useRef<AnchorMode | null>(null);
   const syncQueued = useRef(false);
+  // 팝업 세계의 위 경계(헤더 하단의 창 좌표) — visualViewport getter가 읽어요.
+  const contentTopRef = useRef(0);
 
   // style·attr 쓰기 → (배치 예약) → placed 스냅샷. rAF로 묶어 프레임당 1회.
   const scheduleSync = useCallback(() => {
@@ -174,6 +190,39 @@ export default function UisdkPopup() {
   // 언마운트(Fast Refresh 포함)에서 rAF 루프·500ms 인터벌이 새어 나가지 않게.
   useEffect(() => close, [close]);
 
+  // 팝업의 세계 = 헤더 아래 대역. position()의 플립·클램프·available가 이
+  // 뷰포트 기준으로 판정해요(이슈 #12). 언마운트 시 null(전체 창)로 복구.
+  useEffect(
+    () =>
+      bindVisualViewport(() => {
+        const { width, height } = Dimensions.get("window");
+        const top = Math.min(Math.max(contentTopRef.current, 0), height);
+        return { offsetLeft: 0, offsetTop: top, width, height: height - top };
+      }),
+    [],
+  );
+
+  // 헤더(제목·컨트롤)의 화면상 하단 = 팝업 세계의 위 경계. onLayout마다 갱신.
+  // 단 onLayout은 1회성이라 마운트 직후 인셋 레이아웃 과도기(측정이 일찍
+  // 와서 헤더가 아직 접혀 있던 순간)의 값을 영원히 붙들 수 있어요(기기
+  // 실측: 재마운트 후 대역이 31dp로 잡혀 side=top 팝업이 헤더를 덮음).
+  // 그래서 열릴 때마다(openAt) 다시 측정해 값을 교정해요.
+  const measureHeader = useCallback(
+    () =>
+      new Promise<void>((resolve) => {
+        const el = headerRef.current;
+        if (!el) {
+          resolve();
+          return;
+        }
+        el.measureInWindow((_x, y, _width, height) => {
+          contentTopRef.current = (y ?? 0) + (height ?? 0);
+          resolve();
+        });
+      }),
+    [],
+  );
+
   const openAt = useCallback(
     (nextMode: AnchorMode) => {
       stopRef.current?.();
@@ -189,6 +238,7 @@ export default function UisdkPopup() {
           measure(anchorRef),
           measure(popupRef),
           measure(containerRef),
+          measureHeader(),
         ]).then(([anchor, popup, container]) => {
           // 닫기·재개방 사이에 측정이 늦게 오면 과거 요청이 루프를 되살려요.
           if (modeRef.current !== nextMode) return;
@@ -229,7 +279,7 @@ export default function UisdkPopup() {
         });
       });
     },
-    [close, scheduleSync],
+    [close, measureHeader, scheduleSync],
   );
 
   // 스크롤 추종: onScroll마다 앵커 rect를 제자리 갱신. 깨우는 건 position()의
@@ -279,9 +329,13 @@ export default function UisdkPopup() {
 
   return (
     <View ref={containerRef} className="flex-1 bg-background">
+      {/* 헤더 레이어 — zIndex 20: 전환 1프레임 지연에 팝업이 대역을 넘어도
+          side/align/닫기 hit 영역이 이김(그리기 순서도 같이 올라감). */}
       <View
-        className="flex-1 gap-3 px-4"
-        style={{ paddingTop: insets.top + 20, paddingBottom: insets.bottom + 16 }}
+        ref={headerRef}
+        onLayout={measureHeader}
+        className="gap-3 px-4"
+        style={{ paddingTop: insets.top + 20, zIndex: 20 }}
       >
         <View className="gap-1">
           <Text className="font-sans text-xl font-bold tracking-tight text-foreground">
@@ -327,7 +381,13 @@ export default function UisdkPopup() {
             </Pressable>
           ) : null}
         </View>
+      </View>
 
+      {/* 몸통 레이어 — 앵커·리스트(팝업 아래). */}
+      <View
+        className="flex-1 gap-3 px-4 pt-3"
+        style={{ paddingBottom: insets.bottom + 16 }}
+      >
         <Pressable
           ref={staticAnchorRef}
           className="self-start rounded-xl bg-primary px-4 py-3 active:opacity-80"
@@ -384,7 +444,9 @@ export default function UisdkPopup() {
           // 웹에서는 CSS max-width가 이 일을 해요. RN에서는 시각 크기만 줄이고,
           // FakeElement.rect는 고유 크기(측정값)를 유지해요 — 줄어든 값을 rect에
           // 되먹이면 다음 프레임 available이 0으로 붕괴해 팝업이 사라져요(스크롤 추종 회귀).
+          // zIndex 10 — 헤더(20) 아래·몸통 위(이슈 #12 hit 영역 분리).
           style={{
+            zIndex: 10,
             left: placed ? placed.left : 0,
             top: placed ? placed.top : 0,
             // available ≤0 은 «공간 없음» 순간값이 아니라 붕괴로 취급 — 고유 크기 유지.
