@@ -325,7 +325,7 @@ export default function Index() {
         </Link>
         <Link href="/uisdk-toggle" asChild>
           <Pressable
-            className="rounded-2xl border border-border/50 bg-card px-4 py-3 active:bg-muted/50 active:opacity-85"
+            className="mb-2 rounded-2xl border border-border/50 bg-card px-4 py-3 active:bg-muted/50 active:opacity-85"
             accessibilityLabel="ui-sdk 층2 파트 렌더러 스파이크 열기"
           >
             <Text className="font-sans text-sm font-semibold text-foreground">
@@ -333,6 +333,19 @@ export default function Index() {
             </Text>
             <Text className="mt-0.5 font-sans text-xs text-muted-foreground">
               definePrimitive 상태 기계를 RN 어댑터로 구동(이슈 #17)
+            </Text>
+          </Pressable>
+        </Link>
+        <Link href="/uisdk-keys" asChild>
+          <Pressable
+            className="rounded-2xl border border-border/50 bg-card px-4 py-3 active:bg-muted/50 active:opacity-85"
+            accessibilityLabel="키보드 벽 스파이크 열기"
+          >
+            <Text className="font-sans text-sm font-semibold text-foreground">
+              키보드 벽 — View onKeyDown Android 실증
+            </Text>
+            <Text className="mt-0.5 font-sans text-xs text-muted-foreground">
+              하드웨어 키·DPAD가 조상 카드 핸들러에 버블링되는지(이슈 #19)
             </Text>
           </Pressable>
         </Link>
