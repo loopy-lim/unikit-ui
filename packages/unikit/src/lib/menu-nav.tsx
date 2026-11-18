@@ -19,8 +19,14 @@
 // - 처리한 키는 preventDefault + stopPropagation한다 — 서브 카드는 포탈로 렌더되지만
 //   React 합성 이벤트는 React 트리를 따라 루트 카드까지 버블링되어 2중 처리가
 //   생긴다（menu-nav은 이를 끊는다）.
-// - 웹 전용: 네이티브 View는 onKeyDown을 폐기한다（브리지 계약 문서화 한계）.
-//   항목 등록·포커스 보고 자체는 무해해 네이티브에서도 수행된다.
+// - (과거 판정 — 아래 재실측이 수정) 웹 전용: 네이티브 View는 onKeyDown을
+//   폐기한다고 봤다（브리지 계약 문서화 한계）. 항목 등록·포커스 보고
+//   자체는 무해해 네이티브에서도 수행된다.
+//   (2026-11-18 이슈 #19 재실측: 브리지는 Android View onKeyDown을 연결하기로
+//   했지만 RN 0.88 코어가 enableKeyEvents 피처 플래그(기본 false) 뒤에 숨겨
+//   둬서, 소비자 앱이 네이티브에서 플래그를 켜지 않는 한 발화하지 않는다 —
+//   menu-nav의 루빙은 여전히 웹 전용이고, iOS는 계약 자체가 없다.
+//   docs/sdd/issue-19-keyboard-modality-wall.md 참조.)
 import {
   createContext,
   useCallback,

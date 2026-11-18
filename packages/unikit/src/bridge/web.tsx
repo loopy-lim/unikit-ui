@@ -154,6 +154,7 @@ const View = forwardRef<BridgeViewRef, ViewProps>(
       accessibilityRole,
       pointerEvents,
       onLayout,
+      focusable,
       onHoverIn,
       onHoverOut,
       ...rest
@@ -174,7 +175,9 @@ const View = forwardRef<BridgeViewRef, ViewProps>(
     // onLayout — RN View onLayout의 웹 실현（사이클 90）. ResizeObserver로
     // 마운트 시 1회 + 크기 변화마다 {width,height}를 전달한다. 콜백은 ref로
     // 최신 것을 읽어(inline 화살표 전개에서 관찰 재시작하지 않게) prop 유무로만
-    // 구독한다. onKeyDown은 DOM 표준명이라 rest로 그대로 흐른다.
+    // 구독한다. onKeyDown은 DOM 표준명이라 rest로 그대로 흐른다. focusable은
+    // tabIndex 0/−1로 치환한다(이슈 #19 — div는 기본 비포커스, 하드웨어 키
+    // 수신·프로그래매틱 포커스를 위해 명시 필요).
     const nodeRef = useRef<HTMLDivElement | null>(null);
     const layoutRef = useRef(onLayout);
     layoutRef.current = onLayout;
@@ -204,6 +207,7 @@ const View = forwardRef<BridgeViewRef, ViewProps>(
         aria-label={accessibilityLabel}
         className={className ? cn(VIEW_BASE_CLASS, className) : VIEW_BASE_CLASS}
         style={resolvedStyle}
+        tabIndex={focusable === true ? 0 : focusable === false ? -1 : undefined}
         onMouseEnter={onHoverIn}
         onMouseLeave={onHoverOut}
         {...rest}
@@ -285,9 +289,11 @@ const Pressable = forwardRef<BridgePressableRef, PressableProps>(
       onLongPress: _onLongPress, // 네이티브 전용 제스처 — 웹 폐기(context-menu는 onContextMenu)
       onContextMenu,
       // hover 2종은 웹 mouse 이벤트로 이름만 치환（사이클 90）. onFocus/onBlur/
-      // onKeyDown은 DOM 표준명이라 rest로 그대로 흐른다.
+      // onKeyDown은 DOM 표준명이라 rest로 그대로 흐른다. focusable은 tabIndex로
+      // 치환한다(이슈 #19 — button은 기본 포커스 가능, false로 탭 순서에서 제외).
       onHoverIn,
       onHoverOut,
+      focusable,
       ...rest
     },
     ref,
@@ -299,6 +305,7 @@ const Pressable = forwardRef<BridgePressableRef, PressableProps>(
       data-testid={testID}
       className={className ? cn(PRESSABLE_BASE_CLASS, className) : PRESSABLE_BASE_CLASS}
       style={style as React.CSSProperties}
+      tabIndex={focusable === true ? 0 : focusable === false ? -1 : undefined}
       onClick={onPress}
       disabled={disabled}
       aria-label={accessibilityLabel}

@@ -107,8 +107,15 @@ export type ViewProps = {
    * 발화한다. 소비처: chart fluid 폭 등（컨테이너 폭 추종）.
    */
   onLayout?: (layout: BridgeLayout) => void;
-  /** 키 입력（메뉴 카드 키보드 탐색） — 웹 onKeyDown. 네이티브 폐기（한계） */
+  /** 키 입력（메뉴 카드 키보드 탐색） — 웹 onKeyDown. Android는 RN 0.88 코어의
+   *  W3C 규격 View onKeyDown에 연결한다(이슈 #19): 하드웨어 키보드·DPAD가
+   *  ReactRootView → JSKeyDispatcher를 거쳐 「포커스된 focusable 뷰」 대상으로
+   *  발화한다 — 카드(조상) onKeyDown은 버블링으로 자손 포커스 시 수신.
+   *  iOS는 RN 코어에 일반 View 키 계약이 없어 폐기（한계 — 이슈 #19） */
   onKeyDown?: (event: BridgeKeyEvent) => void;
+  /** 하드웨어 키 입력 포커스 가능 — Android View focusable(키 이벤트 수신
+   *  조건 — 이슈 #19), 웹 tabIndex 0/−1 치환. iOS는 RN 계약이 없어 무시（한계） */
+  focusable?: boolean;
   /** 포인터 진입（hover-card 카드 이탈 닫힘） — 웹 mouseenter. 네이티브 폐기
    *  （RN View에는 hover 계약 없음 — Pressable만 onHoverIn 보유） */
   onHoverIn?: () => void;
@@ -201,8 +208,13 @@ export type PressableProps = {
   onContextMenu?: () => void;
   /** 길게 누르기 — 네이티브 onLongPress. 웹은 미지원（폐기） */
   onLongPress?: () => void;
-  /** 키 입력（웹 키보드 탐색조정） — 웹 onKeyDown. 네이티브 미지원（폐기） */
+  /** 키 입력（웹 키보드 탐색조정） — 웹 onKeyDown. Android는 RN 0.88 코어의
+   *  W3C 규격 View onKeyDown에 연결한다(이슈 #19 — 하드웨어 키보드·DPAD,
+   *  focusable·포커스 필요, 수정자 4종은 네이티브 실측값). iOS는 폐기（한계） */
   onKeyDown?: (event: BridgeKeyEvent) => void;
+  /** 하드웨어 키 입력 포커스 가능 — Android Pressable focusable(이슈 #19),
+   *  웹 tabIndex 0/−1 치환(button은 기본 포커스 가능 — false로 탭 순서 제외) */
+  focusable?: boolean;
   /**
    * 포인터（마우스·스타일러스） 진입（사이클 90） — 웹 onMouseEnter,
    * 네이티브 RN Pressable onHoverIn（터치 기기에서는 발화하지 않는다）.
@@ -303,24 +315,28 @@ export interface BridgeTextInputRef {
 // 사이클 40 신규 계약 — PortalScrollViewSelectmeasure드래그오버레이 훈
 // ---------------------------------------------------------------------------
 
-/** 웹 KeyboardEventRN onKeyPress의 공통 최소 형태（구조적 타이핑） */
+/** 웹 KeyboardEvent·Android View onKeyDown(RN 0.88 W3C 규격 — 이슈 #19)·
+ *  RN TextInput onKeyPress의 공통 최소 형태（구조적 타이핑） */
 export type BridgeKeyEvent = {
   key: string;
   preventDefault: () => void;
-  /** 전파 중단（메뉴 카드 중첩 2중 처리 방지） — 웹 DOM KeyboardEvent 제공,
-   *  선택적이라 네이티브 래핑 구현부는 생략한다. */
+  /** 전파 중단（메뉴 카드 중첩 2중 처리 방지） — 웹 DOM KeyboardEvent와
+   *  Android View 경로(이슈 #19 — 항상 제공)가 주고, RN TextInput 래핑은
+   *  이 신호가 없어 생략된다(소비자는 호출 가드로 대응). */
   stopPropagation?: () => void;
   /** 수정자 키 눌림（사이클 90 후속 — 메뉴 타입어헤드가 일반 글자만
    *  받아들이게 하는 게이트용） — 웹은 DOM KeyboardEvent가 구조적으로
-   *  제공하고, 네이티브 래핑 구현부는 생략한다(없으면 false 취급). */
+   *  제공하고, Android View 경로(이슈 #19)는 네이티브 실측값을 주며,
+   *  RN TextInput 래핑은 key만 받아 생략한다(없으면 false 취급). */
   ctrlKey?: boolean;
   altKey?: boolean;
   metaKey?: boolean;
   /** 시프트 눌림（사이클 101 후속 — ui-sdk 범위 선택 등 시프트 조합 전달,
-   *  이슈 #13）. 웹은 DOM KeyboardEvent가 구조적으로 제공하고, 네이티브
-   *  TextInput 래핑은 RN onKeyPress가 key만 주는 관계로 시프트된 글자
-   *  대문자에서 유도한다(CapsLock·자동 대문화 오탐, 이름키·기호 미탐의
-   *  근사 — ctrl·alt·meta는 이 신호조차 없어 생략과 다른 취급). */
+   *  이슈 #13）. 웹은 DOM KeyboardEvent가 구조적으로 제공하고, Android View
+   *  경로(이슈 #19)는 실측값을 준다. RN TextInput 래핑은 RN onKeyPress가
+   *  key만 주는 관계로 시프트된 글자 대문자에서 유도한다(CapsLock·자동
+   *  대문화 오탐, 이름키·기호 미탐의 근사 — ctrl·alt·meta는 이 신호조차
+   *  없어 생략과 다른 취급). */
   shiftKey?: boolean;
 };
 

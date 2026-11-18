@@ -29,8 +29,10 @@
  *
  * 웹 전용 계약의 네이티브 한계（컴포넌트 머리 주석에 기록됨）:
  *   aria-currentaria-invalidaria-describedby → RN 계약 없음, 폐기
- *   Pressable onKeyDown → 폐기（웹 키보드 탐색 전용）
- *   View onKeyDown·View onHoverIn/onHoverOut → 폐기（RN View 계약 — Pressable만 hover 보유）
+ *   View/Pressable onKeyDown → Android는 RN 0.88 코어 W3C 규격 View onKeyDown에
+ *     연결（이슈 #19 — 하드웨어 키보드·DPAD, focusable+포커스 필요, 수정자 4종
+ *     실측값）. iOS는 코어에 일반 View 키 계약이 없어 폐기（한계）
+ *   View onHoverIn/onHoverOut → 폐기（RN View 계약 — Pressable만 hover 보유）
  *   TextInput onKeyDown → RN onKeyPress（{key}）로 래핑（preventDefault는 no-op,
  *   shiftKey는 시프트된 글자 대문자에서 유도 — 근사 한계는 bridge/types.ts）
  *   useReposition → no-op（모달이 창 좌표에 고정, 재배치 불필요불가）
@@ -116,6 +118,7 @@ import type {
   AnimateLayoutFn,
   ApplyColorScheme,
   BridgeImageRef,
+  BridgeKeyEvent,
   BridgePressableRef,
   BridgeScrollViewRef,
   BridgeTextRef,
@@ -187,6 +190,43 @@ const toNativeRole = (role?: BridgeRole) => {
   return RN_ROLE_FALLBACK[role] ?? "none";
 };
 
+/** RN 합성 키 이벤트의 구조적 최소 형태 — Android KeyDownEvent(NativeSyntheticEvent<KeyEvent>)
+ *  에서 브리지가 읽는 부분집합. RN의 KeyDownEvent가 이 형태를 구조적으로 만족한다. */
+type NativeKeyDownLike = {
+  nativeEvent: {
+    key: string;
+    ctrlKey?: boolean;
+    altKey?: boolean;
+    metaKey?: boolean;
+    shiftKey?: boolean;
+  };
+  preventDefault: () => void;
+  stopPropagation: () => void;
+};
+
+/**
+ * Android W3C 규격 View 키 이벤트(RN KeyDownEvent — JSKeyDispatcher가 포커스된
+ * focusable 뷰에 발화, 이슈 #19)를 BridgeKeyEvent으로 좁힌다. key·수정자 4종은
+ * 네이티브 실측값이고 preventDefault/stopPropagation은 RN 합성 이벤트에 위임한다.
+ * TextInput 래핑과 달리 시프트 근사가 없다 — View 경로는 실측 수정자를 준다.
+ */
+const toBridgeKeyEvent = (event: NativeKeyDownLike): BridgeKeyEvent => ({
+  key: event.nativeEvent.key,
+  ctrlKey: event.nativeEvent.ctrlKey,
+  altKey: event.nativeEvent.altKey,
+  metaKey: event.nativeEvent.metaKey,
+  shiftKey: event.nativeEvent.shiftKey,
+  preventDefault: () => event.preventDefault(),
+  stopPropagation: () => event.stopPropagation(),
+});
+
+/** Android 전용 키 연결 — iOS 뷰 설정에는 topKeyDown이 없어 미발화 경로를
+ *  아예 전달하지 않는다(미등록 이벤트 prop 경고 방지 — 이슈 #19). */
+const androidKeyDown = (onKeyDown?: (event: BridgeKeyEvent) => void) =>
+  onKeyDown && Platform.OS === "android"
+    ? (event: NativeKeyDownLike) => onKeyDown(toBridgeKeyEvent(event))
+    : undefined;
+
 // ---------------------------------------------------------------------------
 // View — RN View 재노출（타입만 브리지 계약으로 좁힌다）.
 // aria-modal → accessibilityViewIsModal, aria-describedby는 RN 계약 없음（폐기）.
@@ -214,10 +254,12 @@ const View = forwardRef<BridgeViewRef, ViewProps>(
       "aria-labelledby": _ariaLabelledBy, // 〃
       pointerEvents,
       // 사이클 90 — onLayout은 RN 관용 시그니처({nativeEvent:{layout}})를
-      // {width,height}로 좁혀 전달. onKeyDown·hover 2종은 RN View 계약이
-      // 없어 폐기한다(웹 전용 — Pressable에는 hover/focus가 있다).
+      // {width,height}로 좁혀 전달. hover 2종은 RN View 계약이 없어 폐기한다
+      // (웹 전용 — Pressable에는 hover/focus가 있다). onKeyDown은 이슈 #19로
+      // Android에서 실연결됐다(조상 카드 패턴 — 버블링 수신).
       onLayout,
-      onKeyDown: _onKeyDown,
+      onKeyDown,
+      focusable,
       onHoverIn: _onHoverIn,
       onHoverOut: _onHoverOut,
       ...rest
@@ -256,6 +298,8 @@ const View = forwardRef<BridgeViewRef, ViewProps>(
         pointerEvents={pointerEvents}
         className={className}
         style={resolvedStyle}
+        onKeyDown={androidKeyDown(onKeyDown)}
+        focusable={focusable}
         {...rest}
       >
         {children}
@@ -370,7 +414,8 @@ const Pressable = forwardRef<BridgePressableRef, PressableProps>(
       "aria-describedby": _ariaDescribedBy,
       onContextMenu,
       onLongPress,
-      onKeyDown: _onKeyDown,
+      onKeyDown,
+      focusable,
       hitSlop,
       nativeID,
       testID,
@@ -417,6 +462,8 @@ const Pressable = forwardRef<BridgePressableRef, PressableProps>(
         hitSlop={hitSlop}
         className={className}
         style={style as ViewStyle}
+        onKeyDown={androidKeyDown(onKeyDown)}
+        focusable={focusable}
         {...rest}
       >
         {children}
