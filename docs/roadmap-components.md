@@ -84,7 +84,7 @@ shadcn/ui(new-york-v4)의 `registry:ui` 61종을 UniKit UI 유니버설(한 벌 
 
 ### 키보드·포커스
 
-- **select·메뉴 키보드 탐색（사이클 90 해소 — 웹, 사이클 90 후속 타입어헤드 추가）** — `select`·`dropdown-menu`·`context-menu` 카드에서 ArrowDown/Up(양 끝 루프)·Home/End 항목 이동, ArrowRight 서브 개방·ArrowLeft 서브 복귀, 닫힌 트리거의 ArrowDown/Up 열림을 지원해요(lib/menu-nav 공유 골격 — 항목 DOM 포커스 이동 방식이라 엔터 선택·포커스 스크롤 따라가기는 브라우저 기본 동작). 타입어헤드(글자 입력 점프)도 radix Menu `getNextMatch` 원본 이식으로 지원해요(반복 글자 순환·버퍼 1초 초기화·disabled 제외·ctrl/alt/meta 수정자 키 제외 — 사이클 90 후속). `command`는 웹 방향키·엔터를 지원하지만 네이티브 onKeyPress 래핑 한계로 IME 조합 키는 발화되지 않아요. 잔여: 네이티브 카드 탐색(RN 0.88 View에 onKeyDown·onKeyUp 타입 부재 확인 — 브리지 계약 한계), `navigation-menu` 화살표키 트리거 순회.
+- **select·메뉴 키보드 탐색（사이클 90 해소 — 웹, 사이클 90 후속 타입어헤드 추가）** — `select`·`dropdown-menu`·`context-menu` 카드에서 ArrowDown/Up(양 끝 루프)·Home/End 항목 이동, ArrowRight 서브 개방·ArrowLeft 서브 복귀, 닫힌 트리거의 ArrowDown/Up 열림을 지원해요(lib/menu-nav 공유 골격 — 항목 DOM 포커스 이동 방식이라 엔터 선택·포커스 스크롤 따라가기는 브라우저 기본 동작). 타입어헤드(글자 입력 점프)도 radix Menu `getNextMatch` 원본 이식으로 지원해요(반복 글자 순환·버퍼 1초 초기화·disabled 제외·ctrl/alt/meta 수정자 키 제외 — 사이클 90 후속). `command`는 웹 방향키·엔터를 지원하지만 네이티브 onKeyPress 래핑 한계로 IME 조합 키는 발화되지 않아요. 잔여: 네이티브 카드 탐색(2026-11-18 이슈 #19 재실측 — RN 0.88 코어에 W3C 규격 View onKeyDown 계약이 있으나 `enableKeyEvents` 피처 플래그가 기본 false라 소비자 앱의 네이티브 조치가 전제된다. 브리지는 View/Pressable `onKeyDown`+`focusable` 계약을 이미 연결했고 플래그 on 기기 실증 완료 — 조상 카드 버블링·타입어헤드 작동. 단 DPAD 방향키는 JS 루빙과 네이티브 포커스 탐색이 간섭해 방향키 소유권 설계가 남았다. 상세 docs/sdd/issue-19-keyboard-modality-wall.md), `navigation-menu` 화살표키 트리거 순회.
 - **resizable 키보드 리사이즈** — 포커서블 계약(tabIndex) 부재로 화살표 리사이즈 미지원.
 - **slider** — 수직 방향 미지원(수평 전용), 썸별 포커스·썸별 aria 미지원(트랙 전체 드래그 조작).
 
