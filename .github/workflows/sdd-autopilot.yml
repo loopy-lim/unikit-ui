@@ -1,17 +1,15 @@
-# SDD autopilot relay — label → T3 webhook → loopy-desktop
+# SDD autopilot relay — manual dispatch only (loopy-desktop)
 #
-# relay.t3.codes is behind Cloudflare. GitHub-hosted runners get CF 1010.
-# This job runs on a self-hosted runner on loopy-desktop.
+# Label/synchronize triggers are handled by the repository webhook
+# (GitHub -> relay.t3.codes -> T3 scheduled task). This workflow used to
+# relay the same events through Actions too, which double-delivered every
+# event and re-injected stale ones whenever the self-hosted runner came
+# back online (2026-11-18 cleanup). Keep this as a manual relay only.
 #
-# Labels: sdd:ready (issue → implement) · sdd:pr (PR → review)
 # Secrets: T3_WEBHOOK_URL, T3_WEBHOOK_SECRET
 name: SDD Issue-to-Merge Autopilot
 
 on:
-  issues:
-    types: [opened, labeled]
-  pull_request:
-    types: [opened, synchronize, labeled]
   workflow_dispatch:
     inputs:
       issue_number:
@@ -30,66 +28,22 @@ permissions:
 
 jobs:
   relay:
-    if: >-
-      github.event_name == 'workflow_dispatch' ||
-      (github.event_name == 'issues' && contains(github.event.issue.labels.*.name, 'sdd:ready')) ||
-      (github.event_name == 'pull_request' &&
-        github.event.pull_request.head.repo.full_name == github.repository &&
-        contains(github.event.pull_request.labels.*.name, 'sdd:pr'))
     runs-on: [self-hosted, linux, loopy-desktop]
     steps:
-      - name: Actor permission guard
-        if: github.event_name != 'workflow_dispatch'
-        env:
-          GH_TOKEN: ${{ github.token }}
-          ACTOR: ${{ github.actor }}
-          REPO: ${{ github.repository }}
-          ALLOWED: loopy-lim
-        run: |
-          set -euo pipefail
-          perm="$(gh api "repos/${REPO}/collaborators/${ACTOR}/permission" --jq '.permission')"
-          case "$perm" in
-            admin|maintain|write) echo "actor=${ACTOR} permission=${perm}" ;;
-            *)
-              if [[ ",${ALLOWED}," == *",${ACTOR},"* ]]; then
-                echo "actor=${ACTOR} allowlisted"
-              else
-                echo "::error::Actor ${ACTOR} lacks write permission (${perm})"
-                exit 1
-              fi
-              ;;
-          esac
-
-      - name: Fork PR guard
-        if: github.event_name == 'pull_request'
-        run: |
-          set -euo pipefail
-          head='${{ github.event.pull_request.head.repo.full_name }}'
-          base='${{ github.repository }}'
-          if [[ "$head" != "$base" ]]; then
-            echo "::error::Cross-repository (fork) PR blocked: ${head}"
-            exit 1
-          fi
-
       - name: Dispatch T3 webhook (loopy-desktop)
         env:
           T3_WEBHOOK_URL: ${{ secrets.T3_WEBHOOK_URL }}
           T3_WEBHOOK_SECRET: ${{ secrets.T3_WEBHOOK_SECRET }}
-          EVENT_NAME: ${{ github.event_name }}
           REPO: ${{ github.repository }}
           ACTOR: ${{ github.actor }}
-          ISSUE_NUMBER: ${{ github.event.issue.number || inputs.issue_number }}
-          PR_NUMBER: ${{ github.event.pull_request.number || inputs.pr_number }}
+          ISSUE_NUMBER: ${{ inputs.issue_number }}
+          PR_NUMBER: ${{ inputs.pr_number }}
         run: |
           set -euo pipefail
           : "${T3_WEBHOOK_URL:?T3_WEBHOOK_URL secret missing}"
-          : "${T3_WEBHOOK_SECRET:?T3_WEBHOOK_SECRET secret missing}"
+          : "${T3_WEBHOOK_SECRET:?T3_WEBHOOK_SECRET missing}"
 
-          if [[ "${EVENT_NAME}" == "pull_request" ]]; then
-            STAGE=review
-            ISSUE_NUMBER=""
-            PR_NUMBER="${PR_NUMBER:-}"
-          elif [[ "${EVENT_NAME}" == "workflow_dispatch" && -n "${PR_NUMBER:-}" && -z "${ISSUE_NUMBER:-}" ]]; then
+          if [[ -n "${PR_NUMBER:-}" && -z "${ISSUE_NUMBER:-}" ]]; then
             STAGE=review
             ISSUE_NUMBER=""
           else
@@ -110,16 +64,30 @@ jobs:
           def parse_int(v):
               v = (v or "").strip()
               return int(v) if v.isdigit() else None
+          issue_no = parse_int(os.environ.get("ISSUE_NUMBER"))
+          pr_no = parse_int(os.environ.get("PR_NUMBER"))
+          label_name = "sdd:pr" if stage == "review" else "sdd:ready"
           payload = {
               "event": f"sdd.{stage}",
               "stage": stage,
-              "repository": os.environ["REPO"],
-              "issueNumber": parse_int(os.environ.get("ISSUE_NUMBER")),
-              "prNumber": parse_int(os.environ.get("PR_NUMBER")),
+              "issueNumber": issue_no,
+              "prNumber": pr_no,
               "actor": os.environ["ACTOR"],
               "autoMergeAllowed": True,
               "prompt": os.environ["PROMPT"],
+              # Mirror the direct GitHub webhook shape so the T3 task's
+              # filters (body.action in [labeled, synchronize]) and dedupe
+              # keys (repository.full_name / issue.number / pull_request.number)
+              # accept manual dispatches too.
+              "action": "labeled",
+              "label": {"name": label_name},
+              "repository": {"full_name": os.environ["REPO"]},
+              "sender": {"login": os.environ["ACTOR"]},
           }
+          if issue_no is not None:
+              payload["issue"] = {"number": issue_no}
+          if pr_no is not None:
+              payload["pull_request"] = {"number": pr_no}
           body = json.dumps(payload, ensure_ascii=False).encode("utf-8")
           digest = hmac.new(os.environ["T3_WEBHOOK_SECRET"].encode(), body, hashlib.sha256).hexdigest()
           open(os.environ["BODY_PATH"], "wb").write(body)
@@ -128,10 +96,13 @@ jobs:
           PY
 
           SIG=$(cat "$SIG_PATH")
+          # Stable per run/attempt: replay dedupe keys off this header.
+          DELIVERY="run-${GITHUB_RUN_ID:-manual}-${GITHUB_RUN_ATTEMPT:-1}"
           curl -fsSL -X POST "$T3_WEBHOOK_URL" \
             -H "Content-Type: application/json" \
             -H "User-Agent: unikit-ui-sdd-relay/1.0 (self-hosted; loopy-desktop)" \
             -H "X-SDD-Event: sdd.${STAGE}" \
+            -H "X-GitHub-Delivery: ${DELIVERY}" \
             -H "X-Hub-Signature-256: ${SIG}" \
             -H "X-T3-Signature: ${SIG}" \
             --data-binary @"$BODY_PATH"
