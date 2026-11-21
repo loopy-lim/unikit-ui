@@ -352,6 +352,19 @@ export default function Index() {
             </Text>
           </Pressable>
         </Link>
+        <Link href="/uisdk-press" asChild>
+          <Pressable
+            className="mb-2 rounded-2xl border border-border/50 bg-card px-4 py-3 active:bg-muted/50 active:opacity-85"
+            accessibilityLabel="ui-sdk 상태기계 press 유형 화면 열기"
+          >
+            <Text className="font-sans text-sm font-semibold text-foreground">
+              상태기계+press 유형 — button·switch·radio·segmented
+            </Text>
+            <Text className="mt-0.5 font-sans text-xs text-muted-foreground">
+              M2-① 수직 슬라이스 4종을 파트 렌더러로 구동(이슈 #37)
+            </Text>
+          </Pressable>
+        </Link>
         <Link href="/uisdk-keys" asChild>
           <Pressable
             className="rounded-2xl border border-border/50 bg-card px-4 py-3 active:bg-muted/50 active:opacity-85"
