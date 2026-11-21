@@ -22,6 +22,13 @@
 //   - lazy resolve·mergeProps·HandleScope·takeOwnId/yieldToAuthor·
 //     schemaOf 기반 슬롯 해석은 미구현 — M2 슬라이스에서 필요해질 때
 //     이 진입점에 추가해요(잔여 기능 목록은 docs/sdd 이슈 문서 참조).
+//     M2-①(이슈 #37)에서 두 계약을 보강했어요 — ① attrs·present·partState를
+//     커밋된 props로 계산(radio 항목·indicator 슬롯의 attrs/present가
+//     props.value를 읽어요. 슬롯 스키마의 "from: root" 상속은 소비자가
+//     명시적으로 넘기는 방식으로 소비해요), ② SdkElement에 ownerDocument·
+//     style 최소 멤버(hidden input bind의 associate·그룹 bind의
+//     bindRadioGroup이 문서 리스너를, segmented-control indicator bind가
+//     CSS 변수 쓰기를 요구).
 //   - id 전파(followId·MutationObserver)는 웹 전용 계약이라 RN에서 소유하지
 //     않아요. RN 0.88 내장 MutationObserver(childList 전용 폴리필)는 커널
 //     followId의 attributeFilter 관찰과 계약이 안 맞아 바인딩 동안만 전역을
@@ -89,13 +96,30 @@ const HOST = { by: "framework", attaches: ["click", "keydown", "keyup"] } as con
  *     ending-style 속성과 el.getAnimations()를 읽어요. 속성은 소형 저장소로
  *     실제처럼 일관되게 유지하고 애니메이션은 «없음»([])을 돌려줘요 — 종료
  *     콜백(finishExit)은 즉시 경로로 자연스럽게 흘러요.
+ *  M2-①(이슈 #37) 전 슬롯 소비에서 두 멤버가 더 필요해졌어요 —
+ *  3. ownerDocument: hidden input bind(associate)가 reset 리스너를, 그룹
+ *     bind(bindRadioGroup)가 pointerdown 캡처 리스너를 문서에 붙여요. RN에
+ *     문서가 없어 이벤트는 오지 않고 리스너 등록만 성립하면 돼요.
+ *  4. style: segmented-control indicator bind(bindIndicator)가 CSS 변수
+ *     setProperty/removeProperty를 써요. RN 표면은 측정(활성 항목의
+ *     isConnected)이 없어 write(undefined)의 제거 경로만 와요.
  *  나머지 멤버는 watchFormDisabled·press(roving)·keyClick이 도달할 수 있는 방어
  *  경로예요. instanceof 브랜드 검사(HTMLFieldSetElement 등)는 parentElement
  *  순환 전에 끝나 RN에 없는 글로벌 참조 없이 통과해요. */
+const SdkDocument = {
+  addEventListener() {},
+  removeEventListener() {},
+};
+
 class SdkElement {
   isConnected = false;
   tagName: string;
   parentElement: SdkElement | undefined = undefined;
+  ownerDocument = SdkDocument;
+  style = {
+    setProperty() {},
+    removeProperty() {},
+  };
   private attributes = new Map<string, string>();
   constructor(tag: string) {
     this.tagName = tag.toUpperCase();
@@ -293,13 +317,15 @@ export function useSdkPart(
   } => {
     const state = instance.get() as Record<string, unknown>;
     return {
-      showing: present(kernel, {}, state),
-      domAttrs: attrs(kernel, {}, state) as Attrs,
-      snapshot: partState(kernel, {}, state) as Record<string, unknown>,
+      // 커밋된 props로 계산한다 — radio 항목(attrs가 props.value·disabled를
+      // 읽음)·indicator(present가 props.value를 읽음) 슬롯의 계약(M2-① #37).
+      showing: present(kernel, props, state),
+      domAttrs: attrs(kernel, props, state) as Attrs,
+      snapshot: partState(kernel, props, state) as Record<string, unknown>,
       element: String(state.element ?? "unknown"),
     };
     // kernel은 part와 같은 심볼(슬롯별 안정)이라 의존성에 포함하지 않는다.
-  }, [instance, part]);
+  }, [instance, part, props]);
 
   const lastRef = React.useRef<{
     showing: boolean;
