@@ -155,6 +155,13 @@ UI SDK의 `createAgent` 계층은 **소비자 앱 런타임**에서 페이지 �
 - **함정 추가 — onLayout 1회 측정의 과도기 오염**: 재마운트(딥링크 재진입) 직후 `onLayout`→`measureInWindow`가 인셋 레이아웃 완료 전 값을 잡아 대역이 31dp로 잡힌 적이 있어요(이 상태에선 side=top이 플립 없이 y86에 붙어 헤더를 덮음 — 정적 앵커 조합은 31dp/206dp 어느 쪽과도 모순 없는 위치라 드러나지 않고, 헤더 바로 아래 스크롤 앵커에서만 폭로돼요). 교정: `openAt`이 열릴 때마다 헤더를 다시 측정해 대역을 교정해요. «1회성 측정을 라이브 계약 입력으로 쓸 때는 소비 시점 재측정»이 P2·P3 전반의 교훈(앵커 rect의 updateRect 추종과 같은 맥락).
 - **LogBox 비재현**: 이슈 제목에 오른 LogBox 경고는 수정 전 baseline(12조합·급속 개폐·스크롤 추종)과 수정 후 전 구간에서 한 번도 재현되지 않았어요(Metro 로그 14줄 전부 기동·번들 행). 경고 원본을 특정할 수 없어 억지 수정은 하지 않고 비재현 사실만 기록해요.
 
+**«다 go» 방향 전환 — 판정 3건 뒤집기와 M0·M1 완료(2026-11-21, 에픽 [#35](https://github.com/loopy-lim/unikit-ui/issues/35))** — 위 §7의 조건부 판정 3건(#17 전면 no-go·#18 층3 웹 전용 제외·#16 createPopup 비도입)을 뒤지르는 제품 결정이에요. 사용자 방향 확정(«웹이 아니라 RN에서도 모두 이루어지게»)으로 «수요 대기» 전제가 사라져 #17 §5 트리거 3·#16 재평가 조건 2가 공식 발동했어요. 로드맵 M0(기록·버전 고정·상시 프로브) → M1(RN 파트 렌더러 코어 제품화) → M2(51종 6유형 수직 슬라이스 — createPopup 비공개 커널 API 제공이 최대 공사) → M3(registry·docs 카탈로그화). 동반 사용자 결정: iOS 하드웨어 키보드는 Android+터치 완주 후 별도 마일스톤으로 단계화, 업스트림 제기(vercel-labs/ui — renderer 공개·RN 어댑터 논의)는 승인 후 영어 초안 검토 대기.
+
+- **M0**: `@ui-sdk/core` peer를 정확 고정(0.1.0-beta.6 — beta churn이 renderer 비공개 API를 바꾸므로 수동 승급 + 프로브 재실행이 계약), 계약 프로브 상시 테스트화(`bun run probe:ui-sdk` — packages/unikit/scripts/ui-sdk-contract-probe.ts), 에픽 #35 개설.
+- **M1(이슈 [#36](https://github.com/loopy-lim/unikit-ui/issues/36), 완료)**: `@unikit-bridge/ui/behaviors/ui-sdk-renderer` 진입점(`useSdkPrimitive`·`useSdkPart`) — 수명·구독(출력 기반 축소)·DOM attrs→브리지 props 번역을 패키지가 담당하고 소비자는 @ui-sdk/core 팩토리를 그대로 넘겨요. 스파이크 화면 uisdk-toggle.tsx는 참조 소비자로 전환(toggle 3행 + checkbox root+indicator 이중 슬롯). 기기 실측에서 요소 표면 회귀 2건(el.matches·indicator bind의 toggleAttribute/getAnimations)을 발견·수습하고 프로브에 경성 검사로 상시 재현했어요 — 상세·API 계약·설계 판단: [issue-36 문서](issue-36-m1-part-renderer-core.md). 층2 스파이크 문서(issue-17)의 «소수 조건부 go» 전제가 이 결정으로 만료됐고, 층3 제외 판정(issue-18)도 같은 결정으로 재평가 대상이 됐어요(각 문서는 시점 기록으로 보존).
+
+
+
 ## §8 참조
 
 - 저장소: <https://github.com/vercel-labs/ui> · 문서: <https://ui-sdk.dev> · 공개 보도: MarkTechPost 2026-11-13 <https://www.marktechpost.com/2026/11/13/vercel-ui-sdk-agent-ui-behaviors>
