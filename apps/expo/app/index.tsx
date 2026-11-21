@@ -245,14 +245,15 @@ export default function Index() {
     ({
       section,
     }: {
-      section: { title?: string; count: number };
+      // SectionList 표준 섹션 타입엔 count가 없어 선택형으로 받는다(빌드 시점엔 항상 채워짐).
+      section: { title?: string; count?: number };
     }) => (
       <View className="flex-row items-baseline justify-between px-1 pb-2 pt-6">
         <Text className="font-sans text-xs font-semibold uppercase tracking-wider text-muted-foreground">
           {section.title}
         </Text>
         <Text className="font-sans text-xs text-muted-foreground/60">
-          {section.count}종
+          {section.count ?? 0}종
         </Text>
       </View>
     ),
