@@ -2,7 +2,7 @@
 
 - **관련 이슈**: [#16](https://github.com/loopy-lim/unikit-ui/issues/16) (상위 에픽 [#11](https://github.com/loopy-lim/unikit-ui/issues/11))
 - **기준일**: 2026-11-18
-- **판정**: **UniKit 경계 — `createPopup` 비도입 확정(wontfix): `position()` + 자체 포털(`src/lib/overlay.tsx`) 경계 채택. 업스트림 제기 — 보류(사용자 승인 대기).**
+- **판정**: **UniKit 경계 — `createPopup` 비도입 확정(wontfix): `position()` + 자체 포털(`src/lib/overlay.tsx`) 경계 채택. 업스트림 제기 — 보류(사용자 승인 대기).** → 이후 «다 go»(에픽 #35)로 재평가되다가 **2026-11-22 사용자 결정으로 업스트림 제기 자체를 철회** — 제기하지 않기로 확정(초안 작성·게시 이력 없음).
 
 > **병합 안내**: 이 기록은 `docs/sdd/100-vercel-ui-sdk-research.md` §7의 후속 관문 기록으로 병합해요(문서 보존 원칙). 작성 시점(2026-11-18)에는 100번 문서가 다른 세션의 진행 중 작업(untracked)이라 이슈 #16의 산출물을 별도 파일로 남겼고, 이후 100번 문서가 main에 반영 완료됐어요(PR #24). 병합은 §7 추적 줄의 #16 항목이 이 문서를 참조하는 방식으로 이어져요.
 
