@@ -36,6 +36,10 @@
 //   - keydown/keyup은 하드원 키보드 경로(이슈 #19 — Android는 플래그 뒤
 //     W3C View onKeyDown 계약, iOS·소프트키보드는 폐기). 터치는 click
 //     경로(onPress → fire("click"))가 1차 UX예요.
+//   - 에이전트 브리지(ui-sdk-agent)가 켜는 옵트인 모드: SdkElement가
+//     isConnected·checkVisibility·getBoundingClientRect를 갖추고 커밋된
+//     props에서 aria-label을 심어요(accessibilityLabel → 접근명 계약).
+//     아래 sdkElementAgentMode 참조.
 import {
   attrs,
   commit,
@@ -111,8 +115,29 @@ const SdkDocument = {
   removeEventListener() {},
 };
 
+// ---------------------------------------------------------------------------
+// 에이전트 모드 — ./behaviors/ui-sdk-agent가 켜는 옵트인 플래그(2026-11-22).
+// 커널 감시자의 bound()가 파트 요소의 isConnected를 읽어 «연결되지 않음»
+// 파트를 등록에서 걸러요. 기본 false여야 segmented-control indicator bind가
+// «측정 없음» 제거 경로(removeProperty)로 안전하게 흘러요 — 측정 경로는
+// isConnected true일 때 getBoundingClientRect를 동기로 읽어 RN 3벽 중
+// «동기 레이아웃 읽기»와 정면충돌해요. agent 진입점은 문서 스텁과 함께 이
+// 플래그만 true로 바꾸고, getBoundingClientRect는 0 직사각형을 돌려주게
+// 해서 측정이 안전하게 실패하도록 지켜요.
+// ---------------------------------------------------------------------------
+let sdkElementAgentMode = false;
+
+/** 에이전트 브리지 모드 토글 — ./behaviors/ui-sdk-agent의 createSdkAgent가
+ *  true로 켜요. 일반 렌더러 소비자는 호출하지 않아요. */
+export function setSdkElementAgentMode(enabled: boolean): void {
+  sdkElementAgentMode = enabled;
+}
+
 class SdkElement {
-  isConnected = false;
+  /** bound() 필터가 읽는 연결 사실 — 에이전트 모드에서만 true. */
+  get isConnected() {
+    return sdkElementAgentMode;
+  }
   tagName: string;
   parentElement: SdkElement | undefined = undefined;
   ownerDocument = SdkDocument;
@@ -165,6 +190,19 @@ class SdkElement {
   removeEventListener() {}
   dispatchEvent() {
     return true;
+  }
+  /** agent 브리지(2026-11-22): marks textOf가 childNodes를, svg 접근성 이름
+   *  경로가 children을 순회해요 — 심어둔 텍스트가 없어 빈 배열이면 순회
+   *  본문이 돌지 않아 RN에 없는 Node/Element 글로벌을 건드리지 않아요. */
+  childNodes: unknown[] = [];
+  children: unknown[] = [];
+  /** agent isShown — hidden·aria-hidden 마크가 없으면 보이는 것으로. */
+  checkVisibility() {
+    return !this.hasAttribute("hidden") && this.getAttribute("aria-hidden") !== "true";
+  }
+  /** 동기 레이아웃 읽기(indicator 측정 등) — RN은 0 직사각형이 정직한 답 */
+  getBoundingClientRect() {
+    return { x: 0, y: 0, top: 0, left: 0, right: 0, bottom: 0, width: 0, height: 0 };
   }
 }
 
@@ -360,11 +398,17 @@ export function useSdkPart(
     const saved = globalScope.MutationObserver;
     if (typeof saved === "function") globalScope.MutationObserver = undefined;
     try {
-      bindElement(
-        new SdkElement(
-          String((instance.get() as Record<string, unknown>).element ?? "unknown"),
-        ) as never,
+      const element = new SdkElement(
+        String((instance.get() as Record<string, unknown>).element ?? "unknown"),
       );
+      // agent 브리지의 접근명 계약 — accessibleName은 aria-label을 최우선으로
+      // 읽어요. RN 표면은 accessibilityLabel이므로 커밋된 props에서 aria-label을
+      // 심어 두면 snapshot의 label·act의 «라벨로 대상 찾기»가 성립해요.
+      const agentLabel = props["aria-label"] ?? props.accessibilityLabel;
+      if (typeof agentLabel === "string" && agentLabel !== "") {
+        element.setAttribute("aria-label", agentLabel);
+      }
+      bindElement(element as never);
     } finally {
       if (typeof saved === "function") globalScope.MutationObserver = saved;
     }

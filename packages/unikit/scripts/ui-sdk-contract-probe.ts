@@ -54,6 +54,9 @@ import { switchPrimitive } from "@ui-sdk/core/switch";
 import { button } from "@ui-sdk/core/button";
 import { radioGroup } from "@ui-sdk/core/radio";
 import { segmentedControl } from "@ui-sdk/core/segmented-control";
+// 제품 에이전트 진입점을 직접 소비한다(섹션 8) — 프로브는 계약을 검증하는
+// 소비자 역할.
+import { createSdkAgent, installSdkAgentDom } from "../src/behaviors/ui-sdk-agent";
 
 /** hidden input bind(associate)·그룹 bind(bindRadioGroup)가 리스너를 붙이는
  *  최소 문서 — reset·pointerdown 이벤트는 bun·RN 런타임에 오지 않아요. */
@@ -115,6 +118,18 @@ class FakeElement {
   dispatchEvent() {
     return true;
   }
+  /** 에이전트 브리지 미러 — 제품 SdkElement(ui-sdk-renderer) agent 모드와
+   *  같은 명세: checkVisibility(isShown)·getBoundingClientRect(0 직사각형)·
+   *  빈 자식 순회(childNodes/children — Node/Element 글로벌 없이 통과).
+   *  isConnected는 섹션 8에서 true로 바꿔 bound() 필터를 통과시킨다. */
+  checkVisibility() {
+    return !this.hasAttribute("hidden") && this.getAttribute("aria-hidden") !== "true";
+  }
+  getBoundingClientRect() {
+    return { x: 0, y: 0, top: 0, left: 0, right: 0, bottom: 0, width: 0, height: 0 };
+  }
+  childNodes: unknown[] = [];
+  children: unknown[] = [];
 }
 
 /** 프레임워크 렌더러 선언 — 비-attaches 이벤트를 요소에 직접 붙이지 않는다 */
@@ -534,6 +549,64 @@ console.log("(7) segmented-control root+item+input+indicator 전 슬롯");
 
   release(instance);
   instance.destroy();
+}
+
+// --- 8. 에이전트 브리지 — 제품 진입점 ui-sdk-agent --------------------------
+// «DOM을 얇게» 방향(2026-11-22)의 제품화 상시 검증. 제품 진입점을 직접
+// 소비하는 것으로 검증한다: 스텁 설치 → createSdkAgent(문서 스텁 시 커널
+// 감시자 install이 걸린다) → 이후 생성 인스턴스 자동 등록 → 접근명 라벨
+// 탐색 → act 실행 → subscribe 통지. 요소는 FakeElement(제품 SdkElement와
+// 같은 명세)로, useSdkPart의 접근명 시딩(aria-label ← accessibilityLabel)은
+// 여기서 setAttribute로 미러한다. React 훅 경로는 기기 화면
+// (apps/expo uisdk-agent)이 담당한다.
+console.log("(8) 에이전트 브리지 — ui-sdk-agent 제품 진입점");
+{
+  if (typeof (globalThis as Record<string, unknown>).document !== "undefined") {
+    hard("사전조건: 런타임에 document 부재(스텁 설치 전)", false);
+  } else {
+    installSdkAgentDom();
+    const doc = (globalThis as Record<string, unknown>).document as Record<string, unknown>;
+    hard(
+      "document 스텁 5멤버(addEventListener·getElementById·createTreeWalker·documentElement·hidden)",
+      [doc.addEventListener, doc.getElementById, doc.createTreeWalker, doc.documentElement, doc.hidden].every(
+        (member) => member !== undefined,
+      ),
+    );
+    const win = (globalThis as Record<string, unknown>).window as Record<string, unknown>;
+    hard("window addEventListener 멤버 패치(modality blur 등록)", typeof win.addEventListener === "function");
+    hard("NodeFilter 상수(marks 텍스트 순회)", (globalThis as Record<string, unknown>).NodeFilter !== undefined);
+
+    const agent = createSdkAgent();
+    hard("에이전트 생성·도구 3종(snapshot·query·act)", typeof agent.snapshot === "function" && typeof agent.query === "function" && typeof agent.act === "function");
+
+    // 에이전트 생성 «이후» 만들어지는 인스턴스 — 커널 감시자가 자동 등록한다.
+    const instance = unwatched(() => toggle({ id: "agent-probe-toggle" }));
+    keep(instance);
+    const part = instance.part("root", {}, true);
+    commit(part, {});
+    const el = new FakeElement("unknown");
+    el.setAttribute("aria-label", "알림");
+    el.isConnected = true; // agent 모드 SdkElement 계약 미러(bound 필터 통과)
+    ref(part, host)(el as unknown as HTMLElement);
+    subscribe(part, () => {});
+
+    const list = agent.snapshot();
+    const mine = list.find((c) => c.label === "알림");
+    hard("인스턴스 자동 등록·접근명 라벨 노출", mine !== undefined, JSON.stringify(list));
+    // toggle의 agent api는 setPressed(button 계열의 press와 다르다 — 실측).
+    hard("actions에 setPressed", mine?.actions.includes("setPressed") === true);
+
+    const events: unknown[] = [];
+    agent.subscribe((change) => events.push(change));
+    const result = await agent.act({ steps: [{ ref: "알림", action: "setPressed", args: [true] }] });
+    hard("act(ref 라벨 → setPressed) ok", result.ok === true, JSON.stringify(result.error ?? result.steps));
+    const after = partState(part, {}, instance.get()) as { pressed?: boolean };
+    hard("act 후 pressed=true", after.pressed === true);
+    hard("subscribe 통지 source='agent'", events.length >= 1 && (events[0] as Record<string, unknown>).source === "agent");
+
+    release(instance);
+    instance.destroy();
+  }
 }
 
 console.log(failed === 0 ? "probe:ui-sdk PASS" : `probe:ui-sdk FAIL — 위반 ${failed}건`);

@@ -365,6 +365,19 @@ export default function Index() {
             </Text>
           </Pressable>
         </Link>
+        <Link href="/uisdk-agent" asChild>
+          <Pressable
+            className="mb-2 rounded-2xl border border-border/50 bg-card px-4 py-3 active:bg-muted/50 active:opacity-85"
+            accessibilityLabel="ui-sdk 에이전트 브리지 화면 열기"
+          >
+            <Text className="font-sans text-sm font-semibold text-foreground">
+              에이전트 브리지 — 가상 DOM으로 AI 계약 구동
+            </Text>
+            <Text className="mt-0.5 font-sans text-xs text-muted-foreground">
+              createAgent가 프리미티브를 발견하고 라벨로 act·subscribe
+            </Text>
+          </Pressable>
+        </Link>
         <Link href="/uisdk-keys" asChild>
           <Pressable
             className="rounded-2xl border border-border/50 bg-card px-4 py-3 active:bg-muted/50 active:opacity-85"
