@@ -29,6 +29,14 @@
 //     style 최소 멤버(hidden input bind의 associate·그룹 bind의
 //     bindRadioGroup이 문서 리스너를, segmented-control indicator bind가
 //     CSS 변수 쓰기를 요구).
+//     M2-②(이슈 #39)에서 팝업 표면을 추가했어요 — SdkElement에 rect 캐시
+//     ·SdkStyle(observer)·nodeType·client/offset 치수·querySelectorAll
+//     ·contains·getRootNode·showPopover no-op·nextElementSibling, 문서 스텁에
+//     activeElement·getSelection. 팝업 모드 플래그(setSdkElementPopupMode)가
+//     isConnected를 켜고, useSdkPart 출력이 바인딩된 요소(sdkElement)를
+//     노출해요 — 화면이 measureInWindow로 rect를 주입하고 style observer로
+//     position() 계산 결과를 RN 화면으로 옮겨요(P2/P3 FakeElement 패턴의
+//     렌더러 이식).
 //   - id 전파(followId·MutationObserver)는 웹 전용 계약이라 RN에서 소유하지
 //     않아요. RN 0.88 내장 MutationObserver(childList 전용 폴리필)는 커널
 //     followId의 attributeFilter 관찰과 계약이 안 맞아 바인딩 동안만 전역을
@@ -65,6 +73,9 @@ export type SdkPrimitiveInstance = {
   id: string;
   /** 인스턴스 전체 상태 — 실제 프리미티브의 정밀 타입을 그대로 돌려줘요 */
   get(): unknown;
+  /** 팩토리가 만든 공개 api(createPopup 계열은 setOpen·close·toggle 등) —
+   *  커널이 인스턴스 생성 시 이미 구축했어요(wake 경계). */
+  readonly api?: Record<string, unknown>;
   setOptions(options: Record<string, unknown>): void;
   part(
     slot: string,
@@ -107,12 +118,24 @@ const HOST = { by: "framework", attaches: ["click", "keydown", "keyup"] } as con
  *  4. style: segmented-control indicator bind(bindIndicator)가 CSS 변수
  *     setProperty/removeProperty를 써요. RN 표면은 측정(활성 항목의
  *     isConnected)이 없어 write(undefined)의 제거 경로만 와요.
+ *  M2-②(이슈 #39) 팝업 표면 — createPopup 계열이 요구하는 나머지 멤버예요:
+ *  5. rect 캐시·SdkStyle(observer)·nodeType·client/offset 치수·
+ *     getClientRects·querySelectorAll([])·contains(false)·getRootNode·
+ *     showPopover/hidePopover no-op·nextElementSibling — position() 배치와
+ *     popup layer attach가 읽는 전부. rect는 화면이 measureInWindow로
+ *     주입하고(팝업 모드), getBoundingClientRect는 «스타일이 곧 위치»
+ *     web 의미로 style.left/top에서 x/y를 유도해요(P3 origin-drift 방어).
  *  나머지 멤버는 watchFormDisabled·press(roving)·keyClick이 도달할 수 있는 방어
  *  경로예요. instanceof 브랜드 검사(HTMLFieldSetElement 등)는 parentElement
  *  순환 전에 끝나 RN에 없는 글로벌 참조 없이 통과해요. */
 const SdkDocument = {
   addEventListener() {},
   removeEventListener() {},
+  /** popup layer의 focus 경로(activeElement 읽기) — 항상 «없음»이 정직해요.
+   *  RN에는 문서 포커스 개념이 없어요(가상 포커스는 M2-⑥ 과제). */
+  activeElement: null,
+  /** returnFocus의 caret 복원 경로 — 선택 영역 없음으로 통과해요. */
+  getSelection: () => null,
 };
 
 // ---------------------------------------------------------------------------
@@ -124,8 +147,14 @@ const SdkDocument = {
 // «동기 레이아웃 읽기»와 정면충돌해요. agent 진입점은 문서 스텁과 함께 이
 // 플래그만 true로 바꾸고, getBoundingClientRect는 0 직사각형을 돌려주게
 // 해서 측정이 안전하게 실패하도록 지켜요.
+// 팝업 모드(M2-② 이슈 #39) — 같은 옵트인 방식의 별도 플래그예요. createPopup
+// 계열의 요소 조회(context.element·elements()·popup layer의 bind 시작
+// 조건)가 el.isConnected를 요구해요. 팝업 모드에서는 측정이 «주입된 rect
+// 캐시»로 성립해요(아래 SdkElement.rect — FakeElement 패턴, P2/P3 실증) —
+// 동기 읽기가 아니라 화면이 measureInWindow(비동기)로 채운 캐시를 읽어요.
 // ---------------------------------------------------------------------------
 let sdkElementAgentMode = false;
+let sdkElementPopupMode = false;
 
 /** 에이전트 브리지 모드 토글 — ./behaviors/ui-sdk-agent의 createSdkAgent가
  *  true로 켜요. 일반 렌더러 소비자는 호출하지 않아요. */
@@ -133,17 +162,85 @@ export function setSdkElementAgentMode(enabled: boolean): void {
   sdkElementAgentMode = enabled;
 }
 
-class SdkElement {
-  /** bound() 필터가 읽는 연결 사실 — 에이전트 모드에서만 true. */
-  get isConnected() {
-    return sdkElementAgentMode;
+/** 팝업 모드 토글 — createPopup 계열(popover·dialog·menu·select·tooltip…)
+ *  화면이 켜요. 바인딩된 요소가 «연결됨»으로 보고 요소 조회·layer bind가
+ *  성립하며, rect 캐시·SdkStyle(observer)로 position() 배치가 구동돼요.
+ *  화면 마운트에서 켜고 언마운트에서 끄는 경계를 권장해요(다른 모드
+ *  화면과의 전역 공유를 피하기 위해). */
+export function setSdkElementPopupMode(enabled: boolean): void {
+  sdkElementPopupMode = enabled;
+}
+
+/** position() 계산 결과(style 쓰기)를 RN 화면으로 옮기는 관찰 훅 계약 —
+ *  ui-sdk-dom의 FakeStyle과 같은 모양(P3 실증). setProperty가 값이 실제로
+ *  바뀔 때마다 불려요. */
+export type SdkStyleObserver = (key: string, value: string) => void;
+
+/** CSSStyleDeclaration 모양 최소형 — position()의 계산 결과가 흘러와요.
+ *  일반 슬롯의 CSS 변수 쓰기(segmented indicator)도 같은 표면을 써요. */
+export class SdkStyle {
+  [key: string]: unknown;
+  transformOrigin = "0px 0px";
+  transform = "none";
+  observer?: SdkStyleObserver;
+  setProperty(key: string, value: string) {
+    if (this[key] !== value) {
+      this.observer?.(key, value);
+    }
+    this[key] = value;
   }
+  getPropertyValue(key: string) {
+    return typeof this[key] === "string" ? (this[key] as string) : "";
+  }
+  removeProperty(key: string) {
+    delete this[key];
+  }
+}
+
+/** rect 캐시를 제자리에서 갱신 — 같은 객체를 getter가 계속 읽게 해요(추종 입력).
+ *  ui-sdk-dom의 updateRect와 같은 계약이에요(react-native 의존 없이). */
+export function setSdkRect(
+  element: SdkElement,
+  x: number,
+  y: number,
+  width: number,
+  height: number,
+): void {
+  const rect = element.rect;
+  rect.x = x;
+  rect.y = y;
+  rect.width = width;
+  rect.height = height;
+  rect.top = y;
+  rect.left = x;
+  rect.right = x + width;
+  rect.bottom = y + height;
+}
+
+export class SdkElement {
+  /** bound() 필터가 읽는 연결 사실 — agent·popup 모드에서만 true. */
+  get isConnected() {
+    return sdkElementAgentMode || sdkElementPopupMode;
+  }
+  /** position()이 앵커 판별에 쓰는 노드 종류("nodeType" in anchor). */
+  nodeType = 1;
   tagName: string;
   parentElement: SdkElement | undefined = undefined;
+  nextElementSibling: SdkElement | undefined = undefined;
+  previousElementSibling: SdkElement | undefined = undefined;
   ownerDocument = SdkDocument;
-  style = {
-    setProperty() {},
-    removeProperty() {},
+  /** position()의 계산 결과·CSS 변수 쓰기가 흐르는 표면(관찰 훅 동반). */
+  style = new SdkStyle();
+  /** 측정 주입 캐시 — 화면이 measureInWindow로 채워요(기본 0). */
+  rect = {
+    x: 0,
+    y: 0,
+    width: 0,
+    height: 0,
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
   };
   private attributes = new Map<string, string>();
   constructor(tag: string) {
@@ -172,6 +269,9 @@ class SdkElement {
   matches() {
     return false;
   }
+  /** 웹 popover top layer 계약 — RN에는 없으므로 no-op(try/catch 대신 정직). */
+  showPopover() {}
+  hidePopover() {}
   /** watchFormDisabled·label 탐색 — 값이 없으면 무시하는 경로 */
   closest() {
     return null;
@@ -179,6 +279,22 @@ class SdkElement {
   querySelector() {
     return null;
   }
+  /** tabbables(root)(initialFocus 경로) — 빈 목록이 «포커스 대상 없음»의
+   *  정직한 번역이에요(제거 경로가 content 자신으로 흘러요). */
+  querySelectorAll() {
+    return [] as unknown[];
+  }
+  /** 레이어 트리 판정(composedContains·findLayer) — RN 요소 트리가 없어
+   *  «포함하지 않음»으로 흘러요. */
+  contains() {
+    return false;
+  }
+  /** focusedFrom(el)(닫힘 포커스 경로) — 문서 루트 모양으로 통과. */
+  getRootNode() {
+    return this.ownerDocument;
+  }
+  /** position()의 스크롤 경로 — no-op(추종은 rect 주입이 담당). */
+  scrollTo() {}
   /** presence(애니메이션 종료 대기) — RN에서 애니메이션은 없음 */
   getAnimations() {
     return [];
@@ -200,9 +316,51 @@ class SdkElement {
   checkVisibility() {
     return !this.hasAttribute("hidden") && this.getAttribute("aria-hidden") !== "true";
   }
-  /** 동기 레이아웃 읽기(indicator 측정 등) — RN은 0 직사각형이 정직한 답 */
+  /** 동기 레이아웃 읽기 — 팝업 모드는 «스타일이 곧 위치» web 의미(P3 실증:
+   *  고정 rect를 돌려주면 추종마다 원점이 누적 드리프트해요). agent 모드와
+   *  측정 없는 일반 모드는 0 직사각형이 정직한 답이에요. */
   getBoundingClientRect() {
-    return { x: 0, y: 0, top: 0, left: 0, right: 0, bottom: 0, width: 0, height: 0 };
+    if (!sdkElementPopupMode) {
+      return { x: 0, y: 0, top: 0, left: 0, right: 0, bottom: 0, width: 0, height: 0 };
+    }
+    const styleLeft = this.style.left;
+    const styleTop = this.style.top;
+    const left = typeof styleLeft === "string" ? parseFloat(styleLeft) || 0 : 0;
+    const top = typeof styleTop === "string" ? parseFloat(styleTop) || 0 : 0;
+    const x = styleLeft !== undefined ? left : this.rect.x;
+    const y = styleTop !== undefined ? top : this.rect.y;
+    return {
+      x,
+      y,
+      width: this.rect.width,
+      height: this.rect.height,
+      top: y,
+      left: x,
+      right: x + this.rect.width,
+      bottom: y + this.rect.height,
+    };
+  }
+  /** renderedRect(position.js) — rect 목록이 있으면 «렌더됨» 판정. */
+  getClientRects() {
+    return [this.getBoundingClientRect()];
+  }
+  get clientLeft() {
+    return 0;
+  }
+  get clientTop() {
+    return 0;
+  }
+  get clientWidth() {
+    return this.rect.width;
+  }
+  get clientHeight() {
+    return this.rect.height;
+  }
+  get offsetWidth() {
+    return this.rect.width;
+  }
+  get offsetHeight() {
+    return this.rect.height;
   }
 }
 
@@ -324,6 +482,9 @@ export type SdkPartOutput = {
   snapshot: Record<string, unknown>;
   /** 인스턴스 전체 상태에서 읽은 element 이름(역할 합성용) */
   element: string;
+  /** 바인딩된 가상 요소(SdkElement) — 팝업 계열 화면이 rect 주입·style
+   *  observer 설치·속성 판독에 써요(M2-② #39). 바인딩 생명주기와 1:1. */
+  sdkElement: SdkElement;
   /** 브리지 프리미티브로 번역된 props */
   bridgeProps: SdkBridgeProps;
   /** 합성 이벤트 발송 — press()는 click의 약자. 반환값은 defaultPrevented */
@@ -390,13 +551,25 @@ export function useSdkPart(
   }, [part, props]);
 
   const bindElement = React.useMemo(() => ref(kernel, HOST), [part]);
+  const sdkElementRef = React.useRef<SdkElement | null>(null);
   React.useLayoutEffect(() => {
-    // RN 0.88 내장 MutationObserver( childList 전용 폴리필)과 커널 followId의
-    // attributeFilter 계약 충돌을 피해 바인딩 동안만 전역을 마스킹한다.
-    // 바인딩이 없는 런타임(bun 등)은 typeof 가드로 그냥 통과.
+    // RN 0.88 내장 MutationObserver(childList 전용 폴리필)과 커널 followId의
+    // attributeFilter 계약 충돌을 피해 바인딩 동안만 전역을 교체한다 —
+    // undefined 대신 no-op 클래스로(M2-② #39): moves.js(position()의 추적
+    // 등록)가 가드 없이 `new MutationObserver(...)`로 생성하기 때문. no-op도
+    // «아무것도 발화하지 않는다»는 마스킹의 효과를 그대로 유지해요(RN 가상
+    // 요소는 DOM 변이를 일으키지 않아요). 바인딩이 없는 런타임(bun 등)은
+    // typeof 가드로 그냥 통과.
     const globalScope = globalThis as { MutationObserver?: unknown };
     const saved = globalScope.MutationObserver;
-    if (typeof saved === "function") globalScope.MutationObserver = undefined;
+    class SilentObserver {
+      observe() {}
+      disconnect() {}
+      takeRecords() {
+        return [];
+      }
+    }
+    globalScope.MutationObserver = SilentObserver;
     try {
       const element = new SdkElement(
         String((instance.get() as Record<string, unknown>).element ?? "unknown"),
@@ -408,11 +581,15 @@ export function useSdkPart(
       if (typeof agentLabel === "string" && agentLabel !== "") {
         element.setAttribute("aria-label", agentLabel);
       }
+      sdkElementRef.current = element;
       bindElement(element as never);
     } finally {
-      if (typeof saved === "function") globalScope.MutationObserver = saved;
+      globalScope.MutationObserver = saved;
     }
-    return () => bindElement(null);
+    return () => {
+      sdkElementRef.current = null;
+      bindElement(null);
+    };
   }, [bindElement, instance]);
 
   const current = compute();
@@ -436,6 +613,7 @@ export function useSdkPart(
     domAttrs: current.domAttrs,
     snapshot: current.snapshot,
     element: current.element,
+    sdkElement: sdkElementRef.current as SdkElement,
     bridgeProps: sdkBridgeProps(current.domAttrs, current.element),
     fire,
     press: () => fire("click"),

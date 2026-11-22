@@ -609,5 +609,264 @@ console.log("(8) 에이전트 브리지 — ui-sdk-agent 제품 진입점");
   }
 }
 
+// --- 9. M2-② 팝업 슬라이스 — popover 전 슬롯·createPopup 비공개 커널 경로 ---
+// 이슈 #39. popover의 createPopup이 커널 Context(store·element·props·parts)를
+// 소비해 RN(=DOM 없는 런타임)에서 개폐·배치까지 도는지 검증한다. 요소는
+// 제품 SdkElement의 팝업 표면과 같은 명세(rect 캐시·SdkStyle observer·
+// nodeType·querySelectorAll 등 — ui-sdk-renderer.ts M2-②). 전역은 window·
+// document 최소 스텁(position()의 뷰포트 판정·getComputedStyle·bind 정리의
+// activeElement 읽기)을 «멤버 단위 패치»로 깐다(ui-sdk-dom installDomStubs와
+// 같은 원칙 — bun은 react-native 의존 프로브가 import할 수 없어 여기서 미러).
+// isBrowser(env.js)는 최상위 import 시점에 이미 false로 평가됐다 — 기기(RN)도
+// 마찬가지(문서 스텁은 컴포넌트 몸통에서 늦게 설치)므로 프로브와 기기가 같은
+// 경로를 검증한다. 이 섹션의 요소는 isConnected true(팝업 모드 미러).
+console.log("(9) M2-② popover 전 슬롯 — createPopup 커널 경로");
+{
+  // 전역 멤버 패치 — «미존재 시에만» 설치(다른 스텁과 같은 가드).
+  const g = globalThis as Record<string, unknown>;
+  const probeDocElement = {
+    clientWidth: 390,
+    clientHeight: 844,
+  };
+  if (typeof g.window !== "object" || g.window === null) g.window = {};
+  const probeWin = g.window as Record<string, unknown>;
+  if (typeof probeWin.addEventListener !== "function") probeWin.addEventListener = () => {};
+  if (typeof probeWin.removeEventListener !== "function") probeWin.removeEventListener = () => {};
+  if (probeWin.visualViewport === undefined) probeWin.visualViewport = null;
+  if (typeof probeWin.getComputedStyle !== "function") {
+    probeWin.getComputedStyle = (el?: { style?: unknown }) => (el?.style ?? {});
+  }
+  if (typeof g.getComputedStyle !== "function") {
+    g.getComputedStyle = (el?: { style?: unknown }) => (el?.style ?? {});
+  }
+  if (typeof g.document !== "object" || g.document === null) g.document = {};
+  const probeDoc = g.document as Record<string, unknown>;
+  // 선행 섹션(8 — installSdkAgentDom)이 documentElement를 0×0 스텁으로
+  // 이미 설치했을 수 있어요 — «미존재 시에만» 가드로는 두면 뷰포트가 0×0으로
+  // 남아 배치가 전부 플립/클램프돼요. 프로브 런타임의 뷰포트는 여기서
+  // 결정한다(기기 화면은 installDomStubs의 Dimensions live getter가 같은
+  // 역할을 해요 — 에이전트 선행 설치와 공존할 때 치수 멤버 교정 필요,
+  // 이슈 #39 문서에 기록).
+  probeDoc.documentElement = probeDocElement;
+  if (typeof probeDoc.addEventListener !== "function") probeDoc.addEventListener = () => {};
+  if (typeof probeDoc.removeEventListener !== "function") probeDoc.removeEventListener = () => {};
+  // moves.js(watchMoves → listen)가 가드 없이 `new MutationObserver(...)`로
+  // 생성해요 — bun에는 없으므로 no-op 클래스를 설치(제품 렌더러의 바인딩
+  // 마스크과 같은 명세, ui-sdk-dom installDomStubs과 같은 가드).
+  if (typeof g.MutationObserver !== "function") {
+    g.MutationObserver = class {
+      observe() {}
+      disconnect() {}
+      takeRecords() {
+        return [];
+      }
+    };
+  }
+  hard("전역 스텁 — window(documentElement 390×844·getComputedStyle)·document", true);
+
+  // 팝업 표면 요소 — 제품 SdkElement(ui-sdk-renderer M2-②)와 같은 명세.
+  class PopupElement extends FakeElement {
+    nodeType = 1;
+    isConnected = true;
+    nextElementSibling: PopupElement | undefined = undefined;
+    previousElementSibling: PopupElement | undefined = undefined;
+    style = new (class {
+      [key: string]: unknown;
+      transformOrigin = "0px 0px";
+      transform = "none";
+      observer?: (key: string, value: string) => void;
+      setProperty(key: string, value: string) {
+        if (this[key] !== value) this.observer?.(key, value);
+        this[key] = value;
+      }
+      getPropertyValue(key: string) {
+        return typeof this[key] === "string" ? (this[key] as string) : "";
+      }
+      removeProperty(key: string) {
+        delete this[key];
+      }
+    })();
+    rect = { x: 0, y: 0, width: 0, height: 0, top: 0, left: 0, right: 0, bottom: 0 };
+    showPopover() {}
+    hidePopover() {}
+    querySelectorAll() {
+      return [] as unknown[];
+    }
+    contains() {
+      return false;
+    }
+    getRootNode() {
+      return this.ownerDocument;
+    }
+    scrollTo() {}
+    getBoundingClientRect() {
+      const left = parseFloat(this.style.left as string) || 0;
+      const top = parseFloat(this.style.top as string) || 0;
+      const x = this.style.left !== undefined ? left : this.rect.x;
+      const y = this.style.top !== undefined ? top : this.rect.y;
+      return {
+        x,
+        y,
+        width: this.rect.width,
+        height: this.rect.height,
+        top: y,
+        left: x,
+        right: x + this.rect.width,
+        bottom: y + this.rect.height,
+      };
+    }
+    getClientRects() {
+      return [this.getBoundingClientRect()];
+    }
+    get clientLeft() {
+      return 0;
+    }
+    get clientTop() {
+      return 0;
+    }
+    get clientWidth() {
+      return this.rect.width;
+    }
+    get clientHeight() {
+      return this.rect.height;
+    }
+    get offsetWidth() {
+      return this.rect.width;
+    }
+    get offsetHeight() {
+      return this.rect.height;
+    }
+  }
+  const fill = (
+    el: PopupElement,
+    x: number,
+    y: number,
+    width: number,
+    height: number,
+  ) => {
+    Object.assign(el.rect, { x, y, width, height, top: y, left: x, right: x + width, bottom: y + height });
+  };
+
+  const { popover } = await import("@ui-sdk/core/popover");
+  const openChanges: Array<{ open: boolean; reason: string }> = [];
+  const instance = unwatched(() =>
+    popover({
+      id: "probe-popover",
+      onOpenChange: (open: boolean, closed?: { reason: string }) =>
+        openChanges.push({ open, reason: closed?.reason ?? "" }),
+    }),
+  );
+  keep(instance);
+  hard("popover 인스턴스 생성 — createPopup 비공개 커널 경로 무예외", true);
+
+  const api = (instance as { api?: Record<string, unknown> }).api as Record<
+    string,
+    (arg?: unknown) => unknown
+  >;
+  hard("api setOpen·close·toggle 노출", typeof api?.setOpen === "function" && typeof api?.close === "function" && typeof api?.toggle === "function");
+
+  // 전 슬롯 part 확보 — popover는 trigger·content·viewport·title·description·
+  // close·arrow·shortcut·backdrop. 소비 표면 6종(trigger·content·title·
+  // description·close·arrow)을 bind한다(viewport는 sheet 전용·shortcut는
+  // 장식·backdrop는 popover가 렌더하지 않는 경로).
+  const triggerPart = instance.part("trigger", {}, true);
+  const contentPart = instance.part("content", {}, true);
+  const titlePart = instance.part("title", {}, true);
+  const descriptionPart = instance.part("description", {}, true);
+  const closePart = instance.part("close", {}, true);
+  const arrowPart = instance.part("arrow", {}, true);
+  for (const part of [triggerPart, contentPart, titlePart, descriptionPart, closePart, arrowPart]) {
+    commit(part, {});
+  }
+
+  const triggerEl = new PopupElement("button");
+  // P2 실측 수치 — 앵커 (100, 200)·120×40, side bottom·offset 8 → top 248.
+  fill(triggerEl, 100, 200, 120, 40);
+  const contentEl = new PopupElement("div");
+  fill(contentEl, 100, 200, 224, 124);
+  const titleEl = new PopupElement("h2");
+  const descriptionEl = new PopupElement("p");
+  const closeEl = new PopupElement("button");
+  const arrowEl = new PopupElement("span");
+  fill(arrowEl, 150, 240, 12, 12);
+  const styleWrites: Array<[string, string]> = [];
+  contentEl.style.observer = (key, value) => styleWrites.push([key, value]);
+
+  ref(triggerPart, host)(triggerEl as unknown as HTMLElement);
+  hard("trigger bind 무예외(bindTrigger·adoptPlatform·shortcut 경유)", true);
+  const state1 = instance.get() as { trigger: string | null };
+  hard("bind 후 store.trigger 설정", state1.trigger !== null, JSON.stringify(state1.trigger));
+
+  const triggerAttrs = attrs(triggerPart, {}, instance.get()) as Attrs;
+  hard("trigger aria-haspopup='dialog'", triggerAttrs["aria-haspopup"] === "dialog", JSON.stringify(triggerAttrs));
+  hard("trigger type='button'", triggerAttrs.type === "button");
+  hard("trigger 초기 aria-expanded='false'", triggerAttrs["aria-expanded"] === "false");
+
+  // 개방 — trigger press(pressOpening.press → control.show → createOpenSteps).
+  subscribe(triggerPart, () => {});
+  handlers(triggerPart).click?.(syntheticClick());
+  const opened = instance.get() as { open: boolean; mounted: boolean; presentation: string };
+  hard("press → open=true", opened.open === true);
+  hard("open → mounted=true(콘텐츠 렌더 계약)", opened.mounted === true);
+  hard("onOpenChange(true) 통지", openChanges.some((c) => c.open));
+  const triggerAttrsOpen = attrs(triggerPart, {}, instance.get()) as Attrs;
+  hard("열림 중 trigger aria-expanded='true'", triggerAttrsOpen["aria-expanded"] === "true");
+  hard("trigger aria-controls 노출", typeof triggerAttrsOpen["aria-controls"] === "string");
+
+  // 콘텐츠 bind — attach 경로(position() 호출·layer push·animateIn·
+  // initialFocus 크마이크로태스크)가 여기서 돈다.
+  ref(contentPart, host)(contentEl as unknown as HTMLElement);
+  ref(titlePart, host)(titleEl as unknown as HTMLElement);
+  ref(descriptionPart, host)(descriptionEl as unknown as HTMLElement);
+  ref(closePart, host)(closeEl as unknown as HTMLElement);
+  ref(arrowPart, host)(arrowEl as unknown as HTMLElement);
+  hard("content·title·description·close·arrow bind 무예외(attach·position 경유)", true);
+
+  const contentAttrs = attrs(contentPart, {}, instance.get()) as Attrs;
+  hard("content role='dialog'", contentAttrs.role === "dialog", JSON.stringify(contentAttrs));
+  hard("content aria-labelledby=«id»-title(titled 플래그)", contentAttrs["aria-labelledby"] === "probe-popover-title");
+  hard("content aria-describedby=«id»-description", contentAttrs["aria-describedby"] === "probe-popover-description");
+
+  // position() 수치 검증 — P2 실측과 같은 앵커(100,200·120×40)·side bottom
+  // 기본·sideOffset 4 기본 → top=200+40+4=244. align은 popover 슬롯 기본
+  // «center»(bindPopupContent가 placement.options에 넘기는 기본값) →
+  // left=100+120/2−224/2=48(클램프 대역 [8,58] 안).
+  await new Promise((resolve) => setTimeout(resolve, 60));
+  const left = contentEl.style.left as string | undefined;
+  const top = contentEl.style.top as string | undefined;
+  hard("position() left='48px'(앵커 중심 정렬)", left === "48px", String(left));
+  hard("position() top='244px'(앵커 y+높이+sideOffset)", top === "244px", String(top));
+  const side = contentEl.getAttribute("data-side");
+  hard("data-side='bottom'", side === "bottom", String(side));
+  const availableHeight = contentEl.style.getPropertyValue("--available-height");
+  hard("--available-height 기록(뷰포트 844 클램프)", availableHeight === `${844 - 244 - 8}px`, String(availableHeight));
+  hard("style observer 통지(left 쓰기)", styleWrites.some(([key]) => key === "left"));
+
+  // close press — popupClose.press → control.hide → mounted 해제.
+  handlers(closePart).click?.(syntheticClick());
+  await new Promise((resolve) => setTimeout(resolve, 30));
+  const closed = instance.get() as { open: boolean; mounted: boolean };
+  hard("close press → open=false", closed.open === false);
+  hard("close → mounted=false", closed.mounted === false);
+  hard("onOpenChange(false, close-press) 통지", openChanges.some((c) => !c.open && c.reason === "close-press"), JSON.stringify(openChanges));
+
+  // api.setOpen(true) 재개방 — 공개 api 경로.
+  api.setOpen(true);
+  const reopened = instance.get() as { open: boolean };
+  hard("api.setOpen(true) → 재개방", reopened.open === true);
+  api.close({ reason: "outside-press" });
+  const reclosed = instance.get() as { open: boolean };
+  hard("api.close({reason:'outside-press'}) — RN 바깥누름 소비 경로", reclosed.open === false);
+
+  release(instance);
+  let destroyed = true;
+  try {
+    instance.destroy();
+  } catch {
+    destroyed = false;
+  }
+  hard("release·destroy 무예외", destroyed);
+}
+
 console.log(failed === 0 ? "probe:ui-sdk PASS" : `probe:ui-sdk FAIL — 위반 ${failed}건`);
 process.exit(failed === 0 ? 0 : 1);

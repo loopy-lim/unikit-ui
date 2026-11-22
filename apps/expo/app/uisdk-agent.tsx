@@ -12,8 +12,10 @@
 //   - act({steps:[{ref:"라벨", action, args}]}) — 라벨로 대상을 찾아 상태
 //     변경(toggle은 setPressed, button은 press)
 //   - subscribe — 변경 통지의 source가 "agent"로 구분돼요
-// 기기 미검증 상태 — 헤드리스 계약은 probe (8)이 PASS, 이 화면은 기기
-// 실증 후 주석을 갱신해요(M2-①과 같은 운영).
+// 기기 실증 완료(2026-11-23 — 에뮬레이터 390×844dp): 초기 snapshot 등록
+// (toggle-2 «공지 알림»·button-1 «저장") → 2단계 act(tap → setPressed) →
+// 사람 터치가 onPressedChange(false)로 source 구분 반영 — probe (8)과
+// 기기 양측 통과(docs/sdd/issue-39 문서 §4 같은 세션 기록).
 import * as React from "react";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Pressable, ScrollView, Text, View } from "@unikit-bridge/ui/primitives";

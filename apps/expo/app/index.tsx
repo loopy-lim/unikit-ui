@@ -378,6 +378,19 @@ export default function Index() {
             </Text>
           </Pressable>
         </Link>
+        <Link href="/uisdk-popover" asChild>
+          <Pressable
+            className="mb-2 rounded-2xl border border-border/50 bg-card px-4 py-3 active:bg-muted/50 active:opacity-85"
+            accessibilityLabel="ui-sdk 팝업 유형 화면 열기"
+          >
+            <Text className="font-sans text-sm font-semibold text-foreground">
+              팝업 유형 — createPopup 커널 경로(popover)
+            </Text>
+            <Text className="mt-0.5 font-sans text-xs text-muted-foreground">
+              비공개 커널이 trigger·content·arrow 슬롯을 배치·개폐(이슈 #39)
+            </Text>
+          </Pressable>
+        </Link>
         <Link href="/uisdk-keys" asChild>
           <Pressable
             className="rounded-2xl border border-border/50 bg-card px-4 py-3 active:bg-muted/50 active:opacity-85"
