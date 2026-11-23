@@ -73,6 +73,7 @@ import {
   setSdkElementPopupMode,
   setSdkRect,
   setSdkViewport,
+  SdkWindow,
   typeSdkValue,
   type SdkElement,
 } from "../src/behaviors/ui-sdk-renderer";
@@ -1944,6 +1945,21 @@ console.log("(15) 하드웨어 키 호스트 — sdkKeyHostProps가 브리지 on
   host.onKeyUp({ key: "Enter" });
   await settle();
   hard("onKeyUp → keyup 발송(캡처 수신)", seen.some((s) => s.type === "keyup" && s.key === "Enter"), "");
+
+  // dialog Escape 하드웨어 경로 전제 — 요소 keydown이 버블 끝의 창에 닿아요
+  // (layers의 창 리스너 — 발송 요소 불문. hwkeys 화면에서 트리거·콘텐츠
+  // 어느 쪽에 포커스가 남아 있어도 Escape가 레이어에 흐르는 근거).
+  const windowKeys: string[] = [];
+  SdkWindow.addEventListener("keydown", (event) => {
+    windowKeys.push((event as { key: string }).key);
+  });
+  fireSdkEvent(registry.get("b") as SdkElement, "keydown", { key: "Escape" });
+  await settle();
+  hard(
+    "요소 keydown Escape → 창 도달(발송 요소 불문 — layers 캡처 전제)",
+    windowKeys.includes("Escape"),
+    JSON.stringify(windowKeys),
+  );
 
   host.onBlur();
   hard("onBlur → 가상 포커스 해제(activeElement null)", doc.activeElement === null, "");

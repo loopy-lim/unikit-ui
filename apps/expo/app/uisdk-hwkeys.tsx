@@ -14,6 +14,11 @@
 // roving은 remember:false라 stop이 선택을 따라요) Enter가 값을 바꿔요.
 // radio 데모는 기본값(값·포커스 동시 이동).
 //
+// slider 데모(키보드 전용): thumb-input 요소에 keydown — ArrowLeft/Right가
+// ±step(step-key), Home/End가 양끝(이슈 #43 «v1 경계» 항목의 하드웨어 실증).
+// dialog 데모: Escape(111)가 트리거·콘텐츠 어디에 있든 요소 keydown →
+// 창 캡처 → 레이어 onEscape → 닫힘(escape-key) — Tab 트랩도 같은 경로.
+//
 // 그룹 경계 계약(실측 예정): 컨테이너 사이의 방향키는 네이티브 탐색이 실
 // 포커스를 옮겨요(커널 preventDefault가 비동기 JS라 네이티브 결정에 못
 // 미쳐요) — 커널의 값 이동은 완료되지만, 다음 키는 포커스을 받은 이웃
@@ -30,22 +35,43 @@
 //   경계 실측: MOVE_HOME/MOVE_END(122/123)는 RN 코어가 key "Unidentified"로
 //   번역 — 커널 도달 불가(브리지 수준 결핍, 화면 키패드 발송은 무관).
 import * as React from "react";
+import { Modal } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Pressable, Text, View } from "@unikit-bridge/ui/primitives";
 
 import { tabs } from "@ui-sdk/core/tabs";
 import { radioGroup } from "@ui-sdk/core/radio";
+import { slider as sliderPrimitive } from "@ui-sdk/core/slider";
+import { dialog as dialogPrimitive } from "@ui-sdk/core/dialog";
 import {
+  SdkDocument,
+  dispatchSdkDocumentEvent,
+  dispatchSdkWindowEvent,
   fireSdkEvent,
   installSdkEventGlobals,
   sdkKeyHostProps,
   setSdkElementFocusMode,
+  setSdkElementPopupMode,
   useSdkPart,
   useSdkPrimitive,
   type SdkPrimitiveInstance,
 } from "@unikit-bridge/ui/behaviors/ui-sdk-renderer";
 
 installSdkEventGlobals();
+
+/** Fabric 키 핸들러 안에서 커널로 동기 발송하면 change→콜백 전파를 삼키는
+ *  레이스가 계측 없이도 재현돼요(슬라이더·다이얼로그 — 탭·라디오 목록은 같은
+ *  동기 경로가 무사해요). keydown·keyup 한 쌍을 마이크로태스크로 미뤄
+ *  보내면 안정해요. 파트의 fire는 호출 시점의 바인딩 요소를 읽어요. */
+function sendKeyPair(
+  part: { fire: (type: string, init: Record<string, unknown>) => unknown },
+  key: string,
+) {
+  queueMicrotask(() => {
+    part.fire("keydown", { key });
+    part.fire("keyup", { key });
+  });
+}
 
 const TAB_PROPS = [
   { value: "a" },
@@ -300,6 +326,286 @@ function HwRadioItem({
   );
 }
 
+function HwSliderDemo({ onKey }: { onKey: (line: string) => void }) {
+  const instance = useSdkPrimitive(sliderPrimitive, {
+    defaultValue: 50,
+    min: 0,
+    max: 100,
+    step: 1,
+  });
+  useSdkPart(instance, "root");
+  useSdkPart(instance, "control");
+  useSdkPart(instance, "track");
+  const thumbInput = useSdkPart(instance, "thumb-input", { index: 0, id: "0" });
+
+  // 커널이 진실 — 값은 스토어 구독(useSyncExternalStore)으로 읽어요. 이 화면은
+  // reactCompiler가 켜져 있어서 콜백이 내 녹화한 클로저를 메모이즈하고,
+  // instance.get() 직독은 컴파일러 눈에 보이지 않는 외부 상태라 캐시돼요.
+  // 스토어 구독은 컴파일러가 아는 훅이라 안전해요.
+  const subscribeStore = React.useCallback(
+    (notify: () => void) => instance.subscribe(notify),
+    [instance],
+  );
+  const kernelValue = React.useSyncExternalStore(
+    subscribeStore,
+    () => (instance.get() as { value: number | number[] }).value,
+  );
+  const value = Array.isArray(kernelValue) ? (kernelValue[0] ?? 0) : kernelValue;
+
+  // 키보드 전용 구획 — 트랙 누름(rect 주입)·드래그는 uisdk-slider 화면 영역.
+  // 방향키는 thumb-input 요소에 keydown(프로브 (12)와 같은 경로).
+  const host = sdkKeyHostProps({
+    event: () => ({ element: thumbInput.sdkElement }),
+    focusElement: () => thumbInput.sdkElement,
+  });
+
+  const [lastKey, setLastKey] = React.useState<string | null>(null);
+
+  return (
+    <View className="gap-2">
+      <Text className="font-sans text-base font-bold text-foreground">
+        SLIDER — 방향키 값 조정(키보드 전용)
+      </Text>
+      <Pressable
+        accessibilityLabel="하드웨어 슬라이더 트랙"
+        className="h-10 justify-center"
+        {...host}
+        onKeyDown={(event) => {
+          setLastKey(event.key);
+          const key = event.key;
+          sendKeyPair(thumbInput, key);
+          onKey(`slider ↓${event.key}`);
+        }}
+      >
+        <View className="h-1.5 w-full rounded-full bg-muted">
+          <View
+            className="absolute h-4 w-4 rounded-full bg-primary"
+            style={{ left: `${value}%` }}
+          />
+        </View>
+      </Pressable>
+      <Text className="font-sans text-xs leading-4 text-muted-foreground">
+        value «{String(value)}» · ↓{lastKey ?? "-"} — ArrowLeft/Right가 ±step(step-key)
+      </Text>
+    </View>
+  );
+}
+
+/** 다이얼로그 콘텐츠 서브트리 — 네이티브 Modal 창 안에서 열림 동안만 마운트
+ *  (언마운트에 잠금 해제 — uisdk-dialog와 같은 수명 계약). 하드웨어
+ *  Tab·Escape가 콘텐츠 컨테이너의 host props를 거쳐 커널(layers 창 캡처)로
+ *  흘러요. */
+function HwDialogContent({
+  instance,
+  onKey,
+}: {
+  instance: SdkPrimitiveInstance;
+  onKey: (line: string) => void;
+}) {
+  const content = useSdkPart(instance, "content");
+  const title = useSdkPart(instance, "title");
+  const description = useSdkPart(instance, "description");
+  const close = useSdkPart(instance, "close");
+  const backdrop = useSdkPart(instance, "backdrop");
+
+  React.useLayoutEffect(() => {
+    const contentEl = content.sdkElement;
+    if (!contentEl) return;
+    // 가상 트리 연결 — 안쪽 누름 판정(composedHops)의 고리.
+    for (const part of [title, description, close]) {
+      const el = part.sdkElement;
+      if (el) el.parentElement = contentEl;
+    }
+  }, [content.sdkElement, title.sdkElement, description.sdkElement, close.sdkElement]);
+
+  const host = sdkKeyHostProps({
+    event: () => ({ element: content.sdkElement }),
+    focusElement: () => content.sdkElement,
+  });
+
+  // 열림 즉시 네이티브 포커스를 콘텐츠로 — Escape·Tab가 도착하는 길.
+  // Modal 창 부착 후 한 프레임 미뤄 잡는다(마운트 직후 호출은 흘러넘침).
+  // 브리지 View ref 타입은 focus를 선언하지 않아요 — 실행 시점 선택적 호출.
+  const contentHostRef = React.useRef<React.ComponentRef<typeof View>>(null);
+  React.useLayoutEffect(() => {
+    const raf = requestAnimationFrame(() => {
+      (contentHostRef.current as unknown as { focus?: () => void } | null)?.focus?.();
+    });
+    return () => cancelAnimationFrame(raf);
+  }, []);
+
+  const closePress = () => {
+    const el = close.sdkElement;
+    if (!el) return;
+    dispatchSdkWindowEvent("pointerdown", {
+      pointerType: "mouse",
+      pointerId: 3,
+      button: 0,
+      buttons: 1,
+      clientX: 100,
+      clientY: 100,
+      target: el,
+    });
+    dispatchSdkWindowEvent("pointerup", {
+      pointerType: "mouse",
+      pointerId: 3,
+      button: 0,
+      buttons: 0,
+      clientX: 100,
+      clientY: 100,
+      target: el,
+    });
+    fireSdkEvent(el, "click", { detail: 1 });
+  };
+
+  return (
+    <View className="absolute inset-0 items-center justify-center">
+      {backdrop.showing ? (
+        <Pressable
+          focusable={false}
+          accessibilityLabel="다이얼로그 뒷면(바깥누름)"
+          className="absolute inset-0 bg-black/50"
+          onPress={() => {
+            dispatchSdkWindowEvent("pointerdown", {
+              pointerType: "touch",
+              pointerId: 2,
+              button: 0,
+              isPrimary: true,
+              clientX: 10,
+              clientY: 10,
+              target: null,
+            });
+            dispatchSdkWindowEvent("click", {
+              pointerType: "touch",
+              detail: 1,
+              button: 0,
+              clientX: 12,
+              clientY: 12,
+              target: null,
+            });
+          }}
+        >
+          <Text className="font-sans text-xs text-white/70" />
+        </Pressable>
+      ) : null}
+      <View
+        ref={contentHostRef}
+        accessibilityLabel="하드웨어 다이얼로그 콘텐츠"
+        className="w-72 gap-3 rounded-2xl border border-border bg-background p-4"
+        {...host}
+        onKeyDown={(event) => {
+          sendKeyPair(content, event.key);
+          onKey(`dialog ↓${event.key}`);
+        }}
+      >
+        <Text className="font-sans text-base font-bold text-foreground">모달 제목(title 슬롯)</Text>
+        <Text className="font-sans text-xs leading-4 text-muted-foreground">
+          열림 동안 Tab·Escape가 레이어에 갇혀요 — 하드웨어 Escape(111)로 닫혀요.
+        </Text>
+        <Pressable
+          focusable={false}
+          accessibilityLabel="다이얼로그 닫기"
+          className="h-9 items-center justify-center rounded-lg bg-primary active:opacity-85"
+          onPress={closePress}
+        >
+          <Text className="font-sans text-xs font-semibold text-primary-foreground">닫기(close press)</Text>
+        </Pressable>
+      </View>
+    </View>
+  );
+}
+
+function HwDialogDemo({ onKey }: { onKey: (line: string) => void }) {
+  const instance = useSdkPrimitive(dialogPrimitive, {});
+  const trigger = useSdkPart(instance, "trigger");
+
+  // 커널이 진실 — open은 스토어 구독으로 읽어요(슬라이더와 같은 이유 —
+  // reactCompiler 환경에서 instance.get() 직독은 캐시되고 콜백 클로저도
+  // 메모이즈돼요. useSyncExternalStore는 컴파일러가 아는 구독 경로예요).
+  const subscribeStore = React.useCallback(
+    (notify: () => void) => instance.subscribe(notify),
+    [instance],
+  );
+  const open = React.useSyncExternalStore(
+    subscribeStore,
+    () => Boolean((instance.get() as { open?: boolean }).open),
+  );
+  const lastLogged = React.useRef<boolean | null>(null);
+  React.useEffect(() => {
+    if (open !== lastLogged.current) {
+      lastLogged.current = open;
+      onKey(`dialog ${open ? "열림" : "닫힘"}(kernel)`);
+    }
+  }, [open, onKey]);
+
+  // 트리거도 키 호스트 — 열림 동안 실 포커스가 트리거에 남아 있어도
+  // Escape가 요소 발송으로 흘러 창에 닿아요(layers 캡처 — 발송 요소 불문).
+  const host = sdkKeyHostProps({
+    event: () => ({ element: trigger.sdkElement }),
+    focusElement: () => trigger.sdkElement,
+  });
+
+  const openPress = () => {
+    const el = trigger.sdkElement;
+    if (!el) return;
+    dispatchSdkDocumentEvent("pointerdown", {
+      pointerType: "touch",
+      pointerId: 1,
+      button: 0,
+      isPrimary: true,
+      clientX: 20,
+      clientY: 20,
+    });
+    fireSdkEvent(el, "click", { detail: 1 });
+  };
+
+  // 안드로이드 뒤로가기 — 같은 커널 경로로 Escape를 발송해 닫는다(발송 요소
+  // 불문 — layers 창 캡처). 트리거 요소는 항상 마운트돼 있어 송신점이 안전해요.
+  const backPress = () => {
+    sendKeyPair(trigger, "Escape");
+  };
+
+  return (
+    <>
+      <View className="gap-2">
+        <Text className="font-sans text-base font-bold text-foreground">DIALOG — Escape 닫기(하드웨어)</Text>
+        <Pressable
+          accessibilityLabel="하드웨어 다이얼로그 열기"
+          className="h-11 items-center justify-center rounded-xl bg-primary active:opacity-85"
+          {...host}
+          onKeyDown={(event) => {
+            // Enter·Space는 네이티브 클릭(Pressable onPress)이 한 번만 활성화
+            // — 커널 keydown으로도 보내면 이중 활성화가 돼 열렸다 곧바로 닫혀요.
+            if (event.key !== "Enter" && event.key !== " ") {
+              sendKeyPair(trigger, event.key);
+            }
+            onKey(`dialog ↓${event.key}`);
+          }}
+          onPress={openPress}
+        >
+          <Text className="font-sans text-sm font-semibold text-primary-foreground">
+            {open ? "열림(트리거)" : "다이얼로그 열기(Enter·터치)"}
+          </Text>
+        </Pressable>
+        <Text className="mt-2 font-sans text-xs leading-4 text-muted-foreground">
+          open {String(open)} · 잠금 overflow «{SdkDocument.documentElement.style.getPropertyValue("overflow")}»
+        </Text>
+      </View>
+      {/* 네이티브 Modal 창 — 오버레이가 화면 전체를 덮고 하드웨어 키가
+          이 창 안의 포커스로 흘러요. 열림 동안만 콘텐츠 마운트(수명 계약). */}
+      <Modal
+        visible={open}
+        transparent
+        animationType="none"
+        statusBarTranslucent
+        onRequestClose={backPress}
+      >
+        {open ? <HwDialogContent instance={instance} onKey={onKey} /> : null}
+      </Modal>
+    </>
+  );
+}
+
 export default function UisdkHwkeys() {
   const insets = useSafeAreaInsets();
   const [log, setLog] = React.useState<string[]>([]);
@@ -309,7 +615,11 @@ export default function UisdkHwkeys() {
 
   React.useEffect(() => {
     setSdkElementFocusMode(true);
-    return () => setSdkElementFocusMode(false);
+    setSdkElementPopupMode(true);
+    return () => {
+      setSdkElementFocusMode(false);
+      setSdkElementPopupMode(false);
+    };
   }, []);
 
   return (
@@ -324,9 +634,11 @@ export default function UisdkHwkeys() {
           거쳐 커널 keydown으로 흘러요. 목록 파트만 focusable(컨테이너 전략) — 방향키 소유권이
           커널 roving에 있어요. 터치도 함께 동작해요.
         </Text>
-        <View className="mt-5 gap-8">
+        <View className="mt-5 gap-6">
           <HwTabsDemo onKey={pushLog} />
           <HwRadioDemo onKey={pushLog} />
+          <HwSliderDemo onKey={pushLog} />
+          <HwDialogDemo onKey={pushLog} />
         </View>
         <Text className="mt-6 font-sans text-xs leading-4 text-muted-foreground">최근 이벤트</Text>
         {log.map((line, i) => (
