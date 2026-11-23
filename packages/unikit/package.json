@@ -42,6 +42,7 @@
     "./behaviors/ui-sdk-dom": "./src/behaviors/ui-sdk-dom.ts",
     "./behaviors/ui-sdk-renderer": "./src/behaviors/ui-sdk-renderer.ts",
     "./behaviors/ui-sdk-agent": "./src/behaviors/ui-sdk-agent.ts",
+    "./behaviors/ui-sdk-catalog": "./src/behaviors/ui-sdk-catalog.ts",
     "./overlay-position": {
       "react-native": "./src/lib/overlay-position/native.ts",
       "default": "./src/lib/overlay-position/web.ts"

@@ -1689,5 +1689,130 @@ console.log("(13) M2-⑥ modality — dialog 레이어(초기 포커스·Tab 트
   setSdkElementFocusMode(false);
 }
 
+console.log("(14) M3 카탈로그 — 53종 export·패밀리 재스캔·이중 유지(카탈로그 단일 출처 검증)");
+{
+  const { existsSync, readFileSync, readdirSync, statSync } = await import("node:fs");
+  const path = await import("node:path");
+  const { createRequire } = await import("node:module");
+  const { SDK_CATALOG, SDK_CATALOG_COUNT, SDK_OVERLAP, SDK_SCREEN_VERIFIED } = await import(
+    "../src/behaviors/ui-sdk-catalog"
+  );
+  const nodeRequire = createRequire(import.meta.url);
+  const coreRoot = path.dirname(nodeRequire.resolve("@ui-sdk/core/package.json"));
+  const pkgRoot = path.resolve(path.dirname(nodeRequire.resolve("../package.json")), "..");
+
+  // dist 파일 그래프 — 상대 import를 실제 파일로 해석(.js·index.js 폴백)
+  const fileDeps = new Map<string, string[]>();
+  const walkFiles = (dir: string) => {
+    for (const entry of readdirSync(dir, { withFileTypes: true })) {
+      const p = path.join(dir, entry.name);
+      if (entry.isDirectory()) walkFiles(p);
+      else if (entry.name.endsWith(".js")) {
+        const body = readFileSync(p, "utf8");
+        const deps = [...body.matchAll(/from "(\.[^"]+)"/g)]
+          .map((m) => {
+            const resolved = path.resolve(path.dirname(p), m[1]);
+            for (const candidate of [resolved, `${resolved}.js`, path.join(resolved, "index.js")]) {
+              if (existsSync(candidate) && statSync(candidate).isFile()) return candidate;
+            }
+            return null;
+          })
+          .filter((v): v is string => v !== null);
+        fileDeps.set(p, deps);
+      }
+    }
+  };
+  walkFiles(coreRoot);
+
+  // 이행적 폐쇄(위치 불문 — components 내부도 통과) → foundation 의존 → 패밀리
+  const familyOf = (rel: string): string | null => {
+    const mod = rel.split("/")[0];
+    const sub = rel.split("/")[1] ?? "";
+    if (mod === "popups") return "popup";
+    if (mod === "focus") return "roving";
+    if (mod === "forms") return "form";
+    if (mod === "direct-manipulation" || mod === "drag-and-drop") return "gesture";
+    if (mod === "platform" && ["layers", "keyboard", "document", "scrollbar"].includes(sub)) return "modality";
+    if (mod === "kernel" && sub === "modality") return "modality";
+    if (mod === "motion") return "motion";
+    return null;
+  };
+  const scanFamilies = (file: string): string[] => {
+    const seen = new Set<string>();
+    const stack = [file];
+    const fams = new Set<string>();
+    while (stack.length) {
+      const f = stack.pop() as string;
+      for (const dep of fileDeps.get(f) ?? []) {
+        if (seen.has(dep)) continue;
+        seen.add(dep);
+        stack.push(dep);
+        const marker = "/foundation/";
+        const at = dep.lastIndexOf(marker);
+        if (at !== -1) {
+          const fam = familyOf(dep.slice(at + marker.length).replace(/\.js$/, ""));
+          if (fam) fams.add(fam);
+        }
+      }
+    }
+    return fams.size ? [...fams].sort() : ["press"];
+  };
+
+  const factoryBad: string[] = [];
+  const familyBad: string[] = [];
+  const overlapBad: string[] = [];
+  for (const entry of SDK_CATALOG) {
+    const mod = (await import(`@ui-sdk/core/${entry.sdk}`)) as Record<string, unknown>;
+    if (typeof mod[entry.factory] !== "function") factoryBad.push(`${entry.sdk}:${entry.factory}`);
+    const scanned = scanFamilies(nodeRequire.resolve(`@ui-sdk/core/${entry.sdk}`));
+    if (scanned.join(",") !== [...entry.families].sort().join(",")) {
+      familyBad.push(`${entry.sdk} [${scanned}] ≠ [${entry.families}]`);
+    }
+    if (entry.unikit) {
+      const comp = path.join(pkgRoot, "unikit", "src", "components", `${entry.unikit}.tsx`);
+      if (!existsSync(comp)) overlapBad.push(`${entry.sdk}→${entry.unikit} 소스 부재`);
+      else {
+        const barrel = readFileSync(path.join(pkgRoot, "unikit", "src", "index.ts"), "utf8");
+        if (!barrel.includes(`./components/${entry.unikit}`)) overlapBad.push(`${entry.unikit} 배럴 미수출`);
+      }
+    }
+  }
+  hard(
+    "카탈로그 53종 — 전종 팩토리 export 존재·함수",
+    SDK_CATALOG_COUNT === 53 && factoryBad.length === 0,
+    `${SDK_CATALOG_COUNT}종·위반 ${factoryBad.join(" ") || "없음"}`,
+  );
+  hard(
+    "families — dist 이행적 재스캔과 53종 전부 정확 일치",
+    familyBad.length === 0,
+    familyBad.join(" | ") || "완전 일치",
+  );
+  hard(
+    "이중 유지 35종 — UniKit 소스·배럴 재수출 존재",
+    SDK_OVERLAP.length === 35 && overlapBad.length === 0,
+    `${SDK_OVERLAP.length}종·위반 ${overlapBad.join(" ") || "없음"}`,
+  );
+
+  // 역방향 — 패키지 exports의 컴포넌트급 서브경로가 전부 카탈로그에 있나
+  const nonComponents = new Set([
+    "overlays", "shortcuts", "async-options", "text-match", "date", "number", "color", "image",
+    "agent", "observe", "history", "gesture", "renderer", "testing", "package.json", "web.css",
+  ]);
+  const corePkg = JSON.parse(readFileSync(path.join(coreRoot, "package.json"), "utf8")) as {
+    exports: Record<string, unknown>;
+  };
+  const componentExports = Object.keys(corePkg.exports)
+    .map((k) => k.replace(/^\.\//, ""))
+    .filter((k) => k !== "." && !nonComponents.has(k));
+  const catalogNames = new Set(SDK_CATALOG.map((e) => e.sdk));
+  const unlisted = componentExports.filter((k) => !catalogNames.has(k));
+  hard(
+    "역방향 — 컴포넌트 export 전부 카탈로그 등재(드리프트 감지)",
+    unlisted.length === 0,
+    unlisted.join(", ") || `${componentExports.length}종 전부 등재`,
+  );
+  hard("screen 실증 12종(기기 화면)", SDK_SCREEN_VERIFIED.length === 12, String(SDK_SCREEN_VERIFIED.length));
+}
+
 console.log(failed === 0 ? "probe:ui-sdk PASS" : `probe:ui-sdk FAIL — 위반 ${failed}건`);
 process.exit(failed === 0 ? 0 : 1);
