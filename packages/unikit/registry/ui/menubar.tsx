@@ -25,9 +25,8 @@
 //   children은 자체 Text로 감싸 조건부 전경을 직접 준다 — 요소 자식은 그대로 전달돼
 //   dropdown 트리거의 wrapTextChildren이 통과시킨다（select 트리거 위임 패턴）.
 //   배경 하이라이트는 web:focus-visible·web:hover·active·isOpen 조건부 근사
-//   （UniKit UI 관행 — 네이티브 hover 부재）, 라벨 전경은 web:hover·active·isOpen로만
-//   근사한다. 라벨의 focus-visible 전환은 Pressable 포커스 계약 부재로 미구현 —
-//   한계·로드맵（input-group과 동일 계열, 사이클 72 G3 F-1）.
+//   （UniKit UI 관행 — 네이티브 hover 부재）에 네이티브 키보드 포커스 하이라이트
+//   （onFocus/onBlur 상태 — #19 §3 계약으로 해소, 사이클 79 G3 F-1）를 더한다.
 // - MenubarContent: 원본 기본값（align startsideOffset 8） 유지, min-w-［12rem］
 //   → min-w-48（표준 계단 근사）. CheckboxItem rounded-xs→dropdown rounded-sm
 //   근사 등 사소한 토큰 차이는 승계（동일 역할시각 차이 미미）.
@@ -51,6 +50,7 @@ import {
   type ReactNode,
 } from "react";
 import {
+  Platform,
   Text,
   View,
   type BridgePressableRef,
@@ -88,7 +88,7 @@ import {
   type DropdownMenuSubProps,
   type DropdownMenuSubTriggerProps,
 } from "./dropdown-menu";
-import { cn } from "@/lib/utils";
+import { cn } from "../lib/utils";
 
 // ---------------------------------------------------------------------------
 // 상태 context — 루트（단일 열림 조율）메뉴（자기 열림）
@@ -217,8 +217,15 @@ function MenubarPortal({ children }: MenubarPortalProps) {
 export type MenubarTriggerProps = PressableProps;
 
 const MenubarTrigger = forwardRef<BridgePressableRef, MenubarTriggerProps>(
-  ({ className, children, onHoverIn, ...props }, ref) => {
+  ({ className, children, onHoverIn, onFocus, onBlur, ...props }, ref) => {
     const menu = useContext(MenubarMenuContext);
+    // 네이티브 키보드 포커스 하이라이트 — Pressable onFocus/onBlur 계약(#19 §3)
+    // 으로 사이클 79 G3 F-1 한계를 해소. 웹은 마우스 클릭 포커스와 키보드
+    // 포커스를 구분해야 해서 상태가 아니라 web:focus-visible CSS가 정답 —
+    // 상태 하이라이트는 네이티브 전용(DPAD/하드웨어 키보드 포커스에만
+    // 발화한다 — 터치 모드에서는 Pressable이 포커스를 갖지 않는다).
+    const [focused, setFocused] = useState(false);
+    const nativeFocused = focused && Platform.OS !== "web";
     return (
       <DropdownMenuTrigger
         ref={ref}
@@ -228,10 +235,19 @@ const MenubarTrigger = forwardRef<BridgePressableRef, MenubarTriggerProps>(
           menu.hoverActivate();
           onHoverIn?.();
         }}
+        onFocus={() => {
+          setFocused(true);
+          onFocus?.();
+        }}
+        onBlur={() => {
+          setFocused(false);
+          onBlur?.();
+        }}
         className={cn(
           "items-center rounded-sm px-2 py-1 active:bg-accent web:hover:bg-accent web:focus-visible:bg-accent",
           // 원본 data-［state=open］:bg-accent → 조건부 클래스
           menu.isOpen && "bg-accent",
+          nativeFocused && "bg-accent",
           className,
         )}
         {...props}
@@ -246,6 +262,7 @@ const MenubarTrigger = forwardRef<BridgePressableRef, MenubarTriggerProps>(
                 "font-sans text-sm font-medium text-foreground active:text-accent-foreground web:hover:text-accent-foreground",
                 // 원본 data-［state=open］:text-accent-foreground → 조건부 클래스
                 menu.isOpen && "text-accent-foreground",
+                nativeFocused && "text-accent-foreground",
               )}
             >
               {child}

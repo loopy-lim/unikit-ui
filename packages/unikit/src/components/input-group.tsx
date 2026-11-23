@@ -9,9 +9,10 @@
 //   children을 1단 순회해 정렬textareaaria-invalid를 정적으로 수집해
 //   context로 내려준다 — 첫 렌더（SSR 포함）부터 반영되고 매 렌더 재수집된다.
 //   임의 래퍼로 감싼 자식은 원본 셀렉터와 동일하게 감지되지 않는다（한계）.
-// - 포커스 링: 원본은 컨트롤 포커스 시 그룹에 링을 옮기지만（셀렉터） 브리지
-//   TextInputProps에 onFocus/onBlur 계약이 없어 그룹이 포커스를 알 수 없다.
-//   대신 컨트롤 자체의 슬림 링（ring-1오프셋 0）으로 근사한다（한계로드맵）.
+// - 포커스 링: 원본은 컨트롤 포커스 시 그룹에 링을 옮기지만（:focus-within）
+//   TextInput onFocus/onBlur 계약으로 컨트롤이 그룹에 포커스를 보고하고
+//   그룹이 ring-1 ring-ring을 가져와요(웹·네이티브 동일 경로 — 컨트롤 자체
+//   슬림 링 근사는 제거).
 // - Addon 눌림 → input 포커스 이동（원본 DOM querySelector）은 이식 불가 —
 //   View에는 onPress 계약이 없고 Pressable（button）로 바꾸면 내부
 //   InputGroupButton과 웹에서 버튼 중첩이 된다. 폐기（한계）.
@@ -31,6 +32,8 @@ import {
   forwardRef,
   isValidElement,
   useContext,
+  useMemo,
+  useState,
   type ReactNode,
 } from "react";
 import {
@@ -106,7 +109,11 @@ function collectGroupChildren(children: ReactNode): InputGroupDerived {
   return derived;
 }
 
-type InputGroupContextValue = InputGroupDerived;
+type InputGroupContextValue = InputGroupDerived & {
+  /** 컨트롤 포커스 보고 — TextInput onFocus/onBlur 계약(#19 §3 계열)으로
+   *  사이클 72 G3 F-1 한계를 해소: 그룹이 포커스를 알고 링을 가져와요. */
+  setFocused: (focused: boolean) => void;
+};
 
 const InputGroupContext = createContext<InputGroupContextValue | null>(null);
 
@@ -135,8 +142,14 @@ const InputGroup = forwardRef<BridgeViewRef, InputGroupProps>(
     // 매 렌더 재수집 — 조건부 렌더링제어 prop（aria-invalid） 변화를 즉시 반영.
     const derived = collectGroupChildren(children);
     const column = derived.blockStart || derived.blockEnd;
+    // 그룹 포커스 링 — 원본 :focus-within을 상태로 옮긴다(웹·네이티브 동일 경로).
+    const [focused, setFocused] = useState(false);
+    const contextValue = useMemo<InputGroupContextValue>(
+      () => ({ ...derived, setFocused }),
+      [derived, setFocused],
+    );
     return (
-      <InputGroupContext.Provider value={derived}>
+      <InputGroupContext.Provider value={contextValue}>
         <View
           ref={ref}
           accessibilityRole="group"
@@ -147,6 +160,9 @@ const InputGroup = forwardRef<BridgeViewRef, InputGroupProps>(
             column || derived.hasTextarea ? "min-h-9" : "h-9",
             // 원본 aria-invalid: border-destructive + ring-destructive/20.
             derived.hasInvalid && "border-destructive web:ring-destructive/20",
+            // 원본 focus-within:ring-1 focus-within:ring-ring — 컨트롤 포커스를
+            // 그룹이 보고받아 링을 가져와요(컨트롤 자체 링은 제거 — 아래).
+            focused && "ring-1 ring-ring",
             className,
           )}
           {...props}
@@ -245,16 +261,22 @@ InputGroupText.displayName = "InputGroupText";
 export type InputGroupInputProps = InputProps;
 
 const InputGroupInput = forwardRef<BridgeTextInputRef, InputGroupInputProps>(
-  ({ className, ...props }, ref) => {
+  ({ className, onFocus, onBlur, ...props }, ref) => {
     const group = useContext(InputGroupContext);
     return (
       <Input
         ref={ref}
         {...props}
+        onFocus={() => {
+          group?.setFocused(true);
+          onFocus?.();
+        }}
+        onBlur={() => {
+          group?.setFocused(false);
+          onBlur?.();
+        }}
         className={cn(
           "h-full min-w-0 flex-1 rounded-none border-0 bg-transparent px-3 web:shadow-none",
-          // 포커스 링 근사 — 그룹 이동 불가로 컨트롤 자체 슬림 링（머리 주석）.
-          "focus:ring-1 focus:ring-ring focus:ring-offset-0",
           // 애던 정렬에 따른 패딩 보정（원본 ［&>input］:pl-2 등 치환）.
           group?.inlineStart && "pl-2",
           group?.inlineEnd && "pr-2",
@@ -273,15 +295,22 @@ export type InputGroupTextareaProps = TextareaProps;
 const InputGroupTextarea = forwardRef<
   BridgeTextInputRef,
   InputGroupTextareaProps
->(({ className, ...props }, ref) => {
+>(({ className, onFocus, onBlur, ...props }, ref) => {
   const group = useContext(InputGroupContext);
   return (
     <Textarea
       ref={ref}
       {...props}
+      onFocus={() => {
+        group?.setFocused(true);
+        onFocus?.();
+      }}
+      onBlur={() => {
+        group?.setFocused(false);
+        onBlur?.();
+      }}
       className={cn(
         "min-h-0 min-w-0 flex-1 resize-none rounded-none border-0 bg-transparent px-3 py-3 web:shadow-none",
-        "focus:ring-1 focus:ring-ring focus:ring-offset-0",
         group?.inlineStart && "pl-2",
         group?.inlineEnd && "pr-2",
         group?.blockStart && "pb-3",
