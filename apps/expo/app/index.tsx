@@ -391,6 +391,19 @@ export default function Index() {
             </Text>
           </Pressable>
         </Link>
+        <Link href="/uisdk-form" asChild>
+          <Pressable
+            className="mb-2 rounded-2xl border border-border/50 bg-card px-4 py-3 active:bg-muted/50 active:opacity-85"
+            accessibilityLabel="ui-sdk 입력 폼 화면 열기"
+          >
+            <Text className="font-sans text-sm font-semibold text-foreground">
+              입력·폼 — field·input RN 구동
+            </Text>
+            <Text className="mt-0.5 font-sans text-xs text-muted-foreground">
+              ElementInternals 등가 표면으로 폼 커널 구동(이슈 #40)
+            </Text>
+          </Pressable>
+        </Link>
         <Link href="/uisdk-keys" asChild>
           <Pressable
             className="rounded-2xl border border-border/50 bg-card px-4 py-3 active:bg-muted/50 active:opacity-85"

@@ -54,9 +54,13 @@ import { switchPrimitive } from "@ui-sdk/core/switch";
 import { button } from "@ui-sdk/core/button";
 import { radioGroup } from "@ui-sdk/core/radio";
 import { segmentedControl } from "@ui-sdk/core/segmented-control";
+import { input } from "@ui-sdk/core/input";
+import { field } from "@ui-sdk/core/field";
 // 제품 에이전트 진입점을 직접 소비한다(섹션 8) — 프로브는 계약을 검증하는
 // 소비자 역할.
 import { createSdkAgent, installSdkAgentDom } from "../src/behaviors/ui-sdk-agent";
+// M2-③ 폼 글로벌 설치 — 제품 렌더러 export(화면과 같은 경로로 소비).
+import { installSdkFormGlobals, typeSdkValue } from "../src/behaviors/ui-sdk-renderer";
 
 /** hidden input bind(associate)·그룹 bind(bindRadioGroup)가 리스너를 붙이는
  *  최소 문서 — reset·pointerdown 이벤트는 bun·RN 런타임에 오지 않아요. */
@@ -107,6 +111,9 @@ class FakeElement {
   }
   querySelector() {
     return null;
+  }
+  querySelectorAll() {
+    return [];
   }
   getAnimations() {
     return [];
@@ -866,6 +873,271 @@ console.log("(9) M2-② popover 전 슬롯 — createPopup 커널 경로");
     destroyed = false;
   }
   hard("release·destroy 무예외", destroyed);
+}
+
+console.log("(10) M2-③ 입력·폼 — input·field 전 슬롯");
+{
+  // 폼 글로벌 — 제품 렌더러의 설치 함수(이 슬라이스 산출)를 소비한다(기기
+  // 화면과 같은 경로). HTML* 브랜드 9종·Node·Event를 «미존재 시에만» 깐다.
+  installSdkFormGlobals();
+  const g = globalThis as Record<string, unknown>;
+  const brands = [
+    "HTMLInputElement", "HTMLSelectElement", "HTMLTextAreaElement",
+    "HTMLLabelElement", "HTMLButtonElement", "HTMLMeterElement",
+    "HTMLOutputElement", "HTMLProgressElement", "Node",
+  ];
+  hard(
+    "폼 글로벌 설치(브랜드 9종·Node·Event)",
+    brands.every((name) => typeof g[name] === "function") && typeof g.Event === "function",
+    brands.filter((name) => typeof g[name] !== "function").join("·") || "ok",
+  );
+
+  // createElement — valueMissingMessage 캐시가 문서 존재 시 생성(toggle-control
+  // 등 검증 메시지 경로 — 입력 슬라이스 예비 계약).
+  const probeDoc10 = g.document as Record<string, unknown>;
+  if (typeof probeDoc10.createElement !== "function") {
+    probeDoc10.createElement = (tag: string) => ({
+      tagName: tag.toUpperCase(),
+      type: "text",
+      name: "",
+      required: true,
+      validationMessage: "",
+    });
+  }
+  hard("document.createElement 스텁", typeof probeDoc10.createElement === "function");
+
+  /** 폼 표면 요소 — 제품 SdkElement의 폼 모드와 같은 명세: value 프로토타입
+   *  접근자(intercept 재정의·writeValue asUser 경로), 실동작 이벤트
+   *  레지스트리(on(el,"input") → typed), id 속성 동기, 폼 멤버. */
+  class FormElement extends FakeElement {
+    /** 폼 모드(setSdkElementFormMode) — elements()의 bound 필터가 요소를
+     *  찾도록 «연결됨»으로 보고해요(field의 element("control") 경로). */
+    isConnected = true;
+    #value = "";
+    defaultValue = "";
+    id = "";
+    form: unknown = null;
+    name = "";
+    type = "text";
+    required = false;
+    willValidate = false;
+    validity = { valid: true };
+    validationMessage = "";
+    setCustomValidity() {}
+    private listeners = new Map<string, Set<(event: unknown) => void>>();
+    constructor(tag: string) {
+      super(tag);
+    }
+    get value() {
+      return this.#value;
+    }
+    set value(next: string) {
+      this.#value = String(next);
+    }
+    setAttribute(name: string, value = "") {
+      super.setAttribute(name, value);
+      if (name === "id") this.id = String(value);
+    }
+    removeAttribute(name: string) {
+      super.removeAttribute(name);
+      if (name === "id") this.id = "";
+    }
+    addEventListener(type: string, listener: (event: unknown) => void) {
+      const set = this.listeners.get(type) ?? new Set();
+      set.add(listener);
+      this.listeners.set(type, set);
+    }
+    removeEventListener(type: string, listener: (event: unknown) => void) {
+      this.listeners.get(type)?.delete(listener);
+    }
+    dispatchEvent(event: { type: string }) {
+      for (const listener of this.listeners.get(event.type) ?? []) {
+        (listener as (e: unknown) => void)(event);
+      }
+      return true;
+    }
+  }
+  hard(
+    "instanceof 브랜드 — 정확히 false(«네이티브 아님» 의미)",
+    !(new FormElement("input") instanceof (g.HTMLInputElement as never)),
+  );
+
+  // --- input: 비제어 왕복(타이핑 → change → state) --------------------------
+  const changes: { value: string; reason: string }[] = [];
+  const inputInstance = unwatched(() =>
+    input({
+      id: "probe-input",
+      onValueChange: (value: string, details: { reason: string }) =>
+        changes.push({ value, reason: details.reason }),
+    }),
+  );
+  keep(inputInstance);
+  const inputPart = inputInstance.part("root", {}, true);
+  commit(inputPart, {});
+  const bindInput = ref(inputPart, host);
+  const inputEl = new FormElement("input");
+  let inputBound = true;
+  try {
+    bindInput(inputEl as unknown as HTMLElement);
+  } catch {
+    inputBound = false;
+  }
+  hard("input root bind 무예외(watchValue intercept 재정의 포함)", inputBound);
+  hard(
+    "비제어 초기 — state.value ''",
+    (inputInstance.get() as { value: string }).value === "",
+  );
+
+  const inputState = () => inputInstance.get() as { value: string; filled: boolean };
+  const inputAttrs = () => attrs(inputPart, {}, inputInstance.get()) as Attrs;
+  hard("초기 data-filled 없음", inputAttrs()["data-filled"] === undefined, JSON.stringify(inputAttrs()["data-filled"]));
+
+  // 타이핑 — native 입력 등가 경로(프레임워크 attrs 적용 후): 프로토타입
+  // setter + input 이벤트 → typed → change. 직접 value 쓰기는 intercept가
+  // «스크립트 쓰기»로 분류해 change가 오지 않아요(제품 typeSdkValue 주석).
+  typeSdkValue(inputEl as never, "안녕");
+  hard(
+    "타이핑 → onValueChange(input-change)",
+    changes.at(-1)?.value === "안녕" && changes.at(-1)?.reason === "input-change",
+    JSON.stringify(changes.at(-1)),
+  );
+  hard("비제어 — state.value 반영", inputState().value === "안녕");
+  hard("filled → data-filled ''", inputAttrs()["data-filled"] === "");
+
+  // api 경로 — setValue(asUser → 프로토타입 setter + input 이벤트)·clear.
+  const inputApi = (inputInstance as { api: { getValue: () => string; setValue: (v: string) => boolean; clear: () => boolean } }).api;
+  hard("api 노출(getValue·setValue·clear·focus)",
+    typeof inputApi?.getValue === "function" && typeof inputApi?.setValue === "function" && typeof inputApi?.clear === "function");
+  inputApi.setValue("프로그램");
+  hard("api.setValue → 요소 value 동기", inputEl.value === "프로그램", inputEl.value);
+  hard("api.setValue → onValueChange(imperative)", changes.at(-1)?.reason === "imperative", JSON.stringify(changes.at(-1)));
+  inputApi.clear();
+  hard("api.clear → value ''", inputEl.value === "" && inputState().value === "");
+
+  // 제어 모드 — value 고정 시 typed는 change만 통지(state는 유지).
+  const controlledChanges: string[] = [];
+  const controlled = unwatched(() =>
+    input({ id: "probe-controlled", value: "고정", onValueChange: (v: string) => controlledChanges.push(v) }),
+  );
+  keep(controlled);
+  const controlledPart = controlled.part("root", {}, true);
+  commit(controlledPart, {});
+  const bindControlled = ref(controlledPart, host);
+  const controlledEl = new FormElement("input");
+  bindControlled(controlledEl as unknown as HTMLElement);
+  typeSdkValue(controlledEl as never, "바꿈");
+  hard("제어 — onValueChange 통지", controlledChanges.at(-1) === "바꿈", JSON.stringify(controlledChanges));
+  hard("제어 — state.value 유지(화면이 prop을 갱신)", (controlled.get() as { value: string }).value === "고정");
+  release(controlled);
+  controlled.destroy();
+
+  release(inputInstance);
+  inputInstance.destroy();
+
+  // --- field: 5슬롯 해부 + 외부 invalid 에러 상태기계 ------------------------
+  const fieldInstance = unwatched(() => field({ id: "probe-field", invalid: true }));
+  keep(fieldInstance);
+  const rootPart = fieldInstance.part("root", {}, true);
+  const labelPart = fieldInstance.part("label", {}, true);
+  const descriptionPart = fieldInstance.part("description", {}, true);
+  const errorPart = fieldInstance.part("error", {}, true);
+  const controlPart = fieldInstance.part("control", {}, true);
+  for (const part of [rootPart, labelPart, descriptionPart, errorPart, controlPart]) commit(part, {});
+  const bindRoot = ref(rootPart, host);
+  const bindLabel = ref(labelPart, host);
+  const bindDescription = ref(descriptionPart, host);
+  const bindError = ref(errorPart, host);
+  const bindControl = ref(controlPart, host);
+  const rootEl = new FormElement("div");
+  const labelEl = new FormElement("label");
+  const descriptionEl = new FormElement("p");
+  const errorEl = new FormElement("p");
+  const controlEl = new FormElement("input");
+  // 제품 useSdkPart는 바인딩 전에 계산된 domAttrs를 요소에 심어요 —
+  // registerById가 bind 시점의 el.id를 읽어요. 같은 순서를 미러.
+  const applyAttrs = (
+    part10: never,
+    el10: FormElement,
+  ) => {
+    for (const [name, value] of Object.entries(attrs(part10, {}, fieldInstance.get()) as Attrs)) {
+      if (value !== undefined && value !== null) el10.setAttribute(name, String(value));
+    }
+  };
+  applyAttrs(rootPart as never, rootEl);
+  applyAttrs(labelPart as never, labelEl);
+  applyAttrs(descriptionPart as never, descriptionEl);
+  applyAttrs(errorPart as never, errorEl);
+  applyAttrs(controlPart as never, controlEl);
+  let fieldBound = true;
+  try {
+    bindRoot(rootEl as unknown as HTMLElement);
+    bindLabel(labelEl as unknown as HTMLElement);
+    bindDescription(descriptionEl as unknown as HTMLElement);
+    bindError(errorEl as unknown as HTMLElement);
+    bindControl(controlEl as unknown as HTMLElement);
+  } catch {
+    fieldBound = false;
+  }
+  hard("field 5슬롯 bind 무예외(bindRoot·registerById·announce·adopt 경유)", fieldBound);
+
+  // 마이크로태스크 등록(register·adopt·bound)이 흐른 뒤 판정.
+  await new Promise((resolve) => setTimeout(resolve, 20));
+  const fieldState10 = () => fieldInstance.get() as {
+    bound: boolean;
+    controlId: string | null;
+    labels: string[];
+    descriptions: string[];
+    errors: string[];
+    revealed: boolean;
+    external?: boolean;
+  };
+  hard("bound=true 마이크로태스크", fieldState10().bound === true);
+  hard("labels·descriptions·errors id 등록", fieldState10().labels.length === 1 && fieldState10().descriptions.length === 1 && fieldState10().errors.length === 1, JSON.stringify({ l: fieldState10().labels, d: fieldState10().descriptions, e: fieldState10().errors }));
+  hard("control adopt → controlId", fieldState10().controlId === "probe-field-control");
+
+  const labelAttrs10 = attrs(labelPart, {}, fieldInstance.get()) as Attrs;
+  hard("label attrs id 조립(«probe-field-label»)", labelAttrs10.id === "probe-field-label", JSON.stringify(labelAttrs10.id));
+  hard("label for 생랴 — isLabelable 경계(브랜드 없음 → 활성화는 press 경로)", labelAttrs10.for === undefined, JSON.stringify(labelAttrs10.for));
+
+  // 외부 invalid → 에러 표시 상태기계.
+  const errorAttrs10 = attrs(errorPart, {}, fieldInstance.get()) as Attrs;
+  hard("error attrs id 조립(«probe-field-error»)", errorAttrs10.id === "probe-field-error");
+  hard("외부 invalid → error present", present(errorPart, {}, fieldInstance.get()) === true);
+  const controlAttrs10 = attrs(controlPart, {}, fieldInstance.get()) as Attrs;
+  hard(
+    "control aria-describedby = description+error",
+    controlAttrs10["aria-describedby"] === "probe-field-description probe-field-error",
+    JSON.stringify(controlAttrs10["aria-describedby"]),
+  );
+  hard("control aria-invalid='true'", controlAttrs10["aria-invalid"] === "true");
+  const rootAttrs10 = attrs(rootPart, {}, fieldInstance.get()) as Attrs;
+  hard("root data-invalid=''", rootAttrs10["data-invalid"] === "");
+
+  // label press → activate — 커널 파트 레지스트리 경로(element('control')).
+  let focused = 0;
+  controlEl.focus = () => {
+    focused += 1;
+  };
+  handlers(labelPart).click?.(syntheticClick());
+  hard("label press → control focus(activate 경로)", focused === 1, `focused=${focused}`);
+
+  // 외부 invalid 해제 → 에터 소거.
+  (fieldInstance as { setOptions: (next: Record<string, unknown>) => void }).setOptions({ id: "probe-field", invalid: false });
+  await new Promise((resolve) => setTimeout(resolve, 20));
+  hard("invalid=false → error 미표시", present(errorPart, {}, fieldInstance.get()) === false);
+  hard("해제 후 control aria-invalid 없음", !((attrs(controlPart, {}, fieldInstance.get()) as Attrs)["aria-invalid"]));
+
+  for (const part of [rootPart, labelPart, descriptionPart, errorPart, controlPart]) {
+    release(fieldInstance);
+    break;
+  }
+  let fieldDestroyed = true;
+  try {
+    fieldInstance.destroy();
+  } catch {
+    fieldDestroyed = false;
+  }
+  hard("field release·destroy 무예외", fieldDestroyed);
 }
 
 console.log(failed === 0 ? "probe:ui-sdk PASS" : `probe:ui-sdk FAIL — 위반 ${failed}건`);

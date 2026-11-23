@@ -136,6 +136,17 @@ const SdkDocument = {
   activeElement: null,
   /** returnFocus의 caret 복원 경로 — 선택 영역 없음으로 통과해요. */
   getSelection: () => null,
+  /** valueMissingMessage(forms/form.js) 캐시 — 문서가 있으면 생성해요.
+   *  검증 메시지는 빈 문자열로 정직해요(가상 요소의 검증은 외부 구동). */
+  createElement(tag: string) {
+    return {
+      tagName: String(tag).toUpperCase(),
+      type: "text",
+      name: "",
+      required: true,
+      validationMessage: "",
+    };
+  },
 };
 
 // ---------------------------------------------------------------------------
@@ -155,6 +166,7 @@ const SdkDocument = {
 // ---------------------------------------------------------------------------
 let sdkElementAgentMode = false;
 let sdkElementPopupMode = false;
+let sdkElementFormMode = false;
 
 /** 에이전트 브리지 모드 토글 — ./behaviors/ui-sdk-agent의 createSdkAgent가
  *  true로 켜요. 일반 렌더러 소비자는 호출하지 않아요. */
@@ -169,6 +181,76 @@ export function setSdkElementAgentMode(enabled: boolean): void {
  *  화면과의 전역 공유를 피하기 위해). */
 export function setSdkElementPopupMode(enabled: boolean): void {
   sdkElementPopupMode = enabled;
+}
+
+/** 폼 모드 토글 — 입력·폼 계열(field·input 등 — M2-③ 이슈 #40) 화면이
+ *  켜요. 요소 조회(elements()의 bound 필터 — field의 element("control")·
+ *  input의 control())가 성립해야 label press → activate·api 값 동기가
+ *  실동작해요. 팝업 모드와 같은 마운트 경계를 권장해요. */
+export function setSdkElementFormMode(enabled: boolean): void {
+  sdkElementFormMode = enabled;
+}
+
+/** 폼 슬라이스(M2-③ 이슈 #40)가 읽는 이벤트 최소형 — writeValue의 asUser
+ *  경로가 `new Event("input")`로 발송해요. dispatchEvent(SdkElement)가
+ *  요소 리스너로 전달해요. */
+export class SdkEvent {
+  type: string;
+  bubbles: boolean;
+  composed: boolean;
+  cancelable: boolean;
+  defaultPrevented = false;
+  isTrusted = false;
+  target: unknown = null;
+  constructor(type: string, init: { bubbles?: boolean; composed?: boolean; cancelable?: boolean } = {}) {
+    this.type = type;
+    this.bubbles = init.bubbles === true;
+    this.composed = init.composed === true;
+    this.cancelable = init.cancelable === true;
+  }
+  preventDefault() {
+    if (this.cancelable) this.defaultPrevented = true;
+  }
+}
+
+/** 타이핑 주입 — native 입력 등가(M2-③ 이슈 #40). value.js의 intercept가
+ *  인스턴스 value 쓰기를 «스크립트 쓰기»로 분류해요(notify("write") →
+ *  read만 오고 change는 오지 않아요) — 웹에서 사람 타이핑은 JS setter를
+ *  지나지 않아요. 이 헬퍼는 프로토타입 setter로 값을 심고(writeValue의
+ *  asUser 경로와 같은 기법) input 이벤트를 발송해요 → kernel typed()가
+ *  change("input-change")를 일으켜요. */
+export function typeSdkValue(element: SdkElement, text: string): void {
+  const descriptor = Object.getOwnPropertyDescriptor(
+    Object.getPrototypeOf(element),
+    "value",
+  );
+  descriptor?.set?.call(element, text);
+  element.dispatchEvent(new SdkEvent("input", { bubbles: true, composed: true }));
+}
+
+/** 폼 계열(field·input 등 — 이슈 #40)이 참조하는 전역을 «미존재 시에만»
+ *  깐다: HTML* 브랜드 클래스 9종·Node — instanceof가 정확히 false여야
+ *  («네이티브 아님» 분기 — 존재하지 않으면 TypeError) — 그리고 Event
+ *  (SdkEvent). 커널의 브랜드 검사는 queueMicrotask에서도 흐러요(field의
+ *  adopt) — passive useEffect보다 먼저 실행될 수 있으므로 화면 모듈 스코프
+ *  에서 호출하는 것이 권장 모양이에요(기기 실측 2026-11-23). 되돌리지
+ *  않아요. */
+export function installSdkFormGlobals(): void {
+  const g = globalThis as Record<string, unknown>;
+  for (const name of [
+    "HTMLInputElement",
+    "HTMLSelectElement",
+    "HTMLTextAreaElement",
+    "HTMLLabelElement",
+    "HTMLButtonElement",
+    "HTMLMeterElement",
+    "HTMLOutputElement",
+    "HTMLProgressElement",
+    "Node",
+  ]) {
+    if (typeof g[name] !== "function") g[name] = class {};
+  }
+  if (typeof g.Event !== "function") g.Event = SdkEvent;
 }
 
 /** position() 계산 결과(style 쓰기)를 RN 화면으로 옮기는 관찰 훅 계약 —
@@ -220,7 +302,7 @@ export function setSdkRect(
 export class SdkElement {
   /** bound() 필터가 읽는 연결 사실 — agent·popup 모드에서만 true. */
   get isConnected() {
-    return sdkElementAgentMode || sdkElementPopupMode;
+    return sdkElementAgentMode || sdkElementPopupMode || sdkElementFormMode;
   }
   /** position()이 앵커 판별에 쓰는 노드 종류("nodeType" in anchor). */
   nodeType = 1;
@@ -246,12 +328,15 @@ export class SdkElement {
   constructor(tag: string) {
     this.tagName = tag.toUpperCase();
   }
-  /** 속성 저장소 — toggleAttribute·starting/ending-style이 읽고 쓰는 계약 */
+  /** 속성 저장소 — toggleAttribute·starting/ending-style이 읽고 쓰는 계약.
+   *  id는 registerById(field-set.js)가 el.id 속성으로 읽어요 — 동기 유지. */
   setAttribute(name: string, value = "") {
     this.attributes.set(name, String(value));
+    if (name === "id") this.id = String(value);
   }
   removeAttribute(name: string) {
     this.attributes.delete(name);
+    if (name === "id") this.id = "";
   }
   toggleAttribute(name: string, force?: boolean) {
     const present = force ?? !this.attributes.has(name);
@@ -302,11 +387,6 @@ export class SdkElement {
   /** press(roving)·keyClick(Space/Enter)이 쓰는 경로 — RN에서는 no-op */
   focus() {}
   click() {}
-  addEventListener() {}
-  removeEventListener() {}
-  dispatchEvent() {
-    return true;
-  }
   /** agent 브리지(2026-11-22): marks textOf가 childNodes를, svg 접근성 이름
    *  경로가 children을 순회해요 — 심어둔 텍스트가 없어 빈 배열이면 순회
    *  본문이 돌지 않아 RN에 없는 Node/Element 글로벌을 건드리지 않아요. */
@@ -361,6 +441,53 @@ export class SdkElement {
   }
   get offsetHeight() {
     return this.rect.height;
+  }
+  // --- M2-③ 폼 표면(이슈 #40) — input 계열의 요소 계약 ---------------------
+  /** watchValue(value.js)의 intercept가 «own ?? prototype» 서술자를 읽어요
+   *  — 프로토타입 접근자여야 writeValue의 asUser 경로(prototypeValue.set)
+   *  도 통과해요. 인스턴스 필드로 두면 own 서술자가 먼저 잡혀 그 경로가
+   *  죽어요(실측 — HTMLInputElement.value도 프로토타입 접근자예요). */
+  #value = "";
+  get value() {
+    return this.#value;
+  }
+  set value(next: unknown) {
+    this.#value = String(next);
+  }
+  /** input bind의 비제어 초기 판정(el.value === "" && el.defaultValue === ""). */
+  defaultValue = "";
+  /** registerById(field-set.js)가 el.id를 읽고 attrs가 id를 써요 — 속성과
+   *  속성이 같은 값을 보게 동기. */
+  id = "";
+  /** reset 리스너의 event.target !== el.form 판정 — 폼 요소는 없으니 null. */
+  form: unknown = null;
+  name = "";
+  type = "text";
+  required = false;
+  /** validityOf(field-control.js)가 읽는 검증 표면 — willValidate가 거짓이면
+   *  커널이 건너뛰어요(DOM 발견 기반 검증은 가상 트리가 없어 항상 비어요 —
+   *  외부 invalid가 구동해요). */
+  willValidate = false;
+  validity = { valid: true };
+  validationMessage = "";
+  setCustomValidity() {}
+  /** 요소 이벤트 레지스트리 — kernel on(el, "input", typed)가 등록해요.
+ *  화면은 value 쓰기 + dispatchEvent(new SdkEvent("input"))로 타이핑을
+   *  주입해요(part.fire은 커널 파트 핸들러 경로로, 이 채널과 별개예요). */
+  private listeners = new Map<string, Set<(event: unknown) => void>>();
+  addEventListener(type: string, listener: (event: unknown) => void) {
+    const set = this.listeners.get(type) ?? new Set();
+    set.add(listener);
+    this.listeners.set(type, set);
+  }
+  removeEventListener(type: string, listener: (event: unknown) => void) {
+    this.listeners.get(type)?.delete(listener);
+  }
+  dispatchEvent(event: { type: string }) {
+    for (const listener of this.listeners.get(event.type) ?? []) {
+      (listener as (e: unknown) => void)(event);
+    }
+    return true;
   }
 }
 
@@ -552,6 +679,12 @@ export function useSdkPart(
 
   const bindElement = React.useMemo(() => ref(kernel, HOST), [part]);
   const sdkElementRef = React.useRef<SdkElement | null>(null);
+  // 바인딩은 layout effect에서 일어나지만 sdkElement는 렌더 시 캡처돼요.
+  // 마운트 외 상태 변화가 없으면(비제어 input 등) 바인딩 후 재렌더가
+  // 없어 sdkElement가 영구 null로 보여요(기기 실측 — 타이핑 주입이 요소를
+  // 못 찾음). 바인딩이 요소를 노출하면 한 번 흔들어 구독 렌더에 반영한다.
+  const [, shakeElement] = React.useReducer((c: number) => c + 1, 0);
+  const elementSeenRef = React.useRef(false);
   React.useLayoutEffect(() => {
     // RN 0.88 내장 MutationObserver(childList 전용 폴리필)과 커널 followId의
     // attributeFilter 계약 충돌을 피해 바인딩 동안만 전역을 교체한다 —
@@ -581,13 +714,26 @@ export function useSdkPart(
       if (typeof agentLabel === "string" && agentLabel !== "") {
         element.setAttribute("aria-label", agentLabel);
       }
+      // 프레임워크 렌더러의 «host에 attrs 적용» 등가 — registerById(field)가
+      // bind 시점의 el.id를 읽고 isRequired 등이 요소 속성을 읽어요. 계산된
+      // domAttrs(id·role·data-*)를 바인딩 전에 심어요(웹과 같은 순서).
+      for (const [name, value] of Object.entries(compute().domAttrs)) {
+        if (value !== undefined && value !== null) {
+          element.setAttribute(name, value);
+        }
+      }
       sdkElementRef.current = element;
       bindElement(element as never);
+      if (!elementSeenRef.current) {
+        elementSeenRef.current = true;
+        shakeElement();
+      }
     } finally {
       globalScope.MutationObserver = saved;
     }
     return () => {
       sdkElementRef.current = null;
+      elementSeenRef.current = false;
       bindElement(null);
     };
   }, [bindElement, instance]);
