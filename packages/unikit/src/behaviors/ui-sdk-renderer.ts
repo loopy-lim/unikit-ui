@@ -51,10 +51,12 @@
 //     않아요. RN 0.88 내장 MutationObserver(childList 전용 폴리필)는 커널
 //     followId의 attributeFilter 관찰과 계약이 안 맞아 바인딩 동안만 전역을
 //     마스킹해요(#17 스파이크 기기 실측 — 아래 SdkElement 바인딩 참조).
-//   - 하드웨어 키보드 경로 자체는 이슈 #19 벽(Android는 플래그 뒤 W3C View
-//     onKeyDown 계약, iOS·소프트키보드는 폐기) — 키 이벤트가 fire로 들어오면
-//     커널 계약(roving·Tab 트랩·Escape)은 성립해요(프로브 11·13). 터치는
-//     click 경로(onPress → fire("click"))가 1차 UX예요.
+//   - 하드웨어 키보드 경로 — sdkKeyHostProps(하드웨어 키 마일스톤)가 브리지
+//     View/Pressable의 focusable·onKeyDown을 커널 keydown으로 잇아요.
+//     Android는 RN 0.88 W3C 규격 View onKeyDown(MainApplication의
+//     enableKeyEvents 플래그 — 이슈 #19 §1.2), iOS는 브리지 계약 부재로
+//     이 경로가 없어요(#19 §1.3). 터치는 click 경로(onPress → fire("click"))
+//     가 1차 UX예요.
 //   - 에이전트 브리지(ui-sdk-agent)가 켜는 옵트인 모드: SdkElement가
 //     isConnected·checkVisibility·getBoundingClientRect를 갖추고 커밋된
 //     props에서 aria-label을 심어요(accessibilityLabel → 접근명 계약).
@@ -1176,6 +1178,77 @@ export type SdkBridgeProps = {
 
 const ariaFlag = (value: string | undefined) =>
   value === undefined ? undefined : value === "true";
+
+// ---------------------------------------------------------------------------
+// 하드웨어 키 호스트 계약 — 브리지 View/Pressable의 focusable·onKeyDown을
+// 커널 발송으로 잇는 어댑터(«다 go» 하드웨어 키 마일스톤). Android는 RN 0.88
+// W3C 규격 View onKeyDown(MainApplication의 enableKeyEvents 레시피 — 이슈
+// #19 §1.2), 웹은 DOM keydown이 BridgeKeyEvent 형태로 그대로 와요. iOS는
+// 브리지 계약 부재(#19 §1.3)로 이 어댑터가 불리지 않아요.
+//
+// 소유권 계약(«컨테이너 전략»): 키를 받는 뷰는 «목록 파트 하나»를 focusable로
+// 두고 항목 뷰는 포커스 불가로 유지해요 — 네이티브 화살표 탐색이 항목 사이를
+// 움직이지 않으므로(움직일 focusable이 없음) 방향키 소유권이 커널 roving에
+// 단독으로 남아요. 이슈 #19 스파이크 §2.2의 실측(방향키를 JS 루빙과 네이티브
+// 탐색이 함께 움직여 끝 항목에서 갈림)을 우회하는 계약이에요. 항목 활성화는
+// 커널 keydown이 처리해요(Enter/Space — 파트 요소 태그가 BUTTON이 아니라
+// 커널이 preventDefault 후 직접 선택).
+// ---------------------------------------------------------------------------
+/** 브리지 onKeyDown(BridgeKeyEvent — 구조적 타이핑)에서 쓰는 필드. */
+export type SdkHostKeyEvent = {
+  key: string;
+  ctrlKey?: boolean;
+  altKey?: boolean;
+  metaKey?: boolean;
+  shiftKey?: boolean;
+  repeat?: boolean;
+};
+
+export type SdkKeyHostProps = {
+  /** 브리지 View/Pressable에 그대로 펼쳐요 — 키 수신 조건(Android)·웹 tabIndex */
+  focusable: true;
+  onKeyDown: (event: SdkHostKeyEvent) => void;
+  onKeyUp: (event: SdkHostKeyEvent) => void;
+  /** 실 포커스 진입 — focusElement() 요소를 가상 포커스로 만들어요(판독·
+   *  커널의 activeElement 판정 동기). */
+  onFocus: () => void;
+  /** 실 포커스 이탈 — 가상 포커스가 그 요소에 있으면 내려놔요. */
+  onBlur: () => void;
+};
+
+export function sdkKeyHostProps(options: {
+  /** 키 발송 대상 — 매 입력마다 읽어요(stop은 커널이 바꾸므로 발송 시점 값). */
+  event: () => { element: unknown; target?: unknown };
+  /** 실 포커스 진입 시 가상 포커스로 만들 요소(생략하면 동기화하지 않아요). */
+  focusElement?: () => unknown;
+}): SdkKeyHostProps {
+  const send = (type: "keydown" | "keyup", source: SdkHostKeyEvent) => {
+    const { element, target } = options.event();
+    if (!isSdkElement(element)) return;
+    fireSdkEvent(element, type, {
+      key: source.key,
+      ctrlKey: source.ctrlKey === true,
+      altKey: source.altKey === true,
+      metaKey: source.metaKey === true,
+      shiftKey: source.shiftKey === true,
+      repeat: source.repeat === true,
+      ...(target !== undefined ? { target } : {}),
+    });
+  };
+  return {
+    focusable: true,
+    onKeyDown: (event) => send("keydown", event),
+    onKeyUp: (event) => send("keyup", event),
+    onFocus: () => {
+      const el = options.focusElement?.();
+      if (isSdkElement(el)) el.focus();
+    },
+    onBlur: () => {
+      const el = options.focusElement?.();
+      if (isSdkElement(el) && el === SdkDocument.activeElement) el.blur();
+    },
+  };
+}
 
 export function sdkBridgeProps(domAttrs: Attrs, element: unknown): SdkBridgeProps {
   const role = domAttrs.role ?? ELEMENT_ROLES[String(element)];

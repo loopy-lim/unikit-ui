@@ -23,7 +23,7 @@
 | press | 상태기계(벽 없음) | 프레임워크 이벤트만 | 프로브 (2)–(7)·uisdk-press/toggle |
 | popup | createPopup | position() rect 캐시·문서 실 이벤트 대상 | 프로브 (9)·uisdk-popover |
 | form | ElementInternals 등가 | attachInternals·ownerDocument 리스너 | 프로브 (10)·uisdk-form |
-| roving | 가상 포커스 레지스트리 | document.activeElement | 프로브 (11)·uisdk-roving |
+| roving | 가상 포커스 레지스트리 | document.activeElement | 프로브 (11)·(15)·uisdk-roving·uisdk-hwkeys(하드웨어 키) |
 | gesture | 문서 포인터 드래그 | pointermove/rAF flush | 프로브 (12)·uisdk-slider |
 | modality | layers·창 리스너 | 바깥누름·Escape·잠금 | 프로브 (13)·uisdk-dialog |
 | motion | 등장/퇴장 presence | 즉시 전환(마운트 수명은 modality에서 검증) | 프로브 (13) 언마운트 수명 |

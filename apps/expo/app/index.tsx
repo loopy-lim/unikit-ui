@@ -443,6 +443,19 @@ export default function Index() {
             </Text>
           </Pressable>
         </Link>
+        <Link href="/uisdk-hwkeys" asChild>
+          <Pressable
+            className="mb-2 rounded-2xl border border-border/50 bg-card px-4 py-3 active:bg-muted/50 active:opacity-85"
+            accessibilityLabel="ui-sdk 하드웨어 키 화면 열기"
+          >
+            <Text className="font-sans text-sm font-semibold text-foreground">
+              하드웨어 키 — 실제 키가 커널로 직결
+            </Text>
+            <Text className="mt-0.5 font-sans text-xs text-muted-foreground">
+              DPAD·Enter가 View onKeyDown → sdkKeyHostProps → 커널 roving(컨테이너 전략)
+            </Text>
+          </Pressable>
+        </Link>
         <Link href="/uisdk-keys" asChild>
           <Pressable
             className="rounded-2xl border border-border/50 bg-card px-4 py-3 active:bg-muted/50 active:opacity-85"

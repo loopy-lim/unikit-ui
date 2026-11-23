@@ -68,6 +68,7 @@ import {
   fireSdkEvent,
   installSdkEventGlobals,
   installSdkFormGlobals,
+  sdkKeyHostProps,
   setSdkElementFocusMode,
   setSdkElementPopupMode,
   setSdkRect,
@@ -1812,6 +1813,146 @@ console.log("(14) M3 카탈로그 — 53종 export·패밀리 재스캔·이중 
     unlisted.join(", ") || `${componentExports.length}종 전부 등재`,
   );
   hard("screen 실증 12종(기기 화면)", SDK_SCREEN_VERIFIED.length === 12, String(SDK_SCREEN_VERIFIED.length));
+}
+
+console.log("(15) 하드웨어 키 호스트 — sdkKeyHostProps가 브리지 onKeyDown을 커널 발송으로(컨테이너 전략)");
+{
+  setSdkElementFocusMode(true);
+  const { tabs } = await import("@ui-sdk/core/tabs");
+  // manual 활성화 — 방향키는 activeElement(포커스)만 옮기고(tabs roving은
+  // remember:false라 stop이 선택을 따라요), Enter가 값을 바꿔요. 발송 target은
+  // «실제 포커스 항목 우선»(웹 keydown target과 같은 계약 — stop 아님).
+  const changes: Array<{ value: string; reason: string }> = [];
+  const instance = unwatched(() =>
+    tabs({
+      id: "probe-hwkeys",
+      defaultValue: "a",
+      activation: "manual",
+      onValueChange: (value: string, details: { reason: string }) =>
+        changes.push({ value, reason: details.reason }),
+    }),
+  );
+  keep(instance);
+  const tabProps = {
+    a: { value: "a" },
+    b: { value: "b" },
+    c: { value: "c" },
+    d: { value: "d", disabled: true },
+  };
+  const list = instance.part("list", {}, true);
+  const tabA = instance.part("tab", tabProps.a, true);
+  const tabB = instance.part("tab", tabProps.b, true);
+  const tabC = instance.part("tab", tabProps.c, true);
+  const tabD = instance.part("tab", tabProps.d, true);
+  for (const [part, props] of [
+    [list, {}],
+    [tabA, tabProps.a],
+    [tabB, tabProps.b],
+    [tabC, tabProps.c],
+    [tabD, tabProps.d],
+  ] as const) {
+    commit(part, props);
+  }
+  const bind = (part: unknown, props: Record<string, unknown>) =>
+    bindSdkPart(part, props, attrs(part as never, props, instance.get()) as Attrs);
+  const listEl = bind(list, {});
+  const registry = new Map<string, unknown>();
+  for (const [part, props] of [
+    [tabA, tabProps.a],
+    [tabB, tabProps.b],
+    [tabC, tabProps.c],
+    [tabD, tabProps.d],
+  ] as const) {
+    const bound = bind(part, props);
+    registry.set(String(props.value), bound.element);
+  }
+  await settle();
+  const state = () => instance.get() as { value: string; stop: string | null };
+  const doc = (globalThis as unknown as { document: SdkDocumentLike }).document;
+  /** 실제 포커스 항목 우선 — 웹 keydown의 event.target 계약(커널이 tab.el ===
+   *  event.target으로 현재 항목을 찾아요). 포커스가 그룹 밖이면 stop 항목. */
+  const currentItem = () => {
+    for (const el of registry.values()) {
+      if (el === doc.activeElement) return el;
+    }
+    return registry.get(state().stop ?? state().value);
+  };
+  const host = sdkKeyHostProps({
+    event: () => ({ element: listEl.element, target: currentItem() }),
+    focusElement: () => currentItem(),
+  });
+  hard(
+    "호스트 props 모양 — focusable true·핸들러 4종",
+    host.focusable === true &&
+      typeof host.onKeyDown === "function" &&
+      typeof host.onKeyUp === "function" &&
+      typeof host.onFocus === "function" &&
+      typeof host.onBlur === "function",
+    "",
+  );
+
+  host.onFocus();
+  hard("onFocus → 가상 포커스 동기(activeElement = a)", doc.activeElement === registry.get("a"), "");
+
+  // repeat 필드 통과 판독 — 대상 요소 캡처 리스너로 init을 검증한다.
+  const seen: Array<{ type: string; key: string; repeat?: boolean }> = [];
+  (registry.get("a") as SdkElement).addEventListener("keydown", (event) => {
+    seen.push({ type: event.type, key: (event as { key: string }).key, repeat: (event as { repeat?: boolean }).repeat });
+  });
+  for (const el of registry.values()) {
+    (el as SdkElement).addEventListener("keyup", (event) => {
+      seen.push({ type: event.type, key: (event as { key: string }).key });
+    });
+  }
+  host.onKeyDown({ key: "ArrowRight", repeat: true });
+  await settle();
+  hard(
+    "ArrowRight(repeat) → 포커스 b 이동·stop/value a 유지(manual·remember:false)·repeat 통과",
+    doc.activeElement === registry.get("b") &&
+      state().stop === "a" &&
+      state().value === "a" &&
+      seen.some((s) => s.type === "keydown" && s.key === "ArrowRight" && s.repeat === true),
+    JSON.stringify({ s: state(), seen }),
+  );
+
+  host.onKeyDown({ key: "ArrowRight", ctrlKey: true });
+  await settle();
+  hard("ctrl+ArrowRight → 커널 게이트(무시) — 포커스 b 유지", doc.activeElement === registry.get("b"), "");
+
+  host.onKeyDown({ key: "End" });
+  await settle();
+  hard(
+    "End → 포커스 비활성 d 이동(활성화는 차단 — focusables 전 항목)",
+    doc.activeElement === registry.get("d") && state().value === "a",
+    JSON.stringify(state()),
+  );
+
+  host.onKeyDown({ key: "Enter" });
+  await settle();
+  hard("Enter on 비활성 d → 값 변화 없음(차단)", state().value === "a", JSON.stringify(changes));
+
+  host.onKeyDown({ key: "Home" });
+  host.onKeyDown({ key: "ArrowRight" });
+  host.onKeyDown({ key: "Enter" });
+  await settle();
+  hard(
+    "Home→ArrowRight→Enter → value b(item-press) — 커널이 직접 선택(파트 태그 BUTTON 아님)",
+    state().value === "b" && changes.at(-1)?.reason === "item-press" && changes.at(-1)?.value === "b",
+    JSON.stringify(changes),
+  );
+
+  host.onKeyUp({ key: "Enter" });
+  await settle();
+  hard("onKeyUp → keyup 발송(캡처 수신)", seen.some((s) => s.type === "keyup" && s.key === "Enter"), "");
+
+  host.onBlur();
+  hard("onBlur → 가상 포커스 해제(activeElement null)", doc.activeElement === null, "");
+
+  for (const el of registry.values()) (el as SdkElement).blur();
+  listEl.unbind();
+  release(instance);
+  instance.destroy();
+  setSdkElementFocusMode(false);
 }
 
 console.log(failed === 0 ? "probe:ui-sdk PASS" : `probe:ui-sdk FAIL — 위반 ${failed}건`);
