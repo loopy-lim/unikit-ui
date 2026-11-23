@@ -404,6 +404,45 @@ export default function Index() {
             </Text>
           </Pressable>
         </Link>
+        <Link href="/uisdk-roving" asChild>
+          <Pressable
+            className="mb-2 rounded-2xl border border-border/50 bg-card px-4 py-3 active:bg-muted/50 active:opacity-85"
+            accessibilityLabel="ui-sdk roving 화면 열기"
+          >
+            <Text className="font-sans text-sm font-semibold text-foreground">
+              키·포커스 — tabs·radio roving RN 구동
+            </Text>
+            <Text className="mt-0.5 font-sans text-xs text-muted-foreground">
+              가상 포커스 레지스트리로 화살표 키가 stop을 옮겨요(M2-④)
+            </Text>
+          </Pressable>
+        </Link>
+        <Link href="/uisdk-slider" asChild>
+          <Pressable
+            className="mb-2 rounded-2xl border border-border/50 bg-card px-4 py-3 active:bg-muted/50 active:opacity-85"
+            accessibilityLabel="ui-sdk 슬라이더 화면 열기"
+          >
+            <Text className="font-sans text-sm font-semibold text-foreground">
+              제스처·레이아웃 — slider 드래그 RN 구동
+            </Text>
+            <Text className="mt-0.5 font-sans text-xs text-muted-foreground">
+              터치 누름·이동·끝이 문서 리스너로 흘러 track-press·drag·commit(M2-⑤)
+            </Text>
+          </Pressable>
+        </Link>
+        <Link href="/uisdk-dialog" asChild>
+          <Pressable
+            className="mb-2 rounded-2xl border border-border/50 bg-card px-4 py-3 active:bg-muted/50 active:opacity-85"
+            accessibilityLabel="ui-sdk 다이얼로그 화면 열기"
+          >
+            <Text className="font-sans text-sm font-semibold text-foreground">
+              modality — dialog 레이어 RN 구동
+            </Text>
+            <Text className="mt-0.5 font-sans text-xs text-muted-foreground">
+              바깥누름·Escape·Tab 트랩·스크롤 잠금이 커널에서 돌아요(M2-⑥)
+            </Text>
+          </Pressable>
+        </Link>
         <Link href="/uisdk-keys" asChild>
           <Pressable
             className="rounded-2xl border border-border/50 bg-card px-4 py-3 active:bg-muted/50 active:opacity-85"

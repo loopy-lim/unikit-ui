@@ -21,6 +21,11 @@
 // 개방 시 1회 계산이 필요하면 여전히 계산 뒤 stop()으로 닫으면 돼요.
 import { Dimensions } from "react-native";
 
+import {
+  installSdkEventGlobals,
+  setSdkViewport,
+} from "./ui-sdk-renderer";
+
 /** DOMRect 모양의 사각형 — measureInWindow(x, y, w, h)로 채워요. */
 export type FakeRect = {
   x: number;
@@ -187,77 +192,36 @@ export class FakeElement {
 }
 
 /**
- * RN에 없는 전역 최소 스텁 설치 — «통째로 설치»가 아니라 «부족한 멤버 패치».
+ * RN에 없는 전역 설치 — 제품 문서·창(ui-sdk-renderer installSdkEventGlobals)
+ * 을 깔고 뷰포트 제공자를 Dimensions에 묶어요. 멱등(한 번만 설치).
  *
  * 실측 교훈(2026-11-17 기기 검증): RN에서 window === globalThis라 window는
- * 이미 존재하지만 addEventListener 같은 DOM 멤버가 없어요. «없으면 설치»
- * 가드로는 이 경우를 건너뛰게 되고, ui-sdk의 `target?.addEventListener(...)`
- * 선택 체인은 대상이 객체인데 메서드가 없으면 못 막아요(널만 막아요) —
- * "undefined is not a function" 크래시. 그래서 존재 여부가 아니라 멤버별로
- * 채워 넣어요.
+ * 이미 존재하지만 addEventListener 같은 DOM 멤버가 없어요. 예전엔 멤버별
+ * noop을 채웠는데, 그 noop이 곧 «문서 벽»이었어요 — document·window의
+ * addEventListener가 아무 일도 하지 않아 커널의 레이어(바깥누름·Escape)·
+ * 모달리티·roving 순서가 듣지 못했어요(#19 modality 벽). M2-④⑤⑥
+ * (2026-11-23)부터 설치자가 문서·창을 실 이벤트 대상(SdkEventTarget)으로
+ * 교체하고, 입력은 dispatchSdkDocumentEvent/dispatchSdkWindowEvent로 들어가요.
  *
- * documentElement·window 치수는 Dimensions를 live getter로 읽어 회전·
- * 리사이즈를 반영해요. RN(Hermes)은 requestAnimationFrame을 이미 제공해요.
+ * 요소 표면은 소비자가 고르세요 — SdkElement(useSdkPart) 또는 이 파일의
+ * FakeElement(P2/P3 팝업 스파이크 경로). getComputedStyle은 어느 쪽이든
+ * 요소 자신의 style을 돌려줘요(position()의 원점 계약 — 빈 객체를 돌려주면
+ * style.left가 «절대 좌표»가 아니라 «델타»로 쓰여 팝업이 화면 밖으로
+ * 튕겨요, PR #27 사후 리뷰 F-3 실측).
  *
- * 주의(부작용): 이 함수는 `globalThis.document`·`MutationObserver`·
- * `getComputedStyle`을 프로세스 전역으로 패치해요 — 영향이 앱 전역에
- * 퍼지므로 실험·스파이크 범위에서 쓰세요(PR #27 사후 리뷰 F-3 기록).
+ * documentElement·window 치수는 sdkViewport 제공자가 Dimensions를 live로
+ * 읽어 회전·리사이즈를 반영해요(에이전트 진입점의 선행 설치와 같은 싱글턴
+ * 문서를 공유해요). RN(Hermes)은 requestAnimationFrame을 이미 제공해요.
+ * MutationObserver no-op은 moves.js(watchMoves)가 가드 없이 생성하므로
+ * «미존재 시에만» 계속 깔아요.
+ *
+ * 주의(부작용): 앱 전역에 퍼져요 — 설치는 모듈 스코프에서 한 번.
  */
 export function installDomStubs(): void {
+  installSdkEventGlobals();
+  setSdkViewport(() => Dimensions.get("window"));
+
   const g = globalThis as Record<string, unknown>;
-  const noop = () => {};
-
-  if (typeof g.document !== "object" || g.document === null) {
-    g.document = {};
-  }
-  const doc = g.document as Record<string, unknown>;
-  if (!doc.documentElement) {
-    const docEl = new FakeElement("documentElement", rectFrom(0, 0, 0, 0));
-    Object.defineProperty(docEl, "clientWidth", {
-      get: () => Dimensions.get("window").width,
-    });
-    Object.defineProperty(docEl, "clientHeight", {
-      get: () => Dimensions.get("window").height,
-    });
-    doc.documentElement = docEl;
-  }
-  if (typeof doc.addEventListener !== "function") doc.addEventListener = noop;
-  if (typeof doc.removeEventListener !== "function") doc.removeEventListener = noop;
-  if (typeof doc.querySelector !== "function") doc.querySelector = () => null;
-
-  if (typeof g.window !== "object" || g.window === null) {
-    g.window = {};
-  }
-  const win = g.window as Record<string, unknown>;
-  if (typeof win.addEventListener !== "function") win.addEventListener = noop;
-  if (typeof win.removeEventListener !== "function") {
-    win.removeEventListener = noop;
-  }
-  // position()의 원점 계산: box.x − parseFloat(getComputedStyle(el).left).
-  // 빈 FakeStyle을 돌려주면 left가 항상 0이라, 앵커가 움직일 때
-  // style.left가 «절대 좌표»가 아니라 «이전 대비 델타»로 쓰여 팝업이
-  // 화면 밖으로 튕겨요(스크롤 추종 시 사라짐). 요소 자신의 style을 돌려줘요.
-  const computedOf = (el?: { style?: FakeStyle }) =>
-    el?.style instanceof FakeStyle ? el.style : new FakeStyle();
-  // 다른 전역 멤버와 같은 «미존재 시에만 설치» 가드 — 이미 함수 구현이 있으면
-  // 덮어쓰지 않아요(PR #27 사후 리뷰 F-3).
-  if (typeof win.getComputedStyle !== "function") {
-    win.getComputedStyle = computedOf;
-  }
-  if (typeof g.getComputedStyle !== "function") {
-    g.getComputedStyle = computedOf;
-  }
-  if (typeof win.visualViewport === "undefined") win.visualViewport = null;
-  if (!("innerWidth" in win)) {
-    Object.defineProperty(win, "innerWidth", {
-      get: () => Dimensions.get("window").width,
-    });
-  }
-  if (!("innerHeight" in win)) {
-    Object.defineProperty(win, "innerHeight", {
-      get: () => Dimensions.get("window").height,
-    });
-  }
   if (typeof g.MutationObserver !== "function") {
     g.MutationObserver = class MutationObserver {
       observe() {}

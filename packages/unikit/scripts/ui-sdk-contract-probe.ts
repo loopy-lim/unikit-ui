@@ -60,7 +60,36 @@ import { field } from "@ui-sdk/core/field";
 // 소비자 역할.
 import { createSdkAgent, installSdkAgentDom } from "../src/behaviors/ui-sdk-agent";
 // M2-③ 폼 글로벌 설치 — 제품 렌더러 export(화면과 같은 경로로 소비).
-import { installSdkFormGlobals, typeSdkValue } from "../src/behaviors/ui-sdk-renderer";
+// M2-④⑤⑥ — 가상 문서·창(실 이벤트 대상) 설치자·바인딩 본체·발송 헬퍼.
+import {
+  bindSdkPart,
+  dispatchSdkDocumentEvent,
+  dispatchSdkWindowEvent,
+  fireSdkEvent,
+  installSdkEventGlobals,
+  installSdkFormGlobals,
+  setSdkElementFocusMode,
+  setSdkElementPopupMode,
+  setSdkRect,
+  setSdkViewport,
+  typeSdkValue,
+  type SdkElement,
+} from "../src/behaviors/ui-sdk-renderer";
+
+// M2-④⑤⑥ 공통 기반 — 실 이벤트 대상 문서·창을 «코어 import 뒤·섹션 1 앞»에
+// 설치해요. env.js의 isBrowser는 import 시점(문서 부재)에 false로 확정되고,
+// 그 뒤에 사는 문서가 생기므로 modality.install()·layers listenIn()이 살아
+// 있는 레지스트리에 등록돼요(modality의 installed 플래그는 한 번만 —
+// 섹션 8·9의 noop 문서가 먼저였다면 영영 재등록이 없어요). 뷰포트는 설치자의
+// 제공자로 정한다(섹션 9의 배치 수치가 이 값을 읽어요).
+installSdkEventGlobals();
+setSdkViewport(() => ({ width: 390, height: 844 }));
+
+/** 마이크로태스크·rAF 폴리필(16ms)·setTimeout(0)이 모두 흐를 만큼. */
+const settle = () => new Promise((resolve) => setTimeout(resolve, 40));
+
+/** 프로브가 읽는 제품 문서 표면 — document.activeElement(가상 포커스)·documentElement. */
+type SdkDocumentLike = { activeElement: unknown; documentElement: SdkElement };
 
 /** hidden input bind(associate)·그룹 bind(bindRadioGroup)가 리스너를 붙이는
  *  최소 문서 — reset·pointerdown 이벤트는 bun·RN 런타임에 오지 않아요. */
@@ -568,52 +597,53 @@ console.log("(7) segmented-control root+item+input+indicator 전 슬롯");
 // (apps/expo uisdk-agent)이 담당한다.
 console.log("(8) 에이전트 브리지 — ui-sdk-agent 제품 진입점");
 {
-  if (typeof (globalThis as Record<string, unknown>).document !== "undefined") {
-    hard("사전조건: 런타임에 document 부재(스텁 설치 전)", false);
-  } else {
-    installSdkAgentDom();
-    const doc = (globalThis as Record<string, unknown>).document as Record<string, unknown>;
-    hard(
-      "document 스텁 5멤버(addEventListener·getElementById·createTreeWalker·documentElement·hidden)",
-      [doc.addEventListener, doc.getElementById, doc.createTreeWalker, doc.documentElement, doc.hidden].every(
-        (member) => member !== undefined,
-      ),
-    );
-    const win = (globalThis as Record<string, unknown>).window as Record<string, unknown>;
-    hard("window addEventListener 멤버 패치(modality blur 등록)", typeof win.addEventListener === "function");
-    hard("NodeFilter 상수(marks 텍스트 순회)", (globalThis as Record<string, unknown>).NodeFilter !== undefined);
+  // 최상단 installSdkEventGlobals()가 문서·창을 이미 설치했어요(M2-④⑤⑥). 에이전트
+  // 설치기는 제품 설치자를 먼저 부르고 «미존재 멤버만» 패치하므로 문서 신원이
+  // 유지돼야 해요 — 교체돼면 modality·layers의 등록이 끊어져요.
+  const before = (globalThis as Record<string, unknown>).document;
+  installSdkAgentDom();
+  const doc = (globalThis as Record<string, unknown>).document as Record<string, unknown>;
+  hard("사전조건: 설치 뒤에도 문서 신원 유지(멤버 패치 — 교체 아님)", (globalThis as Record<string, unknown>).document === before);
+  hard(
+    "document 5멤버(addEventListener·getElementById·createTreeWalker·documentElement·hidden) — 제품 문서가 제공",
+    [doc.addEventListener, doc.getElementById, doc.createTreeWalker, doc.documentElement, doc.hidden].every(
+      (member) => member !== undefined,
+    ),
+  );
+  const win = (globalThis as Record<string, unknown>).window as Record<string, unknown>;
+  hard("window addEventListener(modality blur 등록)", typeof win.addEventListener === "function");
+  hard("NodeFilter 상수(marks 텍스트 순회)", (globalThis as Record<string, unknown>).NodeFilter !== undefined);
 
-    const agent = createSdkAgent();
-    hard("에이전트 생성·도구 3종(snapshot·query·act)", typeof agent.snapshot === "function" && typeof agent.query === "function" && typeof agent.act === "function");
+  const agent = createSdkAgent();
+  hard("에이전트 생성·도구 3종(snapshot·query·act)", typeof agent.snapshot === "function" && typeof agent.query === "function" && typeof agent.act === "function");
 
-    // 에이전트 생성 «이후» 만들어지는 인스턴스 — 커널 감시자가 자동 등록한다.
-    const instance = unwatched(() => toggle({ id: "agent-probe-toggle" }));
-    keep(instance);
-    const part = instance.part("root", {}, true);
-    commit(part, {});
-    const el = new FakeElement("unknown");
-    el.setAttribute("aria-label", "알림");
-    el.isConnected = true; // agent 모드 SdkElement 계약 미러(bound 필터 통과)
-    ref(part, host)(el as unknown as HTMLElement);
-    subscribe(part, () => {});
+  // 에이전트 생성 «이후» 만들어지는 인스턴스 — 커널 감시자가 자동 등록한다.
+  const instance = unwatched(() => toggle({ id: "agent-probe-toggle" }));
+  keep(instance);
+  const part = instance.part("root", {}, true);
+  commit(part, {});
+  const el = new FakeElement("unknown");
+  el.setAttribute("aria-label", "알림");
+  el.isConnected = true; // agent 모드 SdkElement 계약 미러(bound 필터 통과)
+  ref(part, host)(el as unknown as HTMLElement);
+  subscribe(part, () => {});
 
-    const list = agent.snapshot();
-    const mine = list.find((c) => c.label === "알림");
-    hard("인스턴스 자동 등록·접근명 라벨 노출", mine !== undefined, JSON.stringify(list));
-    // toggle의 agent api는 setPressed(button 계열의 press와 다르다 — 실측).
-    hard("actions에 setPressed", mine?.actions.includes("setPressed") === true);
+  const list = agent.snapshot();
+  const mine = list.find((c) => c.label === "알림");
+  hard("인스턴스 자동 등록·접근명 라벨 노출", mine !== undefined, JSON.stringify(list));
+  // toggle의 agent api는 setPressed(button 계열의 press와 다르다 — 실측).
+  hard("actions에 setPressed", mine?.actions.includes("setPressed") === true);
 
-    const events: unknown[] = [];
-    agent.subscribe((change) => events.push(change));
-    const result = await agent.act({ steps: [{ ref: "알림", action: "setPressed", args: [true] }] });
-    hard("act(ref 라벨 → setPressed) ok", result.ok === true, JSON.stringify(result.error ?? result.steps));
-    const after = partState(part, {}, instance.get()) as { pressed?: boolean };
-    hard("act 후 pressed=true", after.pressed === true);
-    hard("subscribe 통지 source='agent'", events.length >= 1 && (events[0] as Record<string, unknown>).source === "agent");
+  const events: unknown[] = [];
+  agent.subscribe((change) => events.push(change));
+  const result = await agent.act({ steps: [{ ref: "알림", action: "setPressed", args: [true] }] });
+  hard("act(ref 라벨 → setPressed) ok", result.ok === true, JSON.stringify(result.error ?? result.steps));
+  const after = partState(part, {}, instance.get()) as { pressed?: boolean };
+  hard("act 후 pressed=true", after.pressed === true);
+  hard("subscribe 통지 source='agent'", events.length >= 1 && (events[0] as Record<string, unknown>).source === "agent");
 
-    release(instance);
-    instance.destroy();
-  }
+  release(instance);
+  instance.destroy();
 }
 
 // --- 9. M2-② 팝업 슬라이스 — popover 전 슬롯·createPopup 비공개 커널 경로 ---
@@ -629,34 +659,21 @@ console.log("(8) 에이전트 브리지 — ui-sdk-agent 제품 진입점");
 // 경로를 검증한다. 이 섹션의 요소는 isConnected true(팝업 모드 미러).
 console.log("(9) M2-② popover 전 슬롯 — createPopup 커널 경로");
 {
-  // 전역 멤버 패치 — «미존재 시에만» 설치(다른 스텁과 같은 가드).
+  // 전역 멤버 — 최상단의 installSdkEventGlobals()가 문서·창(실 이벤트 대상,
+  // documentElement 390×844 제공자·getComputedStyle)을 이미 설치했어요. 섹션 8의
+  // installSdkAgentDom 선행 설치는 이제 제품 설치자를 먼저 부르므로 같은 문서
+  // 신원이에요(M2-④⑤⑥ — 문서를 «교체»하던 예전 계약은 뷰포트 제공자로 대체).
   const g = globalThis as Record<string, unknown>;
-  const probeDocElement = {
-    clientWidth: 390,
-    clientHeight: 844,
-  };
-  if (typeof g.window !== "object" || g.window === null) g.window = {};
   const probeWin = g.window as Record<string, unknown>;
-  if (typeof probeWin.addEventListener !== "function") probeWin.addEventListener = () => {};
-  if (typeof probeWin.removeEventListener !== "function") probeWin.removeEventListener = () => {};
-  if (probeWin.visualViewport === undefined) probeWin.visualViewport = null;
-  if (typeof probeWin.getComputedStyle !== "function") {
-    probeWin.getComputedStyle = (el?: { style?: unknown }) => (el?.style ?? {});
-  }
-  if (typeof g.getComputedStyle !== "function") {
-    g.getComputedStyle = (el?: { style?: unknown }) => (el?.style ?? {});
-  }
-  if (typeof g.document !== "object" || g.document === null) g.document = {};
   const probeDoc = g.document as Record<string, unknown>;
-  // 선행 섹션(8 — installSdkAgentDom)이 documentElement를 0×0 스텁으로
-  // 이미 설치했을 수 있어요 — «미존재 시에만» 가드로는 두면 뷰포트가 0×0으로
-  // 남아 배치가 전부 플립/클램프돼요. 프로브 런타임의 뷰포트는 여기서
-  // 결정한다(기기 화면은 installDomStubs의 Dimensions live getter가 같은
-  // 역할을 해요 — 에이전트 선행 설치와 공존할 때 치수 멤버 교정 필요,
-  // 이슈 #39 문서에 기록).
-  probeDoc.documentElement = probeDocElement;
-  if (typeof probeDoc.addEventListener !== "function") probeDoc.addEventListener = () => {};
-  if (typeof probeDoc.removeEventListener !== "function") probeDoc.removeEventListener = () => {};
+  hard(
+    "전역 기반 — window·document 이벤트 대상·documentElement 390×844",
+    typeof probeWin.addEventListener === "function" &&
+      typeof probeDoc.addEventListener === "function" &&
+      (probeDoc as SdkDocumentLike).documentElement.clientWidth === 390 &&
+      (probeDoc as SdkDocumentLike).documentElement.clientHeight === 844 &&
+      typeof probeWin.getComputedStyle === "function",
+  );
   // moves.js(watchMoves → listen)가 가드 없이 `new MutationObserver(...)`로
   // 생성해요 — bun에는 없으므로 no-op 클래스를 설치(제품 렌더러의 바인딩
   // 마스크과 같은 명세, ui-sdk-dom installDomStubs과 같은 가드).
@@ -669,7 +686,6 @@ console.log("(9) M2-② popover 전 슬롯 — createPopup 커널 경로");
       }
     };
   }
-  hard("전역 스텁 — window(documentElement 390×844·getComputedStyle)·document", true);
 
   // 팝업 표면 요소 — 제품 SdkElement(ui-sdk-renderer M2-②)와 같은 명세.
   class PopupElement extends FakeElement {
@@ -1138,6 +1154,539 @@ console.log("(10) M2-③ 입력·폼 — input·field 전 슬롯");
     fieldDestroyed = false;
   }
   hard("field release·destroy 무예외", fieldDestroyed);
+}
+
+// --- 11. M2-④ 키·포커스 — 가상 포커스 레지스트리·roving(tabs·radio 대조) --------
+// 벽의 정체(#19 «문서 벽»): roving의 focusOn은 `el.focus()` 뒤
+// `ownerDocument.activeElement === el`을 읽고, order.list()는 isConnected로
+// 항목을 걸러요. 가짜 요소(FakeElement — (6))에서는 stop이 영원히 null이었어요.
+// 제품 SdkElement + 포커스 모드에서 stop이 선택 항목으로 정해지고, 화살표·
+// Home/End 키가 목록 파트 핸들러(onKeyDown — event.target으로 항목을 찾음)를
+// 거쳐 포커스를 옮기고 선택까지 이어져요. 키 이벤트는 RN 화면이 onKeyDown에서
+// fire로 넣어요(하드웨어 키 경로 자체는 #19 — 여기선 커널 계약만).
+console.log("(11) M2-④ 키·포커스 — tabs roving·radio 대조·가상 포커스 레지스트리");
+{
+  setSdkElementFocusMode(true);
+  const doc = (globalThis as unknown as { document: SdkDocumentLike }).document;
+  hard("초기 document.activeElement === null", doc.activeElement === null, String(doc.activeElement));
+
+  const { tabs } = await import("@ui-sdk/core/tabs");
+  const changes: Array<{ value: string; reason: string }> = [];
+  const instance = unwatched(() =>
+    tabs({
+      id: "probe-tabs",
+      defaultValue: "a",
+      onValueChange: (value: string, details: { reason: string }) =>
+        changes.push({ value, reason: details.reason }),
+    }),
+  );
+  keep(instance);
+  const tabProps = {
+    a: { value: "a" },
+    b: { value: "b" },
+    c: { value: "c" },
+    d: { value: "d", disabled: true },
+  };
+  const panelProps = { a: { value: "a" }, b: { value: "b" }, c: { value: "c" } };
+  const list = instance.part("list", {}, true);
+  const tabA = instance.part("tab", tabProps.a, true);
+  const tabB = instance.part("tab", tabProps.b, true);
+  const tabC = instance.part("tab", tabProps.c, true);
+  const tabD = instance.part("tab", tabProps.d, true);
+  const panelA = instance.part("panel", panelProps.a, true);
+  const panelB = instance.part("panel", panelProps.b, true);
+  const panelC = instance.part("panel", panelProps.c, true);
+  for (const [part, props] of [
+    [list, {}],
+    [tabA, tabProps.a],
+    [tabB, tabProps.b],
+    [tabC, tabProps.c],
+    [tabD, tabProps.d],
+    [panelA, panelProps.a],
+    [panelB, panelProps.b],
+    [panelC, panelProps.c],
+  ] as const) {
+    commit(part, props);
+  }
+  /** 제품 useSdkPart의 바인딩 본체(bindSdkPart) — 계산된 attrs를 심고 ref 바인딩.
+   *  요소 생성 순서 = 문서 순서(compareDocumentPosition 계약). */
+  const bind = (part: unknown, props: Record<string, unknown>) =>
+    bindSdkPart(part, props, attrs(part as never, props, instance.get()) as Attrs);
+  const listEl = bind(list, {});
+  const a = bind(tabA, tabProps.a);
+  const b = bind(tabB, tabProps.b);
+  const c = bind(tabC, tabProps.c);
+  const d = bind(tabD, tabProps.d);
+  await settle();
+  const state = () => instance.get() as { value: string; stop: string | null };
+  hard("tabs 바인딩 후 stop = 선택 탭(a) — roving.check", state().stop === "a", JSON.stringify(state()));
+  const attrOf = (part: unknown, props: Record<string, unknown>) =>
+    attrs(part as never, props, instance.get()) as Attrs;
+  hard(
+    "tabindex a=0·b/c/d=-1",
+    attrOf(tabA, tabProps.a).tabindex === "0" &&
+      attrOf(tabB, tabProps.b).tabindex === "-1" &&
+      attrOf(tabC, tabProps.c).tabindex === "-1" &&
+      attrOf(tabD, tabProps.d).tabindex === "-1",
+    [tabA, tabB, tabC, tabD].map((part, i) => attrOf(part, [tabProps.a, tabProps.b, tabProps.c, tabProps.d][i]).tabindex).join("/"),
+  );
+  hard(
+    "문서 순서 — compareDocumentPosition(a→b 뒤따름·b→a 아님·b→c 뒤따름)",
+    (a.element.compareDocumentPosition(b.element) & 4) === 4 &&
+      (b.element.compareDocumentPosition(a.element) & 4) === 0 &&
+      (b.element.compareDocumentPosition(c.element) & 4) === 4,
+    `${a.element.compareDocumentPosition(b.element)}/${b.element.compareDocumentPosition(a.element)}`,
+  );
+  hard(
+    "contains — 자신 true·형제 false·null false",
+    a.element.contains(a.element) === true &&
+      a.element.contains(b.element) === false &&
+      a.element.contains(null as never) === false,
+  );
+
+  let focusSeen = 0;
+  let blurSeen = 0;
+  b.element.addEventListener("focus", () => {
+    focusSeen += 1;
+  });
+  a.element.addEventListener("blur", () => {
+    blurSeen += 1;
+  });
+  const right = fireSdkEvent(listEl.element, "keydown", { key: "ArrowRight", target: a.element });
+  await settle();
+  hard("list keydown ArrowRight(target a) → preventDefault", right.defaultPrevented === true);
+  hard(
+    "→ value b·stop b·onValueChange(b, list-navigation)",
+    state().value === "b" &&
+      state().stop === "b" &&
+      changes.at(-1)?.value === "b" &&
+      changes.at(-1)?.reason === "list-navigation",
+    JSON.stringify({ s: state(), c: changes.at(-1) }),
+  );
+  hard("→ 가상 포커스 이동(document.activeElement === tab b)", doc.activeElement === b.element);
+  hard(
+    "→ focus 이벤트 1회(b)·blur 0회(a는 포커스를 받은 적 없음)",
+    focusSeen === 1 && blurSeen === 0,
+    `${focusSeen}/${blurSeen}`,
+  );
+  hard(
+    "panel a 미표시·panel b 표시",
+    present(panelA as never, panelProps.a, instance.get()) === false &&
+      present(panelB as never, panelProps.b, instance.get()) === true,
+  );
+
+  const pressC = fireSdkEvent(c.element, "click", { detail: 1 });
+  await settle();
+  hard(
+    "tab c press(opensElsewhere의 MouseEvent 브랜드 통과) → value c(item-press)·포커스 c",
+    pressC.defaultPrevented === false &&
+      state().value === "c" &&
+      changes.at(-1)?.reason === "item-press" &&
+      doc.activeElement === c.element,
+    JSON.stringify(changes.at(-1)),
+  );
+
+  const pressD = fireSdkEvent(d.element, "click", { detail: 1 });
+  hard("disabled tab d press → preventDefault·값 유지(c)", pressD.defaultPrevented === true && state().value === "c");
+
+  const home = fireSdkEvent(listEl.element, "keydown", { key: "Home", target: c.element });
+  await settle();
+  hard(
+    "Home(target c) → value a·포커스 a·preventDefault",
+    home.defaultPrevented === true && state().value === "a" && doc.activeElement === a.element,
+    JSON.stringify(state()),
+  );
+
+  (instance.api as { focus?: () => void }).focus?.();
+  hard("api.focus() → stop 탭(a)에 포커스", doc.activeElement === a.element);
+
+  a.element.blur();
+  hard("blur() → document.activeElement null", doc.activeElement === null);
+  a.element.focus();
+  hard("focus() → 재포커스", doc.activeElement === a.element);
+
+  // 라디오 대조 — (6)은 FakeElement라 stop이 null로 유지됐어요. 제품 요소에선
+  // stop이 선택 항목, ArrowDown이 포커스를 옮기고 값까지 바꿔요(list-navigation).
+  let radioValue: unknown;
+  let radioReason = "";
+  const radio = unwatched(() =>
+    radioGroup({
+      id: "probe-radio-focus",
+      defaultValue: "a",
+      onValueChange: (value: unknown, details?: { reason: string }) => {
+        radioValue = value;
+        radioReason = details?.reason ?? "";
+      },
+    }),
+  );
+  keep(radio);
+  const rA = { value: "a" };
+  const rB = { value: "b" };
+  const rC = { value: "c", disabled: true };
+  const group = radio.part("group", {}, true);
+  const itemA = radio.part("root", rA, true);
+  const itemB = radio.part("root", rB, true);
+  const itemC = radio.part("root", rC, true);
+  const inputA = radio.part("input", rA, true);
+  const indA = radio.part("indicator", rA, true);
+  const indB = radio.part("indicator", rB, true);
+  for (const [part, props] of [
+    [group, {}],
+    [itemA, rA],
+    [itemB, rB],
+    [itemC, rC],
+    [inputA, rA],
+    [indA, rA],
+    [indB, rB],
+  ] as const) {
+    commit(part, props);
+  }
+  const radioBind = (part: unknown, props: Record<string, unknown>) =>
+    bindSdkPart(part, props, attrs(part as never, props, radio.get()) as Attrs);
+  const groupEl = radioBind(group, {});
+  const itemAEl = radioBind(itemA, rA);
+  const itemBEl = radioBind(itemB, rB);
+  const itemCEl = radioBind(itemC, rC);
+  const inputAEl = radioBind(inputA, rA);
+  const indAEl = radioBind(indA, rA);
+  const indBEl = radioBind(indB, rB);
+  await settle();
+  const rState = () => radio.get() as { value: string; stop: string | null };
+  hard("radio 대조 — 연결 요소에선 stop = 선택 항목(a) ((6)의 null과 대비)", rState().stop === "a", JSON.stringify(rState()));
+  const down = fireSdkEvent(itemAEl.element, "keydown", { key: "ArrowDown" });
+  await settle();
+  hard(
+    "radio ArrowDown → value b·stop b·포커스 b·onValueChange(b, list-navigation)",
+    down.defaultPrevented === true &&
+      rState().value === "b" &&
+      rState().stop === "b" &&
+      doc.activeElement === itemBEl.element &&
+      radioValue === "b" &&
+      radioReason === "list-navigation",
+    JSON.stringify({ s: rState(), v: radioValue, r: radioReason }),
+  );
+  const enter = fireSdkEvent(itemBEl.element, "keydown", { key: "Enter" });
+  hard("radio Enter → preventDefault(암시 제출 경로 — 폼 없음 통과)", enter.defaultPrevented === true);
+
+  for (const bound of [groupEl, itemAEl, itemBEl, itemCEl, inputAEl, indAEl, indBEl]) bound.unbind();
+  release(radio);
+  radio.destroy();
+  for (const bound of [listEl, a, b, c, d]) bound.unbind();
+  hard("언바인딩 후 activeElement null(요소가 떠나면 포커스도 떠나요)", doc.activeElement === null);
+  release(instance);
+  instance.destroy();
+  setSdkElementFocusMode(false);
+}
+
+// --- 12. M2-⑤ 제스처·레이아웃 — slider 트랙 press·드래그·키 스텝 --------------
+// 드래그 커널(bindDrag)은 `el.ownerDocument.defaultView`(rAF)와 문서 리스너
+// (pointermove/pointerup/pointercancel)로 추적해요 — 문서가 실 이벤트 대상이
+// 되어야 성립해요. RN 화면은 PanResponder/추적 터치의 이동·끝을
+// dispatchSdkDocumentEvent로 넣어요(동기 레이아웃 읽기 대신 rect 주입).
+console.log("(12) M2-⑤ 제스처·레이아웃 — slider 트랙 press·드래그(document pointermove)·키 스텝");
+{
+  setSdkElementFocusMode(true);
+  const doc = (globalThis as unknown as { document: SdkDocumentLike }).document;
+  const { slider } = await import("@ui-sdk/core/slider");
+  const changes: Array<{ value: unknown; reason: string }> = [];
+  const commits: Array<{ value: unknown; reason: string }> = [];
+  const instance = unwatched(() =>
+    slider({
+      id: "probe-slider",
+      defaultValue: 20,
+      min: 0,
+      max: 100,
+      step: 1,
+      onValueChange: (value: unknown, details: { reason: string }) =>
+        changes.push({ value, reason: details.reason }),
+      onValueCommit: (value: unknown, details: { reason: string }) =>
+        commits.push({ value, reason: details.reason }),
+    }),
+  );
+  keep(instance);
+  const slots = [
+    ["root", {}],
+    ["control", {}],
+    ["track", {}],
+    ["indicator", {}],
+    ["thumb", { index: 0 }],
+    // 키 계약: 커널이 `element("thumb-input", String(index))`로 조회하고
+    // keyOf(props) = props.id ?? String(props.value) — 소비자가 id를 줘야
+    // «0» 키가 돼요(checkShared 경고문 «id 또는 value»와 같은 계약).
+    ["thumb-input", { index: 0, id: "0" }],
+    ["value", {}],
+    ["input", {}],
+  ] as const;
+  const parts = slots.map(([slot, props]) => [instance.part(slot, props, true), props] as const);
+  for (const [part, props] of parts) commit(part, props);
+  const bound: Array<ReturnType<typeof bindSdkPart>> = [];
+  for (const [part, props] of parts) {
+    bound.push(bindSdkPart(part, props, attrs(part, props, instance.get()) as Attrs));
+  }
+  const [rootEl, controlEl, trackEl, , thumbEl, thumbInputEl] = bound;
+  setSdkRect(trackEl.element, 0, 0, 200, 20);
+  await settle();
+  const sState = () => instance.get() as { value: number; active: number | null };
+  hard("slider 8슬롯 bind 무예외(root bindInternals·bindPageLocale·input bindValueInput 경유)", true);
+  hard("초기 value 20·active null·포커스 없음", sState().value === 20 && sState().active === null && doc.activeElement === null, JSON.stringify(sState()));
+
+  const touch = (pointerId: number, clientX: number) => ({
+    clientX,
+    clientY: 10,
+    pointerId,
+    pointerType: "touch",
+    button: 0,
+    buttons: 1,
+    isPrimary: true,
+  });
+  const down = fireSdkEvent(controlEl.element, "pointerdown", touch(1, 100));
+  await settle();
+  hard(
+    "control pointerdown(x=100/200) → value 50(track-press)·preventDefault",
+    down.defaultPrevented === true &&
+      sState().value === 50 &&
+      changes.at(-1)?.value === 50 &&
+      changes.at(-1)?.reason === "track-press",
+    JSON.stringify({ s: sState(), c: changes.at(-1) }),
+  );
+  hard(
+    "드래그 시작 — active 0·root data-dragging·thumb-input 포커스",
+    sState().active === 0 &&
+      (attrs(parts[0][0], {}, instance.get()) as Attrs)["data-dragging"] === "" &&
+      doc.activeElement === thumbInputEl.element,
+    JSON.stringify({ a: sState().active, focused: doc.activeElement === thumbInputEl.element }),
+  );
+
+  // 다른 포인터의 이동은 무시(pointerId 계약).
+  dispatchSdkDocumentEvent("pointermove", touch(9, 180));
+  await settle();
+  hard("다른 pointerId의 pointermove는 무시(값 50 유지)", sState().value === 50);
+
+  dispatchSdkDocumentEvent("pointermove", touch(1, 150));
+  await settle();
+  hard(
+    "document pointermove(x=150, rAF flush) → value 75(drag)",
+    sState().value === 75 && changes.at(-1)?.reason === "drag",
+    JSON.stringify({ s: sState(), c: changes.at(-1) }),
+  );
+
+  dispatchSdkDocumentEvent("pointerup", { ...touch(1, 150), buttons: 0 });
+  // click은 pointerup과 같은 틱에 와야 해요 — swallowNextClick은
+  // view.setTimeout(forget)으로 다음 틱에 삼킴 리스너를 거둬요(웹에서
+  // pointerup→click은 같은 작업 안에서 연속 발송). 화면도 같은 순서로.
+  const swallowed = dispatchSdkDocumentEvent("click", { detail: 1, pointerId: 1 });
+  await settle();
+  hard(
+    "document pointerup → onValueCommit(75, drag)·active null",
+    commits.at(-1)?.value === 75 && commits.at(-1)?.reason === "drag" && sState().active === null,
+    JSON.stringify(commits.at(-1)),
+  );
+  hard("드래그 직후 click 삼킴(swallowNextClick — 문서 캡처)", swallowed.defaultPrevented === true);
+
+  const right = fireSdkEvent(thumbInputEl.element, "keydown", { key: "ArrowRight" });
+  hard(
+    "thumb-input ArrowRight → value 76(step-key)·preventDefault",
+    right.defaultPrevented === true && sState().value === 76 && changes.at(-1)?.reason === "step-key",
+    JSON.stringify({ s: sState(), c: changes.at(-1) }),
+  );
+  fireSdkEvent(thumbInputEl.element, "keyup", { key: "ArrowRight" });
+  await settle();
+  hard("thumb-input keyup → onValueCommit(76, step-key)", commits.at(-1)?.value === 76 && commits.at(-1)?.reason === "step-key", JSON.stringify(commits.at(-1)));
+
+  // 시스템 취소(onResponderTerminate 등가) — pointercancel → end(canceled) → commit.
+  fireSdkEvent(controlEl.element, "pointerdown", touch(2, 50));
+  await settle();
+  hard("재누름(x=50) → value 25(track-press)", sState().value === 25 && changes.at(-1)?.reason === "track-press", JSON.stringify(sState()));
+  dispatchSdkDocumentEvent("pointermove", touch(2, 60));
+  await settle();
+  hard("이동(x=60) → value 30(drag)", sState().value === 30 && changes.at(-1)?.reason === "drag", JSON.stringify(sState()));
+  dispatchSdkDocumentEvent("pointercancel", { ...touch(2, 60), buttons: 0 });
+  await settle();
+  hard(
+    "document pointercancel → 드래그 종료·onValueCommit(30, drag)·active null",
+    sState().active === null && commits.at(-1)?.value === 30 && commits.at(-1)?.reason === "drag",
+    JSON.stringify({ s: sState(), c: commits.at(-1) }),
+  );
+  // 종료 뒤 문서 리스너는 떨어져야 해요 — 이동이 더는 값을 바꾸지 않아요.
+  dispatchSdkDocumentEvent("pointermove", touch(2, 120));
+  await settle();
+  hard("종료 후 pointermove는 값 불변(문서 리스너 해제)", sState().value === 30);
+
+  for (const entry of bound) entry.unbind();
+  release(instance);
+  instance.destroy();
+  setSdkElementFocusMode(false);
+}
+
+// --- 13. M2-⑥ modality — dialog 레이어(초기 포커스·Tab 트랩·Escape·바깥누름·잠금) --
+// layers.js는 `doc.defaultView`가 없으면 듣지 않았어요(no-op 반환). 창이 실
+// 이벤트 대상이 되자 M2-②가 남긴 «바깥누름·ESC 벽»이 내려와요 — 터치는
+// pointerdown(대기) → click, 마우스는 pointerdown(소비·click으로 지연) →
+// pointerup에서 닫아요. 안쪽 판정은 composedHops(parentElement 체인)의
+// contains예요(화면이 내부 슬롯 요소를 콘텐츠에 연결). lockScroll은
+// documentElement.style에 쓰고(SdkStyle), inert는 HTMLElement 브랜드 밖에서
+// 정직한 no-op예요.
+console.log("(13) M2-⑥ modality — dialog 레이어(초기 포커스·Tab 트랩·Escape·바깥누름·스크롤 잠금)");
+{
+  setSdkElementPopupMode(true);
+  setSdkElementFocusMode(true);
+  const doc = (globalThis as unknown as { document: SdkDocumentLike }).document;
+  const docEl = doc.documentElement;
+  const { dialog } = await import("@ui-sdk/core/dialog");
+  const openChanges: Array<{ open: boolean; reason?: string }> = [];
+  const onOpenChange = (open: boolean, details?: { reason: string }) =>
+    openChanges.push({ open, reason: details?.reason });
+  const instance = unwatched(() => dialog({ id: "probe-dialog", onOpenChange }));
+  keep(instance);
+  const trigger = instance.part("trigger", {}, true);
+  const content = instance.part("content", {}, true);
+  const title = instance.part("title", {}, true);
+  const description = instance.part("description", {}, true);
+  const close = instance.part("close", {}, true);
+  const backdrop = instance.part("backdrop", {}, true);
+  for (const part of [trigger, content, title, description, close, backdrop]) commit(part, {});
+  const bind = (part: unknown) => bindSdkPart(part, {}, attrs(part as never, {}, instance.get()) as Attrs);
+  const triggerEl = bind(trigger);
+  setSdkRect(triggerEl.element, 100, 200, 120, 40);
+  const dState = () => instance.get() as { open: boolean; modal: boolean };
+  const api = instance.api as { setOpen?: (open: boolean) => void };
+  hard("dialog 초기 closed·modal true(기본)", dState().open === false && dState().modal === true, JSON.stringify(dState()));
+  hard("닫힘 상태 documentElement.style overflow 없음", docEl.style.getPropertyValue("overflow") === "");
+
+  /** 열림마다 콘텐츠 트리를 마운트해요(웹의 언마운트/마운트와 같은 수명). */
+  const mountContent = () => {
+    const contentEl = bind(content);
+    const titleEl = bind(title);
+    const descriptionEl = bind(description);
+    const closeEl = bind(close);
+    const backdropEl = bind(backdrop);
+    setSdkRect(contentEl.element, 20, 300, 350, 300);
+    for (const inner of [titleEl, descriptionEl, closeEl]) inner.element.parentElement = contentEl.element;
+    const mounted = [contentEl, titleEl, descriptionEl, closeEl, backdropEl];
+    return {
+      contentEl,
+      closeEl,
+      unmount() {
+        for (const inner of mounted) inner.unbind();
+      },
+    };
+  };
+
+  // 터치 개방 — modality가 문서 pointerdown(pointerType touch)을 보고
+  // lastPointer=touch → click(detail 1)의 소스 «touch» → 초점 계획 «popup».
+  dispatchSdkDocumentEvent("pointerdown", { pointerType: "touch", pointerId: 1, button: 0, isPrimary: true, clientX: 20, clientY: 20 });
+  fireSdkEvent(triggerEl.element, "click", { detail: 1 });
+  await settle();
+  hard("터치 개방(문서 pointerdown → trigger click) → open·onOpenChange(true)", dState().open === true && openChanges.at(-1)?.open === true, JSON.stringify(openChanges));
+  const first = mountContent();
+  await settle();
+  hard("초기 포커스 — 터치 개방 계획 «popup» → 콘텐츠 자신에 포커스", doc.activeElement === first.contentEl.element, `active=${doc.activeElement === first.closeEl.element ? "close" : String(doc.activeElement)}`);
+  hard("스크롤 잠금 — documentElement.style overflow hidden(lockScroll 쓰기)·--scrollbar-width 0px", docEl.style.getPropertyValue("overflow") === "hidden" && docEl.style.getPropertyValue("--scrollbar-width") === "0px", `${docEl.style.getPropertyValue("overflow")}/${docEl.style.getPropertyValue("--scrollbar-width")}`);
+  const contentAttrs = attrs(content, {}, instance.get()) as Attrs;
+  hard("content role=dialog·aria-modal=true", contentAttrs.role === "dialog" && contentAttrs["aria-modal"] === "true", JSON.stringify({ r: contentAttrs.role, m: contentAttrs["aria-modal"] }));
+  hard("title/description → aria-labelledby·aria-describedby 연결", typeof contentAttrs["aria-labelledby"] === "string" && typeof contentAttrs["aria-describedby"] === "string", JSON.stringify(contentAttrs));
+
+  const tab = fireSdkEvent(first.contentEl.element, "keydown", { key: "Tab" });
+  hard("Tab 트랩(tabbables 없음 → 콘텐츠 유지·preventDefault)", tab.defaultPrevented === true && doc.activeElement === first.contentEl.element);
+
+  const esc = fireSdkEvent(first.closeEl.element, "keydown", { key: "Escape" });
+  await settle();
+  hard(
+    "Escape(close 요소 keydown → 버블 → 문서 keydown 리스너 → 레이어 onEscape) → 닫힘(escape-key)·preventDefault",
+    dState().open === false && openChanges.at(-1)?.open === false && openChanges.at(-1)?.reason === "escape-key" && esc.defaultPrevented === true,
+    JSON.stringify(openChanges.at(-1)),
+  );
+  // 비브라우저 경로는 닫힘 때 hide()를 부르지 않아요(웹은 exit 애니메이션 끝에
+  // 언마운트) — 잠금 해제(thawPage)는 콘텐츠 «언마운트»에 묶여 있어요. 화면은
+  // showing=false로 콘텐츠를 지우고, 그때 잠금이 풀려요.
+  hard("닫힘 직후(콘텐츠 언마운트 전) 잠금은 유지 — 웹의 exit 언마운트와 같은 수명", docEl.style.getPropertyValue("overflow") === "hidden", docEl.style.getPropertyValue("overflow"));
+  first.unmount();
+  hard("콘텐츠 언마운트 → 스크롤 잠금 해제(overflow 복원 «»)", docEl.style.getPropertyValue("overflow") === "", docEl.style.getPropertyValue("overflow"));
+
+  // 명령형 재개방 → 계획 auto → tabbable 없음 → 콘텐츠.
+  api.setOpen?.(true);
+  await settle();
+  hard("setOpen(true) → 재개방", dState().open === true, JSON.stringify(openChanges.at(-1)));
+  const second = mountContent();
+  await settle();
+  hard("명령형 개방 초점 계획 auto → 콘텐츠 포커스", doc.activeElement === second.contentEl.element);
+
+  // 바깥 누름(터치) — pointerdown은 대기, click에서 닫아요(10px 이내).
+  dispatchSdkWindowEvent("pointerdown", { pointerType: "touch", pointerId: 2, button: 0, isPrimary: true, clientX: 10, clientY: 10, target: null });
+  const clickOutside = dispatchSdkWindowEvent("click", { pointerType: "touch", detail: 1, button: 0, clientX: 12, clientY: 12, target: null });
+  await settle();
+  hard(
+    "바깥 누름(터치 — click에서 닫힘) → onOpenChange(false, outside-press)·소비(preventDefault)",
+    dState().open === false && openChanges.at(-1)?.reason === "outside-press" && clickOutside.defaultPrevented === true,
+    JSON.stringify(openChanges.at(-1)),
+  );
+  second.unmount();
+  hard("바깥 누름 닫힘 후 잠금 해제", docEl.style.getPropertyValue("overflow") === "");
+
+  // 재개방 + 안쪽 누름(마우스) — close 요소가 content를 parentElement로 두면
+  // composedHops → contains 체인으로 «안» 판정. 유지돼요.
+  api.setOpen?.(true);
+  await settle();
+  const third = mountContent();
+  await settle();
+  const inside = { pointerType: "mouse", pointerId: 3, button: 0, buttons: 1, clientX: 200, clientY: 580, target: third.closeEl.element };
+  dispatchSdkWindowEvent("pointerdown", inside);
+  dispatchSdkWindowEvent("pointerup", { ...inside, buttons: 0 });
+  await settle();
+  hard("안쪽 누름(close — contains 체인) → 열린 채 유지", dState().open === true, JSON.stringify(dState()));
+  fireSdkEvent(third.closeEl.element, "click", { detail: 1 });
+  await settle();
+  hard("close press → 닫힘(close-press)", dState().open === false && openChanges.at(-1)?.reason === "close-press", JSON.stringify(openChanges.at(-1)));
+  third.unmount();
+
+  // 재개방 + 바깥 누름(마우스) — pointerdown에서 소비하고(click 지연) pointerup에서 닫아요.
+  api.setOpen?.(true);
+  await settle();
+  const fourth = mountContent();
+  await settle();
+  const outside = { pointerType: "mouse", pointerId: 4, button: 0, buttons: 1, clientX: 10, clientY: 10, target: null };
+  const downOut = dispatchSdkWindowEvent("pointerdown", outside);
+  hard("마우스 바깥 pointerdown → 소비(preventDefault)·아직 열림(click으로 지연)", downOut.defaultPrevented === true && dState().open === true);
+  dispatchSdkWindowEvent("pointerup", { ...outside, buttons: 0 });
+  await settle();
+  hard("마우스 바깥 pointerup → 닫힘(outside-press)", dState().open === false && openChanges.at(-1)?.reason === "outside-press", JSON.stringify(openChanges.at(-1)));
+  fourth.unmount();
+  hard("마우스 바깥 누름 닫힘 후 잠금 해제", docEl.style.getPropertyValue("overflow") === "");
+
+  // 비모달 대조 — modal false는 잠금·inert를 건너뛰어요.
+  const plain = unwatched(() => dialog({ id: "probe-dialog-plain", modal: false, onOpenChange }));
+  keep(plain);
+  const plainTrigger = plain.part("trigger", {}, true);
+  const plainContent = plain.part("content", {}, true);
+  commit(plainTrigger, {});
+  commit(plainContent, {});
+  const plainTriggerEl = bindSdkPart(plainTrigger, {}, attrs(plainTrigger as never, {}, plain.get()) as Attrs);
+  // layers의 swallowClick(마우스 바깥누름 소비 → 그 제스처의 click 삼킴)은 다음
+  // pointerdown에서 지워져요 — 브라우저는 click 앞에 반드시 pointerdown이 오고,
+  // fire/dispatchSdk*도 같은 순서를 지켜요(화면: onPressIn → pointerdown, onPress → click).
+  dispatchSdkDocumentEvent("pointerdown", { pointerType: "mouse", pointerId: 5, button: 0, isPrimary: true, clientX: 20, clientY: 20 });
+  fireSdkEvent(plainTriggerEl.element, "click", { detail: 1 });
+  await settle();
+  const plainContentEl = bindSdkPart(plainContent, {}, attrs(plainContent as never, {}, plain.get()) as Attrs);
+  await settle();
+  const plainState = () => plain.get() as { open: boolean; modal: boolean };
+  hard(
+    "비모달(modal false) → open·modal false·스크롤 잠금 없음·aria-modal 없음",
+    plainState().open === true &&
+      plainState().modal === false &&
+      docEl.style.getPropertyValue("overflow") === "" &&
+      (attrs(plainContent as never, {}, plain.get()) as Attrs)["aria-modal"] === undefined,
+    JSON.stringify({ s: plainState(), o: docEl.style.getPropertyValue("overflow") }),
+  );
+  plainContentEl.unbind();
+  plainTriggerEl.unbind();
+  triggerEl.unbind();
+  release(plain);
+  plain.destroy();
+  release(instance);
+  instance.destroy();
+  setSdkElementPopupMode(false);
+  setSdkElementFocusMode(false);
 }
 
 console.log(failed === 0 ? "probe:ui-sdk PASS" : `probe:ui-sdk FAIL — 위반 ${failed}건`);
