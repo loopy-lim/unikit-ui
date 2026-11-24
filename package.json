@@ -1,18 +1,18 @@
 {
   "name": "unikit-ui",
-  "private": true,
   "version": "0.1.0",
   "packageManager": "bun@1.4.4",
-  "workspaces": [
-    "apps/*",
-    "packages/unikit/editor-web-view",
-    "packages/*"
-  ],
+  "private": true,
   "scripts": {
     "typecheck": "bun run --filter '*' typecheck",
     "generate:design": "bun run --filter '@unikit-bridge/ui' generate:design",
     "audit:design": "bun run --filter '@unikit-bridge/ui' audit:design",
     "expo": "cd apps/expo && bun x expo",
     "web": "cd apps/web && bun x next"
-  }
+  },
+  "workspaces": [
+    "apps/*",
+    "packages/unikit/editor-web-view",
+    "packages/*"
+  ]
 }

@@ -29,6 +29,10 @@
       "react-native": "./src/bridge/native.tsx",
       "default": "./src/bridge/web.tsx"
     },
+    "./nsh": {
+      "types": "./dist/nsh-types/nsh/entry.d.ts",
+      "default": "./dist/nsh.mjs"
+    },
     "./chart": {
       "react-native": "./src/chart/native.tsx",
       "default": "./src/chart/web.tsx"
@@ -53,6 +57,7 @@
   "types": "./src/index.ts",
   "files": [
     "src",
+    "dist",
     "docs",
     "README.md",
     "LICENSE"
@@ -64,6 +69,8 @@
     "typecheck": "tsc --noEmit",
     "prepublishOnly": "tsc --noEmit",
     "build:editor": "bun run --filter @unikit/editor-web-view build && bun scripts/sync-editor-html.ts",
+    "build:nsh": "bun run generate:nsh-icons && bun scripts/build-nsh.ts",
+    "generate:nsh-icons": "bun scripts/generate-nsh-icons.ts",
     "generate:design": "bun scripts/generate-design.ts",
     "audit:design": "bun scripts/audit-design.ts",
     "check:consumer": "bun scripts/check-consumer-theme.ts",
@@ -134,25 +141,26 @@
     }
   },
   "devDependencies": {
-    "typescript": "~5.9.0",
-    "@types/react": "~19.3.0",
-    "react": "19.3.0",
-    "react-dom": "19.3.0",
-    "@types/react-dom": "~19.3.0",
-    "react-native": "0.88.1",
-    "react-native-svg": "~15.16.0",
-    "react-native-webview": "14.0.1",
-    "react-hook-form": "~7.65.0",
-    "uniwind": "~1.13.2",
-    "class-variance-authority": "~0.7.1",
-    "clsx": "~2.1.1",
-    "tailwind-merge": "~3.7.0",
-    "lucide-react": "^1.71.0",
-    "lucide-react-native": "^1.71.0",
     "@tiptap/extensions": "^3.0.0",
     "@tiptap/markdown": "^3.0.0",
     "@tiptap/pm": "^3.0.0",
     "@tiptap/react": "^3.0.0",
-    "@tiptap/starter-kit": "^3.0.0"
+    "@tiptap/starter-kit": "^3.0.0",
+    "@types/react": "~19.3.0",
+    "@types/react-dom": "~19.3.0",
+    "class-variance-authority": "~0.7.1",
+    "clsx": "~2.1.1",
+    "lucide-react": "^1.71.0",
+    "lucide-react-native": "^1.71.0",
+    "react": "19.3.0",
+    "react-dom": "19.3.0",
+    "react-hook-form": "~7.65.0",
+    "react-native": "0.88.1",
+    "react-native-svg": "~15.16.0",
+    "react-native-webview": "14.0.1",
+    "react-reconciler": "0.34.0",
+    "tailwind-merge": "~3.7.0",
+    "typescript": "~5.9.0",
+    "uniwind": "~1.13.2"
   }
 }

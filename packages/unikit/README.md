@@ -154,6 +154,22 @@ Web mounts tiptap directly (`@tiptap/react`, `@tiptap/starter-kit`, `@tiptap/mar
 - **Menu nav** — `useMenuNav`, `composeMenuNavKeyDown`, `useMenuItemRef`, `composeMenuItemHoverIn`, `composeMenuItemFocus`: arrow/Home/End navigation, submenu open/back, typeahead (radix `getNextMatch` port).
 - **Bridge hooks** — `useDrag` (web Pointer Events / native PanResponder), `useOverlayFocus` (focus move/trap/restore), `useDismiss` (outside press + Escape), `useReposition` (scroll/resize recompute), `useScrollLock`.
 
+### nsh (Native Shell) — prebundled React runtime
+
+`@unikit-bridge/ui/nsh` (npm-only, not in the registry) runs the same 62 components on [nsh](https://github.com/longbridge/nsh) — the component sources stay a single tree; a `react-reconciler` host config drives React 19 into nsh's native view tree (`nsh:rt` elements). nsh's bundler only reads the `default` exports condition, so this entry ships as a prebuilt single file (`dist/nsh.mjs`, ~1.1 MB — React, the reconciler, `cva`/`clsx`/`tailwind-merge` inlined; `nsh`/`nsh:rt` external):
+
+```tsx
+import { Card, CardContent, Button, Input, mountNsh, el, useState } from "@unikit-bridge/ui/nsh";
+
+function Demo() {
+  const [n, setN] = useState(0);
+  return el(Card, null, el(CardContent, null, el(Button, { onPress: () => setN(n + 1) }, `Tapped ${n} times`)));
+}
+mountNsh(() => el(Demo));
+```
+
+Because nsh app JSX rejects lowercase host tags, compose with `el` (the re-exported `React.createElement`). The entry also exposes the bridge primitives (`View`, `Text`, `Pressable`, `TextInput`, …), renderer APIs (`renderNsh`, `mountNsh`, `el`), React hooks, and 32 lucide icons drawn through nsh `Canvas` + `Path2D` (no lucide runtime dependency). Themes map through `token()`/`setColorScheme`; `nsh test` drives press/type through `id:`/`label:`/`text:` selectors (see `apps/nsh` for the headless 7-step regression). Rebuild the bundle with `bun run build:nsh` inside `packages/unikit`.
+
 ### Optional peer dependencies
 
 - **Icons (platform)**: web → `lucide-react`, native → `lucide-react-native` (bridged through `/primitives`).

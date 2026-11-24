@@ -4,5 +4,5 @@
     "types": ["uniwind/types"],
     "lib": ["ES2022", "DOM", "DOM.Iterable"]
   },
-  "include": ["src"]
+  "include": ["src", "nsh-env.d.ts"]
 }
