@@ -29,10 +29,7 @@
       "react-native": "./src/bridge/native.tsx",
       "default": "./src/bridge/web.tsx"
     },
-    "./nsh": {
-      "types": "./dist/nsh-types/nsh/entry.d.ts",
-      "default": "./dist/nsh.mjs"
-    },
+    "./nsh": "./src/nsh-ui/index.ts",
     "./chart": {
       "react-native": "./src/chart/native.tsx",
       "default": "./src/chart/web.tsx"
@@ -46,6 +43,7 @@
     "./behaviors/ui-sdk-dom": "./src/behaviors/ui-sdk-dom.ts",
     "./behaviors/ui-sdk-renderer": "./src/behaviors/ui-sdk-renderer.ts",
     "./behaviors/ui-sdk-agent": "./src/behaviors/ui-sdk-agent.ts",
+    "./behaviors/ui-sdk-nsh": "./src/nsh-ui/ui-sdk.tsx",
     "./behaviors/ui-sdk-catalog": "./src/behaviors/ui-sdk-catalog.ts",
     "./overlay-position": {
       "react-native": "./src/lib/overlay-position/native.ts",
@@ -66,11 +64,11 @@
     "access": "public"
   },
   "scripts": {
-    "typecheck": "tsc --noEmit",
+    "typecheck": "tsc --noEmit -p tsconfig.json && tsc --noEmit -p tsconfig.nsh-ui.json",
     "prepublishOnly": "tsc --noEmit",
     "build:editor": "bun run --filter @unikit/editor-web-view build && bun scripts/sync-editor-html.ts",
-    "build:nsh": "bun run generate:nsh-icons && bun scripts/build-nsh.ts",
     "generate:nsh-icons": "bun scripts/generate-nsh-icons.ts",
+    "sync:nsh-types": "bun scripts/sync-nsh-types.ts",
     "generate:design": "bun scripts/generate-design.ts",
     "audit:design": "bun scripts/audit-design.ts",
     "check:consumer": "bun scripts/check-consumer-theme.ts",
@@ -158,7 +156,6 @@
     "react-native": "0.88.1",
     "react-native-svg": "~15.16.0",
     "react-native-webview": "14.0.1",
-    "react-reconciler": "0.34.0",
     "tailwind-merge": "~3.7.0",
     "typescript": "~5.9.0",
     "uniwind": "~1.13.2"

@@ -1,6 +1,6 @@
 /** 생성물 — scripts/generate-nsh-icons.ts가 lucide-react(1.71.0)에서
  * 뽑았다. 직접 편집 금지(재생성: bun run generate:nsh-icons).
- * 브리지(src/bridge/nsh.tsx)가 Canvas(Path2D)로 그리는 lucide 아이콘 경로 데이터. */
+ * nsh 킵(src/nsh-ui/icons.tsx)이 Canvas(Path2D)로 그리는 lucide 아이콘 경로 데이터. */
 export type NshLucideNode = ReadonlyArray<
   readonly [tag: string, attrs: Readonly<Record<string, string | number>>]
 >;

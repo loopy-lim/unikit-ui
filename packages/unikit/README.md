@@ -154,21 +154,32 @@ Web mounts tiptap directly (`@tiptap/react`, `@tiptap/starter-kit`, `@tiptap/mar
 - **Menu nav** — `useMenuNav`, `composeMenuNavKeyDown`, `useMenuItemRef`, `composeMenuItemHoverIn`, `composeMenuItemFocus`: arrow/Home/End navigation, submenu open/back, typeahead (radix `getNextMatch` port).
 - **Bridge hooks** — `useDrag` (web Pointer Events / native PanResponder), `useOverlayFocus` (focus move/trap/restore), `useDismiss` (outside press + Escape), `useReposition` (scroll/resize recompute), `useScrollLock`.
 
-### nsh (Native Shell) — prebundled React runtime
+### nsh (Native Shell) — native TSX kit
 
-`@unikit-bridge/ui/nsh` (npm-only, not in the registry) runs the same 62 components on [nsh](https://github.com/longbridge/nsh) — the component sources stay a single tree; a `react-reconciler` host config drives React 19 into nsh's native view tree (`nsh:rt` elements). nsh's bundler only reads the `default` exports condition, so this entry ships as a prebuilt single file (`dist/nsh.mjs`, ~1.1 MB — React, the reconciler, `cva`/`clsx`/`tailwind-merge` inlined; `nsh`/`nsh:rt` external):
+`@unikit-bridge/ui/nsh` (npm-only, not in the registry) is a native kit for [nsh](https://github.com/longbridge/nsh) apps — same UniKit API shape and variants, running on nsh's own signal runtime (no React). It wraps nsh/base's headless primitives (press/switch/checkbox/select/dialog behaviors stay with the shell) with UniKit `cva` classes and tokens:
 
 ```tsx
-import { Card, CardContent, Button, Input, mountNsh, el, useState } from "@unikit-bridge/ui/nsh";
+import { Button, Card, CardContent, Input, Switch } from "@unikit-bridge/ui/nsh";
+import { mount, signal } from "nsh";
 
 function Demo() {
-  const [n, setN] = useState(0);
-  return el(Card, null, el(CardContent, null, el(Button, { onPress: () => setN(n + 1) }, `Tapped ${n} times`)));
+  const n = signal(0);
+  const name = signal("");
+  const on = signal(false);
+  return (
+    <Card>
+      <CardContent className="gap-3">
+        <Button onPress={() => n.set(n() + 1)} testID="inc">{`Tapped ${n()} times`}</Button>
+        <Input value={name()} onChangeText={name.set} placeholder="Your name" />
+        <Switch checked={on()} onCheckedChange={(v) => on.set(v)} />
+      </CardContent>
+    </Card>
+  );
 }
-mountNsh(() => el(Demo));
+mount(Demo);
 ```
 
-Because nsh app JSX rejects lowercase host tags, compose with `el` (the re-exported `React.createElement`). The entry also exposes the bridge primitives (`View`, `Text`, `Pressable`, `TextInput`, …), renderer APIs (`renderNsh`, `mountNsh`, `el`), React hooks, and 32 lucide icons drawn through nsh `Canvas` + `Path2D` (no lucide runtime dependency). Themes map through `token()`/`setColorScheme`; `nsh test` drives press/type through `id:`/`label:`/`text:` selectors (see `apps/nsh` for the headless 7-step regression). Rebuild the bundle with `bun run build:nsh` inside `packages/unikit`.
+Ships as TSX source (nsh's bundler compiles package TSX directly — no prebundle step). The kit covers 12 component families — 26 exported parts (Button, Input, Textarea, Switch, Checkbox, RadioGroup, Select, Badge, Separator, the Card family, Dialog, Sheet) plus bridge-style primitives (`View`/`Text`/`Image`/`ScrollView`/`Pressable` with the `className` convention) and 32 lucide icons drawn through nsh `Canvas` + `Path2D`. Apps theme it through nsh.json `theme.cssVars` (UniKit token names); `setColorScheme` switches light/dark. `@unikit-bridge/ui/behaviors/ui-sdk-nsh` drives `@ui-sdk/core`'s button kernel on the same host. `nsh test` drives press/type through `id:`/`label:`/`text:` selectors (see `apps/nsh` for the headless 8-step regression). Regenerate the vendored nsh types with `bun run sync:nsh-types` after upgrading the nsh CLI.
 
 ### Optional peer dependencies
 

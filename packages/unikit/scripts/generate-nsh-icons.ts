@@ -1,7 +1,7 @@
 /**
  * generate:nsh-icons — 브리지가 그리는 32종 lucide 아이콘의 경로 데이터를
  * lucide-react(dist/esm/icons/*.mjs의 `__iconData`)에서 뽑아
- * src/nsh/lucide-icons.generated.ts로 만든다.
+ * src/nsh-ui/lucide-icons.generated.ts로 만든다.
  *
  * - 생성물이므로 lucide-icons.generated.ts를 직접 편집하지 않는다(재실행으로
  *   재생성). 아이콘 목록은 src/bridge/web.tsx의 *Icon export 면과 1:1.
@@ -14,7 +14,7 @@ import { dirname, join } from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
 
 const here = dirname(fileURLToPath(import.meta.url));
-const outPath = join(here, "../src/nsh/lucide-icons.generated.ts");
+const outPath = join(here, "../src/nsh-ui/lucide-icons.generated.ts");
 
 /** web.tsx가 export하는 아이콘 면(PascalCase) → lucide 모듈명(kebab-case). */
 const ICONS: Record<string, string> = {
@@ -58,7 +58,7 @@ type LucideIconNode = ReadonlyArray<
 
 const header = `/** 생성물 — scripts/generate-nsh-icons.ts가 lucide-react(${await lucideVersion()})에서
  * 뽑았다. 직접 편집 금지(재생성: bun run generate:nsh-icons).
- * 브리지(src/bridge/nsh.tsx)가 Canvas(Path2D)로 그리는 lucide 아이콘 경로 데이터. */
+ * nsh 킵(src/nsh-ui/icons.tsx)이 Canvas(Path2D)로 그리는 lucide 아이콘 경로 데이터. */
 `;
 
 async function lucideVersion(): Promise<string> {

@@ -1,10 +1,9 @@
 /**
- * UniKit on nsh 데모 — `@unikit-bridge/ui/nsh` 사전 번들로 컴포넌트를
- * nsh(Native Shell)에서 구동하는 진입 앱. React 트리는 el(...)(번들이
- * 재수출하는 React.createElement)로 조립한다(App 소스는 nsh JSX라 소문자
- * 호스트 태그를 못 쓴다 — 실측). mountNsh가 트리를 nsh 화면에 올리고,
- * App.test.tsx의 헤드리스 드라이버(id/testID·label·text 셀렉터의 press/type)가
- * 컴포넌트를 구동한다 — 에이전트 친화성(단일 import·헤드리스 구동)의 실증.
+ * UniKit on nsh 데모 — `@unikit-bridge/ui/nsh`(TSX 소스)로 컴포넌트를
+ * nsh(Native Shell) 자체 런타임에서 구동하는 진입 앱. React 없이 nsh의
+ * signal로 상태를 잡고, App.test.tsx의 헤드리스 드라이버(id/testID·label·
+ * text 셀렉터의 press/type/clear)가 컴포넌트를 구동한다 — 에이전트 친화성
+ * (단일 import·헤드리스 구동)의 실증.
  */
 import {
   Badge,
@@ -15,98 +14,98 @@ import {
   CardHeader,
   CardTitle,
   Input,
-  NativeSelect,
-  NativeSelectOption,
+  Select,
   Separator,
   Switch,
   Text,
-  UnikitThemeProvider,
   View,
-  el,
-  mountNsh,
-  useUnikitTheme,
-  useState,
 } from "@unikit-bridge/ui/nsh";
-
+import { SdkButton } from "@unikit-bridge/ui/behaviors/ui-sdk-nsh";
+import { colorScheme, mount, setColorScheme, signal } from "nsh";
 function Demo() {
-  const [count, setCount] = useState(0);
-  const [name, setName] = useState("");
-  const [airplane, setAirplane] = useState(false);
-  const [fruit, setFruit] = useState("apple");
-  const { colorScheme, setColorScheme } = useUnikitTheme();
+  const count = signal(0);
+  const name = signal("");
+  const airplane = signal(false);
+  const fruit = signal("apple");
+  const sdkCount = signal(0);
+  // 커널 pending 계약 실증용: SdkButton의 action은 release 버튼을 누를 때까지
+  // 완료되지 않는다 — pending 중 재눌림은 커널이 차단한다(@ui-sdk/core button).
+  const sdkRelease = signal<(() => void) | null>(null);
 
-  return el(
-    Card,
-    { className: "m-4 max-w-md self-center", testID: "demo-card" },
-    el(
-      CardHeader,
-      null,
-      el(CardTitle, { testID: "demo-title" }, "UniKit on nsh"),
-      el(CardDescription, null, "62 components, one React tree on the native shell"),
-    ),
-    el(
-      CardContent,
-      { className: "gap-3" },
-      el(
-        Button,
-        {
-          onPress: () => setCount((c) => c + 1),
-          testID: "increment-button",
-        },
-        `Tapped ${count} times`,
-      ),
-      el(Input, {
-        value: name,
-        onChangeText: setName,
-        placeholder: "Your name",
-        accessibilityLabel: "Name",
-        testID: "name-input",
-      }),
-      el(Switch, {
-        checked: airplane,
-        onCheckedChange: setAirplane,
-        accessibilityLabel: "Airplane mode",
-        testID: "airplane-switch",
-      }),
-      el(
-        NativeSelect,
-        {
-          value: fruit,
-          onValueChange: setFruit,
-          accessibilityLabel: "Fruit",
-          testID: "fruit-select",
-        },
-        el(NativeSelectOption, { value: "apple" }, "Apple"),
-        el(NativeSelectOption, { value: "banana" }, "Banana"),
-        el(NativeSelectOption, { value: "cherry" }, "Cherry"),
-      ),
-      el(Separator, { className: "my-1" }),
-      // 조건부 문자열 자식 — Text 호스트는 유지되고 내부 텍스트 인스턴스만
-      // 마운트·갱신·언마운트한다(노드 교체 렌더러의 회수 경로 회귀 — §3-1).
-      el(Text, { testID: "echo-text" }, name ? `typed: ${name}` : null),
-      el(
-        View,
-        { className: "flex-row items-center gap-2" },
-        el(Badge, { testID: "fruit-badge" }, fruit),
-        airplane ? el(Badge, { testID: "airplane-badge" }, "airplane") : null,
-        name ? el(Badge, { testID: "name-badge" }, name) : null,
-      ),
-      el(
-        Button,
-        {
-          variant: "outline",
-          onPress: () => setColorScheme(colorScheme === "dark" ? "light" : "dark"),
-          testID: "scheme-button",
-        },
-        colorScheme === "dark" ? "Switch to light" : "Switch to dark",
-      ),
-    ),
+  return (
+    <Card className="m-4 max-w-md self-center" testID="demo-card">
+      <CardHeader>
+        <CardTitle testID="demo-title">UniKit on nsh</CardTitle>
+        <CardDescription>
+          native kit on the shell runtime, no React
+        </CardDescription>
+      </CardHeader>
+      <CardContent className="gap-3">
+        <Button onPress={() => count.set(count() + 1)} testID="increment-button">
+          {`Tapped ${count()} times`}
+        </Button>
+        <Input
+          value={name()}
+          onChangeText={name.set}
+          placeholder="Your name"
+          testID="name-input"
+        />
+        <Switch
+          checked={airplane()}
+          onCheckedChange={(checked) => airplane.set(checked)}
+          testID="airplane-switch"
+        />
+        <Select
+          value={fruit()}
+          onValueChange={fruit.set}
+          placeholder="Fruit"
+          testID="fruit-select"
+          options={[
+            { value: "apple", label: "Apple" },
+            { value: "banana", label: "Banana" },
+            { value: "cherry", label: "Cherry" },
+          ]}
+        />
+        <Separator className="my-1" />
+        <Text testID="echo-text">{name() ? `typed: ${name()}` : null}</Text>
+        <View className="flex-row items-center gap-2">
+          <Badge testID="fruit-badge">{fruit()}</Badge>
+          {airplane() ? <Badge testID="airplane-badge">airplane</Badge> : null}
+          {name() ? <Badge testID="name-badge">{name()}</Badge> : null}
+        </View>
+        <SdkButton
+          onPress={() =>
+            new Promise<void>((resolve) => sdkRelease.set(() => resolve()))
+          }
+          testID="sdk-button"
+        >
+          {`Sdk tapped ${sdkCount()} times`}
+        </SdkButton>
+        <Button
+          variant="secondary"
+          onPress={() => {
+            sdkRelease()?.();
+            sdkRelease.set(null);
+            sdkCount.set(sdkCount() + 1);
+          }}
+          testID="sdk-release-button"
+        >
+          Release sdk action
+        </Button>
+        <Button
+          variant="outline"
+          onPress={() =>
+            setColorScheme(colorScheme() === "dark" ? "light" : "dark")
+          }
+          testID="scheme-button"
+        >
+          {colorScheme() === "dark" ? "Switch to light" : "Switch to dark"}
+        </Button>
+      </CardContent>
+    </Card>
   );
 }
 
-mountNsh(() =>
-  el(UnikitThemeProvider, {
-    defaultColorScheme: "light",
-    children: el(Demo),
-  }),
-);
+
+
+mount(Demo);
