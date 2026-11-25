@@ -1,11 +1,16 @@
 // 유니버설 벡터 아이콘 — lucide 경로 데이터를 nsh canvas(Path2D)로 그린다.
 // 구현은 src/bridge/nsh.tsx(제거됨, 사이클 101)에서 계승했다.
 //
-// 계약(실측 — 101 §3):
-// - Canvas의 draw는 생성 시 1회만 소비된다(스킴 전환 미갱신 — 로드맵).
+// 계약(실측 — 101 §3, 103 §2):
+// - draw 안에서 token()으로 읽은 토큰이 바뀌면(색 스킴 전환) draw가 다시
+//   실행된다. 색 해석은 반드시 draw 안에서 한다 — 바깥에서 한 번 계산하면
+//   다크 모드에서 색이 고정된다(102 결함, 103에서 수정).
 // - Path2D는 전역이 아니라 nsh 모듈 export다 — SVG d 문자열을 네이티브가 파싱.
 // - 캔버스에 currentColor 상속이 없어 className의 text-* 토큰을 token()으로
 //   직접 해석한다. 미지정 시 foreground 폴백.
+// - 크기는 className의 size-* 클래스가 정한다(기본 size-4). size prop을 준
+//   때만 인라인 style이 클래스를 덮어쓴다 — 인라인이 늘 우선하면 size-8 같은
+//   클래스가 무시된다(102 결함, 103에서 수정).
 import { Canvas, Path2D as NshPath2D, token } from "nsh";
 
 import { NSH_LUCIDE_ICONS } from "./lucide-icons.generated";
@@ -116,7 +121,7 @@ function drawIcon(
 
 export type IconProps = {
   className?: string;
-  /** px 크기(기본 16) — 클래스 size-*보다 우선한다 */
+  /** px 크기 — 지정하면 className의 size-*보다 우선한다(생략 시 클래스 기본 size-4) */
   size?: number | string;
   /** 직접 색 지정 — 미지정 시 className의 text-* 토큰, 그마저 없으면 foreground */
   color?: string;
@@ -127,27 +132,29 @@ export type IconProps = {
 
 function makeNshIcon(name: keyof typeof NSH_LUCIDE_ICONS) {
   return function NshIcon(props: IconProps) {
-    const {
-      className,
-      size = 16,
-      color,
-      strokeWidth = 2,
-      style,
-      testID,
-    } = props;
     const data = NSH_LUCIDE_ICONS[name];
-    const resolvedColor = color ?? iconColor(className);
-    const numericSize = typeof size === "string" ? Number(size) || 16 : size;
+    // props는 getter다 — 구조 분해하면 반응성이 끊긴다. 색·클래스는 draw·class
+    // 읽는 시점에 props에서 다시 읽어 className 교체·스킴 전환을 따라간다.
+    const numericSize =
+      props.size === undefined
+        ? undefined
+        : typeof props.size === "string"
+          ? Number(props.size) || 16
+          : props.size;
     return (
       <Canvas
-        class={nshClass(cn("size-4", className))}
-        style={{ width: numericSize, height: numericSize, ...style }}
-        testID={testID}
+        class={nshClass(cn("size-4", props.className))}
+        style={
+          numericSize === undefined
+            ? props.style
+            : { width: numericSize, height: numericSize, ...props.style }
+        }
+        testID={props.testID}
         accessibilityElementsHidden
-        draw={(cx, size) =>
+        draw={(cx, box) =>
           drawIcon(
-            cx as unknown as NshCanvasContext, size.width, size.height,
-            data, resolvedColor, strokeWidth,
+            cx as unknown as NshCanvasContext, box.width, box.height,
+            data, props.color ?? iconColor(props.className), props.strokeWidth ?? 2,
           )
         }
       />

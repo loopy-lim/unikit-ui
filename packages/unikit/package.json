@@ -95,6 +95,9 @@
     "@ui-sdk/core": "0.1.0-beta.6"
   },
   "peerDependenciesMeta": {
+    "react": {
+      "optional": true
+    },
     "react-dom": {
       "optional": true
     },

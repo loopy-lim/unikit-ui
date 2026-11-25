@@ -2,6 +2,8 @@
 
 - 날짜: 2026-11-24
 - 상태: 완료(게이트 통과 — §6)
+- 후속: [103-nsh-kit-050-fixes.md](103-nsh-kit-050-fixes.md)(0.5.0 게시분 검증 결함
+  수리 — §7의 «Dialog/Sheet Trigger 컴파운드»·«아이콘 색 스킴 갱신» 해소, 이슈 #45)
 - 선행: [101-nsh-react-runtime.md](101-nsh-react-runtime.md)(React-on-nsh 사전 번들 — 이 사이클에서 **제거됨**, §1)
 
 ## 1. 요구
