@@ -1,5 +1,6 @@
 # CI — 푸시·PR마다 전체 검증 관문 실행
-# (로컬 게이트와 동일: typecheck 3종 · audit:design · 웹 빌드 · 엑스포 번들 컴파일)
+# (로컬 게이트와 동일: typecheck · audit:design · 웹 빌드 · 엑스포 번들 컴파일.
+#  단, apps/nsh 데모의 타입 검사는 호스티드 러너에서 못 돌려 로컬 전용 — 아래 단계 주석)
 name: CI
 
 on:
@@ -18,8 +19,11 @@ jobs:
       - name: 의존성 설치
         run: bun install --frozen-lockfile
 
-      - name: 타입 검사 (패키지·웹·엑스포)
-        run: bun run typecheck
+      # apps/nsh(unikit-nsh-demo)의 tsconfig는 nsh CLI가 만드는 .nsh/ 스캐폴드를 extends한다.
+      # nsh은 npm 패키지가 아니라 호스티드 러너에 없다 — 이 워크스페이스는 제외하고 그 게이트는
+      # 로컬에서 돌린다(`cd apps/nsh && nsh check && nsh test` — AGENTS.md).
+      - name: 타입 검사 (패키지·웹·엑스포 — nsh 데모 제외)
+        run: bun run --filter '*' --filter '!unikit-nsh-demo' typecheck
 
       - name: 디자인 일관성 감사 (audit:design)
         run: bun run audit:design

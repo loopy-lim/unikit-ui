@@ -47,6 +47,9 @@ bun run generate:design            # 토큰 변경 시에만: globals.css·regis
 
 - apps/nsh는 두 게이트(`typecheck`·`nsh check`)가 생성물에 의존한다 — fresh
   clone에서는 `cd apps/nsh && nsh check`(.nsh 스캐폴드)를 먼저 실행해야 한다.
+  nsh CLI는 npm 패키지가 아니라 `bun install`로 생기지 않으므로 CI·publish
+  워크플로는 이 워크스페이스의 타입 검사를 빼고 돈다
+  (`--filter '*' --filter '!unikit-nsh-demo'`) — nsh 데모 게이트는 로컬 전용이에요.
 
 - MCP 서버 `@unikit-bridge/mcp`: 이 저장소가 아닌 제품군 포털 저장소(`../unikit`의 `packages/mcp`)에 살아요(scriptca·rustra까지 아우르는 제품군 서버). 이 저장소의 llms.txt·registry.json·컴포넌트 소스를 고치면 포털에서 `bun run sync:data`로 동봉 데이터(src/data.ts 생성물)를 재생성해야 해요.
 

@@ -206,3 +206,26 @@ typecheck·audit:design·nsh check·nsh test 웹 13단계를 다시 돌렸고 �
 이 문서가 들어가는 PR에 `sdd:pr` 라벨을 붙여 클린 컨텍스트 리뷰 세션에 검증을
 맡긴다(수리 세션은 리뷰에 개입하지 않는다 — 결함 지적이 오면 그때 수정한다).
 리뷰 판정과 반영 내용은 리뷰가 끝난 뒤 여기에 기록한다.
+
+**PR 준비 중 발견(PR [#46](https://github.com/loopy-lim/unikit-ui/pull/46))**
+
+- 첫 푸시에서 CI `verify`가 실패했다 — `bun run typecheck`의 `unikit-nsh-demo`가
+  `.nsh/tsconfig.json` 부재(TS5083)로 쓰러졌다. nsh 데모 워크스페이스는 102에서
+  들어왔지만 그 커밋들이 한 번도 원격에 푸시된 적이 없어 CI를 처음 만난 것이다.
+  nsh CLI는 npm 패키지가 아니라서 `bun install`로 생기지 않는다 — 러너에 따로
+  설치하는 일은 범위 밖으로 두고 `ci.yml`·`publish.yml`의 타입 검사에서 이
+  워크스페이스를 제외했다(`--filter '*' --filter '!unikit-nsh-demo'` — 로컬에서
+  나머지 6워크스페이스만 선택되는 것을 확인). nsh 데모 게이트는 로컬 `nsh check`·
+  `nsh test`가 그대로 담당한다(AGENTS.md에 적었다). 같은 명령을 쓰는 publish
+  워크플로도 GitHub Release로 게시하면 같은 이유로 쓰러졌을 것이다.
+- 라벨 순서 실수: CI 실패를 보기 전에 `sdd:pr`을 붙였다가 85초 만에 뗐다
+  (16:08:55Z 붙임 → 16:10:20Z 제거). 웹훅 배달은 접수되어 오케스트레이터 세션이
+  1개 열렸지만(16:08:59Z) 첫 턴이 바로 실패했다 — `Pi RPC set_model failed: Model
+  not found: anthropic/glm-5.3`. 웹훅 작업(`scheduled-task:7d99af0d`)과 라우팅
+  설정(`t3-routing.local.json`)은 11-22에 pi zai 제공자의 `anthropic/glm-5.3`으로
+  맞춰 두었는데, 그 제공자의 모델 이름은 지금 `zai-plan/glm-5.3` 꼴이다
+  (`orchestrator_capabilities` 실측 — `zai-plan/glm-5.4`·`zai-plan/glm-5.3`·
+  `zai-plan/glm-5.3-flash`). 리뷰는 시작되지 않았다. 작업 모델은 도구로는 바꿀 수
+  없어 사람이 T3 설정에서 바꿔야 한다.
+- 이 PR이 `.github/workflows`를 건드리게 되어, 리뷰 파이프라인 규칙상 자동 머지
+  대상이 아니다(보호 경로) — 판정 PASS 뒤에는 머지를 사람이 한다.
