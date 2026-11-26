@@ -1,0 +1,47 @@
+# apps/expo 쇼케이스 E2E 스모크 — docs/expo-go.md «무엇을 확인하나요» 흐름의 자동화.
+# 셀렉터는 앱이 이미 달고 있는 accessibilityLabel(안드로이드 content-desc)을 그대로
+# 쓴다 — 앱 본문 수정 0. 컴포넌트 검색(placeholder)·AlertDialog·하드웨어 다이얼로그
+# 라벨은 각각 apps/expo/app/index.tsx·components/showcase/overlay-sections.tsx·
+# app/uisdk-hwkeys.tsx의 실제 문자열과 맞춘다.
+appId: com.anonymous.unikitexpo
+name: 쇼케이스 스모크
+tags:
+  - smoke
+---
+# Metro 차가운 번들 로딩이 30~60초 — 첫 화면(브랜드 "UniKit UI")까지 여유 대기.
+# 여기가 크래시·white screen 가드다.
+- launchApp
+- extendedWaitUntil:
+    visible: "UniKit UI"
+    timeout: 120000
+- takeScreenshot: light-top
+
+# 테마 왕복 — 토글 라벨은 고정("색 테마 전환")이라 텍스트 변화로는 확인 불가.
+# 왕복 생존 + 명/암 스크린샷을 남긴다(색 전환 실측은 후속 pixelmatch diff)
+- tapOn: "색 테마 전환"
+- takeScreenshot: dark-top
+- tapOn: "색 테마 전환"
+- takeScreenshot: light-restored
+
+# 카탈로그 검색 — 포커스 이동 + "dialog" 필터 결과
+- tapOn: "컴포넌트 검색"
+- inputText: "dialog"
+- assertVisible:
+    text: "컴포넌트 검색"
+    focused: true
+- assertVisible: "AlertDialog"
+- assertVisible: "확인 대화 상자"
+- assertNotVisible: "드로어"
+
+# 하드웨어 키 화면(딥링크 — expo-router triple-slash canonical form) —
+# RN Modal 열림·닫힘(수명 계약: 닫히면 콘텐츠 언마운트)
+- openLink: unikitexpo:///uisdk-hwkeys
+- extendedWaitUntil:
+    visible: "하드웨어 다이얼로그 열기"
+    timeout: 60000
+- tapOn: "하드웨어 다이얼로그 열기"
+- assertVisible: "하드웨어 다이얼로그 콘텐츠"
+- takeScreenshot: hwkeys-dialog-open
+- tapOn: "다이얼로그 닫기"
+- assertNotVisible: "하드웨어 다이얼로그 콘텐츠"
+- takeScreenshot: hwkeys-dialog-closed

@@ -8,6 +8,7 @@
     "scheme": "unikitexpo",
     "userInterfaceStyle": "automatic",
     "ios": {
+      "bundleIdentifier": "com.anonymous.unikitexpo",
       "icon": "./assets/images/icon.png"
     },
     "android": {

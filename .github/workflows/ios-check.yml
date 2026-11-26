@@ -1,0 +1,109 @@
+name: iOS Simulator Check
+
+on:
+  workflow_dispatch:
+
+jobs:
+  ios-simulator:
+    runs-on: macos-latest
+    timeout-minutes: 30
+    env:
+      LANG: en_US.UTF-8
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: oven-sh/setup-bun@v2
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: 의존성 설치
+        run: bun install --frozen-lockfile
+
+      - name: Expo iOS export (Hermes bundle smoke)
+        working-directory: apps/expo
+        run: bun x expo export --platform ios
+
+      - name: Expo prebuild (iOS + CocoaPods)
+        working-directory: apps/expo
+        run: |
+          bun x expo prebuild --platform ios --non-interactive
+          if [ ! -d ios/Pods ]; then (cd ios && pod install); fi
+
+      - name: Build iOS Simulator app (Release)
+        working-directory: apps/expo
+        run: |
+          SIM_UDID=$(node -e '
+            const { execSync } = require("node:child_process");
+            const data = JSON.parse(execSync("xcrun simctl list devices available -j", { encoding: "utf8" }));
+            const candidates = [];
+            for (const [runtime, list] of Object.entries(data.devices || {})) {
+              if (!runtime.includes("iOS")) continue;
+              for (const d of list) {
+                if (d.isAvailable && /iPhone/i.test(d.name)) {
+                  candidates.push({ runtime, name: d.name, udid: d.udid });
+                }
+              }
+            }
+            if (candidates.length === 0) process.exit(1);
+            candidates.sort((a, b) => b.runtime.localeCompare(a.runtime) || a.name.localeCompare(b.name));
+            console.log(candidates[0].udid);
+          ')
+          echo "Selected Simulator UDID: $SIM_UDID"
+          echo "SIM_UDID=$SIM_UDID" >> "$GITHUB_ENV"
+
+          export NODE_BINARY=$(which node)
+          WORKSPACE=$(ls -d ios/*.xcworkspace | head -n 1)
+          SCHEME=$(basename "$WORKSPACE" .xcworkspace)
+          xcodebuild \
+            -workspace "$WORKSPACE" \
+            -scheme "$SCHEME" \
+            -configuration Release \
+            -sdk iphonesimulator \
+            -destination "id=$SIM_UDID" \
+            -derivedDataPath ios/build \
+            CODE_SIGNING_ALLOWED=NO \
+            build
+
+      - name: Boot Simulator, launch app & capture screenshot
+        working-directory: apps/expo
+        run: |
+          mkdir -p ios-artifacts
+          touch /tmp/ios-launch-marker
+
+          xcrun simctl boot "$SIM_UDID" || true
+          xcrun simctl bootstatus "$SIM_UDID" -b
+
+          APP_PATH=$(find ios/build/Build/Products/Release-iphonesimulator -maxdepth 1 -name "*.app" | head -n 1)
+          if [ -z "$APP_PATH" ]; then
+            echo "Built .app not found"
+            exit 1
+          fi
+          xcrun simctl install "$SIM_UDID" "$APP_PATH"
+          xcrun simctl launch "$SIM_UDID" com.anonymous.unikitexpo
+          sleep 10
+          xcrun simctl io "$SIM_UDID" screenshot ios-artifacts/ios-simulator-home.png
+
+          xcrun simctl spawn "$SIM_UDID" launchctl list | grep -i unikitexpo > ios-artifacts/launchctl.txt || true
+
+          CRASH_FOUND=0
+          if [ -d "$HOME/Library/Logs/DiagnosticReports" ]; then
+            while IFS= read -r report; do
+              cp "$report" ios-artifacts/
+              CRASH_FOUND=1
+            done < <(find "$HOME/Library/Logs/DiagnosticReports" -maxdepth 2 -type f \( -name "*unikitexpo*.ips" -o -name "*unikitexpo*.crash" \) -newer /tmp/ios-launch-marker)
+          fi
+
+          if [ "$CRASH_FOUND" -ne 0 ]; then
+            echo "Crash report detected for com.anonymous.unikitexpo"
+            exit 1
+          fi
+
+      - name: Upload iOS artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ios-simulator-check
+          path: apps/expo/ios-artifacts

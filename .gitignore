@@ -6,6 +6,10 @@ node_modules/
 dist/
 *.tsbuildinfo
 
+# maestro 로컬 실행 증거(스크린샷·계층·기기 로그·metro 로그) — CI에서는 artifact로 업로드
+.maestro/evidence/
+.maestro/metro.log
+
 # next
 .next/
 out/

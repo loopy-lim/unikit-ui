@@ -1,5 +1,7 @@
 # CI — 푸시·PR마다 전체 검증 관문 실행
-# (로컬 게이트와 동일: typecheck 3종 · audit:design · 웹 빌드 · 엑스포 번들 컴파일)
+# (로컬 게이트와 동일: 단위 테스트 · typecheck · audit:design · ui-sdk 프로브 · 웹 빌드 ·
+#  데스크톱 프론트 빌드 · 엑스포 Android/iOS 번들 컴파일 — 정적 검증은 전부 이 관문에,
+#  실기기 실행 경로는 e2e-android.yml이 담당한다)
 name: CI
 
 on:
@@ -18,17 +20,33 @@ jobs:
       - name: 의존성 설치
         run: bun install --frozen-lockfile
 
-      - name: 타입 검사 (패키지·웹·엑스포)
+      - name: 단위 테스트
+        run: bun run test
+
+      - name: 타입 검사 (패키지·웹·엑스포·모바일·데스크톱)
         run: bun run typecheck
 
       - name: 디자인 일관성 감사 (audit:design)
         run: bun run audit:design
 
+      - name: UI SDK 계약 프로브 (probe:ui-sdk)
+        working-directory: packages/unikit
+        run: bun run probe:ui-sdk
+
       - name: 웹 빌드 (Next.js)
         working-directory: apps/web
         run: bun run build
 
+      # 데스크톱(Tauri) 프론트엔드 — default export 조건의 실제 생산 빌드 경로.
+      # tauri build(Rust)가 아니라 웹 에셋 번들까지만(tsc + vite)
+      - name: 데스크톱 프론트 빌드 (Tauri 웹 에셋)
+        working-directory: apps/desktop
+        run: bun run build
 
       - name: 네이티브 번들 컴파일 (Expo export — Android/Hermes)
         working-directory: apps/expo
         run: bun x expo export --platform android
+
+      - name: 네이티브 번들 컴파일 (Expo export — iOS/Hermes)
+        working-directory: apps/expo
+        run: bun x expo export --platform ios
