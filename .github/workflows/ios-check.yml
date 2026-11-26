@@ -6,7 +6,10 @@ on:
 jobs:
   ios-simulator:
     runs-on: macos-latest
-    timeout-minutes: 30
+    # 콜드 러너 실측: bun install + iOS export + prebuild/CocoaPods에만 ~10분,
+    # xcodebuild Release(시뮬레이터)가 나머지를 쓴다 — 30분이면 빌드 도중 만료된다
+    # (2026-11-26 실행 45844589367에서 빌드 스텝 취소로 확인).
+    timeout-minutes: 60
     env:
       LANG: en_US.UTF-8
 
