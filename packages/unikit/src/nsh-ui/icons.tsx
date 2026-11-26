@@ -31,7 +31,10 @@ function splitColorToken(spec: string): { name: string; opacity: number | null }
   const slash = spec.indexOf("/");
   const name = slash === -1 ? spec : spec.slice(0, slash);
   const suffix = slash === -1 ? "" : spec.slice(slash + 1);
-  return { name, opacity: /^\d+$/.test(suffix) ? Number(suffix) : null };
+  return {
+    name,
+    opacity: /^\d+$/.test(suffix) && Number(suffix) <= 100 ? Number(suffix) : null,
+  };
 }
 
 /** className의 text-* 색 토큰을 nsh token()으로 해석한 색.

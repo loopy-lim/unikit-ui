@@ -147,6 +147,7 @@ test("unikit components drive on nsh", async () => {
   // 15) iconColor 토큰 해석 — 상태 변형 접두(hover:)의 text-*는 무시하고
   //     접두 없는 text-* 중 나중 토큰이 이긴다(캐스케이드와 같은 방향).
   //     투명도 접미는 알파 채널에 반영된다(전부 무시되던 dead code의 회귀).
+  //     상한 밖 접미(/150)는 무효 — 완전 불투명(100으로 클램프한 결과와 같다).
   expect(iconColor("hover:text-muted-foreground text-primary")).toBe(
     token("primary"),
   );
@@ -157,4 +158,5 @@ test("unikit components drive on nsh", async () => {
   expect(iconColor("text-foreground/50")).toBe(
     `${token("foreground").slice(0, 7)}80`,
   );
+  expect(iconColor("text-foreground/150")).toBe(token("foreground"));
 });
