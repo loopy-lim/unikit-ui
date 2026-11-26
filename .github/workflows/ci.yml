@@ -9,6 +9,10 @@ on:
     branches: [main]
   pull_request:
 
+# 이 관문은 읽기만 필요하다 — 토큰은 최소 권한으로(publish.yml·sdd-autopilot.yml 관행)
+permissions:
+  contents: read
+
 jobs:
   verify:
     runs-on: ubuntu-latest

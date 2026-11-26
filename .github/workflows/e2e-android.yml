@@ -55,25 +55,41 @@ jobs:
       # Gradle 의존성·빌드 캐시
       - uses: gradle/actions/setup-gradle@v4
 
-      # assembleDebug가 SDK 구성요소를 내려받을 수 있게 라이선스 승인
+      # assembleDebug가 SDK 구성요소를 내려받을 수 있게 라이선스 승인.
+      # pipefail이 꺼진 Actions bash에선 yes의 SIGPIPE가 실패를 만들지 않으므로
+      # || true는 sdkmanager 본연의 실패만 삼킨다 — 걸지 않는다(실패는 여기서 즉시).
       - name: Android SDK 라이선스 승인
-        run: yes | "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" --licenses > /dev/null || true
+        run: yes | "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" --licenses > /dev/null
 
-      # 에뮬레이터 시스템 이미지(~1.5GB) 재다운로드 방지
-      - name: 에뮬레이터 시스템 이미지 캐시 (API 35 x86_64)
+      # 에뮬레이터 시스템 이미지(~1.5GB) 재다운로드 방지. /usr/local/lib/android/sdk는
+      # ubuntu-latest 러너 이미지의 공식 ANDROID 루트(Actions env 컨텍스트엔 러너
+      # 기본 환경변수가 안 들어와 셸 확장 대신 리터럴로 쓴다). 키에는 대상
+      # 이미지(arch·target·OS)를 전부 반영해 target 교체 시 충돌하지 않게 한다.
+      - name: 에뮬레이터 시스템 이미지 캐시 (API 35 google_apis x86_64)
         uses: actions/cache@v4
         with:
-          path: /usr/local/lib/android/sdk/system-images/android-35
-          key: emulator-sysimg-android-35-x86_64-v1
+          path: /usr/local/lib/android/sdk/system-images/android-35/google_apis/x86_64
+          key: emulator-sysimg-${{ runner.os }}-android-35-google_apis-x86_64-v1
+          restore-keys: emulator-sysimg-${{ runner.os }}-android-35-
 
-      # get.maestro.mobile.dev는 실행 시점의 최신을 당겨오는 대신 MAESTRO_VERSION을
-      # 지정하면 해당 GitHub 릴리스(cli-<버전>/maestro.zip)로 내려받는다 — 이 플로우를
-      # 로컬 AVD에서 검증한 바로 그 버전으로 고정(공급망 트러스트 앵커)
-      - name: Maestro 설치 (버전 고정)
+      # 설치 스크립트(get.maestro.mobile.dev)를 파이프로 실행하는 대신, 고정한
+      # GitHub 릴리스 아티팩트(cli-2.12.1/maestro.zip)를 직접 내려받고 SHA-256로
+      # 검증한다 — 공급망 트러스트 앵커를 불변 릴리스+체크섬으로. 2.12.1은 이
+      # 플로우를 로컬 AVD에서 검증한 버전이다. --version 실행으로 설치 즉시 파손 확인.
+      - name: Maestro 설치 (릴리스 고정 + 체크섬 검증)
         env:
           MAESTRO_VERSION: "2.12.1"
+          MAESTRO_SHA256: "54dbb0716425626604973cbb374c585ca30272375d9ce15177a1152765ddd9d7"
         run: |
-          curl -Ls https://get.maestro.mobile.dev | bash
+          set -euo pipefail
+          curl -fsSL -o /tmp/maestro.zip "https://github.com/mobile-dev-inc/maestro/releases/download/cli-${MAESTRO_VERSION}/maestro.zip"
+          echo "${MAESTRO_SHA256}  /tmp/maestro.zip" | sha256sum -c -
+          mkdir -p "$HOME/.maestro"
+          unzip -q -o /tmp/maestro.zip -d "$HOME/.maestro"
+          # zip 루트가 maestro/ 폴더라 한 겹 들린다 — 설치 스크립트와 같은 배치로 편다
+          mv "$HOME/.maestro/maestro"/* "$HOME/.maestro/"
+          rmdir "$HOME/.maestro/maestro"
+          "$HOME/.maestro/bin/maestro" --version
           echo "$HOME/.maestro/bin" >> "$GITHUB_PATH"
 
       # android/는 커밋돼 있지 않다(apps/expo/.gitignore) — prebuild로 생성
