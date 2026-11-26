@@ -101,30 +101,16 @@ jobs:
             exit 1
           fi
 
+      # 액션이 script를 줄 단위로 쪼개 sh -c로 실행하므로(실행 45853306577에서
+      # for 루프가 잘려 사망 — script-parser.ts 참고), 제어 흐름 전체를
+      # .maestro/run-smoke.sh에 두고 한 줄 호출로 실행한다.
       - name: 에뮬레이터 부팅 + Maestro 스모크
         uses: reactivecircus/android-emulator-runner@v2
         with:
           api-level: 35
           arch: x86_64
           target: google_apis
-          script: |
-            adb install -r apps/expo/android/app/build/outputs/apk/debug/app-debug.apk
-            adb reverse tcp:8081 tcp:8081
-            (cd apps/expo && bun x expo start --port 8081 > ../../.maestro/metro.log 2>&1 &)
-            # Metro가 8081을 듣기 전에 앱이 번들을 당기면 red screen이 뜬다 —
-            # /status가 응답한 뒤에 플로우(launchApp)를 시작한다(최대 120초 대기).
-            # 대기 실패를 그냥 넘기면 maestro의 launch 타임아웃으로 엉뚱하게 귀결되므로
-            # 여기서 즉시 실패시키고 로그로 안내한다.
-            metro_ready=0
-            for i in $(seq 1 60); do
-              if curl -sf -o /dev/null http://localhost:8081/status; then metro_ready=1; break; fi
-              sleep 2
-            done
-            if [ "$metro_ready" != "1" ]; then
-              echo "Metro가 120초 내에 8081을 듣지 시작하지 않았다 — .maestro/metro.log 참고"
-              exit 1
-            fi
-            maestro test .maestro/ --debug-output .maestro/evidence
+          script: sh .maestro/run-smoke.sh
 
       # upload-artifact v4는 검색 경로들의 최소 공통 조상에 루트를 두므로
       # 절대경로(/tmp)와 섞지 않는다 — 증거는 전부 워크스페이스 상대 .maestro/ 아래
