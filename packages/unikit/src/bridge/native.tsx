@@ -39,15 +39,24 @@
  */
 import {
   Children,
+  Fragment,
+  createContext,
   forwardRef,
   isValidElement,
+  useContext,
   useEffect,
+  useId,
+  useLayoutEffect,
+  useMemo,
   useRef,
   useState,
+  useSyncExternalStore,
   type ReactElement,
+  type ReactNode,
   type Ref,
 } from "react";
 import {
+  AccessibilityInfo,
   Animated,
   Dimensions,
   Easing,
@@ -114,13 +123,30 @@ import {
 } from "lucide-react-native";
 
 import { cn } from "../lib/utils";
+import {
+  detectOverlayMotionPreset,
+  detectTailwindAnimatePreset,
+  extractUniversalTransform,
+  getMotionDriver,
+  hasNativeTransitionClass,
+  parseDurationMs,
+  parseRotateDeg,
+  subscribeMotionDriver,
+  type OverlayMotionPhase,
+  type OverlayMotionPreset,
+  type TailwindAnimatePreset,
+} from "./motion-registry";
 import type {
   AnimateLayoutFn,
   ApplyColorScheme,
+  BridgeColorScheme,
+  BridgeDragEvent,
   BridgeImageRef,
   BridgeKeyEvent,
   BridgePressableRef,
+  BridgeScrollEvent,
   BridgeScrollViewRef,
+  BridgeStyle,
   BridgeTextRef,
   BridgeTextInputRef,
   IconProps,
@@ -130,17 +156,20 @@ import type {
   LoopRotateProps,
   MeasureCallback,
   MeasureInWindow,
+  PortalHostProps,
   PortalProps,
   PressableProps,
   ScrollViewProps,
   SectionListComponent,
   KeyboardAvoidingViewComponent,
+  SelectOptGroupProps,
   SelectOptionProps,
   SelectProps,
   TextProps,
   TextInputProps,
   BridgeRole,
   GetViewport,
+  UseColorScheme,
   UseDismiss,
   UseDragOptions,
   UseDragResult,
@@ -156,7 +185,141 @@ export type * from "./types";
 /** Tailwind 클래스 없이도 확정 동작하는 고정 스타일（백드롭은 StyleSheet.absoluteFill 토큰 사용） */
 const STYLES = StyleSheet.create({
   selectList: { maxHeight: 288 },
+  portalHostRoot: { flex: 1 },
 });
+
+// ---------------------------------------------------------------------------
+// 접근성 모션 감소(Reduced Motion) & 색 스킴 스토어
+// ---------------------------------------------------------------------------
+let reducedMotionEnabled = false;
+let reducedMotionInitialized = false;
+const reducedMotionListeners = new Set<() => void>();
+
+function ensureReducedMotionSubscribed() {
+  if (reducedMotionInitialized) return;
+  reducedMotionInitialized = true;
+  if (typeof AccessibilityInfo?.isReduceMotionEnabled === "function") {
+    AccessibilityInfo.isReduceMotionEnabled()
+      .then((enabled) => {
+        if (enabled !== reducedMotionEnabled) {
+          reducedMotionEnabled = enabled;
+          reducedMotionListeners.forEach((listener) => listener());
+        }
+      })
+      .catch(() => {});
+  }
+  if (typeof AccessibilityInfo?.addEventListener === "function") {
+    AccessibilityInfo.addEventListener("reduceMotionChanged", (enabled) => {
+      if (enabled !== reducedMotionEnabled) {
+        reducedMotionEnabled = enabled;
+        reducedMotionListeners.forEach((listener) => listener());
+      }
+    });
+  }
+}
+
+const subscribeReducedMotion = (listener: () => void) => {
+  ensureReducedMotionSubscribed();
+  reducedMotionListeners.add(listener);
+  return () => {
+    reducedMotionListeners.delete(listener);
+  };
+};
+const getReducedMotionSnapshot = () => reducedMotionEnabled;
+const getReducedMotionServerSnapshot = () => false;
+
+function useReducedMotionNative(): boolean {
+  return useSyncExternalStore(
+    subscribeReducedMotion,
+    getReducedMotionSnapshot,
+    getReducedMotionServerSnapshot,
+  );
+}
+
+const getMotionDriverSnapshot = () => getMotionDriver();
+function useMotionDriver() {
+  return useSyncExternalStore(
+    subscribeMotionDriver,
+    getMotionDriverSnapshot,
+    getMotionDriverSnapshot,
+  );
+}
+
+const MODAL_EXIT_WAIT_MS = 180;
+const EASE_OUT_EXPO = Easing.bezier(0.22, 1, 0.36, 1);
+const EASE_IN_CUBIC = Easing.in(Easing.cubic);
+
+type NativeTransformEntry =
+  | { translateX: number }
+  | { translateY: number }
+  | { scale: number }
+  | { rotate: string };
+
+type ResolvedNativeStyleResult = {
+  resolvedStyle: ViewStyle | undefined;
+  translateX: number;
+  translateY: number;
+  scale: number;
+  rotate: string | undefined;
+  hasTransform: boolean;
+};
+
+/**
+ * `BridgeStyle`의 `position: "fixed"` → `"absolute"` 치환 및 범용 변환 단축키
+ * (`translateX`/`translateY`/`scale`/`rotate`)를 RN `transform` 배열로 변환한다.
+ */
+function resolveNativeStyle(style?: BridgeStyle): ResolvedNativeStyleResult {
+  if (!style) {
+    return {
+      resolvedStyle: undefined,
+      translateX: 0,
+      translateY: 0,
+      scale: 1,
+      rotate: undefined,
+      hasTransform: false,
+    };
+  }
+  const extracted = extractUniversalTransform(style);
+  const rawRest = (extracted.restStyle ?? {}) as Record<string, unknown>;
+  const fixedApplied =
+    rawRest.position === "fixed" ? { ...rawRest, position: "absolute" } : rawRest;
+
+  if (!extracted.hasTransformShorthand) {
+    const existing = fixedApplied.transform;
+    const hasTransform = Array.isArray(existing) ? existing.length > 0 : Boolean(existing);
+    return {
+      resolvedStyle: (Object.keys(fixedApplied).length > 0
+        ? fixedApplied
+        : undefined) as ViewStyle | undefined,
+      translateX: 0,
+      translateY: 0,
+      scale: 1,
+      rotate: undefined,
+      hasTransform,
+    };
+  }
+
+  const transforms: NativeTransformEntry[] = Array.isArray(fixedApplied.transform)
+    ? [...(fixedApplied.transform as NativeTransformEntry[])]
+    : [];
+  if (extracted.translateX !== undefined) transforms.push({ translateX: extracted.translateX });
+  if (extracted.translateY !== undefined) transforms.push({ translateY: extracted.translateY });
+  if (extracted.scale !== undefined) transforms.push({ scale: extracted.scale });
+  if (extracted.rotate !== undefined) transforms.push({ rotate: extracted.rotate });
+
+  const merged: Record<string, unknown> = {
+    ...fixedApplied,
+    transform: transforms,
+  };
+  return {
+    resolvedStyle: merged as ViewStyle,
+    translateX: extracted.translateX ?? 0,
+    translateY: extracted.translateY ?? 0,
+    scale: extracted.scale ?? 1,
+    rotate: extracted.rotate,
+    hasTransform: transforms.length > 0,
+  };
+}
 
 // ---------------------------------------------------------------------------
 // 접근성 역할 매핑 — 웹 ARIA role 중 RN 유효 목록에 없는 값(tabpanel·dialog·
@@ -227,11 +390,378 @@ const androidKeyDown = (onKeyDown?: (event: BridgeKeyEvent) => void) =>
     ? (event: NativeKeyDownLike) => onKeyDown(toBridgeKeyEvent(event))
     : undefined;
 
+const PortalPhaseContext = createContext<OverlayMotionPhase>("enter");
+
+function presetEnterDuration(preset: OverlayMotionPreset | null): number {
+  switch (preset) {
+    case "dialog":
+      return 200;
+    case "popover":
+      return 160;
+    case "sheet-top":
+    case "sheet-bottom":
+    case "sheet-left":
+    case "sheet-right":
+      return 260;
+    case "toast":
+      return 220;
+    case "backdrop":
+      return 180;
+    default:
+      return 200;
+  }
+}
+
+function presetExitDuration(preset: OverlayMotionPreset | null): number {
+  switch (preset) {
+    case "dialog":
+      return 150;
+    case "popover":
+      return 120;
+    case "sheet-top":
+    case "sheet-bottom":
+    case "sheet-left":
+    case "sheet-right":
+      return 180;
+    case "toast":
+      return 160;
+    case "backdrop":
+      return 150;
+    default:
+      return 150;
+  }
+}
+
+type CoreAnimatedViewProps = {
+  viewRef: Ref<ViewInstance> | undefined;
+  className?: string;
+  style?: BridgeStyle;
+  preset: OverlayMotionPreset | null;
+  hasTransition: boolean;
+  animatePreset?: TailwindAnimatePreset | null;
+  phase: OverlayMotionPhase;
+  reducedMotion: boolean;
+  resolvedStyle: ViewStyle | undefined;
+  extracted: ResolvedNativeStyleResult;
+  children?: ReactNode;
+  [key: string]: unknown;
+};
+
+/**
+ * 기본 RN 0.88 코어 Animated 드라이버(`useNativeDriver: true`).
+ * Reanimated 드라이버가 설치되지 않은 앱에서도 오버레이 등장/퇴장 및 Switch·
+ * Toast·Drawer 스냅백 전환을 UI 스레드에서 구동한다.
+ */
+function CoreAnimatedView({
+  viewRef,
+  className,
+  style,
+  preset,
+  hasTransition,
+  animatePreset: _animatePreset,
+  phase,
+  reducedMotion,
+  resolvedStyle,
+  extracted,
+  children,
+  ...rnViewProps
+}: CoreAnimatedViewProps) {
+  const classResolved = useResolveClassNames(className ?? "");
+  const styleOpacity =
+    typeof style?.opacity === "number" ? style.opacity : undefined;
+  const classOpacity =
+    typeof classResolved.opacity === "number" ? classResolved.opacity : undefined;
+  const targetOpacity = styleOpacity ?? classOpacity ?? 1;
+
+  const targetTx = extracted.translateX;
+  const targetTy = extracted.translateY;
+  const targetScale = extracted.scale;
+  const durationMs = parseDurationMs(className, 200);
+
+  const presenceProgress = useRef(
+    new Animated.Value(reducedMotion || !preset ? 1 : 0),
+  ).current;
+  const transOpacity = useRef(new Animated.Value(targetOpacity)).current;
+  const transX = useRef(new Animated.Value(targetTx)).current;
+  const transY = useRef(new Animated.Value(targetTy)).current;
+  const transScale = useRef(new Animated.Value(targetScale)).current;
+  const prevTargets = useRef({
+    opacity: targetOpacity,
+    tx: targetTx,
+    ty: targetTy,
+    scale: targetScale,
+  });
+
+  useEffect(() => {
+    if (!preset) {
+      presenceProgress.setValue(1);
+      return;
+    }
+    if (reducedMotion) {
+      presenceProgress.setValue(phase === "enter" ? 1 : 0);
+      return;
+    }
+    if (phase === "enter") {
+      presenceProgress.setValue(0);
+      Animated.timing(presenceProgress, {
+        toValue: 1,
+        duration: presetEnterDuration(preset),
+        easing: EASE_OUT_EXPO,
+        useNativeDriver: true,
+      }).start();
+    } else {
+      Animated.timing(presenceProgress, {
+        toValue: 0,
+        duration: presetExitDuration(preset),
+        easing: EASE_IN_CUBIC,
+        useNativeDriver: true,
+      }).start();
+    }
+  }, [preset, phase, reducedMotion, presenceProgress]);
+
+  useEffect(() => {
+    const prev = prevTargets.current;
+    const animateChange = hasTransition && !reducedMotion;
+    const animations: Animated.CompositeAnimation[] = [];
+
+    const syncVal = (animVal: Animated.Value, prevVal: number, nextVal: number) => {
+      if (prevVal === nextVal) return;
+      if (animateChange) {
+        animations.push(
+          Animated.timing(animVal, {
+            toValue: nextVal,
+            duration: durationMs,
+            easing: EASE_OUT_EXPO,
+            useNativeDriver: true,
+          }),
+        );
+      } else {
+        animVal.setValue(nextVal);
+      }
+    };
+
+    syncVal(transOpacity, prev.opacity, targetOpacity);
+    syncVal(transX, prev.tx, targetTx);
+    syncVal(transY, prev.ty, targetTy);
+    syncVal(transScale, prev.scale, targetScale);
+    prevTargets.current = {
+      opacity: targetOpacity,
+      tx: targetTx,
+      ty: targetTy,
+      scale: targetScale,
+    };
+
+    if (animations.length > 0) {
+      Animated.parallel(animations).start();
+    }
+  }, [
+    hasTransition,
+    reducedMotion,
+    durationMs,
+    targetOpacity,
+    targetTx,
+    targetTy,
+    targetScale,
+    transOpacity,
+    transX,
+    transY,
+    transScale,
+  ]);
+
+  const combinedOpacity = preset
+    ? hasTransition
+      ? Animated.multiply(presenceProgress, transOpacity)
+      : presenceProgress
+    : hasTransition || styleOpacity !== undefined
+      ? transOpacity
+      : undefined;
+
+  const animatedTransforms: Record<string, unknown>[] = [];
+  if (preset && !reducedMotion) {
+    switch (preset) {
+      case "dialog":
+        animatedTransforms.push({
+          scale: presenceProgress.interpolate({
+            inputRange: [0, 1],
+            outputRange: [0.95, 1],
+          }),
+        });
+        break;
+      case "popover":
+        animatedTransforms.push({
+          scale: presenceProgress.interpolate({
+            inputRange: [0, 1],
+            outputRange: [0.96, 1],
+          }),
+        });
+        animatedTransforms.push({
+          translateY: presenceProgress.interpolate({
+            inputRange: [0, 1],
+            outputRange: [-4, 0],
+          }),
+        });
+        break;
+      case "sheet-top":
+        animatedTransforms.push({
+          translateY: presenceProgress.interpolate({
+            inputRange: [0, 1],
+            outputRange: [-64, 0],
+          }),
+        });
+        break;
+      case "sheet-bottom":
+        animatedTransforms.push({
+          translateY: presenceProgress.interpolate({
+            inputRange: [0, 1],
+            outputRange: [64, 0],
+          }),
+        });
+        break;
+      case "sheet-left":
+        animatedTransforms.push({
+          translateX: presenceProgress.interpolate({
+            inputRange: [0, 1],
+            outputRange: [-64, 0],
+          }),
+        });
+        break;
+      case "sheet-right":
+        animatedTransforms.push({
+          translateX: presenceProgress.interpolate({
+            inputRange: [0, 1],
+            outputRange: [64, 0],
+          }),
+        });
+        break;
+      case "toast":
+        animatedTransforms.push({
+          translateY: presenceProgress.interpolate({
+            inputRange: [0, 1],
+            outputRange: [12, 0],
+          }),
+        });
+        animatedTransforms.push({
+          scale: presenceProgress.interpolate({
+            inputRange: [0, 1],
+            outputRange: [0.97, 1],
+          }),
+        });
+        break;
+    }
+  }
+
+  if (extracted.hasTransform || hasTransition) {
+    animatedTransforms.push({ translateX: transX });
+    animatedTransforms.push({ translateY: transY });
+    animatedTransforms.push({ scale: transScale });
+    if (extracted.rotate !== undefined) {
+      animatedTransforms.push({ rotate: extracted.rotate });
+    }
+  }
+
+  // resolvedStyle에서 static transform/opacity를 빼고 Animated.Value로 일원화한다.
+  const baseRestStyle = useMemo(() => {
+    if (!resolvedStyle) return undefined;
+    const clone = { ...(resolvedStyle as Record<string, unknown>) };
+    delete clone.transform;
+    if (combinedOpacity !== undefined) delete clone.opacity;
+    return clone as ViewStyle;
+  }, [resolvedStyle, combinedOpacity]);
+
+  const motionOverlayStyle = useMemo(
+    () =>
+      ({
+        ...(combinedOpacity !== undefined ? { opacity: combinedOpacity } : {}),
+        ...(animatedTransforms.length > 0 ? { transform: animatedTransforms } : {}),
+      }) as ViewStyle,
+    // Animated.Value 참조는 안정적이므로 length·여부 변화 시에만 재조립
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [Boolean(combinedOpacity), animatedTransforms.length, extracted.rotate],
+  );
+
+  return (
+    <Animated.View
+      ref={viewRef as Ref<Animated.AnimatedComponent<typeof RNView>> as never}
+      className={className}
+      style={[baseRestStyle, motionOverlayStyle] as never}
+      {...rnViewProps}
+    >
+      {children}
+    </Animated.View>
+  );
+}
+
+type MotionViewProps = CoreAnimatedViewProps & {
+  rawStyle?: BridgeStyle;
+};
+
+function MotionView({
+  viewRef,
+  className,
+  rawStyle,
+  style: _ignoredStyle,
+  preset,
+  hasTransition,
+  animatePreset = null,
+  phase: _ignoredPhase,
+  reducedMotion: _ignored,
+  resolvedStyle,
+  extracted,
+  children,
+  ...rnViewProps
+}: MotionViewProps) {
+  const driver = useMotionDriver();
+  const phase = useContext(PortalPhaseContext);
+  const reducedMotion = useReducedMotionNative();
+
+  if (driver) {
+    const DriverAnimatedView = driver.AnimatedView;
+    return (
+      <DriverAnimatedView
+        viewRef={viewRef}
+        className={className}
+        style={resolvedStyle}
+        preset={preset}
+        hasTransition={hasTransition}
+        animatePreset={animatePreset}
+        phase={phase}
+        reducedMotion={reducedMotion}
+        hasUserTransform={extracted.hasTransform}
+        {...rnViewProps}
+      >
+        {children}
+      </DriverAnimatedView>
+    );
+  }
+
+  return (
+    <CoreAnimatedView
+      viewRef={viewRef}
+      className={className}
+      style={rawStyle}
+      preset={preset}
+      hasTransition={hasTransition}
+      animatePreset={animatePreset}
+      phase={phase}
+      reducedMotion={reducedMotion}
+      resolvedStyle={resolvedStyle}
+      extracted={extracted}
+      {...rnViewProps}
+    >
+      {children}
+    </CoreAnimatedView>
+  );
+}
+
 // ---------------------------------------------------------------------------
 // View — RN View 재노출（타입만 브리지 계약으로 좁힌다）.
 // aria-modal → accessibilityViewIsModal, aria-describedby는 RN 계약 없음（폐기）.
+// accessibilityRole="alert"|"status" → Android accessibilityLiveRegion 매핑.
 // 인라인 style의 position:"fixed"（웹 포탈 오버레이 관용）은 RN에 없는 값이라
-// "absolute"로 치환한다 — lib/overlay가 플랫폼 무관하게 fixed를 쓸 수 있게.
+// "absolute"로 치환하고, 범용 transform 단축키(`translateX`/`translateY`/
+// `scale`/`rotate`)를 RN transform 배열로 풀어준다.
+// `unikit-*` 모션 프리셋 또는 `transition*` 클래스가 있으면 MotionView(기본 RN
+// Animated 또는 @unikit-bridge/ui/motion의 Reanimated 4 CSS 드라이버)로 위임한다.
 // ---------------------------------------------------------------------------
 const View = forwardRef<BridgeViewRef, ViewProps>(
   (
@@ -266,41 +796,70 @@ const View = forwardRef<BridgeViewRef, ViewProps>(
     },
     ref,
   ) => {
-    // fixed → absolute 치환（RN은 absolute|relative만 지원）
-    const resolvedStyle =
-      style && (style as { position?: string }).position === "fixed"
-        ? ({ ...style, position: "absolute" } as ViewStyle)
-        : (style as ViewStyle);
+    const extracted = resolveNativeStyle(style);
+    const liveRegion =
+      accessibilityRole === "alert"
+        ? "assertive"
+        : accessibilityRole === "status"
+          ? "polite"
+          : undefined;
+    const rnProps = {
+      nativeID,
+      testID,
+      onLayout: onLayout
+        ? (event: { nativeEvent: { layout: { width: number; height: number } } }) =>
+            onLayout({
+              width: event.nativeEvent.layout.width,
+              height: event.nativeEvent.layout.height,
+            })
+        : undefined,
+      accessibilityRole: toNativeRole(accessibilityRole),
+      accessibilityLabel,
+      accessibilityLiveRegion: liveRegion,
+      "aria-hidden": ariaHidden,
+      accessibilityElementsHidden: ariaHidden,
+      accessibilityViewIsModal: ariaModal,
+      accessibilityValue: toAccessibilityValue({
+        "aria-valuenow": ariaValueNow,
+        "aria-valuemin": ariaValueMin,
+        "aria-valuemax": ariaValueMax,
+      }),
+      pointerEvents,
+      onKeyDown: androidKeyDown(onKeyDown),
+      focusable,
+      ...rest,
+    };
+
+    const preset = detectOverlayMotionPreset(className);
+    const hasTransition = hasNativeTransitionClass(className);
+    const animatePreset = detectTailwindAnimatePreset(className);
+    if (preset !== null || hasTransition || animatePreset !== null) {
+      return (
+        <MotionView
+          viewRef={ref as Ref<ViewInstance>}
+          className={className}
+          rawStyle={style}
+          style={style}
+          preset={preset}
+          hasTransition={hasTransition}
+          animatePreset={animatePreset}
+          phase="enter"
+          reducedMotion={false}
+          resolvedStyle={extracted.resolvedStyle}
+          extracted={extracted}
+          {...(rnProps as Record<string, unknown>)}
+        >
+          {children}
+        </MotionView>
+      );
+    }
+
     return (
       <RNView
         ref={ref as Ref<ViewInstance>}
-        nativeID={nativeID}
-        testID={testID}
-        onLayout={
-          onLayout
-            ? (event) =>
-                onLayout({
-                  width: event.nativeEvent.layout.width,
-                  height: event.nativeEvent.layout.height,
-                })
-            : undefined
-        }
-        accessibilityRole={toNativeRole(accessibilityRole)}
-        accessibilityLabel={accessibilityLabel}
-        aria-hidden={ariaHidden}
-        accessibilityElementsHidden={ariaHidden}
-        accessibilityViewIsModal={ariaModal}
-        accessibilityValue={toAccessibilityValue({
-          "aria-valuenow": ariaValueNow,
-          "aria-valuemin": ariaValueMin,
-          "aria-valuemax": ariaValueMax,
-        })}
-        pointerEvents={pointerEvents}
         className={className}
-        style={resolvedStyle}
-        onKeyDown={androidKeyDown(onKeyDown)}
-        focusable={focusable}
-        {...rest}
+        style={extracted.resolvedStyle}
+        {...(rnProps as Record<string, unknown>)}
       >
         {children}
       </RNView>
@@ -338,7 +897,7 @@ const Text = forwardRef<BridgeTextRef, TextProps>(
       // 장식용 글리프 숨김（T-2a 제기） — View 관례와 동일 치환
       accessibilityElementsHidden={ariaHidden}
       className={className}
-      style={style as TextStyle}
+      style={resolveNativeStyle(style).resolvedStyle as TextStyle}
       {...rest}
     >
       {children}
@@ -360,6 +919,8 @@ function toAccessibilityState(props: {
   disabled?: boolean;
   "aria-checked"?: boolean | "mixed";
   "aria-selected"?: boolean;
+  "aria-pressed"?: boolean;
+  "aria-current"?: PressableProps["aria-current"];
   "aria-expanded"?: boolean;
 }) {
   const state: {
@@ -370,7 +931,13 @@ function toAccessibilityState(props: {
   } = {};
   if (props.disabled !== undefined) state.disabled = props.disabled;
   if (props["aria-checked"] !== undefined) state.checked = props["aria-checked"];
-  if (props["aria-selected"] !== undefined) state.selected = props["aria-selected"];
+  const selected =
+    props["aria-selected"] ??
+    props["aria-pressed"] ??
+    (props["aria-current"] !== undefined && props["aria-current"] !== false
+      ? true
+      : undefined);
+  if (selected !== undefined) state.selected = selected;
   if (props["aria-expanded"] !== undefined) state.expanded = props["aria-expanded"];
   return Object.keys(state).length > 0 ? state : undefined;
 }
@@ -408,13 +975,14 @@ const Pressable = forwardRef<BridgePressableRef, PressableProps>(
       "aria-valuenow": ariaValueNow,
       "aria-valuemin": ariaValueMin,
       "aria-valuemax": ariaValueMax,
-      // 웹 전용 aria-* — RN 계약이 없어 네이티브에서 폐기（한계는 머리 주석 참조）
-      "aria-current": _ariaCurrent,
-      "aria-invalid": _ariaInvalid,
+      // 웹 전용 aria-* — RN에서 표현 가능한 상태는 매핑한다.
+      "aria-current": ariaCurrent,
+      "aria-invalid": ariaInvalid,
       "aria-describedby": _ariaDescribedBy,
       onContextMenu,
       onLongPress,
       onKeyDown,
+      onLayout,
       focusable,
       hitSlop,
       nativeID,
@@ -434,8 +1002,18 @@ const Pressable = forwardRef<BridgePressableRef, PressableProps>(
         testID={testID}
         onPress={onPress ? () => onPress() : undefined}
         onLongPress={longPress ? () => longPress() : undefined}
+        onLayout={
+          onLayout
+            ? (event) =>
+                onLayout({
+                  width: event.nativeEvent.layout.width,
+                  height: event.nativeEvent.layout.height,
+                })
+            : undefined
+        }
         disabled={disabled}
         accessibilityLabel={accessibilityLabel}
+        accessibilityHint={ariaInvalid ? "유효하지 않은 입력" : undefined}
         accessibilityRole={toNativeRole(accessibilityRole)}
         aria-disabled={ariaDisabled}
         aria-checked={ariaChecked}
@@ -446,6 +1024,8 @@ const Pressable = forwardRef<BridgePressableRef, PressableProps>(
           disabled,
           "aria-checked": ariaChecked,
           "aria-selected": ariaSelected,
+          "aria-pressed": ariaPressed,
+          "aria-current": ariaCurrent,
           "aria-expanded": ariaExpanded,
         })}
         accessibilityValue={toAccessibilityValue({
@@ -461,7 +1041,7 @@ const Pressable = forwardRef<BridgePressableRef, PressableProps>(
         } as Record<string, unknown>)}
         hitSlop={hitSlop}
         className={className}
-        style={style as ViewStyle}
+        style={resolveNativeStyle(style).resolvedStyle}
         onKeyDown={androidKeyDown(onKeyDown)}
         focusable={focusable}
         {...rest}
@@ -501,7 +1081,9 @@ const TextInput = forwardRef<BridgeTextInputRef, TextInputProps>(
       multiline,
       maxLength,
       onKeyDown,
-      "aria-invalid": _ariaInvalid,
+      onFocus,
+      onBlur,
+      "aria-invalid": ariaInvalid,
       "aria-describedby": _ariaDescribedBy,
       ...rest
     },
@@ -512,8 +1094,9 @@ const TextInput = forwardRef<BridgeTextInputRef, TextInputProps>(
       nativeID={nativeID}
       testID={testID}
       accessibilityLabelledBy={accessibilityLabelledBy}
+      accessibilityHint={ariaInvalid ? "유효하지 않은 입력" : undefined}
       className={className}
-      style={style as TextStyle}
+      style={resolveNativeStyle(style).resolvedStyle as TextStyle}
       value={value}
       defaultValue={defaultValue}
       placeholder={placeholder}
@@ -524,6 +1107,8 @@ const TextInput = forwardRef<BridgeTextInputRef, TextInputProps>(
       inputMode={inputMode}
       multiline={multiline}
       maxLength={maxLength}
+      onFocus={onFocus ? () => onFocus() : undefined}
+      onBlur={onBlur ? () => onBlur() : undefined}
       onKeyPress={
         onKeyDown
           ? (event) => {
@@ -571,7 +1156,7 @@ const Image = forwardRef<BridgeImageRef, ImageProps>(
       accessibilityLabel={accessibilityLabel}
       source={source}
       className={className}
-      style={style as ImageStyle}
+      style={resolveNativeStyle(style).resolvedStyle as ImageStyle}
       onError={onError ? () => onError() : undefined}
       {...rest}
     />
@@ -580,17 +1165,121 @@ const Image = forwardRef<BridgeImageRef, ImageProps>(
 Image.displayName = "Image";
 
 // ---------------------------------------------------------------------------
-// Portal — RN Modal（transparent）. 오버레이가 부모 레이아웃을 벗어나
-// 최상위（실제로는 새 네이티브 창 계층）에 그려진다. onRequestClose는
-// 안드로이드 하드웨어 뒤로가기iOS ESC（블루투스 키보드）에 발화한다.
-// 백드롭은 onBackdropPress가 있을 때만 깔리고（절대 채움 Pressable）,
-// 배경색정렬은 backdropClassName（컨테이너 View에 적용）로.
-// modal={false}（비모달 — 토스트 등）면 Modal이 배경 터치를 차단하는 문제를
-// 피하기 위해 RN Modal 대신 절대 배치 View로 렌더한다. 이 경로는 진짜
-// 포털이 아니므로 소비자를 화면 루트에 두는 것이 전제다（머리주석 안내）.
-// dismissViaDocument는 무시한다 — 문서 리스너 계약이 없는 네이티브는 hover
-// 재계산 문제(F-4)도 없어 배경 Pressable(cover) 방식을 유지한다.
+// Portal & PortalHost — RN Modal(transparent) + 비모달 루트 텔레포트.
+// modal={true}: animated presence(180ms 퇴장 유예)로 CoreAnimatedView·Reanimated
+//   드라이버가 등장·퇴장 애니메이션을 끝까지 재생할 수 있게 한다.
+// modal={false}: UnikitThemeProvider가 감싸는 PortalHost 스토어에 등록하면 루트
+//   화면 최상위에 pointerEvents="box-none"으로 텔레포트되어 토스트 등이 배경
+//   상호작용을 가리지 않고 화면 위에 뜬다. 호스트 밖이면 인라인 절대 View 폴백.
 // ---------------------------------------------------------------------------
+type PortalEntry = [id: string, node: ReactNode];
+type PortalHostStore = {
+  set: (id: string, node: ReactNode) => void;
+  remove: (id: string) => void;
+  subscribe: (listener: () => void) => () => void;
+  getSnapshot: () => PortalEntry[];
+};
+
+function createPortalHostStore(): PortalHostStore {
+  const entries = new Map<string, ReactNode>();
+  let snapshot: PortalEntry[] = [];
+  const listeners = new Set<() => void>();
+  const notify = () => {
+    snapshot = Array.from(entries.entries());
+    listeners.forEach((listener) => listener());
+  };
+  return {
+    set: (id, node) => {
+      entries.set(id, node);
+      notify();
+    },
+    remove: (id) => {
+      if (entries.delete(id)) notify();
+    },
+    subscribe: (listener) => {
+      listeners.add(listener);
+      return () => listeners.delete(listener);
+    },
+    getSnapshot: () => snapshot,
+  };
+}
+
+const PortalHostContext = createContext<PortalHostStore | null>(null);
+
+function PortalOutlet({ store }: { store: PortalHostStore }) {
+  const entries = useSyncExternalStore(
+    store.subscribe,
+    store.getSnapshot,
+    store.getSnapshot,
+  );
+  if (entries.length === 0) return null;
+  return (
+    <RNView pointerEvents="box-none" style={StyleSheet.absoluteFill}>
+      {entries.map(([id, node]) => (
+        <Fragment key={id}>{node}</Fragment>
+      ))}
+    </RNView>
+  );
+}
+
+const PortalHost = ({ children }: PortalHostProps) => {
+  const storeRef = useRef<PortalHostStore | null>(null);
+  if (storeRef.current === null) {
+    storeRef.current = createPortalHostStore();
+  }
+  const store = storeRef.current;
+  return (
+    <PortalHostContext.Provider value={store}>
+      <RNView style={STYLES.portalHostRoot}>
+        {children}
+        <PortalOutlet store={store} />
+      </RNView>
+    </PortalHostContext.Provider>
+  );
+};
+
+function CoreMotionBackdrop({
+  className,
+  phase,
+  reducedMotion,
+}: {
+  className?: string;
+  phase: OverlayMotionPhase;
+  reducedMotion: boolean;
+}) {
+  const opacity = useRef(new Animated.Value(reducedMotion ? 1 : 0)).current;
+  useEffect(() => {
+    if (reducedMotion) {
+      opacity.setValue(phase === "enter" ? 1 : 0);
+      return;
+    }
+    if (phase === "enter") {
+      opacity.setValue(0);
+      Animated.timing(opacity, {
+        toValue: 1,
+        duration: 180,
+        easing: EASE_OUT_EXPO,
+        useNativeDriver: true,
+      }).start();
+    } else {
+      Animated.timing(opacity, {
+        toValue: 0,
+        duration: 150,
+        easing: EASE_IN_CUBIC,
+        useNativeDriver: true,
+      }).start();
+    }
+  }, [phase, reducedMotion, opacity]);
+
+  return (
+    <Animated.View
+      pointerEvents="none"
+      className={className}
+      style={[StyleSheet.absoluteFill, { opacity }] as never}
+    />
+  );
+}
+
 const Portal = ({
   children,
   visible,
@@ -599,36 +1288,121 @@ const Portal = ({
   backdropClassName,
   modal = true,
 }: PortalProps) => {
-  if (!visible) return null;
+  const hostStore = useContext(PortalHostContext);
+  const reducedMotion = useReducedMotionNative();
+  const driver = useMotionDriver();
+  const portalId = useId();
+  const [rendered, setRendered] = useState(visible);
+  const exitTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const shouldRender = visible || rendered;
+  const phase: OverlayMotionPhase = visible ? "enter" : "exit";
+
+  useLayoutEffect(() => {
+    if (exitTimerRef.current !== null) {
+      clearTimeout(exitTimerRef.current);
+      exitTimerRef.current = null;
+    }
+    if (visible) {
+      if (!rendered) setRendered(true);
+      return;
+    }
+    if (!rendered) return;
+    if (reducedMotion) {
+      setRendered(false);
+      return;
+    }
+    exitTimerRef.current = setTimeout(() => {
+      exitTimerRef.current = null;
+      setRendered(false);
+    }, MODAL_EXIT_WAIT_MS);
+    return () => {
+      if (exitTimerRef.current !== null) {
+        clearTimeout(exitTimerRef.current);
+        exitTimerRef.current = null;
+      }
+    };
+  }, [visible, rendered, reducedMotion]);
+
+  const hostedNode = useMemo(
+    () =>
+      !modal && hostStore && shouldRender ? (
+        <PortalPhaseContext.Provider value={phase}>
+          <RNView
+            pointerEvents="box-none"
+            className={cn("absolute inset-0", backdropClassName)}
+          >
+            {children}
+          </RNView>
+        </PortalPhaseContext.Provider>
+      ) : null,
+    [modal, hostStore, shouldRender, phase, backdropClassName, children],
+  );
+
+  useLayoutEffect(() => {
+    if (modal || !hostStore) return;
+    if (hostedNode) {
+      hostStore.set(portalId, hostedNode);
+    } else {
+      hostStore.remove(portalId);
+    }
+    return () => {
+      hostStore.remove(portalId);
+    };
+  }, [modal, hostStore, portalId, hostedNode]);
+
+  if (!shouldRender) return null;
   if (!modal) {
+    if (hostStore) return null;
     return (
-      <RNView
-        pointerEvents="box-none"
-        className={cn("absolute inset-0", backdropClassName)}
-      >
-        {children}
-      </RNView>
+      <PortalPhaseContext.Provider value={phase}>
+        <RNView
+          pointerEvents="box-none"
+          className={cn("absolute inset-0", backdropClassName)}
+        >
+          {children}
+        </RNView>
+      </PortalPhaseContext.Provider>
     );
   }
+
+  const BackdropComp = driver?.Backdrop;
+
   return (
     <RNModal
-      visible={visible}
+      visible={shouldRender}
       transparent
-      animationType="fade"
+      animationType="none"
       statusBarTranslucent
       onRequestClose={onRequestClose}
     >
-      <RNView className={cn("flex-1", backdropClassName)}>
-        {onBackdropPress ? (
-          <RNPressable
-            accessibilityRole="button"
-            accessibilityLabel="닫기"
-            style={StyleSheet.absoluteFill}
-            onPress={onBackdropPress}
-          />
-        ) : null}
-        {children}
-      </RNView>
+      <PortalPhaseContext.Provider value={phase}>
+        <RNView className="flex-1">
+          {backdropClassName ? (
+            BackdropComp ? (
+              <BackdropComp
+                className={backdropClassName}
+                phase={phase}
+                reducedMotion={reducedMotion}
+              />
+            ) : (
+              <CoreMotionBackdrop
+                className={backdropClassName}
+                phase={phase}
+                reducedMotion={reducedMotion}
+              />
+            )
+          ) : null}
+          {onBackdropPress ? (
+            <RNPressable
+              accessibilityRole="button"
+              accessibilityLabel="닫기"
+              style={StyleSheet.absoluteFill}
+              onPress={onBackdropPress}
+            />
+          ) : null}
+          {children}
+        </RNView>
+      </PortalPhaseContext.Provider>
     </RNModal>
   );
 };
@@ -670,7 +1444,23 @@ const ScrollView = forwardRef<BridgeScrollViewRef, ScrollViewProps>(
       accessibilityLabel={accessibilityLabel}
       horizontal={horizontal}
       pagingEnabled={pagingEnabled}
-      onScroll={onScroll ? () => onScroll() : undefined}
+      onScroll={
+        onScroll
+          ? (event) => {
+              const { contentOffset, contentSize, layoutMeasurement } =
+                event.nativeEvent;
+              const payload: BridgeScrollEvent = {
+                contentOffset: { x: contentOffset.x, y: contentOffset.y },
+                contentSize: { width: contentSize.width, height: contentSize.height },
+                layoutMeasurement: {
+                  width: layoutMeasurement.width,
+                  height: layoutMeasurement.height,
+                },
+              };
+              onScroll(payload);
+            }
+          : undefined
+      }
       onLayout={
         onLayout
           ? (event) =>
@@ -682,7 +1472,7 @@ const ScrollView = forwardRef<BridgeScrollViewRef, ScrollViewProps>(
       }
       scrollEventThrottle={16}
       className={className}
-      style={style as ViewStyle}
+      style={resolveNativeStyle(style).resolvedStyle}
       {...rest}
     >
       <RNView className={contentContainerClassName}>{children}</RNView>
@@ -703,11 +1493,54 @@ const KeyboardAvoidingView =
   RNKeyboardAvoidingView as unknown as KeyboardAvoidingViewComponent;
 
 // ---------------------------------------------------------------------------
-// Select/SelectOption — 네이티브 <select> 폴백. 웹 <select>/<option> 대응
-// 프리미티브（native-select이 소비）: Pressable 트리거（combobox） + Modal
-// 옵션 목록（option role선택 상태）. 커스텀 셀렉트（shadcn select）는
-// popover 기반 자체 구현이라 이 프리미티브를 쓰지 않는다.
+// Select/SelectOption/SelectOptGroup — 네이티브 <select> 폴백.
 // ---------------------------------------------------------------------------
+const SelectOptGroup = (_props: SelectOptGroupProps) => null;
+
+type NativeSelectListEntry =
+  | { kind: "group"; key: string; label: string }
+  | { kind: "option"; key: string; props: SelectOptionProps };
+
+function collectSelectEntries(
+  children: ReactNode,
+  inheritedDisabled = false,
+  keyPrefix = "",
+): NativeSelectListEntry[] {
+  const result: NativeSelectListEntry[] = [];
+  Children.toArray(children).forEach((child, idx) => {
+    if (!isValidElement(child)) return;
+    const rawKey = child.key != null ? String(child.key) : `${keyPrefix}${idx}`;
+    if (child.type === SelectOptGroup) {
+      const groupProps = child.props as SelectOptGroupProps;
+      result.push({
+        kind: "group",
+        key: `group-${rawKey}`,
+        label: groupProps.label,
+      });
+      result.push(
+        ...collectSelectEntries(
+          groupProps.children,
+          inheritedDisabled || Boolean(groupProps.disabled),
+          `${rawKey}-`,
+        ),
+      );
+      return;
+    }
+    const optProps = child.props as SelectOptionProps;
+    if (typeof optProps.value === "string") {
+      result.push({
+        kind: "option",
+        key: child.key != null ? String(child.key) : optProps.value,
+        props: {
+          ...optProps,
+          disabled: Boolean(optProps.disabled) || inheritedDisabled,
+        },
+      });
+    }
+  });
+  return result;
+}
+
 function Select({
   className,
   value,
@@ -723,14 +1556,15 @@ function Select({
   // 비제어 값 — value 미지정 시 내부 선택을 트리거 라벨에도 반영한다
   // （G3 F-10: 웹 <select>와 플랫폼 동작 정합）.
   const [uncontrolled, setUncontrolled] = useState<string | undefined>(defaultValue);
-  const entries = (
-    Children.toArray(children).filter(isValidElement) as ReactElement<SelectOptionProps>[]
-  ).map((entry) => ({
-    key: entry.key ?? entry.props.value,
-    props: entry.props,
-  }));
+  const entries = collectSelectEntries(children);
+  const optionEntries = entries.filter(
+    (entry): entry is Extract<NativeSelectListEntry, { kind: "option" }> =>
+      entry.kind === "option",
+  );
   const current = value ?? uncontrolled;
-  const currentLabel = entries.find((entry) => entry.props.value === current)?.props.children;
+  const currentLabel = optionEntries.find(
+    (entry) => entry.props.value === current,
+  )?.props.children;
   const commit = (next: string) => {
     if (value === undefined) setUncontrolled(next);
     onValueChange?.(next);
@@ -767,26 +1601,35 @@ function Select({
             style={StyleSheet.absoluteFill}
             onPress={() => setOpen(false)}
           />
-          <RNView className="max-w-sm self-center rounded-lg border border-border bg-popover py-1">
+          <RNView className="w-full max-w-sm self-center rounded-lg border border-border bg-popover py-1">
             <RNScrollView style={STYLES.selectList}>
-              {entries.map(({ key, props }) => (
-                <RNPressable
-                  key={key}
-                  disabled={props.disabled}
-                  accessibilityRole={toNativeRole("option")}
-                  accessibilityState={{ selected: props.value === current }}
-                  onPress={() => commit(props.value)}
-                  className={cn(
-                    "rounded-md px-3 py-2",
-                    props.value === current && "bg-accent",
-                    props.disabled && "opacity-50",
-                  )}
-                >
-                  <RNText className="text-sm text-popover-foreground" numberOfLines={1}>
-                    {props.children}
+              {entries.map((entry) =>
+                entry.kind === "group" ? (
+                  <RNText
+                    key={entry.key}
+                    className="px-3 pt-2 pb-1 text-xs font-medium text-muted-foreground"
+                  >
+                    {entry.label}
                   </RNText>
-                </RNPressable>
-              ))}
+                ) : (
+                  <RNPressable
+                    key={entry.key}
+                    disabled={entry.props.disabled}
+                    accessibilityRole={toNativeRole("option")}
+                    accessibilityState={{ selected: entry.props.value === current }}
+                    onPress={() => commit(entry.props.value)}
+                    className={cn(
+                      "rounded-md px-3 py-2",
+                      entry.props.value === current && "bg-accent",
+                      entry.props.disabled && "opacity-50",
+                    )}
+                  >
+                    <RNText className="text-sm text-popover-foreground" numberOfLines={1}>
+                      {entry.props.children}
+                    </RNText>
+                  </RNPressable>
+                ),
+              )}
             </RNScrollView>
           </RNView>
         </RNView>
@@ -806,9 +1649,15 @@ const SelectOption = (_props: SelectOptionProps) => null;
 // 두고 CSS 클래스가 담당한다(계약은 types.ts 참조).
 // ---------------------------------------------------------------------------
 const LoopRotate = ({ children, durationMs = 1000 }: LoopRotateProps) => {
+  const driver = useMotionDriver();
+  const reducedMotion = useReducedMotionNative();
   const spin = useRef(new Animated.Value(0)).current;
+
   useEffect(() => {
-    // CSS animate-spin: 1s linear infinite → 0deg→360deg 선형 루프.
+    if (driver || reducedMotion) {
+      spin.setValue(0);
+      return;
+    }
     const loop = Animated.loop(
       Animated.timing(spin, {
         toValue: 1,
@@ -819,7 +1668,18 @@ const LoopRotate = ({ children, durationMs = 1000 }: LoopRotateProps) => {
     );
     loop.start();
     return () => loop.stop();
-  }, [spin, durationMs]);
+  }, [driver, reducedMotion, spin, durationMs]);
+
+  if (driver) {
+    const DriverLoopRotate = driver.LoopRotate;
+    return (
+      <DriverLoopRotate durationMs={durationMs} reducedMotion={reducedMotion}>
+        {children}
+      </DriverLoopRotate>
+    );
+  }
+  if (reducedMotion) return <>{children}</>;
+
   return (
     <Animated.View
       style={{
@@ -839,10 +1699,15 @@ const LoopRotate = ({ children, durationMs = 1000 }: LoopRotateProps) => {
 };
 
 const LoopPulse = ({ children, durationMs = 2000 }: LoopPulseProps) => {
+  const driver = useMotionDriver();
+  const reducedMotion = useReducedMotionNative();
   const opacity = useRef(new Animated.Value(1)).current;
+
   useEffect(() => {
-    // CSS animate-pulse: 2s, 50% opacity .5, cubic-bezier(.4,0,.6,1)
-    // → 왕복 2분할 + 동일 베지어로 재현.
+    if (driver || reducedMotion) {
+      opacity.setValue(1);
+      return;
+    }
     const half = durationMs / 2;
     const pulse = Easing.bezier(0.4, 0, 0.6, 1);
     const loop = Animated.loop(
@@ -863,7 +1728,18 @@ const LoopPulse = ({ children, durationMs = 2000 }: LoopPulseProps) => {
     );
     loop.start();
     return () => loop.stop();
-  }, [opacity, durationMs]);
+  }, [driver, reducedMotion, opacity, durationMs]);
+
+  if (driver) {
+    const DriverLoopPulse = driver.LoopPulse;
+    return (
+      <DriverLoopPulse durationMs={durationMs} reducedMotion={reducedMotion}>
+        {children}
+      </DriverLoopPulse>
+    );
+  }
+  if (reducedMotion) return <>{children}</>;
+
   return <Animated.View style={{ opacity }}>{children}</Animated.View>;
 };
 
@@ -884,6 +1760,7 @@ if (
 }
 
 const animateLayout: AnimateLayoutFn = () => {
+  if (reducedMotionEnabled) return;
   try {
     LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
   } catch {
@@ -910,30 +1787,64 @@ const useDrag = (options: UseDragOptions): UseDragResult => {
   const optionsRef = useRef(options);
   optionsRef.current = options;
   const originRef = useRef({ x: 0, y: 0 });
+  const lastEventRef = useRef<BridgeDragEvent>({
+    x: 0,
+    y: 0,
+    dx: 0,
+    dy: 0,
+    vx: 0,
+    vy: 0,
+  });
   const panRef = useRef(
     PanResponder.create({
       onStartShouldSetPanResponder: () => true,
       onMoveShouldSetPanResponder: () => false,
       onPanResponderGrant: (event) => {
         originRef.current = { x: event.nativeEvent.pageX, y: event.nativeEvent.pageY };
+        lastEventRef.current = {
+          x: event.nativeEvent.pageX,
+          y: event.nativeEvent.pageY,
+          dx: 0,
+          dy: 0,
+          vx: 0,
+          vy: 0,
+        };
         setDragging(true);
         optionsRef.current.onBegin?.();
       },
       onPanResponderMove: (event, gesture) => {
-        optionsRef.current.onMove?.({
+        const payload: BridgeDragEvent = {
           x: event.nativeEvent.pageX,
           y: event.nativeEvent.pageY,
           dx: gesture.dx,
           dy: gesture.dy,
-        });
+          vx: gesture.vx,
+          vy: gesture.vy,
+        };
+        lastEventRef.current = payload;
+        optionsRef.current.onMove?.(payload);
       },
-      onPanResponderRelease: () => {
+      onPanResponderRelease: (_event, gesture) => {
+        const finalEvent: BridgeDragEvent = {
+          ...lastEventRef.current,
+          dx: gesture.dx,
+          dy: gesture.dy,
+          vx: gesture.vx,
+          vy: gesture.vy,
+        };
         setDragging(false);
-        optionsRef.current.onEnd?.();
+        optionsRef.current.onEnd?.(finalEvent);
       },
-      onPanResponderTerminate: () => {
+      onPanResponderTerminate: (_event, gesture) => {
+        const finalEvent: BridgeDragEvent = {
+          ...lastEventRef.current,
+          dx: gesture.dx,
+          dy: gesture.dy,
+          vx: gesture.vx,
+          vy: gesture.vy,
+        };
         setDragging(false);
-        optionsRef.current.onEnd?.();
+        optionsRef.current.onEnd?.(finalEvent);
       },
     }),
   );
@@ -941,26 +1852,54 @@ const useDrag = (options: UseDragOptions): UseDragResult => {
 };
 
 // ---------------------------------------------------------------------------
-// 오버레이 훈 4종 — 네이티브는 no-op. RN Modal이 OS 수준에서 처리한다:
-// 포커스 이동트랩（iOS/Android 모달 포커스 격리）ESC（뒤로가기→onRequestClose）
-// 배경 스크롤 잠금（모달이 터치를 가로챔）. lib/overlay가 웹과 동일 호출부를
-// 유지할 수 있게 하는 stub이다.
+// 오버레이 훈 4종 — useReposition은 Dimensions 변화(회전·리사이즈) 구독,
+// 나머지 3종은 RN Modal이 OS 수준에서 처리하는 stub이다.
 // ---------------------------------------------------------------------------
 const useOverlayFocus: UseOverlayFocus = (_target, _active, _returnTo) => {};
 const useDismiss: UseDismiss = (_onDismiss, _active) => {};
-const useReposition: UseReposition = (_listener, _active) => {};
+const useReposition: UseReposition = (listener, active) => {
+  const callbackRef = useRef(listener);
+  callbackRef.current = listener;
+  useEffect(() => {
+    if (!active) return;
+    const sub = Dimensions.addEventListener("change", () => {
+      callbackRef.current();
+    });
+    return () => sub.remove();
+  }, [active]);
+};
 const useScrollLock: UseScrollLock = (_active) => {};
 
 // ---------------------------------------------------------------------------
 // 테마 바인딩
 // ---------------------------------------------------------------------------
+let activeColorScheme: BridgeColorScheme = "light";
+const colorSchemeListeners = new Set<() => void>();
+const subscribeColorScheme = (listener: () => void) => {
+  colorSchemeListeners.add(listener);
+  return () => {
+    colorSchemeListeners.delete(listener);
+  };
+};
+const getColorSchemeSnapshot = (): BridgeColorScheme => activeColorScheme;
+
 /** 색 스킴 → uniwind 활성 테마. setTheme은 Appearance.setColorScheme도 호출해
  *  Alert·Modal 등 시스템 UI가 앱 테마를 따르게 한다.
  *  정적 import가 안전한 이유: 웹 번들은 exports "default" 조건으로 web.tsx만
  *  로드하므로 이 파일（와 uniwind 의존）은 네이티브 그래프에만 존재한다. */
 const applyColorScheme: ApplyColorScheme = (colorScheme) => {
+  activeColorScheme = colorScheme;
   Uniwind.setTheme(colorScheme);
+  colorSchemeListeners.forEach((listener) => listener());
 };
+
+/** 현재 활성 색 스킴을 구독한다（UnikitThemeProvider 밖에서도 안전）. */
+const useColorScheme: UseColorScheme = () =>
+  useSyncExternalStore(
+    subscribeColorScheme,
+    getColorSchemeSnapshot,
+    getColorSchemeSnapshot,
+  );
 
 /** 뷰포트（창） 크기 — Dimensions.get（"window"）. 순간 값이며 리스너 미구독
  *  （오버레이 클램프용 순간 판독으로 충분하다）. */
@@ -998,17 +1937,62 @@ function wrapNativeLucide(Icon: LucideIcon, defaultClassName = "size-4") {
     const resolvedStyles = useResolveClassNames(className ?? "");
     // 유니윈드 해석값은 처리된 색 문자열(토큰 → 테마별 실측값)이다.
     const resolvedColor = color ?? (resolvedStyles.color as string | undefined);
-    const rotate = className?.includes("rotate-180")
-      ? "180deg"
-      : className?.includes("rotate-90")
-        ? "90deg"
-        : null;
-    const mergedStyle = rotate
-      ? [style, { transform: [{ rotate }] }]
-      : style;
+    const targetDeg = parseRotateDeg(className) ?? 0;
+    const hasTransition = hasNativeTransitionClass(className);
+    const durationMs = parseDurationMs(className, 200);
+    const reducedMotion = useReducedMotionNative();
+    const rotateVal = useRef(new Animated.Value(targetDeg)).current;
+    const prevDegRef = useRef(targetDeg);
+
+    useEffect(() => {
+      if (prevDegRef.current === targetDeg) return;
+      prevDegRef.current = targetDeg;
+      if (!hasTransition || reducedMotion) {
+        rotateVal.setValue(targetDeg);
+        return;
+      }
+      Animated.timing(rotateVal, {
+        toValue: targetDeg,
+        duration: durationMs,
+        easing: EASE_OUT_EXPO,
+        useNativeDriver: true,
+      }).start();
+    }, [targetDeg, hasTransition, durationMs, reducedMotion, rotateVal]);
+
+    const resolvedBaseStyle = resolveNativeStyle(style).resolvedStyle;
     const svgProps = className
       ? ({ className: cn(defaultClassName, className) } as Record<string, unknown>)
       : defaultSvgProps;
+
+    const iconEl = (
+      <Icon
+        size={numericSize}
+        color={resolvedColor}
+        strokeWidth={strokeWidth}
+        {...svgProps}
+      />
+    );
+
+    if (hasTransition) {
+      const rotateStr = rotateVal.interpolate({
+        inputRange: [-360, 360],
+        outputRange: ["-360deg", "360deg"],
+      });
+      return (
+        <Animated.View
+          aria-hidden={ariaHidden ? true : undefined}
+          style={[resolvedBaseStyle, { transform: [{ rotate: rotateStr }] }] as never}
+          {...wrapperProps}
+        >
+          {iconEl}
+        </Animated.View>
+      );
+    }
+
+    const mergedStyle =
+      targetDeg !== 0
+        ? [resolvedBaseStyle, { transform: [{ rotate: `${targetDeg}deg` }] }]
+        : resolvedBaseStyle;
     // rotate-* 는 래퍼 View transform으로 처리（Svg 자체 rotate 클래스 의존 회피）.
     return (
       <RNView
@@ -1016,12 +2000,7 @@ function wrapNativeLucide(Icon: LucideIcon, defaultClassName = "size-4") {
         style={mergedStyle as ViewStyle}
         {...wrapperProps}
       >
-        <Icon
-          size={numericSize}
-          color={resolvedColor}
-          strokeWidth={strokeWidth}
-          {...svgProps}
-        />
+        {iconEl}
       </RNView>
     );
   };
@@ -1068,9 +2047,11 @@ export {
   TextInput,
   Image,
   Portal,
+  PortalHost,
   ScrollView,
   SectionList,
   Select,
+  SelectOptGroup,
   SelectOption,
   KeyboardAvoidingView,
   Platform,
@@ -1087,6 +2068,7 @@ export {
   useScrollLock,
   getViewport,
   applyColorScheme,
+  useColorScheme,
   CheckIcon,
   ChevronDownIcon,
   ChevronUpIcon,

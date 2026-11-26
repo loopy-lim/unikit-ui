@@ -726,7 +726,10 @@ export {
 
 export {
   Calendar,
+  matchesCalendarDate,
   type CalendarProps,
+  type DateRange,
+  type CalendarDateMatcher,
 } from "./components/calendar";
 
 // ── 레이아웃스크롤 ──

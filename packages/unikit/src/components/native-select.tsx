@@ -28,17 +28,12 @@
 // - option의 bg-［Canvas］ text-［CanvasText］는 임의값 색 토큰이라 제거 — 드롭다운
 //   목록 배경은 어차피 UA（웹）/Modal（네이티브）이 그린다.
 // - data-slot 속성은 브리지가 전달하지 않아 제거（셀렉터 스타일 의존 없음）.
-import {
-  Children,
-  forwardRef,
-  isValidElement,
-  type ReactNode,
-} from "react";
+import { forwardRef, type ReactNode } from "react";
 import {
   ChevronDownIcon,
   Select,
+  SelectOptGroup,
   SelectOption,
-  Text,
   View,
   type BridgeViewRef,
   type ViewProps,
@@ -46,16 +41,6 @@ import {
 import { cva } from "class-variance-authority";
 
 import { cn } from "../lib/utils";
-
-/** OptGroup 래퍼를 풀어 SelectOption 직계 목록으로 평탄화（네이티브 추출 정합）. */
-function flattenOptions(children: ReactNode): ReactNode[] {
-  return Children.toArray(children).flatMap((child) => {
-    if (isValidElement(child) && child.type === NativeSelectOptGroup) {
-      return flattenOptions((child.props as { children?: ReactNode }).children);
-    }
-    return [child];
-  });
-}
 
 // 트리거 — 원본 select 토큰에서 속성 셀렉터를 조건부 클래스로 전개.
 const nativeSelectVariants = cva(
@@ -114,7 +99,7 @@ const NativeSelect = forwardRef<BridgeViewRef, NativeSelectProps>(
         nativeID={nativeID}
         testID={testID}
       >
-        {flattenOptions(children)}
+        {children}
       </Select>
       {/* ChevronDownIcon — 절대 배치로 트리거 위에 겹친다（양측 동일）.
           -translate-y-1/2 대신 top-0 bottom-0 + items-center 조합(네이티브 안전). */}
@@ -159,7 +144,11 @@ export type NativeSelectOptGroupProps = {
 const NativeSelectOptGroup = forwardRef<
   BridgeViewRef,
   NativeSelectOptGroupProps
->(({ children }, _ref) => <>{children}</>);
+>(({ label = "", disabled, children }, _ref) => (
+  <SelectOptGroup label={label} disabled={disabled}>
+    {children}
+  </SelectOptGroup>
+));
 NativeSelectOptGroup.displayName = "NativeSelectOptGroup";
 
 export { NativeSelect, NativeSelectOptGroup, NativeSelectOption };

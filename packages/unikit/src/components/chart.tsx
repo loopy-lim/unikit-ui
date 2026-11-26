@@ -66,6 +66,8 @@ import {
 import {
   Text,
   View,
+  useColorScheme,
+  type BridgeColorScheme,
   type BridgeLayout,
   type BridgeViewRef,
   type ViewProps,
@@ -107,6 +109,7 @@ type ChartScale = {
   plotHeight: number;
   /** x 밴드（데이터 1행） 폭 */
   bandWidth: number;
+  yMin: number;
   yMax: number;
   xAt: (index: number) => number;
   yAt: (value: number) => number;
@@ -123,6 +126,7 @@ type ChartContextValue = {
   activeIndex: number | null;
   width: number;
   height: number;
+  colorScheme: BridgeColorScheme;
 };
 
 const ChartContext = createContext<ChartContextValue | null>(null);
@@ -158,15 +162,17 @@ function getChartColor(index: number, kind: ChartColorKind = "fill"): string {
 
 type ResolvedSeriesColor = { className: string; color?: string };
 
-/** config 명시 색（colortheme.light）이 우선, 없으면 순번 토큰 클래스. */
+/** config 명시 색（color · theme[colorScheme] · theme.light）이 우선, 없으면 순번 토큰 클래스. */
 function resolveSeriesColor(
   config: ChartConfig,
   dataKey: string,
   index: number,
   kind: ChartColorKind,
+  colorScheme: BridgeColorScheme = "light",
 ): ResolvedSeriesColor {
   const entry = config[dataKey];
-  const explicit = entry?.color ?? entry?.theme?.light;
+  const explicit =
+    entry?.color ?? entry?.theme?.[colorScheme] ?? entry?.theme?.light;
   return explicit
     ? { className: "", color: explicit }
     : { className: getChartColor(index, kind) };
@@ -190,18 +196,25 @@ function niceStep(value: number): number {
   return step * magnitude;
 }
 
-function rawSeriesMax(data: ChartDatum[], seriesKeys: string[]): number {
+function rawSeriesRange(
+  data: ChartDatum[],
+  seriesKeys: string[],
+): { min: number; max: number } {
+  let min = 0;
   let max = 0;
   for (const datum of data) {
     for (const key of seriesKeys) {
       const value = datum[key];
-      if (typeof value === "number" && value > max) max = value;
+      if (typeof value === "number" && Number.isFinite(value)) {
+        if (value < min) min = value;
+        if (value > max) max = value;
+      }
     }
   }
-  return max;
+  return { min, max };
 }
 
-function buildScale(
+export function buildChartScale(
   data: ChartDatum[],
   seriesKeys: string[],
   width: number,
@@ -213,20 +226,37 @@ function buildScale(
   const plotHeight = Math.max(height - CHART_PADDING.top - CHART_PADDING.bottom, 1);
   const count = data.length;
   const bandWidth = count > 0 ? plotWidth / count : plotWidth;
-  // 틱 4구간 — 최대값/4를 niceStep으로 올려 라벨을 깔끔히 유지한다.
-  const step = niceStep(rawSeriesMax(data, seriesKeys) / 4);
-  const yMax = step * 4;
+  const { min, max } = rawSeriesRange(data, seriesKeys);
+
+  let yMin = 0;
+  let yMax: number;
+  let ticksY: number[];
+  if (min < 0) {
+    const step = niceStep((max - min) / 4);
+    yMin = Math.floor(min / step) * step;
+    yMax = Math.max(Math.ceil(max / step) * step, yMin + step);
+    const stepsCount = Math.max(1, Math.round((yMax - yMin) / step));
+    ticksY = Array.from({ length: stepsCount + 1 }, (_, i) =>
+      Number((yMin + step * i).toPrecision(10)),
+    );
+  } else {
+    const step = niceStep(max / 4);
+    yMax = step * 4;
+    ticksY = [0, step, step * 2, step * 3, step * 4];
+  }
+
+  const span = Math.max(yMax - yMin, 1e-9);
   return {
     plotLeft,
     plotTop,
     plotWidth,
     plotHeight,
     bandWidth,
+    yMin,
     yMax,
     xAt: (index) => plotLeft + bandWidth * (index + 0.5),
-    // 음수 미지원 — 0으로 클램프（머리주석 참고）.
-    yAt: (value) => plotTop + plotHeight - (Math.max(value, 0) / yMax) * plotHeight,
-    ticksY: [0, step, step * 2, step * 3, step * 4],
+    yAt: (value) => plotTop + plotHeight - ((value - yMin) / span) * plotHeight,
+    ticksY,
   };
 }
 
@@ -305,23 +335,31 @@ export type ChartBarSeriesProps = {
 function ChartBarSeries({ dataKey, className, radius = 4 }: ChartBarSeriesProps) {
   const ctx = useChart("ChartBarSeries");
   const { scale } = ctx;
-  const color = resolveSeriesColor(ctx.config, dataKey, seriesIndex(ctx, dataKey), "fill");
+  const color = resolveSeriesColor(
+    ctx.config,
+    dataKey,
+    seriesIndex(ctx, dataKey),
+    "fill",
+    ctx.colorScheme,
+  );
   // 인접 막대 사이 표면 간격 — 밴드의 60%만 채운다（최소 2px）.
   const barWidth = Math.max(2, scale.bandWidth * 0.6);
-  const baseline = scale.plotTop + scale.plotHeight;
+  const zeroY = scale.yAt(Math.max(scale.yMin, Math.min(scale.yMax, 0)));
   return (
     <>
       {ctx.data.map((datum, index) => {
         const value = datum[dataKey];
         if (typeof value !== "number") return null;
         const y = scale.yAt(value);
+        const top = value >= 0 ? y : zeroY;
+        const barHeight = Math.max(0, Math.abs(zeroY - y));
         return (
           <ChartRect
             key={index}
             x={scale.xAt(index) - barWidth / 2}
-            y={y}
+            y={top}
             width={barWidth}
-            height={baseline - y}
+            height={barHeight}
             rx={radius}
             className={cn(color.className, className)}
             fill={color.color}
@@ -348,8 +386,8 @@ function ChartLineSeries({ dataKey, className, strokeWidth = 2 }: ChartLineSerie
   const points = seriesPoints(ctx, dataKey);
   if (!points.length) return null;
   const index = seriesIndex(ctx, dataKey);
-  const stroke = resolveSeriesColor(ctx.config, dataKey, index, "stroke");
-  const dot = resolveSeriesColor(ctx.config, dataKey, index, "fill");
+  const stroke = resolveSeriesColor(ctx.config, dataKey, index, "stroke", ctx.colorScheme);
+  const dot = resolveSeriesColor(ctx.config, dataKey, index, "fill", ctx.colorScheme);
   const d = points.map((p, i) => `${i === 0 ? "M" : "L"}${p.x} ${p.y}`).join(" ");
   const active = activePointOf(ctx, points);
   return (
@@ -380,9 +418,9 @@ function ChartAreaSeries({ dataKey, className, strokeWidth = 2 }: ChartAreaSerie
   if (!points.length) return null;
   const { scale } = ctx;
   const index = seriesIndex(ctx, dataKey);
-  const fill = resolveSeriesColor(ctx.config, dataKey, index, "fill");
-  const stroke = resolveSeriesColor(ctx.config, dataKey, index, "stroke");
-  const baseline = scale.plotTop + scale.plotHeight;
+  const fill = resolveSeriesColor(ctx.config, dataKey, index, "fill", ctx.colorScheme);
+  const stroke = resolveSeriesColor(ctx.config, dataKey, index, "stroke", ctx.colorScheme);
+  const baseline = scale.yAt(Math.max(scale.yMin, Math.min(scale.yMax, 0)));
   const first = points[0];
   const last = points[points.length - 1];
   const lineD = points.map((p, i) => `${i === 0 ? "M" : "L"}${p.x} ${p.y}`).join(" ");
@@ -409,7 +447,7 @@ function ChartAreaSeries({ dataKey, className, strokeWidth = 2 }: ChartAreaSerie
           cx={active.x}
           cy={active.y}
           r={4}
-          className={dotOf(ctx, dataKey)}
+          className={dotOf(ctx, dataKey, ctx.colorScheme)}
           fill={stroke.color}
         />
       ) : null}
@@ -417,8 +455,18 @@ function ChartAreaSeries({ dataKey, className, strokeWidth = 2 }: ChartAreaSerie
   );
 }
 
-function dotOf(ctx: ChartContextValue, dataKey: string): string {
-  return resolveSeriesColor(ctx.config, dataKey, seriesIndex(ctx, dataKey), "fill").className;
+function dotOf(
+  ctx: ChartContextValue,
+  dataKey: string,
+  colorScheme: BridgeColorScheme,
+): string {
+  return resolveSeriesColor(
+    ctx.config,
+    dataKey,
+    seriesIndex(ctx, dataKey),
+    "fill",
+    colorScheme,
+  ).className;
 }
 
 // ---------------------------------------------------------------------------
@@ -594,7 +642,13 @@ function ChartTooltipContent({
       const value = datum[key];
       if (value == null) return null;
       const itemConfig = ctx.config[nameKey ?? key] ?? ctx.config[key];
-      const resolved = resolveSeriesColor(ctx.config, key, seriesIndex(ctx, key), "bg");
+      const resolved = resolveSeriesColor(
+        ctx.config,
+        key,
+        seriesIndex(ctx, key),
+        "bg",
+        ctx.colorScheme,
+      );
       return { key, value, itemConfig, colorClass: resolved.className, colorValue: resolved.color };
     })
     .filter((item): item is NonNullable<typeof item> => item !== null);
@@ -717,7 +771,13 @@ function ChartLegend({ content, verticalAlign = "bottom", className }: ChartLege
 function defaultLegendPayload(ctx: ChartContextValue): ChartLegendItem[] {
   return ctx.seriesKeys.map((key) => ({
     dataKey: key,
-    color: resolveSeriesColor(ctx.config, key, seriesIndex(ctx, key), "bg").color,
+    color: resolveSeriesColor(
+      ctx.config,
+      key,
+      seriesIndex(ctx, key),
+      "bg",
+      ctx.colorScheme,
+    ).color,
   }));
 }
 
@@ -819,6 +879,7 @@ const ChartContainer = forwardRef<BridgeViewRef, ChartContainerProps>(
     ref,
   ) => {
     const [activeIndex, setActiveIndex] = useState<number | null>(null);
+    const colorScheme = useColorScheme();
 
     // fluid 캔버스 폭 — 브리지 onLayout 계약으로 컨테이너 자체 폭을 잰다
     // （사이클 90: 웹 ResizeObserver·네이티브 RN onLayout 양측）. 1px 미만
@@ -869,7 +930,7 @@ const ChartContainer = forwardRef<BridgeViewRef, ChartContainerProps>(
 
     const resolvedXKey = xKey ?? firstCategoryKey(data);
     const scale = useMemo(
-      () => buildScale(data, seriesKeys, canvasWidth, height),
+      () => buildChartScale(data, seriesKeys, canvasWidth, height),
       // eslint-disable-next-line react-hooks/exhaustive-deps -- seriesKeys는 children에서 유도
       [children, data, canvasWidth, height],
     );
@@ -895,6 +956,7 @@ const ChartContainer = forwardRef<BridgeViewRef, ChartContainerProps>(
           activeIndex,
           width: canvasWidth,
           height,
+          colorScheme,
         }}
       >
         <View

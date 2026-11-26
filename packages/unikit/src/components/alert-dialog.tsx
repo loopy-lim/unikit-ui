@@ -120,12 +120,12 @@ const alertDialogHeaderVariants = cva(
   },
 );
 
-// 푸터 — sm 크기는 취소확인 2분할（웹 grid, 네이티브 flex-col 강등）.
+// 푸터 — sm 크기는 취소확인 2분할（웹 grid, 네이티브 flex-row 균등 분할）.
 const alertDialogFooterVariants = cva("gap-2", {
   variants: {
     size: {
       default: "flex-col-reverse sm:flex-row sm:justify-end",
-      sm: "grid grid-cols-2",
+      sm: "flex flex-row web:grid web:grid-cols-2",
     },
   },
   defaultVariants: {
@@ -362,12 +362,13 @@ const AlertDialogAction = forwardRef<
     ref,
   ) => {
     const dialog = useAlertDialogContext("AlertDialogAction");
+    const dialogSize = useContext(AlertDialogSizeContext);
     return (
       <Button
         ref={ref}
         variant={variant}
         size={size}
-        className={className}
+        className={cn(dialogSize === "sm" && "flex-1", className)}
         onPress={() => {
           dialog.setOpen(false);
           onPress?.();
@@ -390,12 +391,13 @@ const AlertDialogCancel = forwardRef<
     ref,
   ) => {
     const dialog = useAlertDialogContext("AlertDialogCancel");
+    const dialogSize = useContext(AlertDialogSizeContext);
     return (
       <Button
         ref={ref}
         variant={variant}
         size={size}
-        className={className}
+        className={cn(dialogSize === "sm" && "flex-1", className)}
         onPress={() => {
           dialog.setOpen(false);
           onPress?.();

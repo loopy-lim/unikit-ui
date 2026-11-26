@@ -76,33 +76,33 @@ shadcn/ui(new-york-v4)의 `registry:ui` 61종을 UniKit UI 유니버설(한 벌 
 ### 오버레이·애니메이션
 
 - **측정 캐시 무효화（사이클 90 정정 — 이미 해소）** — slider·resizable은 드래그 시작 시점마다 재측정해요(slider.tsx·resizable.tsx의 드래그 시작 재측정). 회전·리사이즈 후 드래그 수치가 이전 크기에 묶이는 문제는 발생하지 않아요. 과거 "최초 1회 캐시" 기술은 오류였고 이 문서에서 정정해요.
-- **등장/퇴장 애니메이션** — dialog·sheet·drawer·popover·tooltip·dropdown-menu·select·command·sonner·tabs·accordion·calendar 등 오버레이·전개 계열 전반이 마운트/언마운트 **즉시 전환**이에요(`data-[state]` 셀렉터가 없는 네이티브에서 재현 불가). 로드맵: 웹 전용 애니메이션 클래스(`web:` 접두) 도입 검토.
-- **네이티브 애니메이션 계약(1차 해소 2026-11-10)** — 루프 계열(회전·펄스)은 브리지 `LoopRotate`·`LoopPulse`(RN Animated useNativeDriver — UI 스레드)로 네이티브도 구동해요. 잔여: 오버레이 등장/퇴장 슬라이드(제스처 연동은 Reanimated optional peer 도입 검토 — chart의 react-native-svg 패턴 준용).
+- **등장/퇴장 애니메이션(2차 해소)** — dialog·sheet·drawer·popover·tooltip 등 오버레이 계열이 웹에서 `animations.css` keyframes로 전환되며, 네이티브에서는 `UnikitThemeProvider` `<PortalHost>` + RN 0.88 코어 `Animated`(`Portal` 180ms 퇴장 유예·`CoreMotionBackdrop`·`MotionView`)로 UI 스레드 등장/퇴장을 기본 제공해요.
+- **네이티브 애니메이션 계약(1차 해소 2026-11-10 → 2차 확장)** — 루프 계열(회전·펄스)은 `LoopRotate`·`LoopPulse`(`AccessibilityInfo.isReduceMotionEnabled` 준수 포함)로 구동하며, 선택 진입점 `@unikit-bridge/ui/motion`(`installReanimatedMotion()`)을 호출하면 `react-native-reanimated` 4.x CSS Animations/Transitions 드라이버(Uniwind `cubicBezier` 빈 문자열 정제 포함)로 오버레이·`transition-*`(`switch`·`progress`·`drawer`·`sonner`)까지 확장돼요. `drawer`(4방향 실시간 손가락 추적·속도 dismiss·스냅백)와 `sonner`(실시간 Y 추적·고무줄 저항·스냅백)도 네이티브 제스처 연동이 반영됐어요. 잔여: `accordion`·`collapsible`·`tabs`·`calendar` 내부 콘텐츠 높이 접힘 애니메이션.
 - **hover 개방（사이클 90 해소 — 브리지 onHoverIn/onHoverOut 계약 추가）** — `navigation-menu`는 트리거 hover 200ms 지연 개방·다른 메뉴 열림 시 즉시 전환·닫힘 뒤 300ms 재진입 즉시 열림(radix delayDuration·skipDelayDuration 기본값), `menubar`는 열린 상태에서 인접 트리거 hover 즉시 전환, `dropdown-menu`·`context-menu` 서브메뉴는 진입 100ms 열림·이탈 300ms grace 닫힘(radix Menu 원본값), `tooltip`은 hover·focus 진입, `hover-card`는 openDelay/closeDelay(200/300) 실측 동작 + 카드 진입 유지. 터치 기기에서는 hover 계열이 발화하지 않아 기존 눌림 폴백이 담당해요. 잔여: nav-menu 원본의 다항형 진행 의도(pointer grace intent) 판정은 재현하지 않아 형제 항목 전환은 grace 만료 뒤 닫힘으로 근사.
 - **포인터 이벤트 계약** — `popover` 충돌 감지(avoidCollisions·sticky) 미지원(뷰포트 클램프 8px로 근사). `hover-card` 콘텐츠 이탈 닫힘과 `tooltip` 웹 키보드(focus) 진입은 사이클 90에 해소됐어요.
 - **asChild** — radix Slot 상당 기능이 없어 popover·tooltip·hover-card 트리거와 sidebar 일부 요소는 Pressable/View 고정 렌더예요.
 
 ### 키보드·포커스
 
-- **select·메뉴 키보드 탐색（사이클 90 해소 — 웹, 사이클 90 후속 타입어헤드 추가）** — `select`·`dropdown-menu`·`context-menu` 카드에서 ArrowDown/Up(양 끝 루프)·Home/End 항목 이동, ArrowRight 서브 개방·ArrowLeft 서브 복귀, 닫힌 트리거의 ArrowDown/Up 열림을 지원해요(lib/menu-nav 공유 골격 — 항목 DOM 포커스 이동 방식이라 엔터 선택·포커스 스크롤 따라가기는 브라우저 기본 동작). 타입어헤드(글자 입력 점프)도 radix Menu `getNextMatch` 원본 이식으로 지원해요(반복 글자 순환·버퍼 1초 초기화·disabled 제외·ctrl/alt/meta 수정자 키 제외 — 사이클 90 후속). `command`는 웹 방향키·엔터를 지원하지만 네이티브 onKeyPress 래핑 한계로 IME 조합 키는 발화되지 않아요. 잔여: 네이티브 카드 탐색(2026-11-18 이슈 #19 재실측 — RN 0.88 코어에 W3C 규격 View onKeyDown 계약이 있으나 `enableKeyEvents` 피처 플래그가 기본 false라 소비자 앱의 네이티브 조치가 전제된다. 브리지는 View/Pressable `onKeyDown`+`focusable` 계약을 이미 연결했고 플래그 on 기기 실증 완료 — 조상 카드 버블링·타입어헤드 작동. 단 DPAD 방향키는 JS 루빙과 네이티브 포커스 탐색이 간섭해 방향키 소유권 설계가 남았다. 상세 docs/sdd/issue-19-keyboard-modality-wall.md), `navigation-menu` 화살표키 트리거 순회.
+- **select·메뉴 키보드 탐색（사이클 90 해소 — 웹·Android HW 키 확장）** — `select`·`dropdown-menu`·`context-menu` 카드에서 ArrowDown/Up(양 끝 루프)·Home/End 항목 이동, ArrowRight 서브 개방·ArrowLeft 서브 복귀, 닫힌 트리거의 ArrowDown/Up 열림을 지원해요(lib/menu-nav 공유 골격 — 항목 DOM 포커스 이동 방식이라 엔터 선택·포커스 스크롤 따라가기는 브라우저 기본 동작). 타입어헤드(글자 입력 점프)도 radix Menu `getNextMatch` 원본 이식으로 지원해요(반복 글자 순환·버퍼 1초 초기화·disabled 제외·ctrl/alt/meta 수정자 키 제외 — 사이클 90 후속). Android에서는 카드·항목에 `focusable`과 `typeof document === "undefined"` 분기 `Enter`/`Space` 활성화를 연결해 `enableKeyEvents` 활성 환경에서 선택까지 동작해요(실기 미검증: `navigation-menu` 화살표키 트리거 순회·iOS 하드웨어 키보드 탐색은 RN 코어 계약 부재로 미지원). `command`는 웹 방향키·엔터를 지원하지만 네이티브 onKeyPress 래핑 한계로 IME 조합 키는 발화되지 않아요(상세 docs/sdd/issue-19-keyboard-modality-wall.md).
 - **resizable 키보드 리사이즈** — 포커서블 계약(tabIndex) 부재로 화살표 리사이즈 미지원.
-- **slider** — 수직 방향 미지원(수평 전용), 썸별 포커스·썸별 aria 미지원(트랙 전체 드래그 조작).
+- **slider** — 수평·수직(`orientation="vertical"`) 및 트랙 `measureInWindow` 보정·위아래 화살표 키 조절을 지원해요. 잔여: 다중 썸별 개별 포커스·썸별 aria(트랙 전체 드래그 조작).
 
 ### 차트·데이터
 
 - **chart 반응형 크기** — 유동 폭(width="fluid")은 사이클 90 브리지 onLayout 계약으로 웹·네이티브 양측 지원해요(기존 웹 전용 ResizeObserver 직접 사용 제거). 뷰포트 비례 높이는 BridgeStyle 퍼센트 계약이 없어 고정 근사예요.
-- **chart 다크 전환** — 스킴 조회 계약이 없어 `config.theme`의 light 값만 써요.
+- **chart 다크 전환·음수 스케일(해소)** — 브리지 `useColorScheme()`를 통해 `config.theme[colorScheme]` 다크 팔레트 자동 전환과 `buildChartScale` 음수·0 기준선 스케일링을 지원해요.
 - **recharts 고급 차트** — 스택·극좌표·방사형·브러시·줌·참조선 등 미지원(막대·선·영역 기본 시리즈만).
-- **calendar 다중 선택** — 다중 선택·범위 선택(range_*)·matcher prop 미지원(단일 선택만), 선택 애니메이션·RTL 화살표 회전도 미지원.
-- **carousel 스크롤 오프셋 읽기** — 계약상 오프셋·콘텐츠 폭 읽기가 불가해 페이지 표시(페이지니스)가 자체 추정이에요.
+- **calendar 다중·범위 선택(해소)** — `mode="single" | "multiple" | "range"`, `showOutsideDays`, `CalendarDateMatcher` 기반 `disabled` 매처(`Date[]`·`{ from, to }`·`{ before, after }`·`{ dayOfWeek }`·술어 함수)를 지원해요. 잔여: 선택 전환 애니메이션·RTL 화살표 회전.
+- **carousel 스크롤 오프셋·페이지 상태(해소)** — `BridgeScrollEvent`(`contentOffset`·`contentSize`·`layoutMeasurement`)와 초기 항목 수 동기화로 `canScrollPrev`/`canScrollNext`와 페이지 상태를 실시간 갱신해요.
 
 ### 입력·폼
 
-- **form RN 전파** — `aria-invalid`·`aria-describedby`가 웹 전용 계약이라 RN 입력창에는 미전달돼요(nativeID·accessibilityLabelledBy는 양쪽 동작).
-- **input-otp** — 캐럿 깜빡임: 웹은 keyframes 하드 온오프, 네이티브는 `LoopPulse` 부드러운 맥동 근사(1.25s 주기). 미포커스 상태에도 캐럿이 보일 수 있어요.
+- **form RN 전파** — `aria-describedby`와 네이티브 `aria-invalid` 속성은 웹 전용 계약이지만, `Pressable`·`TextInput`에서는 `aria-invalid` 시 `accessibilityHint="유효하지 않은 입력"`으로 보조 힌트를 전달하고 `View`의 `accessibilityLiveRegion` 및 `aria-pressed`·`aria-current`도 네이티브 브리지에 매핑됐어요(`nativeID`·`accessibilityLabelledBy`는 양쪽 동작).
+- **input-otp** — 숨김 `TextInput`의 `onFocus`/`onBlur` 추적으로 포커스 시에만 활성 슬롯·캐럿(`LoopPulse`)이 표시돼요. 웹은 keyframes 하드 온오프, 네이티브는 `LoopPulse` 부드러운 맥동 근사(1.25s 주기).
 - **input-group** — 원본의 파일 셀 focus 링(data-attribute 셀렉터)이 컨트롤 자체 슬림 링으로 근사돼 있어요.
 - **scroll-area** — 커스텀 스크롤바는 미지원 셀(항상 null 렌더), 기본 스크롤 동작만 제공해요.
-- **combobox** — 자동 필터 변경 훅 미지원(▾ 트리거 개방), 팝업 폭 w-72 고정(앵커 폭 추종 불가).
+- **combobox** — `onValueChange` 입력 시 자동 개방과 트리거/인풋 `onLayout` 폭 측정 기반 `ComboboxContent` `minWidth` 추종을 지원해요.
 
 ## 경쟁 현황 (2026-11-10 실측 — docs/sdd/51-research.md §4)
 

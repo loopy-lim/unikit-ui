@@ -90,6 +90,8 @@ export type ModalOverlayProps = {
   dismissOnEscape?: boolean;
 };
 
+const NOOP = () => {};
+
 /**
  * 중앙（또는 시트 위치） 모달 골격. 백드롭（딤 + 눌림 닫기）포커스 이동/트랩/
  * 복귀ESC 닫기배경 스크롤 잠금을 한 번에 제공한다. children은 실제 카드
@@ -118,7 +120,7 @@ export function ModalOverlay({
     <Portal
       visible={visible}
       onBackdropPress={dismissOnBackdrop ? onClose : undefined}
-      onRequestClose={onClose}
+      onRequestClose={dismissOnEscape ? onClose : NOOP}
       backdropClassName={
         backdropClassName
           ? cn("bg-black/50 unikit-backdrop-in", backdropClassName)

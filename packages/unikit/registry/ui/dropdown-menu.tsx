@@ -383,6 +383,7 @@ const DropdownMenuContent = forwardRef<
           <View
             ref={ref}
             nativeID={`${menu.baseId}-dropdown-menu-content`}
+            focusable
             onKeyDown={composeMenuNavKeyDown(nav, onKeyDown)}
             className={cn(CARD_CLASSES, className)}
             {...props}
@@ -430,19 +431,22 @@ const DropdownMenuItem = forwardRef<BridgePressableRef, DropdownMenuItemProps>(
     const destructive = variant === "destructive";
     // 키보드 탐색 등록（사이클 90） — 카드 밖 렌더는 nav가 없어도 동작.
     const nav = useMenuNavContext();
-    const { id, attach, nodeRef } = useMenuItemRef(ref);
+    const handleSelect = () => {
+      if (disabled) return;
+      onSelect?.();
+      menu.setOpen(false);
+    };
+    const { id, attach, nodeRef } = useMenuItemRef(ref, undefined, handleSelect);
     return (
       <Pressable
         ref={attach}
         accessibilityRole="menuitem"
         disabled={disabled}
+        focusable={!disabled}
         // 포인터 진입 항목으로 포커스 이동（radix pointerenter 정합 — 사이클 90）.
         onHoverIn={composeMenuItemHoverIn(nav, id, nodeRef, onHoverIn)}
         onFocus={composeMenuItemFocus(nav, id, onFocus)}
-        onPress={() => {
-          onSelect?.();
-          menu.setOpen(false);
-        }}
+        onPress={handleSelect}
         className={cn(
           ITEM_CLASSES,
           destructive
@@ -506,23 +510,26 @@ const DropdownMenuCheckboxItem = forwardRef<
     const isChecked = checked !== undefined ? checked : uncontrolled;
     // 키보드 탐색 등록（사이클 90）.
     const nav = useMenuNavContext();
-    const { id, attach, nodeRef } = useMenuItemRef(ref);
+    const handleSelect = () => {
+      if (disabled) return;
+      const next = !isChecked;
+      if (checked === undefined) setUncontrolled(next);
+      onCheckedChange?.(next);
+      onSelect?.();
+      menu.setOpen(false);
+    };
+    const { id, attach, nodeRef } = useMenuItemRef(ref, undefined, handleSelect);
     return (
       <Pressable
         ref={attach}
         accessibilityRole="menuitem"
         aria-checked={isChecked}
         disabled={disabled}
+        focusable={!disabled}
         // 포인터 진입 항목으로 포커스 이동（radix pointerenter 정합 — 사이클 90）.
         onHoverIn={composeMenuItemHoverIn(nav, id, nodeRef, onHoverIn)}
         onFocus={composeMenuItemFocus(nav, id, onFocus)}
-        onPress={() => {
-          const next = !isChecked;
-          if (checked === undefined) setUncontrolled(next);
-          onCheckedChange?.(next);
-          onSelect?.();
-          menu.setOpen(false);
-        }}
+        onPress={handleSelect}
         className={cn(
           INDICATED_ITEM_CLASSES,
           disabled && "web:pointer-events-none opacity-50",
@@ -605,21 +612,24 @@ const DropdownMenuRadioItem = forwardRef<
     const isChecked = group.value === value;
     // 키보드 탐색 등록（사이클 90）.
     const nav = useMenuNavContext();
-    const { id, attach, nodeRef } = useMenuItemRef(ref);
+    const handleSelect = () => {
+      if (disabled) return;
+      group.onItemSelect(value);
+      onSelect?.();
+      menu.setOpen(false);
+    };
+    const { id, attach, nodeRef } = useMenuItemRef(ref, undefined, handleSelect);
     return (
       <Pressable
         ref={attach}
         accessibilityRole="menuitem"
         aria-checked={isChecked}
         disabled={disabled}
+        focusable={!disabled}
         // 포인터 진입 항목으로 포커스 이동（radix pointerenter 정합 — 사이클 90）.
         onHoverIn={composeMenuItemHoverIn(nav, id, nodeRef, onHoverIn)}
         onFocus={composeMenuItemFocus(nav, id, onFocus)}
-        onPress={() => {
-          group.onItemSelect(value);
-          onSelect?.();
-          menu.setOpen(false);
-        }}
+        onPress={handleSelect}
         className={cn(
           INDICATED_ITEM_CLASSES,
           disabled && "web:pointer-events-none opacity-50",
@@ -842,6 +852,7 @@ const DropdownMenuSubTrigger = forwardRef<
         aria-expanded={sub.open}
         aria-controls={`${sub.baseId}-dropdown-menu-sub-content`}
         disabled={disabled}
+        focusable={!disabled}
         // hover 개방（사이클 90 해소） — radix 원본값: 진입 100ms 뒤 열림 예약,
         // 이탈은 예약을 취소하고 300ms grace 뒤 닫힘을 예약한다（카드 진입이
         // 닫힘을 취소해 트리거→카드 이동을 유지）. 터치에서는 발화하지 않아
@@ -961,6 +972,7 @@ const DropdownMenuSubContent = forwardRef<
           <View
             ref={ref}
             nativeID={`${sub.baseId}-dropdown-menu-sub-content`}
+            focusable
             onKeyDown={handleKeyDown}
             // 카드 진입은 닫힘 예약을 취소, 이탈은 재예약（사이클 90 — 300ms grace）.
             onHoverIn={() => sub.cancelClose()}

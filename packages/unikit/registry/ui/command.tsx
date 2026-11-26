@@ -349,6 +349,8 @@ export type CommandInputProps = Omit<
 > & {
   /** 검색창 래퍼（테두리높이패딩） 클래스 — 입력 요소 자체가 아니다（포팅 판단） */
   className?: string;
+  /** 검색어 변경 추가 콜백（Combobox 자동 개방 등 조합용） */
+  onValueChange?: (search: string) => void;
 };
 
 const CommandInput = forwardRef<BridgeTextInputRef, CommandInputProps>(
@@ -361,6 +363,7 @@ const CommandInput = forwardRef<BridgeTextInputRef, CommandInputProps>(
       autoFocus,
       inputMode,
       onKeyDown,
+      onValueChange,
       ...props
     },
     ref,
@@ -396,7 +399,10 @@ const CommandInput = forwardRef<BridgeTextInputRef, CommandInputProps>(
           {...props}
           ref={ref}
           value={command.filter}
-          onChangeText={command.setFilter}
+          onChangeText={(text) => {
+            command.setFilter(text);
+            onValueChange?.(text);
+          }}
           onKeyDown={(event) => {
             command.handleKeyDown(event);
             onKeyDown?.(event);

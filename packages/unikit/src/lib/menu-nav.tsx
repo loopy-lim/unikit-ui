@@ -53,6 +53,7 @@ export type MenuNavContextValue = {
     id: string,
     node: BridgePressableRef | null,
     openSub?: () => void,
+    onActivate?: () => void,
   ) => void;
   /** 항목 포커스 보고 — 현재 위치 추적（마우스·탭 포커스도 갱신된다） */
   reportFocus: (id: string) => void;
@@ -101,6 +102,7 @@ function getNextMatch(values: string[], search: string, currentMatch?: string): 
 export function useMenuNav(): MenuNavContextValue {
   const nodesRef = useRef(new Map<string, BridgePressableRef>());
   const subsRef = useRef(new Map<string, () => void>());
+  const activationsRef = useRef(new Map<string, () => void>());
   const orderRef = useRef<string[]>([]);
   const currentRef = useRef<string | null>(null);
   // 타입어헤드 버퍼(사이클 90 후속) — 누적 검색어와 1초 초기화 타이머.
@@ -110,16 +112,25 @@ export function useMenuNav(): MenuNavContextValue {
   const searchTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const registerItem = useCallback(
-    (id: string, node: BridgePressableRef | null, openSub?: () => void) => {
+    (
+      id: string,
+      node: BridgePressableRef | null,
+      openSub?: () => void,
+      onActivate?: () => void,
+    ) => {
       if (node) {
         if (orderRef.current.length === 0) searchRef.current = "";
         if (!orderRef.current.includes(id)) orderRef.current.push(id);
         nodesRef.current.set(id, node);
         if (openSub) subsRef.current.set(id, openSub);
+        else subsRef.current.delete(id);
+        if (onActivate) activationsRef.current.set(id, onActivate);
+        else activationsRef.current.delete(id);
       } else {
         orderRef.current = orderRef.current.filter((entry) => entry !== id);
         nodesRef.current.delete(id);
         subsRef.current.delete(id);
+        activationsRef.current.delete(id);
         if (currentRef.current === id) currentRef.current = null;
       }
     },
@@ -276,6 +287,20 @@ export function useMenuNav(): MenuNavContextValue {
           openSub();
           break;
         }
+        case "Enter":
+        case " ": {
+          // 웹 DOM(<button>)은 브라우저 기본 Enter/Space → onClick 경로가 동작하므로
+          // 네이티브(Android HW 키보드, enableKeyEvents)에서만 직접 활성화해 이중
+          // 발화를 막는다.
+          if (typeof document !== "undefined" || current === null) return;
+          const activate =
+            activationsRef.current.get(current) ?? subsRef.current.get(current);
+          if (!activate) return;
+          event.preventDefault();
+          event.stopPropagation?.();
+          activate();
+          break;
+        }
       }
     },
     [focusAt, resolveCurrentId, handleTypeaheadSearch],
@@ -310,6 +335,7 @@ export function composeMenuNavKeyDown(
 export function useMenuItemRef(
   ref: ForwardedRef<BridgePressableRef>,
   openSub?: () => void,
+  onActivate?: () => void,
 ): {
   id: string;
   attach: (node: BridgePressableRef | null) => void;
@@ -319,14 +345,23 @@ export function useMenuItemRef(
   const nav = useMenuNavContext();
   const id = useId();
   const nodeRef = useRef<BridgePressableRef | null>(null);
+  const onActivateRef = useRef(onActivate);
+  useEffect(() => {
+    onActivateRef.current = onActivate;
+  });
+  const hasActivate = Boolean(onActivate);
+  const invokeActivate = useMemo(
+    () => (hasActivate ? () => onActivateRef.current?.() : undefined),
+    [hasActivate],
+  );
   const attach = useCallback(
     (node: BridgePressableRef | null) => {
       nodeRef.current = node;
-      nav?.registerItem(id, node, openSub);
+      nav?.registerItem(id, node, openSub, invokeActivate);
       if (typeof ref === "function") ref(node);
       else if (ref) ref.current = node;
     },
-    [nav, id, openSub],
+    [nav, id, openSub, invokeActivate],
   );
   return { id, attach, nodeRef };
 }

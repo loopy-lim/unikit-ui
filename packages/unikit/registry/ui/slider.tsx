@@ -27,6 +27,8 @@ import {
   useEffect,
   useRef,
   useState,
+  type ForwardedRef,
+  type MutableRefObject,
   type ReactNode,
 } from "react";
 import {
@@ -41,6 +43,17 @@ import {
 } from "@unikit-bridge/ui/primitives";
 
 import { cn } from "@/lib/utils";
+
+function composeRefs<T>(
+  local: MutableRefObject<T | null>,
+  forwarded: ForwardedRef<T>,
+) {
+  return (node: T | null) => {
+    local.current = node;
+    if (typeof forwarded === "function") forwarded(node);
+    else if (forwarded) forwarded.current = node;
+  };
+}
 
 export type SliderProps = Omit<
   PressableProps,
@@ -58,11 +71,13 @@ export type SliderProps = Omit<
   max?: number;
   /** 조정 단위（기본 1） */
   step?: number;
+  /** 슬라이더 방향（기본 "horizontal"） */
+  orientation?: "horizontal" | "vertical";
   /** 슬라이더 비활성화 */
   disabled?: boolean;
   /** 내부 전용 — 루트 children은 트랙/썸로 고정 */
   children?: ReactNode;
-  /** 웹 키보드 조정（ArrowLeft/RightHome/End） */
+  /** 웹/안드로이드 키보드 조정（ArrowLeft/Right/Up/Down·Home/End） */
   onKeyDown?: (event: BridgeKeyEvent) => void;
 };
 
@@ -76,11 +91,14 @@ const Slider = forwardRef<BridgePressableRef, SliderProps>(
       min = 0,
       max = 100,
       step = 1,
+      orientation = "horizontal",
       disabled,
+      onKeyDown,
       ...props
     },
     ref,
   ) => {
+    const isVertical = orientation === "vertical";
     // 제어/비제어 통합 — 썸 개수는 원본처럼 값 배열 길이로 정한다.
     const [internal, setInternal] = useState<number[]>(defaultValue ?? [min]);
     const isControlled = value !== undefined;
@@ -101,15 +119,15 @@ const Slider = forwardRef<BridgePressableRef, SliderProps>(
     // 드래그 중 활성 썸 — ref가 진실원（첫 onMove에서 결정）, state는 강조 렌더용.
     const activeRef = useRef<number>(0);
     const [activeIndex, setActiveIndex] = useState<number | null>(null);
-    // 트랙 캐시 — 드래그마다 재측정（레이아웃 변화 대응）. 마운트 시에도 1회.
-    const trackRef = useRef<BridgePressableRef>(null);
-    const rectRef = useRef<{ x: number; width: number } | null>(null);
+    // 트랙 캐시 — 드래그마다 재측정（pageX/pageY 창 기준 좌표 사용해 useDrag와 일치）.
+    const trackRef = useRef<BridgePressableRef | null>(null);
+    const rectRef = useRef<{ x: number; y: number; width: number; height: number } | null>(null);
     const measureTrack = () => {
-      measureInWindow(trackRef.current, (x, _y, width) => {
-        rectRef.current = { x, width };
+      measureInWindow(trackRef.current, (x, y, width, height, pageX, pageY) => {
+        rectRef.current = { x: pageX ?? x, y: pageY ?? y, width, height };
       });
     };
-    useEffect(measureTrack, []);
+    useEffect(measureTrack, [orientation]);
 
     const commit = (index: number, next: number) => {
       const arr = values.slice();
@@ -131,8 +149,12 @@ const Slider = forwardRef<BridgePressableRef, SliderProps>(
 
     const handleMove = (event: BridgeDragEvent) => {
       const rect = rectRef.current;
-      if (!rect || rect.width <= 0) return;
-      const pct = ((event.x - rect.x) / rect.width) * 100;
+      if (!rect) return;
+      const axisSize = isVertical ? rect.height : rect.width;
+      if (axisSize <= 0) return;
+      const pct = isVertical
+        ? ((rect.y + rect.height - event.y) / rect.height) * 100
+        : ((event.x - rect.x) / rect.width) * 100;
       const raw = min + (Math.min(100, Math.max(0, pct)) / 100) * range;
       if (activeIndex === null) {
         // 첫 이동 — 절대 위치에서 가장 가까운 썸을 고정한다.
@@ -160,7 +182,7 @@ const Slider = forwardRef<BridgePressableRef, SliderProps>(
       onEnd: () => setActiveIndex(null),
     });
 
-    // 웹 키보드 조정 — 마지막으로 조작한 썸 기준（기본 첫 썸）.
+    // 키보드 조정 — 마지막으로 조작한 썸 기준（기본 첫 썸）.
     const handleKeyDown = (event: BridgeKeyEvent) => {
       if (disabled) return;
       // value 배열 교체로 마지막 활성 썸이 사라진 경우 방어
@@ -169,10 +191,12 @@ const Slider = forwardRef<BridgePressableRef, SliderProps>(
       let next: number;
       switch (event.key) {
         case "ArrowLeft":
-          next = current - step;
+        case "ArrowDown":
+          next = current - safeStep;
           break;
         case "ArrowRight":
-          next = current + step;
+        case "ArrowUp":
+          next = current + safeStep;
           break;
         case "Home":
           next = min;
@@ -181,10 +205,12 @@ const Slider = forwardRef<BridgePressableRef, SliderProps>(
           next = max;
           break;
         default:
+          onKeyDown?.(event);
           return;
       }
       event.preventDefault();
       updateValue(index, next);
+      onKeyDown?.(event);
     };
 
     const first = values[0] ?? min;
@@ -193,7 +219,7 @@ const Slider = forwardRef<BridgePressableRef, SliderProps>(
     return (
       // 트랙 전체가 드래그키보드 조작면 — Pressable（button）이라 웹 포커스가 된다.
       <Pressable
-        ref={ref}
+        ref={composeRefs(trackRef, ref)}
         accessibilityRole="slider"
         aria-valuenow={values[activeRef.current] ?? first}
         aria-valuemin={min}
@@ -201,41 +227,60 @@ const Slider = forwardRef<BridgePressableRef, SliderProps>(
         disabled={disabled}
         onKeyDown={handleKeyDown}
         className={cn(
-          "relative flex w-full touch-none flex-row items-center select-none",
+          isVertical
+            ? "relative flex h-44 w-4 touch-none flex-col items-center select-none"
+            : "relative flex h-4 w-full touch-none flex-row items-center select-none",
           disabled && "web:pointer-events-none opacity-50",
           className,
         )}
         {...dragHandlers}
         {...props}
       >
-        {/* 트랙 — 원본 h-1.5grow 토큰 그대로 */}
+        {/* 트랙 — 가로 h-1.5 w-full / 세로 w-1.5 h-full */}
         <View
           aria-hidden
-          className="relative h-1.5 w-full grow overflow-hidden rounded-full bg-muted"
+          className={cn(
+            "relative grow overflow-hidden rounded-full bg-muted",
+            isVertical ? "h-full w-1.5" : "h-1.5 w-full",
+          )}
         >
-          {/* 범위 채움 — 동적 백분율 left/width는 BridgeStyle 전용 영역 */}
+          {/* 범위 채움 — 동적 백분율은 BridgeStyle 전용 영역 */}
           <View
-            className="absolute h-full bg-primary"
-            style={{
-              left: `${pctOf(first)}%`,
-              width: `${Math.max(0, pctOf(last) - pctOf(first))}%`,
-            }}
+            className={cn(
+              "absolute bg-primary",
+              isVertical ? "w-full" : "h-full",
+            )}
+            style={
+              isVertical
+                ? {
+                    bottom: `${pctOf(first)}%`,
+                    height: `${Math.max(0, pctOf(last) - pctOf(first))}%`,
+                  }
+                : {
+                    left: `${pctOf(first)}%`,
+                    width: `${Math.max(0, pctOf(last) - pctOf(first))}%`,
+                  }
+            }
           />
         </View>
-        {/* 썸 — 장식（aria-hidden）. 위치는 동적 백분율 left */}
+        {/* 썸 — 장식（aria-hidden）. 위치는 동적 백분율 left/bottom */}
         {values.map((v, index) => (
           <View
             aria-hidden
             key={index}
             className={cn(
               // 원본 썸: shadow-sm + ring-ring/50 상시·hover/focus-visible ring-4.
-              // 장식 썸은 포커스 불가라 hover로 근사하고, 드래그 링은 기존 어포던스 유지.
-              "absolute top-1/2 -mt-2 -ml-2 size-4 rounded-full border border-primary bg-white web:ring-ring/50 web:hover:ring-4",
+              "absolute size-4 rounded-full border border-primary bg-white web:ring-ring/50 web:hover:ring-4",
+              isVertical ? "left-1/2 -mb-2 -ml-2" : "top-1/2 -mt-2 -ml-2",
               dragging &&
                 index === (activeIndex ?? activeRef.current) &&
                 "web:ring-4",
             )}
-            style={{ left: `${pctOf(v)}%` }}
+            style={
+              isVertical
+                ? { bottom: `${pctOf(v)}%` }
+                : { left: `${pctOf(v)}%` }
+            }
           />
         ))}
       </Pressable>

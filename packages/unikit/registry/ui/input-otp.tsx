@@ -104,6 +104,7 @@ const InputOTP = forwardRef<BridgeTextInputRef, InputOTPProps>(
     const cellCount = Math.max(1, maxLength);
     // 비제어 상태 — 제어（value 지정）면 무시된다.
     const [internalValue, setInternalValue] = useState(defaultValue ?? "");
+    const [focused, setFocused] = useState(Boolean(autoFocus));
     const current = value ?? internalValue;
     const commit = (text: string) => {
       const next = text.slice(0, cellCount);
@@ -113,12 +114,12 @@ const InputOTP = forwardRef<BridgeTextInputRef, InputOTPProps>(
         if (next.length === cellCount) onComplete?.(next);
       }
     };
-    // 삽입 위치 모델 — 첫 빈 셀, 모두 찼으면 마지막 셀（머리 주석）.
+    // 삽입 위치 모델 — 포커스 중에만 활성 셀·가짜 캐럿 표시.
     const insertion = Math.min(current.length, cellCount - 1);
     const slots = Array.from({ length: cellCount }, (_, index) => ({
       char: current[index],
-      isActive: index === insertion,
-      hasFakeCaret: index === insertion && !current[index] && !disabled,
+      isActive: focused && index === insertion,
+      hasFakeCaret: focused && index === insertion && !current[index] && !disabled,
     }));
     return (
       <InputOTPContext.Provider
@@ -145,6 +146,8 @@ const InputOTP = forwardRef<BridgeTextInputRef, InputOTPProps>(
             )}
             value={current}
             onChangeText={commit}
+            onFocus={() => setFocused(true)}
+            onBlur={() => setFocused(false)}
             maxLength={cellCount}
             editable={disabled ? false : undefined}
             disabled={disabled}

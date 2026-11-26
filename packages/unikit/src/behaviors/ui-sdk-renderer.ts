@@ -1449,6 +1449,67 @@ export function useSdkPart(
   };
 }
 
+/**
+ * React Compiler 환경에서도 `instance.get()` 변이가 누락되지 않도록
+ * `useSyncExternalStore`로 커널 상태를 구독하고 직전 파생값과 동등하면 참조를 유지한다.
+ */
+export function useSdkSnapshot<T>(
+  instance: SdkPrimitiveInstance,
+  selector: (state: unknown) => T,
+  slot = "root",
+): T {
+  const part = instance.part(slot, EMPTY_PROPS, true);
+  const kernel = part as never;
+  const selectorRef = React.useRef(selector);
+  React.useLayoutEffect(() => {
+    selectorRef.current = selector;
+    commit(kernel, EMPTY_PROPS);
+  });
+
+  const cacheRef = React.useRef<{ hasValue: boolean; value: T }>({
+    hasValue: false,
+    value: undefined as T,
+  });
+
+  const subscribeSnapshot = React.useCallback(
+    (onStoreChange: () => void) => subscribe(kernel, onStoreChange),
+    [kernel],
+  );
+
+  const getSnapshot = React.useCallback((): T => {
+    const next = selectorRef.current(instance.get());
+    if (cacheRef.current.hasValue && sameSnapshot(cacheRef.current.value, next)) {
+      return cacheRef.current.value;
+    }
+    cacheRef.current = { hasValue: true, value: next };
+    return next;
+  }, [instance]);
+
+  return React.useSyncExternalStore(
+    subscribeSnapshot,
+    getSnapshot,
+    getSnapshot,
+  );
+}
+
+function sameSnapshot<T>(a: T, b: T): boolean {
+  if (sameValue(a, b)) return true;
+  if (
+    a !== null &&
+    b !== null &&
+    typeof a === "object" &&
+    typeof b === "object" &&
+    !Array.isArray(a) &&
+    !Array.isArray(b)
+  ) {
+    return sameSlotState(
+      a as Record<string, unknown>,
+      b as Record<string, unknown>,
+    );
+  }
+  return false;
+}
+
 function attrsEqual(a: Attrs, b: Attrs): boolean {
   const keys = new Set([...Object.keys(a), ...Object.keys(b)]);
   for (const key of keys) {

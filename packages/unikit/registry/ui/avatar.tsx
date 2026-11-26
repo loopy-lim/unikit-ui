@@ -17,12 +17,16 @@
 // - AvatarGroupCount의 그룹 크기 반응（group-has-data-）은 고정 토큰（size-8）으로
 //   단순화. AvatarBadge 내용은 글리프 Text 또는 비움（배경 자체가 상태 점）.
 import {
+  Children,
+  cloneElement,
   createContext,
   forwardRef,
+  isValidElement,
   useContext,
   useEffect,
   useMemo,
   useState,
+  type ReactElement,
   type ReactNode,
 } from "react";
 import {
@@ -227,15 +231,27 @@ AvatarBadge.displayName = "AvatarBadge";
 export type AvatarGroupProps = ViewProps;
 
 const AvatarGroup = forwardRef<BridgeViewRef, AvatarGroupProps>(
-  ({ className, ...props }, ref) => (
-    <AvatarGroupContext.Provider value={true}>
-      <View
-        ref={ref}
-        className={cn("flex flex-row items-center web:-space-x-2", className)}
-        {...props}
-      />
-    </AvatarGroupContext.Provider>
-  ),
+  ({ className, children, ...props }, ref) => {
+    const items = Children.toArray(children);
+    const overlapped = items.map((child, index) => {
+      if (index === 0 || !isValidElement(child)) return child;
+      const typedChild = child as ReactElement<{ className?: string }>;
+      return cloneElement(typedChild, {
+        className: cn("native:-ml-2", typedChild.props.className),
+      });
+    });
+    return (
+      <AvatarGroupContext.Provider value={true}>
+        <View
+          ref={ref}
+          className={cn("flex flex-row items-center web:-space-x-2", className)}
+          {...props}
+        >
+          {overlapped}
+        </View>
+      </AvatarGroupContext.Provider>
+    );
+  },
 );
 AvatarGroup.displayName = "AvatarGroup";
 

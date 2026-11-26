@@ -4,9 +4,12 @@ import { StatusBar } from "expo-status-bar";
 import { Stack } from "expo-router";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import { Toaster, UnikitThemeProvider, useUnikitTheme } from "@unikit-bridge/ui";
+import { installReanimatedMotion } from "@unikit-bridge/ui/motion";
 import { installUiSdkOverlayPosition } from "@unikit-bridge/ui/overlay-position";
 import { Dimensions, View } from "@unikit-bridge/ui/primitives";
 
+// Reanimated 4 CSS Animations/Transitions 모션 드라이버 활성화.
+installReanimatedMotion();
 // 오버레이 배치(앵커 팝업 전 계열)를 @ui-sdk/core position() 엔진으로 교체
 // (이슈 #15 — behaviors/ui-sdk-dom 어댑터 경유, docs/sdd/100 §7 P3 패턴).
 // 내장 경로로 되돌리려면 이 호출을 지우면 된다.

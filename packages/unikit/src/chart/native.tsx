@@ -40,6 +40,7 @@ const ChartSurface = ({
     height={height}
     viewBox={`0 0 ${width} ${height}`}
     accessibilityLabel={accessibilityLabel}
+    {...({ className } as Record<string, unknown>)}
   >
     {children}
   </Svg>

@@ -47,6 +47,10 @@
       "react-native": "./src/lib/overlay-position/native.ts",
       "default": "./src/lib/overlay-position/web.ts"
     },
+    "./motion": {
+      "react-native": "./src/motion/native.tsx",
+      "default": "./src/motion/web.tsx"
+    },
     "./editor-prose.css": "./src/lib/editor-prose.css"
   },
   "main": "./src/index.ts",
@@ -62,6 +66,7 @@
   },
   "scripts": {
     "typecheck": "tsc --noEmit",
+    "test": "bun test",
     "prepublishOnly": "tsc --noEmit",
     "build:editor": "bun run --filter @unikit/editor-web-view build && bun scripts/sync-editor-html.ts",
     "generate:design": "bun scripts/generate-design.ts",
@@ -87,6 +92,7 @@
     "@tiptap/react": "^3.0.0",
     "@tiptap/starter-kit": "^3.0.0",
     "react-native-webview": "^14.0.0",
+    "react-native-reanimated": ">=4.0.0",
     "@ui-sdk/core": "0.1.0-beta.6"
   },
   "peerDependenciesMeta": {
@@ -129,6 +135,9 @@
     "react-native-webview": {
       "optional": true
     },
+    "react-native-reanimated": {
+      "optional": true
+    },
     "@ui-sdk/core": {
       "optional": true
     }
@@ -149,6 +158,7 @@
     "react-dom": "19.3.0",
     "react-hook-form": "~7.65.0",
     "react-native": "0.88.1",
+    "react-native-reanimated": "4.7.1",
     "react-native-svg": "~15.16.0",
     "react-native-webview": "14.0.1",
     "tailwind-merge": "~3.7.0",

@@ -41,11 +41,13 @@ import {
   useImperativeHandle,
   useRef,
   useState,
+  useSyncExternalStore,
   type ChangeEvent,
   type ComponentType,
   type PointerEvent as ReactPointerEvent,
   type ReactNode,
   type RefObject,
+  type UIEvent as ReactUIEvent,
 } from "react";
 import { createPortal } from "react-dom";
 import {
@@ -85,13 +87,17 @@ import {
 } from "lucide-react";
 
 import { cn } from "../lib/utils";
+import { extractUniversalTransform } from "./motion-registry";
 import type {
   AnimateLayoutFn,
   ApplyColorScheme,
+  BridgeColorScheme,
   BridgeDimensions,
+  BridgeDragEvent,
   BridgeImageRef,
   BridgePlatformStatic,
   BridgePressableRef,
+  BridgeScrollEvent,
   BridgeScrollViewRef,
   BridgeShare,
   BridgeStyle,
@@ -104,16 +110,19 @@ import type {
   LoopPulseProps,
   LoopRotateProps,
   MeasureInWindow,
+  PortalHostProps,
   PortalProps,
   PressableProps,
   ScrollViewProps,
   SectionListComponent,
   SectionListNode,
   SectionListProps,
+  SelectOptGroupProps,
   SelectOptionProps,
   SelectProps,
   TextProps,
   TextInputProps,
+  UseColorScheme,
   UseDismiss,
   UseDragOptions,
   UseDragResult,
@@ -126,6 +135,30 @@ import type {
 
 // 공유 타입 전량 재수출 — 소비자는 @unikit-bridge/ui/primitives에서 타입까지 한 번에 import
 export type * from "./types";
+
+/**
+ * `BridgeStyle`의 범용 변환 단축키(`translateX`/`translateY`/`scale`/`rotate`)를
+ * DOM CSS `transform` 문자열로 변환한다.
+ */
+function resolveWebStyle(style?: BridgeStyle): React.CSSProperties | undefined {
+  if (!style) return undefined;
+  const extracted = extractUniversalTransform(style);
+  if (!extracted.hasTransformShorthand) {
+    return style as React.CSSProperties;
+  }
+  const parts: string[] = [];
+  if (typeof style.transform === "string" && style.transform) {
+    parts.push(style.transform);
+  }
+  if (extracted.translateX !== undefined) parts.push(`translateX(${extracted.translateX}px)`);
+  if (extracted.translateY !== undefined) parts.push(`translateY(${extracted.translateY}px)`);
+  if (extracted.scale !== undefined) parts.push(`scale(${extracted.scale})`);
+  if (extracted.rotate !== undefined) parts.push(`rotate(${extracted.rotate})`);
+  return {
+    ...(extracted.restStyle as React.CSSProperties | undefined),
+    transform: parts.join(" "),
+  };
+}
 
 // ---------------------------------------------------------------------------
 // View → <div> — RN View 기본값（display:flex, flexDirection:column）을
@@ -167,11 +200,12 @@ const View = forwardRef<BridgeViewRef, ViewProps>(
         : pointerEvents === "box-only"
           ? "auto"
           : pointerEvents;
+    const baseStyle = resolveWebStyle(style);
     const resolvedStyle: React.CSSProperties | undefined = pointerEventsValue
-      ? style
-        ? { ...(style as React.CSSProperties), pointerEvents: pointerEventsValue }
+      ? baseStyle
+        ? { ...baseStyle, pointerEvents: pointerEventsValue }
         : { pointerEvents: pointerEventsValue }
-      : (style as React.CSSProperties | undefined);
+      : baseStyle;
     // onLayout — RN View onLayout의 웹 실현（사이클 90）. ResizeObserver로
     // 마운트 시 1회 + 크기 변화마다 {width,height}를 전달한다. 콜백은 ref로
     // 최신 것을 읽어(inline 화살표 전개에서 관찰 재시작하지 않게) prop 유무로만
@@ -227,19 +261,20 @@ const Text = forwardRef<BridgeTextRef, TextProps>(
     { className, style, children, nativeID, testID, onPress, accessibilityLabel, accessibilityRole, numberOfLines, ...rest },
     ref,
   ) => {
+    const baseStyle = resolveWebStyle(style);
     const resolvedStyle: React.CSSProperties | undefined = numberOfLines
       ? numberOfLines === 1
-        ? style
-          ? { ...(style as React.CSSProperties), ...SINGLE_LINE_STYLE }
+        ? baseStyle
+          ? { ...baseStyle, ...SINGLE_LINE_STYLE }
           : SINGLE_LINE_STYLE
         : {
-            ...(style as React.CSSProperties | undefined),
+            ...baseStyle,
             display: "-webkit-box",
             WebkitBoxOrient: "vertical",
             WebkitLineClamp: numberOfLines,
             overflow: "hidden",
           }
-      : (style as React.CSSProperties | undefined);
+      : baseStyle;
     return (
       <span
         ref={ref as React.Ref<HTMLSpanElement>}
@@ -293,39 +328,62 @@ const Pressable = forwardRef<BridgePressableRef, PressableProps>(
       // 치환한다(이슈 #19 — button은 기본 포커스 가능, false로 탭 순서에서 제외).
       onHoverIn,
       onHoverOut,
+      onLayout,
       focusable,
       ...rest
     },
     ref,
-  ) => (
-    <button
-      ref={ref as React.Ref<HTMLButtonElement>}
-      type="button"
-      id={nativeID}
-      data-testid={testID}
-      className={className ? cn(PRESSABLE_BASE_CLASS, className) : PRESSABLE_BASE_CLASS}
-      style={style as React.CSSProperties}
-      tabIndex={focusable === true ? 0 : focusable === false ? -1 : undefined}
-      onClick={onPress}
-      disabled={disabled}
-      aria-label={accessibilityLabel}
-      role={accessibilityRole}
-      onMouseEnter={onHoverIn}
-      onMouseLeave={onHoverOut}
-      // 브라우저 기본 우클릭 메뉴를 막고 커스텀 메뉴（context-menu）만 띄운다
-      onContextMenu={
-        onContextMenu
-          ? (event: React.MouseEvent<HTMLButtonElement>) => {
-              event.preventDefault();
-              onContextMenu();
-            }
-          : undefined
-      }
-      {...rest}
-    >
-      {children}
-    </button>
-  ),
+  ) => {
+    const nodeRef = useRef<HTMLButtonElement | null>(null);
+    const layoutRef = useRef(onLayout);
+    layoutRef.current = onLayout;
+    const hasLayout = onLayout !== undefined;
+    useEffect(() => {
+      if (!hasLayout) return;
+      const el = nodeRef.current;
+      if (!el || typeof ResizeObserver !== "function") return;
+      const observer = new ResizeObserver((entries) => {
+        const rect = entries[0]?.contentRect;
+        if (rect) layoutRef.current?.({ width: rect.width, height: rect.height });
+      });
+      observer.observe(el);
+      return () => observer.disconnect();
+    }, [hasLayout]);
+    const setRef = (node: HTMLButtonElement | null) => {
+      nodeRef.current = node;
+      if (typeof ref === "function") ref(node);
+      else if (ref) (ref as { current: HTMLButtonElement | null }).current = node;
+    };
+    return (
+      <button
+        ref={setRef}
+        type="button"
+        id={nativeID}
+        data-testid={testID}
+        className={className ? cn(PRESSABLE_BASE_CLASS, className) : PRESSABLE_BASE_CLASS}
+        style={resolveWebStyle(style)}
+        tabIndex={focusable === true ? 0 : focusable === false ? -1 : undefined}
+        onClick={onPress}
+        disabled={disabled}
+        aria-label={accessibilityLabel}
+        role={accessibilityRole}
+        onMouseEnter={onHoverIn}
+        onMouseLeave={onHoverOut}
+        // 브라우저 기본 우클릭 메뉴를 막고 커스텀 메뉴（context-menu）만 띄운다
+        onContextMenu={
+          onContextMenu
+            ? (event: React.MouseEvent<HTMLButtonElement>) => {
+                event.preventDefault();
+                onContextMenu();
+              }
+            : undefined
+        }
+        {...rest}
+      >
+        {children}
+      </button>
+    );
+  },
 );
 Pressable.displayName = "Pressable";
 
@@ -353,15 +411,20 @@ const TextInput = forwardRef<BridgeTextInputRef, TextInputProps>(
       secureTextEntry,
       inputMode,
       multiline,
+      onFocus,
+      onBlur,
       ...rest
     },
     ref,
   ) => {
+    const resolvedStyle = resolveWebStyle(style);
     const handleChange = (
       event: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
     ) => {
       onChangeText?.(event.target.value);
     };
+    const handleFocus = onFocus ? () => onFocus() : undefined;
+    const handleBlur = onBlur ? () => onBlur() : undefined;
     // multiline → <textarea>（웹 표준 여러 줄 입력）. 나머지 계약은 <input>과 동일.
     if (multiline) {
       return (
@@ -372,7 +435,7 @@ const TextInput = forwardRef<BridgeTextInputRef, TextInputProps>(
           aria-label={accessibilityLabel}
           aria-labelledby={accessibilityLabelledBy}
           className={className}
-          style={style as React.CSSProperties}
+          style={resolvedStyle}
           value={value}
           defaultValue={defaultValue}
           placeholder={placeholder}
@@ -381,6 +444,8 @@ const TextInput = forwardRef<BridgeTextInputRef, TextInputProps>(
           autoFocus={autoFocus}
           inputMode={inputMode}
           onChange={handleChange}
+          onFocus={handleFocus}
+          onBlur={handleBlur}
           {...rest}
         />
       );
@@ -393,7 +458,7 @@ const TextInput = forwardRef<BridgeTextInputRef, TextInputProps>(
         aria-label={accessibilityLabel}
         aria-labelledby={accessibilityLabelledBy}
         className={className}
-        style={style as React.CSSProperties}
+        style={resolvedStyle}
         value={value}
         defaultValue={defaultValue}
         placeholder={placeholder}
@@ -403,6 +468,8 @@ const TextInput = forwardRef<BridgeTextInputRef, TextInputProps>(
         type={secureTextEntry ? "password" : undefined}
         inputMode={inputMode}
         onChange={handleChange}
+        onFocus={handleFocus}
+        onBlur={handleBlur}
         {...rest}
       />
     );
@@ -437,7 +504,7 @@ const Image = forwardRef<BridgeImageRef, ImageProps>(
       alt={alt || accessibilityLabel}
       loading="lazy"
       className={className}
-      style={style as React.CSSProperties}
+      style={resolveWebStyle(style)}
       onError={onError}
       {...rest}
     />
@@ -551,6 +618,9 @@ const Portal = ({
   );
 };
 
+/** 웹은 createPortal이 항상 document.body로 나가므로 투명 래퍼. */
+const PortalHost = ({ children }: PortalHostProps) => <>{children}</>;
+
 // ---------------------------------------------------------------------------
 // ScrollView → overflow 스크롤 div + 내부 콘텐츠 컨테이너 div.
 // ref.scrollTo는 RN ScrollView 인스퍼런스 계약과 동일 시그니처（x/y/animated）.
@@ -602,8 +672,20 @@ const ScrollView = forwardRef<BridgeScrollViewRef, ScrollViewProps>(
           pagingEnabled && (horizontal ? "snap-x snap-mandatory" : "snap-y snap-mandatory"),
           className,
         )}
-        style={style as React.CSSProperties}
-        onScroll={onScroll}
+        style={resolveWebStyle(style)}
+        onScroll={
+          onScroll
+            ? (event: ReactUIEvent<HTMLDivElement>) => {
+                const el = event.currentTarget;
+                const payload: BridgeScrollEvent = {
+                  contentOffset: { x: el.scrollLeft, y: el.scrollTop },
+                  contentSize: { width: el.scrollWidth, height: el.scrollHeight },
+                  layoutMeasurement: { width: el.clientWidth, height: el.clientHeight },
+                };
+                onScroll(payload);
+              }
+            : undefined
+        }
         {...rest}
       >
         <div
@@ -789,6 +871,12 @@ const SelectOption = ({ value, disabled, children }: SelectOptionProps) => (
   </option>
 );
 
+const SelectOptGroup = ({ label, disabled, children }: SelectOptGroupProps) => (
+  <optgroup label={label} disabled={disabled}>
+    {children}
+  </optgroup>
+);
+
 // ---------------------------------------------------------------------------
 // measureInWindow — getBoundingClientRect는 이미 뷰포트（창） 좌표를 반환하므로
 // （x,y,w,h,pageX,pageY）에 그대로 흘린다（scrollX/Y 가산 없음 → fixed 배치와
@@ -813,28 +901,44 @@ const useDrag = (options: UseDragOptions): UseDragResult => {
   const optionsRef = useRef(options);
   optionsRef.current = options;
   const originRef = useRef({ x: 0, y: 0 });
+  const sampleRef = useRef({ x: 0, y: 0, t: 0, vx: 0, vy: 0 });
+  const lastEventRef = useRef<BridgeDragEvent>({ x: 0, y: 0, dx: 0, dy: 0, vx: 0, vy: 0 });
 
   const onPointerDown = (event: ReactPointerEvent<HTMLElement>) => {
     event.currentTarget.setPointerCapture?.(event.pointerId);
+    const now = typeof performance !== "undefined" ? performance.now() : Date.now();
     originRef.current = { x: event.clientX, y: event.clientY };
+    sampleRef.current = { x: event.clientX, y: event.clientY, t: now, vx: 0, vy: 0 };
+    lastEventRef.current = { x: event.clientX, y: event.clientY, dx: 0, dy: 0, vx: 0, vy: 0 };
     draggingRef.current = true;
     setDragging(true);
     optionsRef.current.onBegin?.();
   };
   const onPointerMove = (event: ReactPointerEvent<HTMLElement>) => {
     if (!draggingRef.current) return;
-    optionsRef.current.onMove?.({
+    const now = typeof performance !== "undefined" ? performance.now() : Date.now();
+    const dt = now - sampleRef.current.t;
+    const vx = dt > 0 ? (event.clientX - sampleRef.current.x) / dt : sampleRef.current.vx;
+    const vy = dt > 0 ? (event.clientY - sampleRef.current.y) / dt : sampleRef.current.vy;
+    if (dt > 0) {
+      sampleRef.current = { x: event.clientX, y: event.clientY, t: now, vx, vy };
+    }
+    const payload: BridgeDragEvent = {
       x: event.clientX,
       y: event.clientY,
       dx: event.clientX - originRef.current.x,
       dy: event.clientY - originRef.current.y,
-    });
+      vx,
+      vy,
+    };
+    lastEventRef.current = payload;
+    optionsRef.current.onMove?.(payload);
   };
   const onPointerEnd = () => {
     if (!draggingRef.current) return;
     draggingRef.current = false;
     setDragging(false);
-    optionsRef.current.onEnd?.();
+    optionsRef.current.onEnd?.(lastEventRef.current);
   };
 
   return {
@@ -982,10 +1086,33 @@ const useScrollLock: UseScrollLock = (active) => {
 // ---------------------------------------------------------------------------
 // 테마 바인딩
 // ---------------------------------------------------------------------------
+let activeColorScheme: BridgeColorScheme = "light";
+const colorSchemeListeners = new Set<() => void>();
+const subscribeColorScheme = (listener: () => void) => {
+  colorSchemeListeners.add(listener);
+  return () => {
+    colorSchemeListeners.delete(listener);
+  };
+};
+const getColorSchemeSnapshot = (): BridgeColorScheme => activeColorScheme;
+const getServerColorScheme = (): BridgeColorScheme => "light";
+
 /** 색 스킴 → 문서 루트의 .dark 클래스（표준 Tailwind dark 변형 — @custom-variant dark） */
 const applyColorScheme: ApplyColorScheme = (colorScheme) => {
-  document.documentElement.classList.toggle("dark", colorScheme === "dark");
+  activeColorScheme = colorScheme;
+  if (typeof document !== "undefined") {
+    document.documentElement.classList.toggle("dark", colorScheme === "dark");
+  }
+  colorSchemeListeners.forEach((listener) => listener());
 };
+
+/** 현재 활성 색 스킴을 구독한다（UnikitThemeProvider 밖에서도 안전）. */
+const useColorScheme: UseColorScheme = () =>
+  useSyncExternalStore(
+    subscribeColorScheme,
+    getColorSchemeSnapshot,
+    getServerColorScheme,
+  );
 
 /** 뷰포트 크기 — SSR（창 부재）이면 0（소비자가 클램프를 건너뛴다） */
 const getViewport: GetViewport = () =>
@@ -1070,9 +1197,11 @@ export {
   TextInput,
   Image,
   Portal,
+  PortalHost,
   ScrollView,
   SectionList,
   Select,
+  SelectOptGroup,
   SelectOption,
   KeyboardAvoidingView,
   Platform,
@@ -1089,6 +1218,7 @@ export {
   useScrollLock,
   getViewport,
   applyColorScheme,
+  useColorScheme,
   CheckIcon,
   ChevronDownIcon,
   ChevronUpIcon,

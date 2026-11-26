@@ -28,11 +28,23 @@ export type BridgeColorScheme = "light" | "dark";
 
 /**
  * 플랫폼 공통 인라인 스타일 최소 계약 — className 문자열로 표현할 수 없는
- * 동적 값（진행률 폭 %, 가로세로 비율 등）용. RN 스타일 객체과 DOM
- * CSSProperties의 실용 교집합（프로퍼티 이름은 camelCase, 값은 문자열·숫자）.
- * 정적 스타일은 여전히 className이 원칙이고, 여기는 동적 값 전용이다.
+ * 동적 값（진행률 폭 %, 가로세로 비율, 범용 transform 단축키 등）용.
+ * RN 스타일 객체와 DOM CSSProperties의 실용 교집합（프로퍼티 이름은 camelCase,
+ * 값은 문자열·숫자）. 범용 변환 단축키(`translateX`, `translateY`, `scale`,
+ * `rotate`)는 web.tsx가 CSS `transform` 문자열로, native.tsx가 RN `transform`
+ * 배열로 변환한다. 정적 스타일은 여전히 className이 원칙이고, 여기는 동적 값 전용이다.
  */
 export type BridgeStyle = Record<string, string | number | undefined>;
+
+/**
+ * 스크롤 이벤트 최소 계약 — ScrollView `onScroll`이 양 플랫폼에서 동일
+ * 형태로 전달한다. 웹 div `scroll*` / `client*`, RN `nativeEvent`를 정규화한다.
+ */
+export type BridgeScrollEvent = {
+  contentOffset: { x: number; y: number };
+  contentSize: { width: number; height: number };
+  layoutMeasurement: { width: number; height: number };
+};
 
 /**
  * onLayout 측정값（사이클 90） — 웹 ResizeObserver contentRect / 네이티브 RN
@@ -228,6 +240,8 @@ export type PressableProps = {
   onFocus?: () => void;
   /** 포커스 이탈（무인자） — 웹 blur, 네이티브 RN Pressable onBlur */
   onBlur?: () => void;
+  /** 크기 변화 통지（combobox 앵커 폭 등） — 웹 ResizeObserver, 네이티브 RN Pressable onLayout */
+  onLayout?: (layout: BridgeLayout) => void;
   /** RN 전용 터치 타깃 확장（px） — 웹에서는 무시 */
   hitSlop?: number | { top: number; bottom: number; left: number; right: number };
   nativeID?: string;
@@ -365,10 +379,16 @@ export type PortalProps = {
    *  ref 객체 또는 요소. 웹 전용(네이티브는 RN Modal이 담당). */
   dismissIgnoreRef?: unknown;
   /** 모달성（기본 true） — 네이티브에서만 유효. true면 RN Modal（배경 조작 차단
-   *  OS 뒤로가기 연결）, false면 절대 배치 View로 렌더해 배경 조작을 막지 않는다
-   *  （토스트 등 비모달 오버레이 — T-3b 제기）. 이때 화면 최상위 배치는 소비자가
-   *  루트에 두는 것으로 보증한다. 웹 포털은 원래 비모달이라 무시된다. */
+   *  OS 뒤로가기 연결）, false면 PortalHost(있으면 루트 오버레이 층, 없으면
+   *  절대 배치 View)로 렌더해 배경 조작을 막지 않는다（토스트 등 비모달 오버레이）.
+   *  웹 포털은 원래 비모달이라 무시된다. */
   modal?: boolean;
+};
+
+/** 루트 비모달 포털 호스트 — `Portal modal={false}`가 화면 최상위에 그려지도록
+ *  `UnikitThemeProvider`가 자동으로 감싸며, 웹에서는 투명 래퍼다. */
+export type PortalHostProps = {
+  children?: ReactNode;
 };
 
 /** 스크롤 영역 — 웹 overflow div / 네이티브 RN ScrollView. ref로 scrollTo. */
@@ -379,8 +399,8 @@ export type ScrollViewProps = ViewProps & {
   horizontal?: boolean;
   /** 페이지 단위 스냅（carousel） — 웹 scroll-snap, RN pagingEnabled */
   pagingEnabled?: boolean;
-  /** 스크롤 이벤트（무인자 — 페이징 감지 등） */
-  onScroll?: () => void;
+  /** 스크롤 이벤트（오프셋·콘텐츠·뷰포트 크기 전달 — 무인자 핸들러도 호환） */
+  onScroll?: (event: BridgeScrollEvent) => void;
   /** RN 관용 — 웹 구현은 받아 두고 폐기（웹은 표준 키보드-스크롤 상호작용） */
   keyboardShouldPersistTaps?: "always" | "never" | "handled";
   /** 〃 */
@@ -412,6 +432,12 @@ export type SelectOptionProps = {
   children?: ReactNode;
 };
 
+export type SelectOptGroupProps = {
+  label: string;
+  disabled?: boolean;
+  children?: ReactNode;
+};
+
 /** measure 콜백 — 뷰포트（창） 기준 좌표로 양측 동일 시맨틱.
  *  웹 getBoundingClientRect（이미 뷰포트 좌표） / RN ref.measure（pageX/pageY 창 기준）.
  *  오버레이 위치 계산（lib/overlay）이 소비한다 — fixed 배치와 정합（§2.1）. */
@@ -438,12 +464,16 @@ export type BridgeDragEvent = {
   /** 제스처 시작점 기준 누적 이동 */
   dx: number;
   dy: number;
+  /** 순시 X 속도（px/ms, 선택 — 웹/네이티브 제스처 속도 기반 닫기 판정용） */
+  vx?: number;
+  /** 순시 Y 속도（px/ms, 선택） */
+  vy?: number;
 };
 
 export type UseDragOptions = {
   onBegin?: () => void;
   onMove?: (event: BridgeDragEvent) => void;
-  onEnd?: () => void;
+  onEnd?: (event?: BridgeDragEvent) => void;
 };
 
 export type UseDragResult = {
@@ -512,6 +542,9 @@ export type LoopPulseProps = {
  * - web.tsx → document.documentElement의 `.dark` 클래스 토글（표준 Tailwind dark 변형）
  */
 export type ApplyColorScheme = (colorScheme: BridgeColorScheme) => void;
+
+/** 현재 활성 색 스킴을 구독한다（UnikitThemeProvider 밖에서도 안전하게 동작）. */
+export type UseColorScheme = () => BridgeColorScheme;
 
 // ---------------------------------------------------------------------------
 // 유니버설 벡터 아이콘 타입 — lucide（웹 lucide-react / 네이티브 lucide-react-native）

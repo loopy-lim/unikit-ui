@@ -67,7 +67,7 @@ Add the token mapping + values to your global CSS (or install them via the shadc
 
 On web, put this in the app that compiles your Tailwind CSS (e.g. `app/globals.css` in Next.js, added to `transpilePackages: ["@unikit-bridge/ui"]`). On native, put it in the `global.css` referenced by uniwind's `cssEntryFile`.
 
-Web overlay entry animations (`unikit-backdrop-in`, `unikit-dialog-in`, sheet/popover variants — 7 classes, 6 keyframes, `prefers-reduced-motion` guard) are distributed as a registry style item: `bunx shadcn add <registry>/r/animations.json` merges them into the same global CSS, and `dialog`, `sheet`, `popover`, `drawer` and `alert-dialog` pull it in automatically.
+Web overlay entry animations (`unikit-backdrop-in`, `unikit-dialog-in`, sheet/popover variants — 7 classes, 6 keyframes, `prefers-reduced-motion` guard) are distributed as a registry style item: `bunx shadcn add <registry>/r/animations.json` merges them into the same global CSS, and `dialog`, `sheet`, `popover`, `drawer` and `alert-dialog` pull it in automatically. On native, `<UnikitThemeProvider>` mounts `<PortalHost>` so overlays animate on the UI thread with RN core `Animated` enter/exit transitions by default, and calling `installReanimatedMotion()` from `@unikit-bridge/ui/motion` upgrades native overlays and `transition-*` classes to `react-native-reanimated` 4.x CSS Animations & Transitions.
 
 ## Usage
 
@@ -157,6 +157,7 @@ Web mounts tiptap directly (`@tiptap/react`, `@tiptap/starter-kit`, `@tiptap/mar
 ### Optional peer dependencies
 
 - **Icons (platform)**: web → `lucide-react`, native → `lucide-react-native` (bridged through `/primitives`).
+- **Motion (native CSS Animations/Transitions)** → `react-native-reanimated` (`>=4.0.0`)
 - **Form** → `react-hook-form`
 - **Chart** → `react-native-svg`
 - **Editor (web)** → `@tiptap/react`, `@tiptap/starter-kit`, `@tiptap/markdown`, `@tiptap/extensions`, `@tiptap/pm`

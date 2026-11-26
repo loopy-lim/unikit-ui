@@ -38,7 +38,7 @@
 import {
   forwardRef,
   useEffect,
-  useRef,
+  useState,
   useSyncExternalStore,
 } from "react";
 import {
@@ -319,20 +319,23 @@ function ToastCard({
   closeButton,
   defaultDuration,
 }: ToastCardProps) {
-  // 드래그 dismiss — 배치 방향으로 48px 이상 끌면 닫는다（이동 중 추적 없음）.
-  const dyRef = useRef(0);
-  const { dragHandlers } = useDrag({
-    onBegin: () => {
-      dyRef.current = 0;
-    },
+  // 실시간 손가락 추적 스와이프 닫힘 — 배치 방향으로 48px 또는 속도 임계 초과 시 닫고, 미달 시 0 복귀.
+  const [dragY, setDragY] = useState(0);
+  const upward = position.startsWith("top");
+  const { dragHandlers, dragging } = useDrag({
     onMove: (event) => {
-      dyRef.current = event.dy;
+      const primary = upward ? -event.dy : event.dy;
+      setDragY(primary >= 0 ? event.dy : event.dy * 0.2);
     },
-    onEnd: () => {
-      const upward = position.startsWith("top");
-      const dy = dyRef.current;
-      if (upward ? dy < -48 : dy > 48) {
+    onEnd: (event) => {
+      const dy = event?.dy ?? dragY;
+      const vy = event?.vy ?? 0;
+      const primary = upward ? -dy : dy;
+      const primaryV = upward ? -vy : vy;
+      if (primary > 48 || (primaryV > 0.45 && primary > 16)) {
         dismissToast(toastItem.id);
+      } else {
+        setDragY(0);
       }
     },
   });
@@ -350,6 +353,13 @@ function ToastCard({
   // richColors 시 전경은 흰색 계열로 고정（원본）, 아니면 팝오버 토큰.
   const titleColor = colored ? "text-white" : "text-popover-foreground";
   const descriptionColor = colored ? "text-white/80" : "text-muted-foreground";
+  const dragStyle =
+    dragY !== 0
+      ? {
+          translateY: dragY,
+          opacity: Math.max(0.35, 1 - Math.abs(dragY) / 160),
+        }
+      : undefined;
 
   return (
     <View
@@ -357,7 +367,9 @@ function ToastCard({
       className={cn(
         "w-full",
         toastCardVariants({ rich: richColors, variant: toastItem.variant }),
+        !dragging && "transition-transform duration-200",
       )}
+      style={dragStyle}
       {...(dragHandlers as ViewProps)}
     >
       {toastItem.variant !== "default" && (

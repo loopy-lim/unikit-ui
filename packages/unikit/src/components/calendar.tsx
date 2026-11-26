@@ -65,12 +65,48 @@ function addMonths(date: Date, amount: number): Date {
   return new Date(date.getFullYear(), date.getMonth() + amount, 1);
 }
 
+function dayKey(date: Date): number {
+  return new Date(date.getFullYear(), date.getMonth(), date.getDate()).getTime();
+}
+
 function isSameDay(a: Date, b: Date): boolean {
-  return (
-    a.getFullYear() === b.getFullYear() &&
-    a.getMonth() === b.getMonth() &&
-    a.getDate() === b.getDate()
-  );
+  return dayKey(a) === dayKey(b);
+}
+
+export type DateRange = {
+  from?: Date;
+  to?: Date;
+};
+
+export type CalendarDateMatcher =
+  | Date
+  | Date[]
+  | { before: Date }
+  | { after: Date }
+  | { from: Date; to?: Date }
+  | ((date: Date) => boolean);
+
+/** 단일·배열·범위(before/after/from~to)·함수 matcher로 날짜 일치 여부를 판정한다. */
+export function matchesCalendarDate(
+  date: Date,
+  matcher?: CalendarDateMatcher | CalendarDateMatcher[],
+): boolean {
+  if (!matcher) return false;
+  if (typeof matcher === "function") return matcher(date);
+  if (matcher instanceof Date) return isSameDay(date, matcher);
+  if (Array.isArray(matcher)) {
+    return matcher.some((item) => matchesCalendarDate(date, item));
+  }
+  const t = dayKey(date);
+  if ("before" in matcher) return t < dayKey(matcher.before);
+  if ("after" in matcher) return t > dayKey(matcher.after);
+  if ("from" in matcher) {
+    const start = dayKey(matcher.from);
+    if (matcher.to === undefined) return t === start;
+    const end = dayKey(matcher.to);
+    return t >= Math.min(start, end) && t <= Math.max(start, end);
+  }
+  return false;
 }
 
 // 6행 7열 격자 — 첫 칸은 1일이 속한 주의 일요일（42칸이면 달 끝까지 빈칸이 없다）
@@ -97,37 +133,61 @@ function formatMonthLabel(month: Date): string {
   return `${month.getFullYear()}년 ${month.getMonth() + 1}월`;
 }
 
-export type CalendarProps = Omit<ViewProps, "children"> & {
-  /** 선택된 날짜（mode="single"） */
-  selected?: Date;
-  /** 날짜 선택 콜백 — 원본 onSelect（date, ） 신호에서 단일 인자로 단순화 */
-  onSelect?: (date: Date) => void;
+type CalendarBaseProps = Omit<ViewProps, "children"> & {
   /** 표시 월 제어（각 달의 1일로 정규화） */
   month?: Date;
   /** 초기 표시 월 — 없으면 selected, 그것도 없으면 오늘 */
   defaultMonth?: Date;
   onMonthChange?: (month: Date) => void;
-  /** 비활성 판정 함수 — 원본의 DayPicker matcher 체계 대신 predicate */
-  disabled?: (date: Date) => boolean;
+  /** 앞뒤 달 날짜 표시 여부（기본 true） */
+  showOutsideDays?: boolean;
+  /** 비활성 판정 — 함수·단일 Date·배열·{ before | after | from/to } matcher 모두 지원 */
+  disabled?: CalendarDateMatcher | CalendarDateMatcher[];
 };
 
-const Calendar = forwardRef<BridgeViewRef, CalendarProps>(
+export type CalendarProps = CalendarBaseProps &
   (
-    {
+    | {
+        mode?: "single";
+        selected?: Date;
+        onSelect?: (date: Date) => void;
+      }
+    | {
+        mode: "multiple";
+        selected?: Date[];
+        onSelect?: (dates: Date[]) => void;
+      }
+    | {
+        mode: "range";
+        selected?: DateRange;
+        onSelect?: (range: DateRange | undefined) => void;
+      }
+  );
+
+function resolveInitialSelectedDate(props: CalendarProps): Date | undefined {
+  if (props.mode === "multiple") return props.selected?.[0];
+  if (props.mode === "range") return props.selected?.from ?? props.selected?.to;
+  return props.selected;
+}
+
+const Calendar = forwardRef<BridgeViewRef, CalendarProps>(
+  (allProps, ref) => {
+    const {
+      mode = "single",
       selected,
       onSelect,
       month,
       defaultMonth,
       onMonthChange,
+      showOutsideDays = true,
       disabled,
       className,
       ...props
-    },
-    ref,
-  ) => {
+    } = allProps;
+    const initialAnchor = resolveInitialSelectedDate(allProps);
     // 비제어 월 상태 — 제어（month 지정）면 무시된다.
     const [internalMonth, setInternalMonth] = useState<Date>(() =>
-      startOfMonth(defaultMonth ?? selected ?? new Date()),
+      startOfMonth(defaultMonth ?? initialAnchor ?? new Date()),
     );
     const currentMonth = month !== undefined ? startOfMonth(month) : internalMonth;
     const baseId = useId();
@@ -145,8 +205,40 @@ const Calendar = forwardRef<BridgeViewRef, CalendarProps>(
     const handleSelect = (cell: DayCell) => {
       // 앞뒤 달 날짜는 월을 넘겨가며 선택（원본 outside day 동작）
       if (cell.outside) goToMonth(cell.date);
-      onSelect?.(cell.date);
+      if (mode === "multiple") {
+        const current = Array.isArray(selected) ? selected : [];
+        const exists = current.some((d) => isSameDay(d, cell.date));
+        const next = exists
+          ? current.filter((d) => !isSameDay(d, cell.date))
+          : [...current, cell.date];
+        (onSelect as ((dates: Date[]) => void) | undefined)?.(next);
+        return;
+      }
+      if (mode === "range") {
+        const current = (selected as DateRange | undefined) ?? undefined;
+        let next: DateRange;
+        if (!current?.from || (current.from && current.to)) {
+          next = { from: cell.date, to: undefined };
+        } else if (dayKey(cell.date) < dayKey(current.from)) {
+          next = { from: cell.date, to: current.from };
+        } else {
+          next = { from: current.from, to: cell.date };
+        }
+        (onSelect as ((range: DateRange | undefined) => void) | undefined)?.(next);
+        return;
+      }
+      (onSelect as ((date: Date) => void) | undefined)?.(cell.date);
     };
+
+    const rangeSelected = mode === "range" ? (selected as DateRange | undefined) : undefined;
+    const rangeStartKey =
+      rangeSelected?.from !== undefined ? dayKey(rangeSelected.from) : null;
+    const rangeEndKey =
+      rangeSelected?.to !== undefined ? dayKey(rangeSelected.to) : null;
+    const multipleSelected =
+      mode === "multiple" && Array.isArray(selected) ? selected : null;
+    const singleSelected =
+      mode === "single" ? (selected as Date | undefined) : undefined;
 
     return (
       <View
@@ -207,19 +299,55 @@ const Calendar = forwardRef<BridgeViewRef, CalendarProps>(
               className="mt-2 flex-row"
             >
               {week.map((cell) => {
+                if (!showOutsideDays && cell.outside) {
+                  return (
+                    <View
+                      key={cell.date.toISOString()}
+                      className="flex-1"
+                    />
+                  );
+                }
+                const cellKey = dayKey(cell.date);
+                const isRangeStart =
+                  rangeStartKey !== null && cellKey === rangeStartKey;
+                const isRangeEnd =
+                  rangeEndKey !== null && cellKey === rangeEndKey;
+                const isInRange =
+                  rangeStartKey !== null &&
+                  rangeEndKey !== null &&
+                  cellKey > rangeStartKey &&
+                  cellKey < rangeEndKey;
                 const isSelected =
-                  selected !== undefined && isSameDay(cell.date, selected);
+                  mode === "range"
+                    ? isRangeStart || isRangeEnd
+                    : mode === "multiple"
+                      ? Boolean(
+                          multipleSelected?.some((d) => isSameDay(d, cell.date)),
+                        )
+                      : singleSelected !== undefined &&
+                        isSameDay(cell.date, singleSelected);
                 const isToday = isSameDay(cell.date, today);
-                const isDisabled = disabled?.(cell.date) ?? false;
+                const isDisabled = matchesCalendarDate(cell.date, disabled);
                 return (
                   <View
                     key={cell.date.toISOString()}
                     accessibilityRole="gridcell"
-                    className="flex-1 items-center justify-center"
+                    className={cn(
+                      "flex-1 items-center justify-center",
+                      isInRange && "bg-accent",
+                      isRangeStart &&
+                        rangeEndKey !== null &&
+                        rangeEndKey !== rangeStartKey &&
+                        "rounded-l-md bg-accent",
+                      isRangeEnd &&
+                        rangeStartKey !== null &&
+                        rangeEndKey !== rangeStartKey &&
+                        "rounded-r-md bg-accent",
+                    )}
                   >
                     <Pressable
                       accessibilityRole="button"
-                      aria-selected={isSelected}
+                      aria-selected={isSelected || isInRange}
                       aria-current={isToday ? "date" : undefined}
                       disabled={isDisabled}
                       onPress={() => handleSelect(cell)}
@@ -231,8 +359,10 @@ const Calendar = forwardRef<BridgeViewRef, CalendarProps>(
                         "size-8 flex-row items-center justify-center rounded-md active:bg-accent web:select-none web:focus-visible:border-ring web:focus-visible:ring-3 web:focus-visible:ring-ring/50",
                         isSelected
                           ? "bg-primary web:hover:bg-primary/90 active:bg-primary/90"
-                          : "web:hover:bg-accent",
-                        !isSelected && isToday && "bg-accent",
+                          : isInRange
+                            ? "bg-accent"
+                            : "web:hover:bg-accent",
+                        !isSelected && !isInRange && isToday && "bg-accent",
                         isDisabled && "opacity-50",
                       )}
                     >
@@ -242,11 +372,13 @@ const Calendar = forwardRef<BridgeViewRef, CalendarProps>(
                           "font-sans text-sm leading-none",
                           isSelected
                             ? "text-primary-foreground"
-                            : isToday
+                            : isInRange
                               ? "text-accent-foreground"
-                              : cell.outside || isDisabled
-                                ? "text-muted-foreground"
-                                : "text-foreground",
+                              : isToday
+                                ? "text-accent-foreground"
+                                : cell.outside || isDisabled
+                                  ? "text-muted-foreground"
+                                  : "text-foreground",
                         )}
                       >
                         {cell.date.getDate()}

@@ -4,7 +4,10 @@ import { StatusBar } from "expo-status-bar";
 import { Stack } from "expo-router";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import { Toaster, UnikitThemeProvider, useUnikitTheme } from "@unikit-bridge/ui";
+import { installReanimatedMotion } from "@unikit-bridge/ui/motion";
 import { View } from "@unikit-bridge/ui/primitives";
+
+installReanimatedMotion();
 
 function RootShell() {
   const { colorScheme } = useUnikitTheme();

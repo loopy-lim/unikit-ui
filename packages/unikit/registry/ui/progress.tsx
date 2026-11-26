@@ -50,7 +50,7 @@ const Progress = forwardRef<BridgeViewRef, ProgressProps>(
         {/* 인디케이터 — 동적 백분율 폭은 BridgeStyle 전용 영역 */}
         <View
           aria-hidden
-          className="h-full bg-primary web:transition-all"
+          className="h-full bg-primary transition-all duration-300"
           style={{ width: `${percent}%` }}
         />
       </View>

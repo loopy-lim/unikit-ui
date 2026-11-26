@@ -140,6 +140,9 @@ type ComboboxContextValue = {
   registerItem: (value: string, label: string) => void;
   /** 등록된 라벨 맵（읽기 전용 관찰） */
   labels: Map<string, string>;
+  /** 트리거/입력창 측정 폭（px） — ComboboxContent 최소 폭 추종 */
+  anchorWidth: number | null;
+  setAnchorWidth: (width: number) => void;
 };
 
 const ComboboxContext = createContext<ComboboxContextValue | null>(null);
@@ -202,6 +205,12 @@ const Combobox = forwardRef<BridgeViewRef, ComboboxProps>(
     const selectedValues = values !== undefined ? values : internalValues;
     const [internalOpen, setInternalOpen] = useState(defaultOpen ?? false);
     const isOpen = open ?? internalOpen;
+    const [anchorWidth, setAnchorWidthState] = useState<number | null>(null);
+    const setAnchorWidth = useCallback((w: number) => {
+      const next = Math.round(w);
+      if (next <= 0) return;
+      setAnchorWidthState((prev) => (prev === next ? prev : next));
+    }, []);
 
     const stateRef = useRef({
       multiple,
@@ -303,6 +312,8 @@ const Combobox = forwardRef<BridgeViewRef, ComboboxProps>(
         setOpen,
         registerItem,
         labels: labelRegistry.current,
+        anchorWidth,
+        setAnchorWidth,
       }),
       [
         multiple,
@@ -314,6 +325,8 @@ const Combobox = forwardRef<BridgeViewRef, ComboboxProps>(
         isOpen,
         setOpen,
         registerItem,
+        anchorWidth,
+        setAnchorWidth,
       ],
     );
 
@@ -347,21 +360,28 @@ Combobox.displayName = "Combobox";
 export type ComboboxTriggerProps = PressableProps;
 
 const ComboboxTrigger = forwardRef<BridgePressableRef, ComboboxTriggerProps>(
-  ({ className, children, ...props }, ref) => (
-    <PopoverTrigger
-      ref={ref}
-      className={cn(
-        "flex flex-row items-center gap-2",
-        TRIGGER_RESET_CLASSES,
-        className,
-      )}
-      {...props}
-    >
-      {wrapTextChildren(children, "font-sans text-sm text-foreground")}
-      {/* 원본 트리거 아이콘: size-4 text-muted-foreground — opacity-50 없음 */}
-      <ChevronDownIcon className="size-4 shrink-0 text-muted-foreground" />
-    </PopoverTrigger>
-  ),
+  ({ className, children, onLayout, ...props }, ref) => {
+    const combobox = useComboboxContext("ComboboxTrigger");
+    return (
+      <PopoverTrigger
+        ref={ref}
+        onLayout={(layout) => {
+          combobox.setAnchorWidth(layout.width);
+          onLayout?.(layout);
+        }}
+        className={cn(
+          "flex flex-row items-center gap-2",
+          TRIGGER_RESET_CLASSES,
+          className,
+        )}
+        {...props}
+      >
+        {wrapTextChildren(children, "font-sans text-sm text-foreground")}
+        {/* 원본 트리거 아이콘: size-4 text-muted-foreground — opacity-50 없음 */}
+        <ChevronDownIcon className="size-4 shrink-0 text-muted-foreground" />
+      </PopoverTrigger>
+    );
+  },
 );
 ComboboxTrigger.displayName = "ComboboxTrigger";
 
@@ -449,35 +469,42 @@ const ComboboxInput = forwardRef<BridgeTextInputRef, ComboboxInputProps>(
       ...props
     },
     ref,
-  ) => (
-    // 원본 InputGroup（미이식） 구조를 검색 행으로 재구성 — 하단 보더는
-    // Content 내부 배치（전통형）에서 목록과 구분선을 이룬다.
-    <View
-      className={cn(
-        "flex-none flex-row items-center border-b border-border h-9",
-        className,
-      )}
-    >
-      <CommandInput
-        ref={ref}
-        disabled={disabled}
-        className="h-full flex-1 border-0 px-3"
-        {...props}
-      />
-      {showClear ? (
-        <ComboboxClear disabled={disabled} className="mr-2" />
-      ) : null}
-      {showTrigger ? (
-        <PopoverTrigger
-          accessibilityLabel="목록 열기"
-          className={cn("mr-2", TRIGGER_RESET_CLASSES)}
-        >
-          <ChevronDownIcon className="size-4 shrink-0 text-muted-foreground" />
-        </PopoverTrigger>
-      ) : null}
-      {children}
-    </View>
-  ),
+  ) => {
+    const combobox = useComboboxContext("ComboboxInput");
+    return (
+      // 원본 InputGroup（미이식） 구조를 검색 행으로 재구성 — 하단 보더는
+      // Content 내부 배치（전통형）에서 목록과 구분선을 이룬다.
+      <View
+        onLayout={(layout) => combobox.setAnchorWidth(layout.width)}
+        className={cn(
+          "flex-none flex-row items-center border-b border-border h-9",
+          className,
+        )}
+      >
+        <CommandInput
+          ref={ref}
+          disabled={disabled}
+          onValueChange={(search) => {
+            if (!combobox.open && search !== "") combobox.setOpen(true);
+          }}
+          className="h-full flex-1 border-0 px-3"
+          {...props}
+        />
+        {showClear ? (
+          <ComboboxClear disabled={disabled} className="mr-2" />
+        ) : null}
+        {showTrigger ? (
+          <PopoverTrigger
+            accessibilityLabel="목록 열기"
+            className={cn("mr-2", TRIGGER_RESET_CLASSES)}
+          >
+            <ChevronDownIcon className="size-4 shrink-0 text-muted-foreground" />
+          </PopoverTrigger>
+        ) : null}
+        {children}
+      </View>
+    );
+  },
 );
 ComboboxInput.displayName = "ComboboxInput";
 
@@ -498,6 +525,7 @@ const ComboboxContent = forwardRef<BridgeViewRef, ComboboxContentProps>(
   (
     {
       className,
+      style,
       side = "bottom",
       align = "start",
       sideOffset = 6,
@@ -505,24 +533,32 @@ const ComboboxContent = forwardRef<BridgeViewRef, ComboboxContentProps>(
       ...props
     },
     ref,
-  ) => (
-    // PopoverContent 기본 카드（w-72p-4border）를 원본 팝업 토큰으로 오버라이드.
-    // 테두리는 popover 기본 border border-border를 통과시킨다 — select·dropdown
-    // 과 형제 일관성（원본 ring 대비 의도적 이탈 — 머리 주석 참조）.
-    <PopoverContent
-      ref={ref}
-      side={side}
-      align={align}
-      sideOffset={sideOffset}
-      className={cn(
-        "p-0 web:max-h-96 web:overflow-y-auto web:shadow-md",
-        className,
-      )}
-      {...props}
-    >
-      {children}
-    </PopoverContent>
-  ),
+  ) => {
+    const combobox = useComboboxContext("ComboboxContent");
+    const mergedStyle =
+      combobox.anchorWidth != null
+        ? { minWidth: combobox.anchorWidth, ...style }
+        : style;
+    return (
+      // PopoverContent 기본 카드（w-72p-4border）를 원본 팝업 토큰으로 오버라이드.
+      // 테두리는 popover 기본 border border-border를 통과시킨다 — select·dropdown
+      // 과 형제 일관성（원본 ring 대비 의도적 이탈 — 머리 주석 참조）.
+      <PopoverContent
+        ref={ref}
+        side={side}
+        align={align}
+        sideOffset={sideOffset}
+        style={mergedStyle}
+        className={cn(
+          "p-0 web:max-h-96 web:overflow-y-auto web:shadow-md",
+          className,
+        )}
+        {...props}
+      >
+        {children}
+      </PopoverContent>
+    );
+  },
 );
 ComboboxContent.displayName = "ComboboxContent";
 

@@ -33,6 +33,7 @@ import {
   forwardRef,
   useCallback,
   useContext,
+  useEffect,
   useId,
   useMemo,
   useRef,
@@ -225,19 +226,97 @@ const DrawerClose = forwardRef<BridgePressableRef, DrawerCloseProps>(
 );
 DrawerClose.displayName = "DrawerClose";
 
+export type DrawerDirection = "top" | "right" | "bottom" | "left";
+
+/** 4방향 실시간 드래그 오프셋 계산(닫힘 축 1:1 추적, 반대 축 0.18x 루버 밴드). */
+export function computeDrawerDragOffset(
+  direction: DrawerDirection,
+  dx: number,
+  dy: number,
+): number {
+  switch (direction) {
+    case "bottom":
+      return dy >= 0 ? dy : dy * 0.18;
+    case "top":
+      return dy <= 0 ? dy : dy * 0.18;
+    case "right":
+      return dx >= 0 ? dx : dx * 0.18;
+    case "left":
+      return dx <= 0 ? dx : dx * 0.18;
+  }
+}
+
+/** 4방향 드로어 닫힘 판정(거리 > 80px 또는 속도 > 0.5px/ms + 거리 > 24px). */
+export function shouldDismissDrawer(
+  direction: DrawerDirection,
+  dx: number,
+  dy: number,
+  vx = 0,
+  vy = 0,
+): boolean {
+  let primary = 0;
+  let velocity = 0;
+  switch (direction) {
+    case "bottom":
+      primary = dy;
+      velocity = vy;
+      break;
+    case "top":
+      primary = -dy;
+      velocity = -vy;
+      break;
+    case "right":
+      primary = dx;
+      velocity = vx;
+      break;
+    case "left":
+      primary = -dx;
+      velocity = -vx;
+      break;
+  }
+  return primary > 80 || (velocity > 0.5 && primary > 24);
+}
+
 export type DrawerContentProps = ViewProps & {
-  direction?: "top" | "right" | "bottom" | "left";
+  direction?: DrawerDirection;
 };
 
 const DrawerContent = forwardRef<BridgeViewRef, DrawerContentProps>(
-  ({ className, children, direction = "bottom", nativeID, ...props }, ref) => {
+  ({ className, style, children, direction = "bottom", nativeID, ...props }, ref) => {
     const drawer = useDrawerContext("DrawerContent");
-    // 아래 드래그 닫기 — vaul 제스처의 최소 대체（핸들 전용, 임계값 80px）.
-    const { dragHandlers } = useDrag({
+    const [dragOffset, setDragOffset] = useState(0);
+
+    useEffect(() => {
+      if (!drawer.open) setDragOffset(0);
+    }, [drawer.open]);
+
+    // 4방향 실시간 손가락 추적 + 속도/거리 임계값 닫힘 · 미달 시 0 복귀(스냅백).
+    const { dragHandlers, dragging } = useDrag({
       onMove: (event) => {
-        if (event.dy > 80) drawer.setOpen(false);
+        setDragOffset(computeDrawerDragOffset(direction, event.dx, event.dy));
+      },
+      onEnd: (event) => {
+        if (
+          event &&
+          shouldDismissDrawer(direction, event.dx, event.dy, event.vx, event.vy)
+        ) {
+          drawer.setOpen(false);
+        }
+        setDragOffset(0);
       },
     });
+
+    const isVertical = direction === "top" || direction === "bottom";
+    const mergedStyle =
+      dragOffset !== 0
+        ? {
+            ...style,
+            ...(isVertical
+              ? { translateY: dragOffset }
+              : { translateX: dragOffset }),
+          }
+        : style;
+
     return (
       <ModalOverlay
         visible={drawer.open}
@@ -255,18 +334,45 @@ const DrawerContent = forwardRef<BridgeViewRef, DrawerContentProps>(
             ref={ref}
             nativeID={nativeID ?? drawer.contentId}
             aria-describedby={drawer.descriptionId}
-            className={cn(drawerContentVariants({ direction }), className)}
+            className={cn(
+              drawerContentVariants({ direction }),
+              !dragging && "transition-transform duration-200",
+              className,
+            )}
+            style={mergedStyle}
             {...props}
           >
             {direction === "bottom" && (
               <View
                 aria-hidden
-                // 드래그 핸들 — 웹 포인터 이벤트/네이티브 panHandlers 펼침.
                 {...(dragHandlers as ViewProps)}
-                className="mx-auto mt-4 h-2 w-24 shrink-0 rounded-full bg-muted"
-              />
+                className="w-full items-center pt-4"
+              >
+                <View className="h-2 w-24 shrink-0 rounded-full bg-muted" />
+              </View>
             )}
             {children}
+            {direction === "top" && (
+              <View
+                aria-hidden
+                {...(dragHandlers as ViewProps)}
+                className="mt-auto w-full items-center pt-2 pb-4"
+              >
+                <View className="h-2 w-24 shrink-0 rounded-full bg-muted" />
+              </View>
+            )}
+            {(direction === "left" || direction === "right") && (
+              <View
+                aria-hidden
+                {...(dragHandlers as ViewProps)}
+                className={cn(
+                  "absolute top-0 bottom-0 w-5 items-center justify-center",
+                  direction === "left" ? "right-0" : "left-0",
+                )}
+              >
+                <View className="h-12 w-1.5 shrink-0 rounded-full bg-muted" />
+              </View>
+            )}
           </View>
         </DrawerDirectionContext.Provider>
       </ModalOverlay>

@@ -21,7 +21,7 @@ import {
   useState,
   type ReactNode,
 } from "react";
-import { applyColorScheme } from "@unikit-bridge/ui/primitives";
+import { PortalHost, applyColorScheme } from "@unikit-bridge/ui/primitives";
 
 import type { UnikitColorScheme } from "./tokens";
 
@@ -116,7 +116,7 @@ export function UnikitThemeProvider({
 
   return (
     <UnikitThemeContext.Provider value={value}>
-      {children}
+      <PortalHost>{children}</PortalHost>
     </UnikitThemeContext.Provider>
   );
 }

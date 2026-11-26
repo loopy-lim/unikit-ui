@@ -382,6 +382,7 @@ const SelectContent = forwardRef<BridgeViewRef, SelectContentProps>(
         // 덮는다. nativeID는 popover 기본값（트리거 aria-controls와 연결됨） 유지.
         accessibilityRole="listbox"
         nativeID={nativeID}
+        focusable
         onKeyDown={composeMenuNavKeyDown(nav, onKeyDown)}
         // popover 카드 기본 w-72 p-4를 셀렉트 목록용으로 무효화（twMerge 병합）
         className={cn("w-auto min-w-32 p-0 web:shadow-md", className)}
@@ -445,21 +446,24 @@ const SelectItem = forwardRef<BridgePressableRef, SelectItemProps>(
     }, [select, value, label]);
     // 키보드 탐색 등록（사이클 90） — 카드 밖 렌더는 nav가 없어도 동작.
     const nav = useMenuNavContext();
-    const { id, attach, nodeRef } = useMenuItemRef(ref);
+    const handleSelect = () => {
+      if (disabled) return;
+      select.setValue(value);
+      onSelect?.();
+    };
+    const { id, attach, nodeRef } = useMenuItemRef(ref, undefined, handleSelect);
     return (
       <Pressable
         ref={attach}
         accessibilityRole="option"
         aria-selected={selected}
         disabled={disabled}
+        focusable={!disabled}
         // 포인터 진입 항목으로 포커스 이동（radix pointerenter 정합 — 하이라이트와
         // DOM 포커스가 일치해야 Enter가 가리키는 항목을 선택한다, 사이클 90）.
         onHoverIn={composeMenuItemHoverIn(nav, id, nodeRef, onHoverIn)}
         onFocus={composeMenuItemFocus(nav, id, onFocus)}
-        onPress={() => {
-          select.setValue(value);
-          onSelect?.();
-        }}
+        onPress={handleSelect}
         className={cn(
           "relative flex-row w-full items-center gap-2 rounded-sm py-1.5 pr-8 pl-2 active:bg-accent web:cursor-default web:select-none web:outline-none web:hover:bg-accent web:focus-visible:bg-accent",
           disabled && "web:pointer-events-none opacity-50",

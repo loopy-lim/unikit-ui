@@ -104,25 +104,26 @@ const Switch = forwardRef<BridgePressableRef, SwitchProps>(
           // 꺼짐 트랙은 bg-input（라이트 1.27:1·다크 1.2:1）이 배경에 묻혀
           // "꺼짐" 상태를 오독시켜 foreground/50（양 모드 ≥3:1, G4）로 조정.
           isChecked
-            ? "justify-end bg-primary web:justify-start"
+            ? "justify-start bg-primary"
             : "justify-start bg-foreground/50",
           disabled && "web:pointer-events-none web:cursor-not-allowed opacity-50",
           className,
         )}
         {...props}
       >
-        {/* 썸 — 장식 요소（aria-hidden）. 다크 모드 썸 색은 상태별로 다르다（원본 준수）. */}
+        {/* 썸 — 장식 요소（aria-hidden）. 범용 translateX + transition-transform으로 양측 슬라이드. */}
         <View
           aria-hidden
           className={cn(
             switchThumbVariants({ size }),
-            "web:transition-transform web:duration-200",
+            "transition-transform duration-200",
             isChecked
-              ? resolvedSize === "sm"
-                ? "bg-background dark:bg-primary-foreground web:translate-x-2.5"
-                : "bg-background dark:bg-primary-foreground web:translate-x-3.5"
-              : "bg-background dark:bg-foreground web:translate-x-0",
+              ? "bg-background dark:bg-primary-foreground"
+              : "bg-background dark:bg-foreground",
           )}
+          style={{
+            translateX: isChecked ? (resolvedSize === "sm" ? 10 : 14) : 0,
+          }}
         />
       </Pressable>
     );

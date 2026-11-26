@@ -43,6 +43,7 @@ import {
   ScrollView,
   View,
   type BridgePressableRef,
+  type BridgeScrollEvent,
   type BridgeScrollViewRef,
   type BridgeViewRef,
   type ScrollViewProps,
@@ -76,7 +77,9 @@ type MessageScrollerContextValue = {
   setStickToEnd: (value: boolean) => void;
   atStart: boolean;
   atEnd: boolean;
-  /** 가시성（시작/끝 버튼 표시 판단） 갱신 — 계약상 자동 계산 불가 */
+  scrollable: boolean;
+  setScrollable: (value: boolean) => void;
+  /** 가시성（시작/끝 버튼 표시 판단） 갱신 — onScroll에서 자동 계산되며 수동 덮어쓰기도 가능 */
   setVisibility: (visibility: Partial<MessageScrollerVisibilityValue>) => void;
   /** Viewport가 자신의 스크롤 ref를 등록하는 통로 */
   registerViewport: (ref: BridgeScrollViewRef | null) => void;
@@ -91,6 +94,8 @@ const NOOP_SCROLLER: MessageScrollerContextValue = {
   setStickToEnd: () => {},
   atStart: false,
   atEnd: true,
+  scrollable: true,
+  setScrollable: () => {},
   setVisibility: () => {},
   registerViewport: () => {},
 };
@@ -109,28 +114,47 @@ export type MessageScrollerProviderProps = {
 function MessageScrollerProvider({ children }: MessageScrollerProviderProps) {
   const viewportRef = useRef<BridgeScrollViewRef | null>(null);
   const [stickToEnd, setStickToEnd] = useState(true);
+  const [scrollable, setScrollable] = useState(false);
   // 기본값은 채팅 관례 — 맨 아래에서 시작（끝 버튼 숨김）.
   const [visibility, setVisibilityState] = useState<MessageScrollerVisibilityValue>(
     { atStart: false, atEnd: true },
   );
+  const setVisibility = useCallback(
+    (next: Partial<MessageScrollerVisibilityValue>) => {
+      setVisibilityState((prev) => {
+        const atStart = next.atStart ?? prev.atStart;
+        const atEnd = next.atEnd ?? prev.atEnd;
+        return prev.atStart === atStart && prev.atEnd === atEnd
+          ? prev
+          : { atStart, atEnd };
+      });
+    },
+    [],
+  );
+  const registerViewport = useCallback((ref: BridgeScrollViewRef | null) => {
+    viewportRef.current = ref;
+  }, []);
   const value = useMemo<MessageScrollerContextValue>(
     () => ({
       scrollTo: (options) => viewportRef.current?.scrollTo(options),
-      scrollToStart: (animated = true) =>
-        viewportRef.current?.scrollTo({ y: 0, animated }),
-      scrollToEnd: (animated = true) =>
-        viewportRef.current?.scrollTo({ y: SCROLL_END_OFFSET, animated }),
+      scrollToStart: (animated = true) => {
+        setStickToEnd(false);
+        viewportRef.current?.scrollTo({ y: 0, animated });
+      },
+      scrollToEnd: (animated = true) => {
+        setStickToEnd(true);
+        viewportRef.current?.scrollTo({ y: SCROLL_END_OFFSET, animated });
+      },
       stickToEnd,
       setStickToEnd,
       atStart: visibility.atStart,
       atEnd: visibility.atEnd,
-      setVisibility: (next) =>
-        setVisibilityState((prev) => ({ ...prev, ...next })),
-      registerViewport: (ref) => {
-        viewportRef.current = ref;
-      },
+      scrollable,
+      setScrollable,
+      setVisibility,
+      registerViewport,
     }),
-    [stickToEnd, visibility],
+    [stickToEnd, visibility, scrollable, setVisibility, registerViewport],
   );
   return (
     <MessageScrollerContext.Provider value={value}>
@@ -197,12 +221,26 @@ const MessageScrollerViewport = forwardRef<
     const didMountRef = useRef(false);
     useEffect(() => {
       if (scroller.stickToEnd) {
-        // 최초 마운트는 점프, 이후 도착은 부드럽게（원본 자동 스크롤 동작）.
-        scroller.scrollToEnd(!didMountRef.current);
+        // 최초 마운트는 즉시 점프(animated=false), 이후 도착은 부드럽게（원본 자동 스크롤 동작）.
+        scroller.scrollToEnd(didMountRef.current);
       }
       didMountRef.current = true;
       // scroller 함수들은 viewportRef.current를 읽으므로 최신 상태를 참조한다.
     }, [childCount, scroller.stickToEnd]); // eslint-disable-line react-hooks/exhaustive-deps
+
+    const handleScroll = (event: BridgeScrollEvent) => {
+      const { contentOffset, contentSize, layoutMeasurement } = event;
+      const isScrollable = contentSize.height > layoutMeasurement.height + 1;
+      const atStart = contentOffset.y <= 16;
+      const atEnd =
+        !isScrollable ||
+        contentOffset.y + layoutMeasurement.height >= contentSize.height - 24;
+      scroller.setScrollable(isScrollable);
+      scroller.setVisibility({ atStart, atEnd });
+      scroller.setStickToEnd(atEnd);
+      onScroll?.(event);
+    };
+
     return (
       <ScrollView
         ref={setViewport}
@@ -214,7 +252,7 @@ const MessageScrollerViewport = forwardRef<
           "min-h-full",
           contentContainerClassName,
         )}
-        onScroll={onScroll}
+        onScroll={handleScroll}
         {...props}
       >
         {children}
@@ -291,11 +329,11 @@ const MessageScrollerButton = forwardRef<
           (direction === "end" ? "맨 아래로 스크롤" : "맨 위로 스크롤")
         }
         className={cn(
-          "absolute left-1/2 size-8 -translate-x-1/2 p-0 web:transition-opacity web:duration-200 web:rtl:translate-x-1/2",
+          "absolute left-1/2 size-8 -translate-x-1/2 p-0 transition-all duration-200 web:rtl:translate-x-1/2",
           direction === "end" ? "bottom-4" : "top-4",
           isVisible
-            ? "web:opacity-100"
-            : "pointer-events-none web:scale-95 web:opacity-0",
+            ? "opacity-100"
+            : "pointer-events-none scale-95 opacity-0",
           className,
         )}
         onPress={() => {
@@ -334,7 +372,7 @@ function useMessageScroller(): MessageScrollerContextValue {
  * 원본 API 유지, 실제 판단은 소비자 몫）.
  */
 function useMessageScrollerScrollable(): boolean {
-  return true;
+  return useContext(MessageScrollerContext).scrollable;
 }
 
 /** 시작/끝 가시성 — 소비자가 onScroll에서 판단해 setVisibility로 갱신한다. */

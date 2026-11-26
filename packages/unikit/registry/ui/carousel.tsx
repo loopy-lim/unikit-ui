@@ -55,6 +55,7 @@ import {
   View,
   measureInWindow,
   type BridgePressableRef,
+  type BridgeScrollEvent,
   type BridgeScrollViewRef,
   type BridgeViewRef,
   type ScrollViewProps,
@@ -86,6 +87,8 @@ type CarouselContextValue = {
   canScrollNext: boolean;
   /** CarouselContent가 항목 수를 보고（이동 상한 근사용） */
   reportItemCount: (count: number) => void;
+  /** ScrollView 실시간 스크롤 오프셋 동기화（양측 스와이프 대응） */
+  handleScroll: (event: BridgeScrollEvent) => void;
 };
 
 const CarouselContext = createContext<CarouselContextValue | null>(null);
@@ -120,6 +123,7 @@ const Carousel = forwardRef<BridgeViewRef, CarouselProps>(
     const rootRef = useRef<BridgeViewRef | null>(null);
     // 버튼 이동의 목표 절대 오프셋 추적（실제 스크롤 오프셋 읽기 계약 부재）.
     const offsetRef = useRef(0);
+    const viewportRef = useRef(0);
     const countRef = useRef(0);
 
     const setRef = (element: BridgeViewRef | null) => {
@@ -130,7 +134,40 @@ const Carousel = forwardRef<BridgeViewRef, CarouselProps>(
 
     const reportItemCount = useCallback((count: number) => {
       countRef.current = count;
+      setCanScrollPrev(offsetRef.current > 2);
+      setCanScrollNext(
+        count > 1 &&
+          (viewportRef.current <= 0 ||
+            offsetRef.current < (count - 1) * viewportRef.current - 2),
+      );
     }, []);
+
+    const handleScroll = useCallback(
+      (event: BridgeScrollEvent) => {
+        const offset =
+          orientation === "horizontal"
+            ? event.contentOffset.x
+            : event.contentOffset.y;
+        const viewport =
+          orientation === "horizontal"
+            ? event.layoutMeasurement.width
+            : event.layoutMeasurement.height;
+        const total =
+          orientation === "horizontal"
+            ? event.contentSize.width
+            : event.contentSize.height;
+        if (viewport > 0) viewportRef.current = viewport;
+        offsetRef.current = offset;
+        const maxOffset = Math.max(
+          total - viewport,
+          (countRef.current - 1) * (viewport || 1),
+          0,
+        );
+        setCanScrollPrev(offset > 2);
+        setCanScrollNext(offset < maxOffset - 2);
+      },
+      [orientation],
+    );
 
     // 방향 이동 — 뷰포트 크기 측정 후 절대 오프셋 scrollTo.
     const scrollBy = useCallback(
@@ -141,6 +178,7 @@ const Carousel = forwardRef<BridgeViewRef, CarouselProps>(
           const viewport =
             orientation === "horizontal" ? width : height;
           if (viewport <= 0) return;
+          viewportRef.current = viewport;
           // 콘텐츠 폭 근사: 항목 수 × 뷰포트（basis-full 전제） — 끝 슬라이드가
           // 보이는 지점을 상한으로 쓴다.
           const max = Math.max((countRef.current - 1) * viewport, 0);
@@ -193,8 +231,17 @@ const Carousel = forwardRef<BridgeViewRef, CarouselProps>(
         canScrollPrev,
         canScrollNext,
         reportItemCount,
+        handleScroll,
       }),
-      [orientation, scrollPrev, scrollNext, canScrollPrev, canScrollNext, reportItemCount],
+      [
+        orientation,
+        scrollPrev,
+        scrollNext,
+        canScrollPrev,
+        canScrollNext,
+        reportItemCount,
+        handleScroll,
+      ],
     );
 
     return (
@@ -221,8 +268,8 @@ Carousel.displayName = "Carousel";
 export type CarouselContentProps = ScrollViewProps;
 
 const CarouselContent = forwardRef<BridgeScrollViewRef, CarouselContentProps>(
-  ({ className, children, ...props }, ref) => {
-    const { carouselRef, orientation, reportItemCount } = useCarousel();
+  ({ className, children, onScroll, ...props }, ref) => {
+    const { carouselRef, orientation, reportItemCount, handleScroll } = useCarousel();
 
     // 항목 수 보고 — 이동 가능 상한 근사의 근거.
     useEffect(() => {
@@ -240,11 +287,16 @@ const CarouselContent = forwardRef<BridgeScrollViewRef, CarouselContentProps>(
         ref={setRef}
         horizontal={orientation === "horizontal"}
         pagingEnabled
+        onScroll={(event) => {
+          handleScroll(event);
+          onScroll?.(event);
+        }}
         // 교차축 overflow는 브리지 ScrollView가 축 전환 시 스스로 잠근다.
         className={cn("relative", className)}
         contentContainerClassName={
           orientation === "horizontal" ? "flex-row -ml-4" : "flex-col -mt-4"
-        }        {...props}
+        }
+        {...props}
       >
         {children}
       </ScrollView>
