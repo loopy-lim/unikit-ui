@@ -37,7 +37,7 @@
 import * as React from "react";
 import { Modal } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { Pressable, Text, View } from "@unikit-bridge/ui/primitives";
+import { Pressable, ScrollView, Text, View } from "@unikit-bridge/ui/primitives";
 
 import { tabs } from "@ui-sdk/core/tabs";
 import { radioGroup } from "@ui-sdk/core/radio";
@@ -622,13 +622,19 @@ export default function UisdkHwkeys() {
     };
   }, []);
 
+  // 콘텐츠(탭·라디오·슬라이더·다이얼로그 4섹션 + 이벤트 로그)가 폰 화면 높이를
+  // 넘어요 — uisdk 화면 관례대로 브리지 ScrollView로 감싸고(uisdk-agent와 동일)
+  // 안전 영역은 양끝 스페이서 View로. 스크롤 없이는 하단 DIALOG 섹션이 도달
+  // 불가능해요(E2E 45855459563에서 하단 라벨 미가시로 확인).
   return (
-    <View className="flex-1 bg-background">
+    <ScrollView
+      className="flex-1 bg-background"
+      contentContainerClassName="px-6"
+    >
       <View style={{ height: insets.top + 20 }} />
-      <View className="flex-1 px-6">
-        <Text className="font-sans text-xl font-bold tracking-tight text-foreground">
-          하드웨어 키 → 커널 직결
-        </Text>
+      <Text className="font-sans text-xl font-bold tracking-tight text-foreground">
+        하드웨어 키 → 커널 직결
+      </Text>
         <Text className="mt-1 font-sans text-xs leading-4 text-muted-foreground">
           실제 하드웨어 키(RN 0.88 View onKeyDown — enableKeyEvents 플래그)가 sdkKeyHostProps를
           거쳐 커널 keydown으로 흘러요. 목록 파트만 focusable(컨테이너 전략) — 방향키 소유권이
@@ -646,7 +652,7 @@ export default function UisdkHwkeys() {
             {line}
           </Text>
         ))}
-      </View>
-    </View>
+      <View style={{ height: insets.bottom + 24 }} />
+    </ScrollView>
   );
 }

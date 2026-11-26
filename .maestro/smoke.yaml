@@ -33,12 +33,19 @@ tags:
 - assertVisible: "확인 대화 상자"
 - assertNotVisible: "드로어"
 
-# 하드웨어 키 화면(딥링크 — expo-router triple-slash canonical form) —
+# 하드웨어 키 화면(딥링크 — expo-router triple-slash canonical form).
+# 착지 확인은 화면 상단 탭 목록 라벨로 — 다이얼로그 버튼은 화면 하단이라
+# scrollUntilVisible로 도달한다(이 화면은 콘텐츠가 폰 높이를 넘어 ScrollView 필수).
 # RN Modal 열림·닫힘(수명 계약: 닫히면 콘텐츠 언마운트)
 - openLink: unikitexpo:///uisdk-hwkeys
 - extendedWaitUntil:
-    visible: "하드웨어 다이얼로그 열기"
+    visible: "하드웨어 탭 목록"
     timeout: 60000
+- scrollUntilVisible:
+    element: "하드웨어 다이얼로그 열기"
+    direction: DOWN
+    timeout: 30000
+- takeScreenshot: hwkeys-dialog-reached
 - tapOn: "하드웨어 다이얼로그 열기"
 - assertVisible: "하드웨어 다이얼로그 콘텐츠"
 - takeScreenshot: hwkeys-dialog-open

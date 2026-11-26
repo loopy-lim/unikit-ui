@@ -112,12 +112,12 @@ jobs:
           target: google_apis
           script: sh .maestro/run-smoke.sh
 
-      # upload-artifact v4는 검색 경로들의 최소 공통 조상에 루트를 두므로
-      # 절대경로(/tmp)와 섞지 않는다 — 증거는 전부 워크스페이스 상대 .maestro/ 아래
+      # upload-artifact v4는 점 디렉터리(.maestro)를 직접 지정해도 못 찾는다(실행
+      # 45855459563 — "No files were found") — 증거는 점이 아닌 e2e-evidence/에
+      # 기록되고 여기서는 그 경로만 올린다.
       - name: 증거 업로드 (스크린샷·계층·기기 로그·Metro 로그)
         uses: actions/upload-artifact@v4
         if: always()
         with:
           name: maestro-evidence
-          path: .maestro
-          if-no-files-found: ignore
+          path: e2e-evidence

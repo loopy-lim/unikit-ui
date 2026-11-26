@@ -11,7 +11,10 @@ set -e
 adb install -r apps/expo/android/app/build/outputs/apk/debug/app-debug.apk
 adb reverse tcp:8081 tcp:8081
 
-(cd apps/expo && bun x expo start --port 8081 > ../../.maestro/metro.log 2>&1 &)
+# 증거는 점이 아닌 디렉터리(e2e-evidence/)에 — upload-artifact v4는 점
+# 디렉터리(.maestro)를 직접 지정해도 못 찾는다(실행 45855459563).
+mkdir -p e2e-evidence
+(cd apps/expo && bun x expo start --port 8081 > ../../e2e-evidence/metro.log 2>&1 &)
 
 # Metro가 8081을 듣기 전에 앱이 번들을 당기면 red screen이 뜬다 — /status가
 # 응답한 뒤에 플로우(launchApp)를 시작한다(최대 120초 대기). 대기 실패를 그냥
@@ -23,8 +26,8 @@ for i in $(seq 1 60); do
   sleep 2
 done
 if [ "$metro_ready" != "1" ]; then
-  echo "Metro가 120초 내에 8081을 듣지 시작하지 않았다 — .maestro/metro.log 참고"
+  echo "Metro가 120초 내에 8081을 듣지 시작하지 않았다 — e2e-evidence/metro.log 참고"
   exit 1
 fi
 
-maestro test .maestro/ --debug-output .maestro/evidence
+maestro test .maestro/ --debug-output e2e-evidence/maestro
