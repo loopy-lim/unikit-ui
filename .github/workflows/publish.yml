@@ -22,9 +22,10 @@ jobs:
       - name: 의존성 설치
         run: bun install --frozen-lockfile
 
-      - name: 게시 전 검증 (typecheck·audit:design)
+      # nsh 데모(unikit-nsh-demo) 타입 검사는 nsh CLI 스캐폴드가 필요해 제외 — ci.yml과 같은 사유.
+      - name: 게시 전 검증 (typecheck·audit:design — nsh 데모 제외)
         run: |
-          bun run typecheck
+          bun run --filter '*' --filter '!unikit-nsh-demo' typecheck
           bun run audit:design
 
       - uses: actions/setup-node@v4

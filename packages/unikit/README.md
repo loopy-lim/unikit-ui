@@ -154,6 +154,43 @@ Web mounts tiptap directly (`@tiptap/react`, `@tiptap/starter-kit`, `@tiptap/mar
 - **Menu nav** — `useMenuNav`, `composeMenuNavKeyDown`, `useMenuItemRef`, `composeMenuItemHoverIn`, `composeMenuItemFocus`: arrow/Home/End navigation, submenu open/back, typeahead (radix `getNextMatch` port).
 - **Bridge hooks** — `useDrag` (web Pointer Events / native PanResponder), `useOverlayFocus` (focus move/trap/restore), `useDismiss` (outside press + Escape), `useReposition` (scroll/resize recompute), `useScrollLock`.
 
+### nsh (Native Shell) — native TSX kit
+
+`@unikit-bridge/ui/nsh` (npm-only, not in the registry) is a native kit for [nsh](https://github.com/longbridge/nsh) apps — same UniKit API shape and variants, running on nsh's own signal runtime (no React). It wraps nsh/base's headless primitives (press/switch/checkbox/select/dialog behaviors stay with the shell) with UniKit `cva` classes and tokens:
+
+```tsx
+import { Button, Card, CardContent, Input, Switch } from "@unikit-bridge/ui/nsh";
+import { mount, signal } from "nsh";
+
+function Demo() {
+  const n = signal(0);
+  const name = signal("");
+  const on = signal(false);
+  return (
+    <Card>
+      <CardContent className="gap-3">
+        <Button onPress={() => n.set(n() + 1)} testID="inc">{`Tapped ${n()} times`}</Button>
+        <Input value={name()} onChangeText={name.set} placeholder="Your name" />
+        <Switch checked={on()} onCheckedChange={(v) => on.set(v)} />
+      </CardContent>
+    </Card>
+  );
+}
+mount(Demo);
+```
+
+Ships as TSX source (nsh's bundler compiles package TSX directly — no prebundle step). The kit covers 12 component families — 32 exported parts (Button, Input, Textarea, Switch, Checkbox, RadioGroup/RadioGroupItem, Select, Badge, Separator, the Card family, and the compound Dialog and Sheet families — `Dialog`/`DialogTrigger`/`DialogClose`/`DialogContent`/`DialogHeader`/`DialogFooter`/`DialogTitle`/`DialogDescription`, the same eight for `Sheet`) plus bridge-style primitives (`View`/`Text`/`Image`/`ScrollView`/`Pressable` with the `className` convention), 19 `*Variants` helpers and 32 lucide icons drawn through nsh `Canvas` + `Path2D`, and the exported `iconColor` helper (resolves `text-*` token classes, `/opacity` suffixes included, into canvas colors) — 89 value exports and 30 types in all. Apps theme it through nsh.json `theme.cssVars` (UniKit token names); `setColorScheme` switches light/dark. `@unikit-bridge/ui/behaviors/ui-sdk-nsh` drives `@ui-sdk/core`'s button kernel on the same host — install it alongside (`bun add @ui-sdk/core`); it is an optional peer, as is `react`, so an nsh-only app installs neither. `nsh test` drives press/type through `id:`/`label:`/`text:` selectors (see `apps/nsh` for the headless 15-step regression). Regenerate the vendored nsh types with `bun run sync:nsh-types` after upgrading the nsh CLI.
+
+nsh runtime notes (measured on the web target and an Android emulator — `docs/sdd/103-nsh-kit-050-fixes.md`):
+
+- **Root colors** — a `Text` with no color class is black in every scheme. Give the root view `bg-background text-foreground`: an nsh view passes its text color down to child `Text`, so unstyled text follows the scheme.
+- **Borders** — always qualify them (`border-border`, `border-input`). An unqualified `border-*` draws black.
+- **Flex direction** — nsh lays a `flex` view out in a row (as CSS does), the opposite of the web/RN bridge default (column). Kit classes always say `flex-row` or `flex-col`; do the same in app classes.
+- **String labels** — `Checkbox`, `Switch`, `RadioGroupItem`, `Pressable` and the Dialog/Sheet `*Trigger`/`*Close` parts accept string children (wrapped in a `Text` with `text-sm text-foreground`). nsh/base's own pressable parts reject raw strings.
+- **Dialog / Sheet** — wrap the body in `DialogContent` / `SheetContent`. (0.5.0 took the body as the `Dialog`/`Sheet` child directly — a breaking change.) Both run uncontrolled from `defaultOpen`, or controlled through `open`/`onOpenChange`. `side` is a `SheetContent` prop (default `"right"`). `testID` names the dialog card or the sheet's inner wrapper, and the close button becomes `<testID>-close`; `DialogContent` also takes `backdropTestID` for outside-press tests and `android`/`ios` pass-through props (Android starts with `statusBarTranslucent: true` so the dim covers the status bar).
+- **ScrollView** — needs a bounded height to scroll: give it `className="flex-1"` inside a `flex-1` parent (nsh's `Scroll` does not grow on its own, unlike React Native's ScrollView).
+- **Icons** — `className` drives size (`size-4` by default) and `text-*` color, and follows scheme changes; the `size`/`color` props override the classes.
+
 ### Optional peer dependencies
 
 - **Icons (platform)**: web → `lucide-react`, native → `lucide-react-native` (bridged through `/primitives`).

@@ -1,0 +1,10 @@
+{
+  "name": "unikit-nsh-demo",
+  "private": true,
+  "scripts": {
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@unikit-bridge/ui": "workspace:*"
+  }
+}

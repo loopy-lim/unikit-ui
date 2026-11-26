@@ -10,12 +10,15 @@ unikit-ui/  (bun 워크스페이스: apps/*, packages/*, packages/unikit/editor-
 ├── apps/web/                   # Next.js 데모 앱(랜딩 /, /components, /blocks, 레지스트리 /r/)
 ├── apps/desktop/               # Tauri 2 도그푸딩 앱(UniKit Markdown — tiptap 위지윅, tauri fs·dialog)
 ├── apps/mobile/                # Expo RN 도그푸딩 앱(UniKit Markdown — MarkdownEditor 진입점 소비, expo-file-system)
+├── apps/nsh/                   # nsh(Native Shell) 데모 앱(`@unikit-bridge/ui/nsh` 네이티브 킵 소비 — nsh check·nsh test 헤드리스 회귀)
 ├── packages/unikit/            # @unikit-bridge/ui — 본체
 │   ├── src/bridge/             # 브리지 — web.tsx(default 조건)·native.tsx(react-native 조건)·types.ts(공통 계약)
 │   ├── src/components/         # 컴포넌트 62종(배럴 진입 대상 61종 + chart; shadcn 이식 61 + 자작 editor-toolbar)
 │   ├── src/chart/              # 차트 렌더러(web.tsx·native.tsx·types.ts) — @unikit-bridge/ui/chart 진입점
 │   ├── src/editor/             # 마크다운 에디터 엔진(web.tsx·native.tsx·types.ts·colors.ts) — @unikit-bridge/ui/editor 진입점(npm 전용, 배럴·registry 미등록)
 │   ├── src/behaviors/          # 행동 훈 재노출(index.ts) + ui-sdk 계열 4종(ui-sdk.ts 순수 헬퍼·ui-sdk-dom.ts position() 어댑터·ui-sdk-renderer.ts 파트 렌더러 코어·ui-sdk-agent.ts 에이전트 브리지 가상 DOM) — @unikit-bridge/ui/behaviors* 진입점(npm 전용, 배럴·registry 미등록)
+│   ├── src/nsh-ui/             # nsh 네이티브 킵(사이클 102 결성·103 수리 — nsh/base 헤드리스 프리미티브 + UniKit cva 변형·API를 signal 런타임으로) — @unikit-bridge/ui/nsh(컴포넌트 12패밀리 32export — Dialog·Sheet는 Trigger/Close/Content 묶음·아이콘 32종·프리미티브)·/behaviors/ui-sdk-nsh(@ui-sdk/core button 어댑터) 진입점. TSX 소스 그대로 배포(nsh 번들러가 패키지 exports의 TSX를 직접 컴파일 — 실측 docs/sdd/102). npm 전용, 배럴·registry 미등록
+│   ├── nsh-types/              # nsh 런타임 타입 vendor(scaffold 생성물 — `bun run sync:nsh-types` 재생성, 직접 편집 금지)
 │   ├── src/lib/overlay.tsx     # 통합 오버레이 훈(포털·백드롭·포커스 관리·앵커 위치 계산)
 │   ├── src/lib/utils.ts        # cn(clsx + tailwind-merge)
 │   ├── src/theme/              # tokens.ts(디자인 토큰 단일 출처)·Provider
@@ -38,14 +41,21 @@ unikit-ui/  (bun 워크스페이스: apps/*, packages/*, packages/unikit/editor-
 ```bash
 bun install                        # 최초 1회 (패키지 매니저는 bun만 — pnpm 금지)
 bun run typecheck                  # 워크스페이스 전체 tsc --noEmit (루트에서)
-bun run audit:design               # 디자인 일관성 검사 9종(임의값 클래스·registry files 실재·WCAG 대비·브리지 flex 방향 등)
+bun run audit:design               # 디자인 일관성 검사(요구 기준 9종·내부 검사 10건 — 임의값 클래스·registry files 실재·WCAG 대비·flex 방향 등; 임의값·팔레트·flex 검사는 src/nsh-ui도 대상)
 bun run generate:design            # 토큰 변경 시에만: globals.css·registry theme·tokens.md 재생성
 ```
+
+- apps/nsh는 두 게이트(`typecheck`·`nsh check`)가 생성물에 의존한다 — fresh
+  clone에서는 `cd apps/nsh && nsh check`(.nsh 스캐폴드)를 먼저 실행해야 한다.
+  nsh CLI는 npm 패키지가 아니라 `bun install`로 생기지 않으므로 CI·publish
+  워크플로는 이 워크스페이스의 타입 검사를 빼고 돈다
+  (`--filter '*' --filter '!unikit-nsh-demo'`) — nsh 데모 게이트는 로컬 전용이에요.
 
 - MCP 서버 `@unikit-bridge/mcp`: 이 저장소가 아닌 제품군 포털 저장소(`../unikit`의 `packages/mcp`)에 살아요(scriptca·rustra까지 아우르는 제품군 서버). 이 저장소의 llms.txt·registry.json·컴포넌트 소스를 고치면 포털에서 `bun run sync:data`로 동봉 데이터(src/data.ts 생성물)를 재생성해야 해요.
 
 - 도그푸딩 앱(UniKit Markdown): 웹 UI 확인은 `cd apps/desktop && bun x vite preview` 후 브라우저. 데스크톱 패키징은 `cd apps/desktop && bun run tauri build`(Rust 필요).
 - 에디터 번들 재생성: `packages/unikit`의 `bun run build:editor`(editor-web-view 빌드 → dist/index.html을 src/editor/editor-html.ts로 인라인 — 생성물이므로 직접 편집 금지). apps/mobile의 `build:editor`는 이 명령의 alias예요.
+- nsh 타입 재생성: nsh CLI 승급 후 `packages/unikit`의 `bun run sync:nsh-types`(scaffold 타입을 nsh-types/로 복사 — 생성물이므로 직접 편집 금지). 검증은 `cd apps/nsh && nsh check && nsh test`(헤드리스 회귀 15단계 — 렌더→press→type/clear→Switch→Select→ui-sdk 커널→색 스킴→Checkbox→RadioGroup→Textarea→Dialog→Sheet→동적 Select options→아이콘 size→iconColor 토큰 해석). 에뮬레이터 실기기 회귀는 `nsh test --target android --device emulator-5554`(헤드리스는 화면을 그리지 않아 스크린샷은 `--target` 실행에서만 찍힌다).
 - 모바일 에뮬레이터 실행: `cd packages/unikit && bun run build:editor` 후 `cd apps/mobile`의 `cd android && ./gradlew assembleDebug -PreactNativeArchitectures=x86_64` → `adb -s emulator-5554 install -r app/build/outputs/apk/debug/app-debug.apk` → Metro `bun x expo start --dev-client` + `adb -s emulator-5554 reverse tcp:8081 tcp:8081`. 주의: 폰 등 여러 기기가 붙어 있으면 `expo run:android`의 ANDROID_SERIAL 지정이 gradle 설치를 못 막아 실제 기기에 설치될 수 있다(2026-11-14 학습) — 빌드와 설치를 분리해 실행한다.
 
 - `audit:design`은 위반 1건이면 exit 1로 실패해요. 머리 주석의 원본 클래스 인용은 주석 라인 제외로 스캔해요(오탐 방지).
