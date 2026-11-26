@@ -65,7 +65,7 @@ export default function Home() {
 }
 ```
 
-> **게시분 참고** — npm `@unikit-bridge/ui` 0.4.1 게시분(2026-11-17)은 62종(EditorToolbar 포함)과 에디터 엔진 진입점 `@unikit-bridge/ui/editor`, 행동 훈 진입점 `@unikit-bridge/ui/behaviors`까지 반영했고, 0.5.0(2026-11-24)은 여기에 nsh 네이티브 킵 `@unikit-bridge/ui/nsh`와 아래 실험 진입점을 더했어요. 컴포넌트 소스를 직접 소유·수정하고 싶을 때는 아래 방법 2(레지스트리 복사)를 쓰세요 — 에디터 진입점은 엔진 HTML 번들이 빌드 산출물이라 npm 설치로만 제공돼요.
+> **게시분 참고** — npm `@unikit-bridge/ui` 0.4.1 게시분(2026-11-17)은 62종(EditorToolbar 포함)과 에디터 엔진 진입점 `@unikit-bridge/ui/editor`, 행동 훈 진입점 `@unikit-bridge/ui/behaviors`까지 반영했고, 0.5.0(2026-11-24)은 여기에 아래 실험 진입점을 더했어요. 컴포넌트 소스를 직접 소유·수정하고 싶을 때는 아래 방법 2(레지스트리 복사)를 쓰세요 — 에디터 진입점은 엔진 HTML 번들이 빌드 산출물이라 npm 설치로만 제공돼요.
 
 **npm 전용 서브진입점(실험)** — 배럴·레지스트리에 등록되지 않은 진입점 세 가지가 더 있어요(Vercel UI SDK `@ui-sdk/core` 연동 실험 — docs/sdd/100 참조).
 

@@ -5,9 +5,6 @@
  * 생성 기준 포맷터·THEME_ITEMS·VALUE_SOURCES·대비 산수는 generate-design.ts와 공유한다
  * (설계 원칙: 검사는 생성의 역). (a2)는 type 기반으로 theme 항목 전수(기본+프리셋 3)를
  * 값·형식·WCAG 대비(라이트 ≥4.5:1)로 검사한다.
- * 대상 트리(사이클 103): (b)는 src 전체(nsh 킷 src/nsh-ui 포함), (c)(g)(h)는
- * src/components·registry·src/nsh-ui — (h)는 nsh-ui에 nsh 규칙(`flex`는 가로 기본 →
- * 방향 없는 flex 금지)을 적용한다.
  *
  * 실행: packages/unikit에서 `bun run audit:design` (루트: `bun run audit:design`)
  */
@@ -55,9 +52,6 @@ function walk(dir: string, exts: string[], acc: string[] = []): string[] {
 }
 
 const rel = (p: string) => path.relative(REPO, p);
-
-/** 사이클 103 — nsh 네이티브 킵(src/nsh-ui)도 컴포넌트와 같은 클래스 규칙 대상이다. */
-const NSH_UI_DIR = path.join(PKG, "src", "nsh-ui");
 
 /** 파일 내용을 줄 번호와 함께 */
 function lines(p: string) {
@@ -160,16 +154,15 @@ function scanPattern(files: string[], pattern: RegExp, label: string): Violation
   report("b", vs.length === 0, `원색 리터럴 0건 (대상 ${files.length}파일, 값 정의 ${VALUE_SOURCES.length}·값 성형 1·생성물 1파일 제외)`, vs);
 }
 
-// ── (c) 임의값 클래스 0건 (컴포넌트 + registry 사본 + nsh 킵) ──────────────────
+// ── (c) 임의값 클래스 0건 (컴포넌트 + registry 사본) ─────────────────────────
 {
   const files = [
     ...walk(path.join(PKG, "src", "components"), [".tsx"]),
     ...walk(path.join(PKG, "registry"), [".tsx"]),
-    ...walk(NSH_UI_DIR, [".ts", ".tsx"]),
   ];
   const pattern = /[a-zA-Z][a-zA-Z0-9-]*-\[[^\]]+\]/; // 클래스 형태만 — 코드 인덱싱/셀렉터 주석은 '-[' 없어 미매칭
   const vs = scanPattern(files, pattern, "임의값 클래스");
-  report("c", vs.length === 0, `임의값 클래스 0건 (대상 ${files.length}파일 — components·registry·nsh-ui)`, vs);
+  report("c", vs.length === 0, `임의값 클래스 0건 (대상 ${files.length}파일)`, vs);
 }
 
 // ── (d) registry 사본 == 원본 (import 치환 제외) ────────────────────────────
@@ -256,7 +249,6 @@ function scanPattern(files: string[], pattern: RegExp, label: string): Violation
   const files = [
     ...walk(path.join(PKG, "src", "components"), [".tsx"]),
     ...walk(path.join(PKG, "registry"), [".tsx"]),
-    ...walk(NSH_UI_DIR, [".ts", ".tsx"]),
   ];
   const PALETTES = "red|orange|amber|yellow|lime|green|emerald|teal|cyan|sky|blue|indigo|violet|purple|fuchsia|pink|rose|slate|gray|zinc|neutral|stone";
   // 클래스 경계 — 공백·따옴표·줄 끝(기존 (^|\s) 매처는 "bg-red-500"처럼
@@ -277,10 +269,6 @@ function scanPattern(files: string[], pattern: RegExp, label: string): Violation
     // (이식 9조 #3). 사이클 90 후속부터 registry/lib 사본도 스캔 대상에 들어와
     // 명시 허용으로 옮긴다.
     "overlay.tsx": /^bg-black\/50$/,
-    // nsh 킷(사이클 103): Dialog·Sheet 백드롭 딤 — 같은 원본값. 백드롭이 파일 안에
-    // 있어 키를 저장소 상대 경로로 둔다(components의 dialog.tsx·sheet.tsx와 구분).
-    "packages/unikit/src/nsh-ui/components/dialog.tsx": /^bg-black\/50$/,
-    "packages/unikit/src/nsh-ui/components/sheet.tsx": /^bg-black\/50$/,
   };
   const vs: Violation[] = [];
   let allowed = 0;
@@ -295,7 +283,7 @@ function scanPattern(files: string[], pattern: RegExp, label: string): Violation
       const probe = ` ${row} `;
       while ((m = pattern.exec(probe)) !== null) {
         const cls = m[1];
-        const allow = PALETTE_ALLOWLIST[base] ?? PALETTE_ALLOWLIST[rel(f)];
+        const allow = PALETTE_ALLOWLIST[base];
         if (allow && allow.test(cls)) {
           allowed += 1;
         } else {
@@ -307,20 +295,16 @@ function scanPattern(files: string[], pattern: RegExp, label: string): Violation
   report(
     "g",
     vs.length === 0,
-    `Tailwind 팔레트 클래스 0건 (대상 ${files.length}파일 — components·registry·nsh-ui, 원본 인용 허용 ${allowed}건)`,
+    `Tailwind 팔레트 클래스 0건 (대상 ${files.length}파일, 원본 인용 허용 ${allowed}건)`,
     vs,
   );
 }
 
-// ── (h) flex 방향 명시 ─────────────────────────────────────────────────────
-// 브리지(React 포팅): Pressable/View 기본이 flex-col이라 가로 배치(items-center+gap ·
-// justify-between/end/start)에 flex-row|flex-col 이 없으면 웹에서 세로로 깨진다
-// （SidebarMenuButton 사고 2026-11-12）.
-// nsh 킷(사이클 103): 반대로 nsh의 `flex`는 CSS처럼 가로 기본이다(모양 없는 뷰만
-// 세로). 두 트리의 기본이 다르므로 nsh-ui에서는 방향 없는 `flex` 자체를 위반으로
-// 본다 — 같은 문자열에 flex-row|flex-col이 있어야 한다.
+// ── (h) 브리지 flex 방향 명시 — Pressable/View 기본이 flex-col이라
+// 가로 배치(items-center+gap · justify-between/end/start)에 flex-row|flex-col
+// 이 없으면 웹에서 세로로 깨진다（SidebarMenuButton 사고 2026-11-12）.
 {
-  const bridgeFiles = [
+  const files = [
     ...walk(path.join(PKG, "src", "components"), [".tsx"]),
     ...walk(path.join(PKG, "registry"), [".tsx"]),
   ];
@@ -329,7 +313,7 @@ function scanPattern(files: string[], pattern: RegExp, label: string): Violation
   const CROSS =
     /\bjustify-(?:between|end|start)\b|\bitems-center\b[\s\S]{0,80}\bgap-|\bgap-[\s\S]{0,80}\bitems-center\b/;
   const vs: Violation[] = [];
-  for (const f of bridgeFiles) {
+  for (const f of files) {
     const { rows } = lines(f);
     rows.forEach((row, i) => {
       const t = row.trim();
@@ -343,32 +327,10 @@ function scanPattern(files: string[], pattern: RegExp, label: string): Violation
       });
     });
   }
-  const nshFiles = walk(NSH_UI_DIR, [".ts", ".tsx"]);
-  for (const f of nshFiles) {
-    // 문자열 리터럴 단위 — cva 변형은 리터럴 하나가 클래스 목록 하나다. 주석 줄
-    // (머리 주석·JSDoc의 원본 클래스 인용)은 제외하고 줄 번호는 원본 그대로 둔다.
-    const { rows } = lines(f);
-    rows.forEach((row, i) => {
-      const t = row.trim();
-      if (t.startsWith("//") || t.startsWith("*") || t.startsWith("/*")) return;
-      let m: RegExpExecArray | null;
-      const literal = /"([^"]*)"/g;
-      while ((m = literal.exec(row)) !== null) {
-        const cls = m[1];
-        if (FLEX.test(cls) && !DIR.test(cls)) {
-          vs.push({
-            file: rel(f),
-            line: i + 1,
-            detail: `nsh flex에 방향 없음(가로 기본): "${cls.slice(0, 80)}"`,
-          });
-        }
-      }
-    });
-  }
   report(
     "h",
     vs.length === 0,
-    `flex 방향 명시(브리지 ${bridgeFiles.length}파일 — 가로 의도 검사, nsh-ui ${nshFiles.length}파일 — 방향 없는 flex 금지, 위반 ${vs.length}건)`,
+    `브리지 flex 방향 명시(대상 ${files.length}파일, 위반 ${vs.length}건)`,
     vs,
   );
 }
