@@ -55,7 +55,7 @@ bun run generate:design            # 토큰 변경 시에만: globals.css·regis
 
 - 도그푸딩 앱(UniKit Markdown): 웹 UI 확인은 `cd apps/desktop && bun x vite preview` 후 브라우저. 데스크톱 패키징은 `cd apps/desktop && bun run tauri build`(Rust 필요).
 - 에디터 번들 재생성: `packages/unikit`의 `bun run build:editor`(editor-web-view 빌드 → dist/index.html을 src/editor/editor-html.ts로 인라인 — 생성물이므로 직접 편집 금지). apps/mobile의 `build:editor`는 이 명령의 alias예요.
-- nsh 타입 재생성: nsh CLI 승급 후 `packages/unikit`의 `bun run sync:nsh-types`(scaffold 타입을 nsh-types/로 복사 — 생성물이므로 직접 편집 금지). 검증은 `cd apps/nsh && nsh check && nsh test`(헤드리스 회귀 13단계 — 렌더→press→type/clear→Switch→Select→ui-sdk 커널→색 스킴→Checkbox→RadioGroup→Textarea→Dialog→Sheet). 에뮬레이터 실기기 회귀는 `nsh test --target android --device emulator-5554`(헤드리스는 화면을 그리지 않아 스크린샷은 `--target` 실행에서만 찍힌다).
+- nsh 타입 재생성: nsh CLI 승급 후 `packages/unikit`의 `bun run sync:nsh-types`(scaffold 타입을 nsh-types/로 복사 — 생성물이므로 직접 편집 금지). 검증은 `cd apps/nsh && nsh check && nsh test`(헤드리스 회귀 15단계 — 렌더→press→type/clear→Switch→Select→ui-sdk 커널→색 스킴→Checkbox→RadioGroup→Textarea→Dialog→Sheet→동적 Select options→아이콘 size→iconColor 토큰 해석). 에뮬레이터 실기기 회귀는 `nsh test --target android --device emulator-5554`(헤드리스는 화면을 그리지 않아 스크린샷은 `--target` 실행에서만 찍힌다).
 - 모바일 에뮬레이터 실행: `cd packages/unikit && bun run build:editor` 후 `cd apps/mobile`의 `cd android && ./gradlew assembleDebug -PreactNativeArchitectures=x86_64` → `adb -s emulator-5554 install -r app/build/outputs/apk/debug/app-debug.apk` → Metro `bun x expo start --dev-client` + `adb -s emulator-5554 reverse tcp:8081 tcp:8081`. 주의: 폰 등 여러 기기가 붙어 있으면 `expo run:android`의 ANDROID_SERIAL 지정이 gradle 설치를 못 막아 실제 기기에 설치될 수 있다(2026-11-14 학습) — 빌드와 설치를 분리해 실행한다.
 
 - `audit:design`은 위반 1건이면 exit 1로 실패해요. 머리 주석의 원본 클래스 인용은 주석 라인 제외로 스캔해요(오탐 방지).
