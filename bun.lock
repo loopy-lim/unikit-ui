@@ -152,7 +152,7 @@
     },
     "packages/unikit": {
       "name": "@unikit-bridge/ui",
-      "version": "0.5.0",
+      "version": "0.6.0",
       "devDependencies": {
         "@tiptap/extensions": "^3.0.0",
         "@tiptap/markdown": "^3.0.0",
