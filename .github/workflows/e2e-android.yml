@@ -85,6 +85,17 @@ jobs:
         working-directory: apps/expo/android
         run: ./gradlew assembleDebug -PreactNativeArchitectures=x86_64
 
+      # x86_64 에뮬레이터는 하드웨어 가속 없이는 부팅을 거부한다(2026-11-26 실행
+      # 45844581153 — /dev/kvm 없는 러너에서 "-accel off"로 내려가 즉시 사망).
+      # 드문 무-KVM 러너를 10분 부팅 타임아웃 대신 즉시·명시적으로 걸러낸다.
+      - name: KVM 가속 확인
+        run: |
+          if [ ! -e /dev/kvm ]; then
+            echo "::error::이 러너에 /dev/kvm이 없다 — x86_64 에뮬레이터가 하드웨어 가속 없이는 부팅을 거부한다. 다른 러너로 재실행한다."
+            exit 1
+          fi
+          ls -la /dev/kvm
+
       - name: 에뮬레이터 부팅 + Maestro 스모크
         uses: reactivecircus/android-emulator-runner@v2
         with:
