@@ -1,8 +1,9 @@
 # 103 — nsh 네이티브 킵 0.5.0 검증 결함 수리
 
-- 날짜: 2026-11-25(수리) · 2026-11-26(PR·독립 리뷰)
-- 상태: 완료(게이트 통과 — §6). PR «nsh 네이티브 킵 반영과 0.5.0 검증 결함 수리»에
-  `sdd:pr` 라벨을 붙여 독립 리뷰를 받는다 — 결과는 §9
+- 날짜: 2026-11-25(수리) · 2026-11-26(PR·독립 리뷰·머지·버전 0.6.0)
+- 상태: 완료 — 게이트 통과(§6)하고 PR «nsh 네이티브 킵 반영과 0.5.0 검증 결함 수리»
+  [#46](https://github.com/loopy-lim/unikit-ui/pull/46)의 `sdd:pr` 독립 리뷰를 3차에
+  통과해 스쿼시 머지했다(main `1acd72b`, 이슈 #45 종결). 리뷰 경과는 §9, 버전은 §10
 - 선행: [102-nsh-native-kit.md](102-nsh-native-kit.md)
 - 이슈: [#45](https://github.com/loopy-lim/unikit-ui/issues/45)
 
@@ -28,6 +29,7 @@
 검증 대상은 npm에 올라간 0.5.0 그대로였고, 수리분은 같은 방식(`bun pm pack` →
 다른 폴더에 신규 설치)으로 다시 확인했다. 패키지 버전은 이 PR 안에서는 0.5.0
 그대로고, 독립 리뷰를 통과해 머지한 뒤 0.6.0으로 올린다 — API가 바뀌었다(§4).
+머지 뒤 그대로 0.6.0으로 올렸다(§10). npm에 올라가 있는 최신은 게시 전까지 0.5.0이다.
 
 ## 2. nsh 계약 실측(103에서 새로 확인한 것)
 
@@ -85,6 +87,7 @@
 10. 회귀(`apps/nsh/App.test.tsx`) 8단계 → 13단계. 8) 체크박스 9) 라디오(비활성
     항목 거절 포함) 10) textarea 11) Dialog(열기→DialogClose→재개→밖 누름) 12) Sheet.
     7) 색 스킴 단계는 전경색 토큰값(`#09090b` ↔ `#fafafa`)까지 본다.
+    독립 리뷰 수리로 13)~15) 단계가 더해져 15단계가 됐다(§9).
 11. `audit:design` — (c) 임의값·(g) Tailwind 팔레트 대상에 `src/nsh-ui`를 더하고,
     (h)에 nsh 규칙(방향 없는 `flex` 금지)을 넣었다. (g) 허용 목록에 nsh 킵
     Dialog·Sheet의 `bg-black/50` 2건을 등록했다(원본값).
@@ -131,8 +134,15 @@
   `DialogContent`에 `showCloseButton`(기본 true)·`backdropTestID`·
   `accessibilityLabel`·`android`·`ios`. `DialogFooter showCloseButton`(기본 false)는
   React 포팅과 같다.
-- export 수: 15파일, 값 88종(아이콘 32 + 컴포넌트 32 + 프리미티브 5 + 변형 19),
-  타입 30종. 0.5.0은 컴포넌트 26export였다.
+- export 수: 15파일, 값 89종(아이콘 32 + 컴포넌트 32 + 프리미티브 5 + 변형 19 +
+  `iconColor` 1), 타입 30종. 수리 커밋 `896d73f` 시점은 값 88종(`iconColor` 없음)이었고
+  독립 리뷰 수리 `8994bcd`가 `iconColor`를 공개했다. 0.5.0은 컴포넌트 26export였다.
+  (머지 뒤 TS Compiler API로 `./nsh` 진입점의 export를 다시 세어 같은 값인 것을
+  확인했다.)
+- 독립 리뷰 수리로 더해진 것(§9): `iconColor(className?)` — 아이콘이 쓰는 `text-*`
+  색 토큰 해석 헬퍼. `hover:` 같은 상태 접두가 붙은 `text-*`는 평상시 색로 보지
+  않고, `text-*`가 여럿이면 나중 토큰이 이기며, `/투명도` 접미는 0~100일 때만
+  알파로 반영한다. `Button`에 `accessibilityLabel` prop.
 - `react`가 선택 peer가 됐다.
 
 ## 5. 검증 증거(2026-11-25 실측)
@@ -181,6 +191,13 @@ typecheck·audit:design·nsh check·nsh test 웹 13단계를 다시 돌렸고 �
 이 정리는 클래스 문자열을 바꾸지 않았고, 안드로이드는 에뮬레이터가 꺼져 있어 다시
 돌리지 않았다(9.4초는 정리 전 측정).
 
+머지 뒤(2026-11-26, main `1acd72b` — 리뷰 수리 `8994bcd`·`fd88516`·`5e647be` 포함) 같은
+게이트를 다시 돌렸다. `bun install` 변경 없음, `bun run typecheck` 7워크스페이스
+exit 0, `audit:design` 10/10, `nsh check` exit 0, `nsh test` 15단계 PASS(테스트 1건 —
+웹 2.1초, 안드로이드 에뮬레이터 12.1초, `--target android --device emulator-5554`).
+데모 번들 177,846 B. 버전 0.6.0으로 올린 뒤(`47b1c06`) typecheck·audit:design도
+다시 통과했다.
+
 ## 7. 범위 밖 관찰·로드맵
 
 - Card의 `shadow-sm`이 React 포팅·nsh 킵 양쪽에 없다(원본에는 있다) — 양쪽을
@@ -192,7 +209,12 @@ typecheck·audit:design·nsh check·nsh test 웹 13단계를 다시 돌렸고 �
 - 포털 `data.ts`는 이 작업 전에 이미 이 저장소 main보다 뒤처져 있었다(52ea674의
   레지스트리 사본 2종 미반영) — AGENTS.md의 «고치면 sync:data» 규칙이 지켜지지
   않으면 재발하므로 동기화 시점을 게시 절차에 묶을지 검토.
-- npm 게시는 사용자 결정이다(버전은 독립 리뷰 통과 뒤 0.6.0 — §1).
+- 독립 리뷰 1차의 Nit 3건은 반영하지 않았다(후속 후보 — §9). (h)의 nsh-ui 규칙이
+  큰따옴표 문자열만 스캔한다(`audit-design.ts` — 작은따옴표·템플릿 리터럴은 비켜
+  간다). `scripts/generate-nsh-icons.ts`의 폴백 import 경로 정규식 정리.
+  `ci.yml`에 명시적 `permissions: contents: read`가 없다(PR 이전부터 있던 상태).
+- npm 게시는 사용자 결정이다 — 버전은 0.6.0으로 올렸다(§10), 게시·GitHub Release는
+  아직 하지 않았다.
 
 ## 8. 평가 방식과 한계
 
@@ -205,7 +227,7 @@ typecheck·audit:design·nsh check·nsh test 웹 13단계를 다시 돌렸고 �
 
 이 문서가 들어가는 PR에 `sdd:pr` 라벨을 붙여 클린 컨텍스트 리뷰 세션에 검증을
 맡긴다(수리 세션은 리뷰에 개입하지 않는다 — 결함 지적이 오면 그때 수정한다).
-리뷰 판정과 반영 내용은 리뷰가 끝난 뒤 여기에 기록한다.
+리뷰 판정과 반영 내용은 아래 «리뷰 경과»에 기록했다.
 
 **PR 준비 중 발견(PR [#46](https://github.com/loopy-lim/unikit-ui/pull/46))**
 
@@ -229,3 +251,68 @@ typecheck·audit:design·nsh check·nsh test 웹 13단계를 다시 돌렸고 �
   없어 사람이 T3 설정에서 바꿔야 한다.
 - 이 PR이 `.github/workflows`를 건드리게 되어, 리뷰 파이프라인 규칙상 자동 머지
   대상이 아니다(보호 경로) — 판정 PASS 뒤에는 머지를 사람이 한다.
+
+**리뷰 경과(2026-11-26)**
+
+- 재개: 위 모델 오류로 리뷰는 시작되지 않았다. 웹훅 작업의 모델은 도구로는 바꿀 수
+  없어서(사람이 T3 설정에서 바꾼다) 죽은 웹훅 스레드의 모델만 `t3_thread_configure`로
+  `pi_pi_zai:zai-plan/glm-5.3`로 바꾼 뒤 진행 메시지를 보내 재개했다(사용자 선택
+  «웹훅 경로 복구»). 스레드에 웹훅 원문과 워크트리가 그대로 남아 있어 라벨을 다시
+  붙이지 않았다. 라우팅 설정(`t3-routing.local.json`·`t3-routing.example.json` —
+  skills 저장소)의 옛 모델 이름 36곳씩도 `zai-plan/*`로 고쳤다(그 저장소에는
+  커밋하지 않았다).
+- 구성: 오케스트레이터가 웹훅 스레드(`zai-plan/glm-5.3`), 등급 L(61파일·보호 경로).
+  리뷰는 매 라운드 새 클린 컨텍스트(antigravity `gemini-4-neon`, thought_level high),
+  수리는 별도 세션(pi zai `zai-plan/glm-5.3`)이 PR 브랜치에 커밋했다. 수리 세션(이
+  문서의 작성자)은 리뷰가 끝날 때까지 PR 브랜치에 푸시하지 않았다.
+- 1차(헤드 `11e0c2d`) **FAIL** — 확정 8건.
+  - Major 3: ① `Select`의 `options`를 컴포넌트 몸체에서 즉시 평가해 마운트 시점의
+    목록에 고정 ② 아이콘 `size` prop을 몸체에서 한 번만 계산해 갱신 안 됨
+    ③ `iconColor()`가 `hover:text-destructive`를 평상시 색로 오해석, `text-*`가
+    여럿이면 첫 토큰 우선(캐스케이드와 반대), 투명도 접미 제거식이 실행될 수 없는
+    코드. 세 건 모두 §2 «props는 getter» 계약을 스스로 어긴 것이다.
+  - Minor 5: ④ `SdkButton`의 비활성 `opacity-50` 누락 ⑤ `package.json` `files`의
+    미존재 `dist` ⑥ `Button`·`Switch`의 `hitSlop`이 초기 `size`에 고정 ⑦ `SheetClose`
+    (absolute)의 배치 기준이 `relative` 없는 내부 View ⑧ `ButtonProps`에
+    `accessibilityLabel` 없음.
+- 수리 r1 `8994bcd`(10파일, +172/−47) — 8건 전부 수리. 회귀 13 → 15단계(13) 셀렉트
+  동적 options 14) 아이콘 `size` prop 동적 변경 15) `iconColor` 해석 — 2차 리뷰가
+  수리 전 코드로 되돌려 셋 다 실패하는 것을 확인했다. `iconColor`를 킵 export로
+  공개했고 뒤처져 있던 `bun.lock`의 버전 표기(0.4.1 → 0.5.0)도 맞췄다.
+- 2차(헤드 `8994bcd`) **FAIL** — 1차 8건은 8/8 해소 확인. 신규 [Minor] 라이브 문서
+  수치 불일치(`packages/unikit/README.md`·`AGENTS.md`가 값 export 88·회귀 13단계
+  그대로였다), [Nit] 투명도 접미에 상한 없음(`text-foreground/150`이 255를 넘는
+  알파 `17f`를 만듦).
+- 수리 r2 `fd88516`(문서 수치)·`5e647be`(`splitColorToken` 상한 검사 + 회귀 `/150`
+  케이스) — 수리 라운드 2/2(마지막).
+- 3차(헤드 `5e647be`) **PASS** — 확증 결함 0. `nsh check`·`nsh test` 15단계·
+  `typecheck` 7워크스페이스·`audit:design` 10/10·CI `verify` 전부 통과.
+- 머지: 사용자가 리뷰 스레드에서 확인한 뒤 오케스트레이터가 헤드 `5e647be`를 고정해
+  스쿼시 머지했다 — main `1acd72b`(2026-11-26), PR 브랜치 삭제, 이슈 #45 종결.
+  스쿼시 커밋 메시지에 원본 8커밋(126c058·40d8ff4·850267c·896d73f·11e0c2d·8994bcd·
+  fd88516·5e647be)의 메시지가 그대로 실린다. 그 해시들은 main 역사에 커밋으로
+  남지 않았으니 이 문서의 `896d73f`·`850267c`는 그 메시지에서 찾는다.
+- 머지 뒤(수리 세션): 로컬 main을 `origin/main`에 맞췄다(트리가 머지 직전 PR 헤드와
+  같다). 게이트를 웹·안드로이드로 다시 돌리고(§6), export 수를 TS Compiler API로
+  따로 세어 리뷰 수치(값 89·타입 30)와 같음을 확인했다(§4).
+
+리뷰가 남긴 교훈:
+
+- §2의 «props는 getter» 계약은 표로 적어 두고도 수리 코드가 스스로 어겼다 — 컴포넌트
+  몸체에서 props를 즉시 평가하지 않고 표현식·접근자로 넘긴다(Major 3건의 공통 원인).
+- 공개 export나 회귀 단계 수를 바꾸면 `packages/unikit/README.md`·`AGENTS.md`의
+  수치를 같은 커밋에서 바꾼다(2차 지적).
+
+## 10. 버전 0.6.0(2026-11-26)
+
+- `packages/unikit/package.json` 0.5.0 → 0.6.0(커밋 `47b1c06`). nsh 킵의 API가 0.5.0과
+  달라졌으므로 minor를 올렸다(§4).
+- `llms.txt`의 버전 표기와 `bun.lock`의 워크스페이스 버전 줄을 같이 맞췄다.
+- 루트 README 두 쪽·`docs/install.md`·`docs/install.en.md`의 «0.5.0 게시분» 문장은
+  npm의 최신이 아직 0.5.0이라 그대로 두었다 — 0.6.0을 게시할 때 함께 바꾼다
+  (0.4.1 때 `a628bab`이 바꾼 파일들).
+- 게시는 하지 않았다. npm 게시·GitHub Release(`publish.yml`)는 사용자 결정이다.
+  `v0.5.0` 태그는 만들지 않는다 — 그 지점의 `package.json`은 수리 전 API다.
+- 포털 동기화: `../unikit/packages/mcp`의 `bun run sync:data`를 다시 실행했다(포털
+  루트에는 이 스크립트가 없다). 아이템 71종·사용법 66종·742.9 KiB, `src/data.ts`의
+  버전 표기가 0.6.0으로 바뀌었다(포털 저장소에는 커밋하지 않음).
