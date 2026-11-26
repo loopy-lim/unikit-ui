@@ -102,6 +102,8 @@ export type ButtonProps = VariantProps<typeof buttonVariants> & {
   disabled?: boolean;
   /** UI 테스트 셀렉터(id:x) */
   testID?: string;
+  /** 화면 낭독기가 읽는 이름 — 눌림 대상에 글자가 없을 때(아이콘 버튼) 반드시 준다 */
+  accessibilityLabel?: string;
   /** 터치 타깃 확장(px) — 미지정 시 크기별 기본 보정 */
   hitSlop?: number;
   /** 문자열·숫자를 권장(내부 Text 래핑) */
@@ -109,7 +111,6 @@ export type ButtonProps = VariantProps<typeof buttonVariants> & {
 };
 
 export function Button(props: ButtonProps) {
-  const resolvedSize = props.size ?? "default";
   return (
     <NshButton
       class={cn(
@@ -118,8 +119,9 @@ export function Button(props: ButtonProps) {
         nshClass(props.className),
       )}
       testID={props.testID}
+      accessibilityLabel={props.accessibilityLabel}
       disabled={props.disabled}
-      hitSlop={props.hitSlop ?? HIT_SLOP[resolvedSize]}
+      hitSlop={props.hitSlop ?? HIT_SLOP[props.size ?? "default"]}
       onPress={props.onPress}
     >
       {typeof props.children === "string" ||

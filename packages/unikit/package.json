@@ -55,7 +55,6 @@
   "types": "./src/index.ts",
   "files": [
     "src",
-    "dist",
     "docs",
     "README.md",
     "LICENSE"

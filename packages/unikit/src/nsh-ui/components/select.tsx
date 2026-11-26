@@ -69,19 +69,24 @@ export type SelectProps = VariantProps<typeof selectTriggerVariants> & {
 };
 
 export function Select(props: SelectProps) {
-  const items: SelectItem[] = props.options.map((option) => ({
-    value: option.value,
-    title: option.label,
-    disabled: option.disabled,
-  }));
+  // props는 getter다 — options을 몸체에서 즉시 풀면 시그널 교체를 못 따라간다
+  // (초기 목록에 고정). 접근자로 두고 넘기는 시점(items={items()}·selected())마다
+  // 다시 계산해 options 갱신을 추적한다.
+  const items = () =>
+    props.options.map((option): SelectItem => ({
+      value: option.value,
+      title: option.label,
+      disabled: option.disabled,
+    }));
   // 비제어 선택을 반영한다(제어형 value 우선) — 트리거 텍스트는 양쪽 모두 갱신.
   const picked = signal<string | null>(props.defaultValue ?? null);
   const chosen = () => (props.value !== undefined ? props.value : picked());
-  const selected = () => items.find((item) => item.value === chosen()) ?? null;
+  const selected = () =>
+    items().find((item) => item.value === chosen()) ?? null;
   return (
     <NshSelect
       class={nshClass(props.className)}
-      items={items}
+      items={items()}
       value={chosen()}
       placeholder={props.placeholder}
       disabled={props.disabled}

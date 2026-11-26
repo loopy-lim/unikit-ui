@@ -17,8 +17,33 @@ import { NSH_LUCIDE_ICONS } from "./lucide-icons.generated";
 import { cn } from "../lib/utils";
 import { nshClass } from "./lib";
 
-/** className의 text-* 색 토큰을 nsh token()으로 해석한 색. */
-function iconColor(className: string | undefined): string {
+/** "#rrggbb(aa)" 색의 알파 채널을 투명도 접미(0~100) 값으로 바꾼다. */
+function withAlpha(color: string, percent: number): string {
+  if (color.length !== 7 && color.length !== 9) return color;
+  const alpha = Math.round((percent / 100) * 255)
+    .toString(16)
+    .padStart(2, "0");
+  return `${color.slice(0, 7)}${alpha}`;
+}
+
+/** "foreground/50" 같은 색 토큰 지정 — 이름과 투명도(0~100, 없으면 null). */
+function splitColorToken(spec: string): { name: string; opacity: number | null } {
+  const slash = spec.indexOf("/");
+  const name = slash === -1 ? spec : spec.slice(0, slash);
+  const suffix = slash === -1 ? "" : spec.slice(slash + 1);
+  return { name, opacity: /^\d+$/.test(suffix) ? Number(suffix) : null };
+}
+
+/** className의 text-* 색 토큰을 nsh token()으로 해석한 색.
+ *
+ * 해석 규칙(캐스케이드와 같은 방향):
+ * - nshClass 정규화 후 공백 분리해 토큰 단위로 본다 — 정규식 전체 탐색은
+ *   hover:text-* 같은 상태 변형의 뒷부분을 오매칭한다.
+ * - 접두 없는 text-* 토큰만 후보다(상태 변형 토큰은 ":"를 포함한다 —
+ *   hover:·group-focus-visible: 등은 기본 상태의 색이 아니다).
+ * - 여럿이면 나중 토큰이 이긴다(뒤→앞 해석).
+ * - 투명도 접미(text-foreground/50)는 토큰 단위로 풀어 알파에 반영한다. */
+export function iconColor(className: string | undefined): string {
   const fallback = () => {
     try {
       return token("foreground") as string;
@@ -27,16 +52,22 @@ function iconColor(className: string | undefined): string {
     }
   };
   if (!className) return fallback();
-  const match = className.match(/text-([a-z0-9-]+)/g);
-  if (match) {
-    for (const cls of match) {
-      const name = cls.slice("text-".length).replace(/\/\d+$/, "");
-      try {
-        const value = token(name as "foreground");
-        if (typeof value === "string") return value;
-      } catch {
-        // 미지원 토큰 — 다음 매치로
+  const normalized = nshClass(className);
+  if (!normalized) return fallback();
+  const candidates = normalized
+    .split(/\s+/)
+    .filter((cls) => cls.startsWith("text-") && !cls.includes(":"));
+  for (let i = candidates.length - 1; i >= 0; i--) {
+    const { name, opacity } = splitColorToken(
+      candidates[i]!.slice("text-".length),
+    );
+    try {
+      const value = token(name as "foreground");
+      if (typeof value === "string") {
+        return opacity !== null ? withAlpha(value, opacity) : value;
       }
+    } catch {
+      // 미지원 토큰 — 앞선(더 이른) 토큰으로
     }
   }
   return fallback();
@@ -135,20 +166,18 @@ function makeNshIcon(name: keyof typeof NSH_LUCIDE_ICONS) {
     const data = NSH_LUCIDE_ICONS[name];
     // props는 getter다 — 구조 분해하면 반응성이 끊긴다. 색·클래스는 draw·class
     // 읽는 시점에 props에서 다시 읽어 className 교체·스킴 전환을 따라간다.
-    const numericSize =
-      props.size === undefined
-        ? undefined
-        : typeof props.size === "string"
-          ? Number(props.size) || 16
-          : props.size;
+    // 크기도 같다: style 표현식이 읽는 시점에 props.size를 다시 읽어 동적 size
+    // prop을 따라가게 한다(몸체에서 1회 계산하면 초기값에 고정된다).
+    const sizeStyle = () => {
+      if (props.size === undefined) return props.style;
+      const px =
+        typeof props.size === "string" ? Number(props.size) || 16 : props.size;
+      return { width: px, height: px, ...props.style };
+    };
     return (
       <Canvas
         class={nshClass(cn("size-4", props.className))}
-        style={
-          numericSize === undefined
-            ? props.style
-            : { width: numericSize, height: numericSize, ...props.style }
-        }
+        style={sizeStyle()}
         testID={props.testID}
         accessibilityElementsHidden
         draw={(cx, box) =>

@@ -8,8 +8,15 @@
  *
  * 사이클 103: 8)~12) 단계가 더해져 총 13단계가 되었다 — 0.5.0 검증에서 결함이
  * 있던 부분(문자열 라벨·비제어 Dialog/Sheet·다크 모드 전경색·체크 표시)의 회귀 방지.
+ *
+ * 수리 라운드 1(PR #46 독립 리뷰): 13)~15) 단계 — 셀렉트 동적 options(items
+ * 즉시 평가 결함)·아이콘 size prop 동적 변경(style 1회 계산 결함)·iconColor
+ * 토큰 해석(hover: 오매칭·첫 토큰 우선·투명도 접미 dead code).
  */
 import { expect, open, test } from "nsh/test";
+import { token } from "nsh";
+
+import { iconColor } from "@unikit-bridge/ui/nsh";
 
 test("unikit components drive on nsh", async () => {
   const app = await open(".");
@@ -113,4 +120,41 @@ test("unikit components drive on nsh", async () => {
   expect(app.texts()).toContain("Sheet title");
   await app.press("id:sheet-done");
   expect(app.shows("id:demo-sheet")).toBe(false);
+
+  // 13) 셀렉트 동적 options — 시그널 교체 후 목록이 항목을 따라간다(몸체에서
+  //     items를 즉시 풀면 초기 목록에 고정되던 결함의 회귀)
+  await app.press("id:swap-options-button");
+  await app.press("id:fruit-select");
+  expect(app.texts()).toContain("Durian");
+  expect(app.texts()).not.toContain("Cherry");
+  await app.press("text:Durian");
+  expect(app.texts()).toContain("durian");
+  await app.press("id:swap-options-button");
+  await app.press("id:fruit-select");
+  expect(app.texts()).toContain("Cherry");
+  expect(app.texts()).not.toContain("Durian");
+  await app.press("text:Cherry");
+  expect(app.texts()).toContain("cherry");
+
+  // 14) 아이콘 size prop 동적 변경 — 스타일 표현식이 읽는 시점에 size를 다시
+  //     읽는다(몸체에서 1회 계산하면 초기값에 고정되던 결함의 회귀)
+  expect(app.layout("id:size-icon")?.width).toBe(16);
+  await app.press("id:toggle-icon-size");
+  expect(app.layout("id:size-icon")?.width).toBe(32);
+  await app.press("id:toggle-icon-size");
+  expect(app.layout("id:size-icon")?.width).toBe(16);
+
+  // 15) iconColor 토큰 해석 — 상태 변형 접두(hover:)의 text-*는 무시하고
+  //     접두 없는 text-* 중 나중 토큰이 이긴다(캐스케이드와 같은 방향).
+  //     투명도 접미는 알파 채널에 반영된다(전부 무시되던 dead code의 회귀).
+  expect(iconColor("hover:text-muted-foreground text-primary")).toBe(
+    token("primary"),
+  );
+  expect(iconColor("text-primary text-destructive")).toBe(
+    token("destructive"),
+  );
+  expect(iconColor("hover:text-primary")).toBe(token("foreground"));
+  expect(iconColor("text-foreground/50")).toBe(
+    `${token("foreground").slice(0, 7)}80`,
+  );
 });

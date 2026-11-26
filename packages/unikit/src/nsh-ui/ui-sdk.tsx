@@ -88,6 +88,7 @@ export function SdkButton(props: SdkButtonProps) {
       class={cn(
         buttonVariants({ variant: "default", size: "default" }),
         state().pending && "opacity-50",
+        state().disabled && "opacity-50",
         nshClass(props.className),
       )}
       disabled={state().disabled}

@@ -43,9 +43,24 @@ import {
   Text,
   Textarea,
   View,
+  XIcon,
 } from "@unikit-bridge/ui/nsh";
+import type { SelectOption } from "@unikit-bridge/ui/nsh";
 import { SdkButton } from "@unikit-bridge/ui/behaviors/ui-sdk-nsh";
 import { colorScheme, mount, setColorScheme, signal } from "nsh";
+
+// 수리 라운드 1 회귀용 — 셀렉트 options 시그널 교체(같은 참조 둘을 토글한다).
+const FRUIT_OPTIONS_BASIC: SelectOption[] = [
+  { value: "apple", label: "Apple" },
+  { value: "banana", label: "Banana" },
+  { value: "cherry", label: "Cherry" },
+];
+const FRUIT_OPTIONS_EXOTIC: SelectOption[] = [
+  { value: "apple", label: "Apple" },
+  { value: "banana", label: "Banana" },
+  { value: "durian", label: "Durian" },
+  { value: "melon", label: "Melon" },
+];
 function Demo() {
   const count = signal(0);
   const name = signal("");
@@ -59,6 +74,9 @@ function Demo() {
   const terms = signal(false);
   const size = signal("small");
   const notes = signal("");
+  // 수리 라운드 1 회귀용 — 셀렉트 options 교체·아이콘 size prop 동적 변경
+  const fruitOptions = signal<SelectOption[]>(FRUIT_OPTIONS_BASIC);
+  const iconSize = signal(16);
 
   return (
     <View className="flex-1 flex-col bg-background p-4 text-foreground" testID="demo-root">
@@ -108,17 +126,28 @@ function Demo() {
               Huge
             </RadioGroupItem>
           </RadioGroup>
-          <Select
-            value={fruit()}
-            onValueChange={fruit.set}
-            placeholder="Fruit"
-            testID="fruit-select"
-            options={[
-              { value: "apple", label: "Apple" },
-              { value: "banana", label: "Banana" },
-              { value: "cherry", label: "Cherry" },
-            ]}
-          />
+          <View className="flex-row flex-wrap items-center gap-2">
+            <Select
+              value={fruit()}
+              onValueChange={fruit.set}
+              placeholder="Fruit"
+              testID="fruit-select"
+              options={fruitOptions()}
+            />
+            <Button
+              variant="secondary"
+              onPress={() =>
+                fruitOptions.set(
+                  fruitOptions() === FRUIT_OPTIONS_BASIC
+                    ? FRUIT_OPTIONS_EXOTIC
+                    : FRUIT_OPTIONS_BASIC,
+                )
+              }
+              testID="swap-options-button"
+            >
+              Swap fruit options
+            </Button>
+          </View>
           <Textarea
             value={notes()}
             onChangeText={notes.set}
@@ -134,6 +163,20 @@ function Demo() {
             {terms() ? <Badge testID="terms-badge">terms</Badge> : null}
             <Badge testID="size-badge">{size()}</Badge>
             {name() ? <Badge testID="name-badge">{name()}</Badge> : null}
+          </View>
+          <View className="flex-row items-center gap-2">
+            <XIcon
+              size={iconSize()}
+              testID="size-icon"
+              className="hover:text-muted-foreground text-primary"
+            />
+            <Button
+              variant="outline"
+              onPress={() => iconSize.set(iconSize() === 16 ? 32 : 16)}
+              testID="toggle-icon-size"
+            >
+              Toggle icon size
+            </Button>
           </View>
           <SdkButton
             onPress={() =>

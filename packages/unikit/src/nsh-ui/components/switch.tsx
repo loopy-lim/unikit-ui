@@ -89,14 +89,13 @@ export type SwitchProps = VariantProps<typeof switchTrackVariants> & {
 
 export function Switch(props: SwitchProps) {
   const uncontrolled = signal(props.defaultChecked ?? false);
-  const resolvedSize = props.size ?? "default";
   return (
     <NshSwitch
       class={cn(switchRowVariants(), nshClass(props.className))}
       checked={props.checked !== undefined ? props.checked : uncontrolled()}
       disabled={props.disabled}
       testID={props.testID}
-      hitSlop={props.hitSlop ?? HIT_SLOP[resolvedSize]}
+      hitSlop={props.hitSlop ?? HIT_SLOP[props.size ?? "default"]}
       trackClass={cn(switchTrackVariants({ size: props.size }))}
       thumbClass={cn(
         switchThumbVariants({ size: props.size }),

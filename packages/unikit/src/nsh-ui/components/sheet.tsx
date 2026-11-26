@@ -83,7 +83,9 @@ const sheetBackdropVariants = cva("bg-black/50");
 // 패널 안 본문 래퍼 — left/right(h-full 패널)에서는 남는 높이를 채워
 // SheetFooter의 mt-auto가 바닥에 닿게 한다. top/bottom은 내용 높이 패널이라
 // flex-basis 0인 flex-1을 쓰면 접히므로 클래스를 주지 않는다.
-const sheetBodyVariants = cva("flex flex-col gap-4", {
+// relative — SheetClose(sheetCloseVariants가 absolute)의 배치 기준을 이 래퍼로
+// 통일한다(팝업 클래스의 relative와 무관하게 항상 본문 기준).
+const sheetBodyVariants = cva("relative flex flex-col gap-4", {
   variants: {
     side: {
       top: "",
