@@ -157,6 +157,7 @@ function FormDemo() {
               <FormControl>
                 <Input
                   placeholder="예: 루피"
+                  testID="form-nickname-input"
                   value={field.value}
                   onChangeText={field.onChange}
                 />

@@ -1,0 +1,170 @@
+# apps/expo 쇼케이스 컴포넌트 상호작용 스모크 — 2026-11-27 RN 갭 해소 웨이브의
+# 에뮬레이터 수동 검증(차트 신규 시리즈·셀렉트 팝오버·아코디언·탭·시트·드로어·
+# 토스트·캐러셀·폼 제출)을 CI에서 재현한다.
+#
+# 셀렉터 원칙: 전부 현재 소스의 실제 문자열·accessibilityLabel만 쓴다
+#   - 슬라이드명/데모 문구: apps/expo/components/showcase/*-sections.tsx
+#   - 폼 입력: FormDemo Input의 testID(form-nickname-input)
+# 딥링크는 expo-router triple-slash canonical form(smoke.yaml 관례).
+# 커버: 상태 전파·언마운트·포털 오버레이 수명·폼 검증→제출 토스트까지.
+# 못 커버: 픽셀 정확도(스크린샷만 수집), 제스처 감촉(핸들 드래그·브러시 줌 —
+# 좌표 스와이프는 기기 의존이라 관문에 넣지 않는다).
+appId: com.anonymous.unikitexpo
+name: 컴포넌트 상호작용 스모크
+tags:
+  - interactions
+---
+# 첫 진입 — Metro 차가운 번들 대기(이 플로우가 디렉터리에서 알파벳순 처음이라
+# 초기 번들 비용을 여기서 지불한다). 여기가 크래시·white screen 가드.
+- launchApp
+- extendedWaitUntil:
+    visible: "UniKit UI"
+    timeout: 120000
+- takeScreenshot: interactions-home
+
+# 1) 차트 — 이 사이클 신규 시리즈(파이/도넛·레이더·스택+참조선·다중 y축·브러시)가
+#    네이티브 SVG 렌더 경로에서 마운트되는지. 렌더 크래시·경계값 가드가 목적.
+- openLink: unikitexpo:///component/chart
+- extendedWaitUntil:
+    # 1차 슬라이드(막대)는 Preview 박스라 이름 라벨이 없다 — 첫 라벨은 Examples의 선 그래프.
+    visible: "선(2시리즈)"
+    timeout: 60000
+- scrollUntilVisible:
+    element: "파이·도넛(innerRadius)"
+    direction: DOWN
+    timeout: 30000
+- takeScreenshot: chart-pie
+- scrollUntilVisible:
+    element: "레이더(방사형)"
+    direction: DOWN
+    timeout: 30000
+- takeScreenshot: chart-radar
+- scrollUntilVisible:
+    element: "스택 막대 + 참조선"
+    direction: DOWN
+    timeout: 30000
+- takeScreenshot: chart-stack
+- scrollUntilVisible:
+    element: "다중 y축(좌판매·우온도)"
+    direction: DOWN
+    timeout: 30000
+- takeScreenshot: chart-dual-axis
+- scrollUntilVisible:
+    element: "브러시(드래그 선택)·줌"
+    direction: DOWN
+    timeout: 30000
+- takeScreenshot: chart-brush
+
+# 2) Select — 팝오버 열림 → 항목 선택 → 목록 언마운트(선택 전파는 힌트 문구로)
+- openLink: unikitexpo:///component/select
+- extendedWaitUntil:
+    visible: "언어 선택"
+    timeout: 60000
+- tapOn: "언어 선택"
+- assertVisible: "한국어"
+- tapOn: "영어"
+- assertNotVisible: "일본어"
+- takeScreenshot: select-chosen
+
+# 3) Accordion — 단일 확장: 두 번째 열면 첫 번째 콘텐츠가 언마운트된다
+#    (Maestro 텍스트 셀렉터는 정확 일치 — 데모 본문 전체 문장으로 잡는다)
+- openLink: unikitexpo:///component/accordion
+- extendedWaitUntil:
+    visible: "UniKit UI가 뭔가요?"
+    timeout: 60000
+- assertVisible: "한 벌 소스로 React(웹)와 React Native 양쪽에 같은 모습을 내는 컴포넌트 모음이에요."
+- tapOn: "어떻게 쓰나요?"
+- assertVisible: "npm으로 설치하거나 shadcn CLI로 소스를 복사해 쓸 수 있어요."
+- assertNotVisible: "한 벌 소스로 React(웹)와 React Native 양쪽에 같은 모습을 내는 컴포넌트 모음이에요."
+- takeScreenshot: accordion-single-expand
+
+# 4) Collapsible — 접기(콘텐츠 언마운트) → 펼치기(재마운트)
+- openLink: unikitexpo:///component/collapsible
+- extendedWaitUntil:
+    visible: "자세히 보기"
+    timeout: 60000
+- assertVisible: "접기를 접었다 펼 수 있어요."
+- tapOn: "자세히 보기"
+- assertNotVisible: "접기를 접었다 펼 수 있어요."
+- tapOn: "자세히 보기"
+- assertVisible: "접기를 접었다 펼 수 있어요."
+- takeScreenshot: collapsible-roundtrip
+
+# 5) Tabs — 탭 전환(이전 패널 언마운트)
+- openLink: unikitexpo:///component/tabs
+- extendedWaitUntil:
+    visible: "계정 탭 내용이에요."
+    timeout: 60000
+- tapOn: "프로필"
+- assertVisible: "프로필 탭 내용이에요."
+- assertNotVisible: "계정 탭 내용이에요."
+- takeScreenshot: tabs-switched
+
+# 6) Sheet — 바텀시트 열림 → 닫기 버튼 → 콘텐츠 언마운트
+#    (페이지 부제목이 "바텀 시트"라 언제나 보인다 — 시트 본문 전용 문구로 판정한다)
+- openLink: unikitexpo:///component/sheet
+- extendedWaitUntil:
+    visible: "Sheet 열기"
+    timeout: 60000
+- tapOn: "Sheet 열기"
+- assertVisible: "화면 아래에서 올라와요. 바깥 누름 또는 ✕로 닫혀요."
+- takeScreenshot: sheet-open
+- tapOn: "닫기"
+- assertNotVisible: "화면 아래에서 올라와요. 바깥 누름 또는 ✕로 닫혀요."
+
+# 7) Drawer — 열림 → 닫기 버튼(핸들 드래그는 제스처라 관문 밖)
+- openLink: unikitexpo:///component/drawer
+- extendedWaitUntil:
+    visible: "Drawer 열기"
+    timeout: 60000
+- tapOn: "Drawer 열기"
+- assertVisible: "드래그로 닫기"
+- takeScreenshot: drawer-open
+- tapOn: "닫기"
+- assertNotVisible: "드래그로 닫기"
+
+# 8) Sonner — 토스트 등장(상단 배치)·자동 소멸 전 관찰
+#    (이전 단계 잔여 토스트로 오인통과하지 않게 소멸을 먼저 기다린다)
+- openLink: unikitexpo:///component/sonner
+- extendedWaitUntil:
+    visible: "성공 토스트"
+    timeout: 60000
+- extendedWaitUntil:
+    notVisible: "방금 바뀐 내용이에요"
+    timeout: 15000
+- tapOn: "성공 토스트"
+- assertVisible: "저장했어요"
+- takeScreenshot: sonner-toast
+
+# 9) Carousel — 다음 버튼(스크롤 스냅 이동. 카드 문구는 "슬라이드 하나 (1/5)" 형식)
+- openLink: unikitexpo:///component/carousel
+- extendedWaitUntil:
+    visible: "슬라이드 하나 (1/5)"
+    timeout: 60000
+- tapOn: "다음 슬라이드"
+- assertVisible: "슬라이드 둘 (2/5)"
+- takeScreenshot: carousel-next
+
+# 10) Form — 빈 제출 검증 오류 → 입력 후 제출 완료 토스트(키보드·react-hook-form 경로)
+#     inputText는 ASCII만 안전하다(ADB IME 한계) — 닉네임은 "loop"로.
+- openLink: unikitexpo:///component/form
+- extendedWaitUntil:
+    visible: "가입하기"
+    timeout: 60000
+- tapOn: "가입하기"
+- assertVisible: "닉네임을 입력해 주세요."
+- takeScreenshot: form-validation-error
+- tapOn:
+    id: "form-nickname-input"
+- inputText: "loop"
+# Maestro inputText 직후 바로 제출하면 RN → react-hook-form 상태 전파가
+# 끝나지 않아 빈 값으로 검증된다(실측 — 오류 재현). 수동 경로처럼 키보드를
+# 닫아(블러) 값을 동기화한 뒤 제출한다.
+- hideKeyboard
+- waitForAnimationToEnd:
+    timeout: 2500
+- tapOn: "가입하기"
+- extendedWaitUntil:
+    visible: "가입 완료 — 닉네임: loop"
+    timeout: 20000
+- takeScreenshot: form-submitted

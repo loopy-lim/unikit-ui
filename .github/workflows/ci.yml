@@ -33,6 +33,23 @@ jobs:
       - name: 디자인 일관성 감사 (audit:design)
         run: bun run audit:design
 
+      # 에디터 WebView 번들 — 네이티브 에디터가 삼키는 단일 HTML 번들(vite
+      # singlefile) 컴파일 + src/editor/editor-html.ts 인라인 동기화까지 관문에
+      # 넣는다(AGENTS.md 수동 절차의 무인 버전).
+      - name: 에디터 WebView 번들 빌드 (vite singlefile + 인라인 동기화)
+        working-directory: packages/unikit
+        run: bun run build:editor
+
+      # 생성물 드리프트 — globals.css 토큰 블록·registry.json theme·tokens.md·
+      # editor-html.ts은 전부 생성물(AGENTS.md 직접 편집 금지). 체크아웃 상태에서
+      # 재생성해 커밋과 한 글자라도 다르면 실패한다(로컬 멱등 검증 완료 — 두 번
+      # 실행의 diff가 동일하다).
+      - name: 생성물 드리프트 검사 (generate:design → git diff --exit-code)
+        working-directory: packages/unikit
+        run: |
+          bun run generate:design
+          git diff --exit-code -- ../../apps/web/app/globals.css docs/tokens.md registry.json src/editor/editor-html.ts
+
       - name: UI SDK 계약 프로브 (probe:ui-sdk)
         working-directory: packages/unikit
         run: bun run probe:ui-sdk
