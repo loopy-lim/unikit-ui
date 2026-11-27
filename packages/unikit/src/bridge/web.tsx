@@ -8,7 +8,8 @@
  * RN 프리미티브 관용 프로퍼티는 DOM 속성으로 치환된다:
  *   onPress→onClick · accessibilityRole→role · accessibilityLabel→aria-label ·
  *   nativeID→id · accessibilityLabelledBy→aria-labelledby · editable→readOnly ·
- *   secureTextEntry→type="password" · onChangeText→onChange（value 추출）
+ *   secureTextEntry→type="password" · onChangeText→onChange（value 추출） ·
+ *   autoComplete는 DOM 속성과 동일명이라 치환 없이 그대로
  * 치환은 View/Text/Pressable 전 프리미티브에 동일 적용된다（M-1 — React DOM은
  * camelCase 미지 prop을 렌더에서 제거하므로 치환 없이는 role·라벨이 사라진다）.
  * hitSlop은 웹에서 무시된다（포인터 정밀도가 높아 불필요）. onLongPress（길게
@@ -17,6 +18,21 @@
  * 사이클 90 확장（docs/sdd/92-design-plan §2）: onHoverIn/onHoverOut→
  * onMouseEnter/onMouseLeave（View·Pressable）, View onLayout→ResizeObserver,
  * Pressable onFocus/onBlur는 DOM 표준명 그대로.
+ *
+ * BridgeStyle 퍼센트 차원（잔여 RN 갭 감사 후속 명문화）: "N%" 문자열은
+ * resolveWebStyle이 transform 단축키 전개 외에 키를 건드리지 않아 DOM CSS
+ * 백분율로 그대로 흐른다（상대 기준 부모 박스 — 계약 상세는 bridge/types.ts
+ * BridgeStyle 주석）.
+ *
+ * Select 폼 연동（잔여 RN 갭 감사 후속）: name·required·tabIndex·ariaHidden을
+ * <select>에 그대로 전달한다 — select.tsx가 radix 방식 숨김 네이티브 셀렉트로
+ * HTML 폼 제출·제약 검증에 쓴다（sr-only + tabIndex -1로 렌더 — display:none은
+ * HTML 표준이 제약 검증까지 막아 sr-only 관용을 쓴다）.
+ *
+ * Slot（잔여 RN 갭 감사 후속）: radix Slot(asChild) 상당 — bridge/slot.ts 공유
+ * 구현을 그대로 재노출한다. popover·tooltip·hover-card 트리거 등이 children
+ * 단일 요소에 행동 prop을 병합해 렌더할 때 소비한다. 플랫폼 API가 없어
+ * native.tsx도 같은 구현을 재노출한다（motion-registry 공유 패턴）.
  *
  * 사이클 40 확장（잔여 shadcn 33종 이식 지원）: Portal（createPortal→body）
  * ScrollView（overflow div + ref scrollTo）Select/SelectOption（select/option）
@@ -37,6 +53,7 @@ import {
   Fragment,
   forwardRef,
   isValidElement,
+  useCallback,
   useEffect,
   useImperativeHandle,
   useRef,
@@ -87,6 +104,7 @@ import {
 } from "lucide-react";
 
 import { cn } from "../lib/utils";
+import { Slot } from "./slot";
 import { extractUniversalTransform } from "./motion-registry";
 import type {
   AnimateLayoutFn,
@@ -99,6 +117,7 @@ import type {
   BridgePressableRef,
   BridgeScrollEvent,
   BridgeScrollViewRef,
+  BridgeSelectRef,
   BridgeShare,
   BridgeStyle,
   BridgeTextRef,
@@ -227,11 +246,18 @@ const View = forwardRef<BridgeViewRef, ViewProps>(
       observer.observe(el);
       return () => observer.disconnect();
     }, [hasLayout]);
-    const setRef = (node: HTMLDivElement | null) => {
-      nodeRef.current = node;
-      if (typeof ref === "function") ref(node);
-      else if (ref) (ref as { current: HTMLDivElement | null }).current = node;
-    };
+    const setRef = useCallback(
+      (node: HTMLDivElement | null) => {
+        nodeRef.current = node;
+        // 함수 ref의 반환값(React 19 cleanup)을 React로 되돌린다 — Slot의
+        // ref 합성이 cleanup을 전달하게 한다(리뷰 후속). ref 기준으로 메모해
+        // 매 렌더 null→재부착 churn도 없앤다.
+        if (typeof ref === "function") return ref(node);
+        if (ref) (ref as { current: HTMLDivElement | null }).current = node;
+        return undefined;
+      },
+      [ref],
+    );
     return (
       <div
         ref={setRef}
@@ -330,6 +356,7 @@ const Pressable = forwardRef<BridgePressableRef, PressableProps>(
       onHoverOut,
       onLayout,
       focusable,
+      pointerEvents,
       ...rest
     },
     ref,
@@ -349,11 +376,16 @@ const Pressable = forwardRef<BridgePressableRef, PressableProps>(
       observer.observe(el);
       return () => observer.disconnect();
     }, [hasLayout]);
-    const setRef = (node: HTMLButtonElement | null) => {
-      nodeRef.current = node;
-      if (typeof ref === "function") ref(node);
-      else if (ref) (ref as { current: HTMLButtonElement | null }).current = node;
-    };
+    const setRef = useCallback(
+      (node: HTMLButtonElement | null) => {
+        nodeRef.current = node;
+        // 〃 View와 동일 — cleanup 반환 전달 + ref 기준 메모(churn 제거).
+        if (typeof ref === "function") return ref(node);
+        if (ref) (ref as { current: HTMLButtonElement | null }).current = node;
+        return undefined;
+      },
+      [ref],
+    );
     return (
       <button
         ref={setRef}
@@ -361,7 +393,20 @@ const Pressable = forwardRef<BridgePressableRef, PressableProps>(
         id={nativeID}
         data-testid={testID}
         className={className ? cn(PRESSABLE_BASE_CLASS, className) : PRESSABLE_BASE_CLASS}
-        style={resolveWebStyle(style)}
+        style={(() => {
+          const baseStyle = resolveWebStyle(style);
+          const value =
+            pointerEvents === "box-none"
+              ? "none"
+              : pointerEvents === "box-only"
+                ? "auto"
+                : pointerEvents;
+          return value
+            ? baseStyle
+              ? { ...baseStyle, pointerEvents: value }
+              : { pointerEvents: value }
+            : baseStyle;
+        })()}
         tabIndex={focusable === true ? 0 : focusable === false ? -1 : undefined}
         onClick={onPress}
         disabled={disabled}
@@ -390,7 +435,8 @@ Pressable.displayName = "Pressable";
 // ---------------------------------------------------------------------------
 // TextInput → <input>
 // maxLengthonKeyDownaria-invalidaria-describedby는 표준 DOM 속성이라
-// rest 스프레드로 전달된다.
+// rest 스프레드로 전달된다. autoComplete（잔여 RN 갭 감사 후속）도 표준 DOM
+// 속성과 동일명 — <input>·<textarea> 양분에 명시 전달한다.
 // ---------------------------------------------------------------------------
 const TextInput = forwardRef<BridgeTextInputRef, TextInputProps>(
   (
@@ -410,6 +456,7 @@ const TextInput = forwardRef<BridgeTextInputRef, TextInputProps>(
       autoFocus,
       secureTextEntry,
       inputMode,
+      autoComplete,
       multiline,
       onFocus,
       onBlur,
@@ -442,6 +489,7 @@ const TextInput = forwardRef<BridgeTextInputRef, TextInputProps>(
           disabled={disabled}
           readOnly={editable === false}
           autoFocus={autoFocus}
+          autoComplete={autoComplete}
           inputMode={inputMode}
           onChange={handleChange}
           onFocus={handleFocus}
@@ -465,12 +513,13 @@ const TextInput = forwardRef<BridgeTextInputRef, TextInputProps>(
         disabled={disabled}
         readOnly={editable === false}
         autoFocus={autoFocus}
-        type={secureTextEntry ? "password" : undefined}
         inputMode={inputMode}
+        autoComplete={autoComplete}
         onChange={handleChange}
         onFocus={handleFocus}
         onBlur={handleBlur}
         {...rest}
+        type={secureTextEntry ? "password" : (rest as { type?: string }).type}
       />
     );
   },
@@ -839,30 +888,47 @@ const KeyboardAvoidingView = ({
 // Select/SelectOption → <select>/<option>. 네이티브 폼 셀렉트（native-select）가
 // 소비한다 — 커스텀 셀렉트（shadcn select）는 popover 기반 자체 구현.
 // onChange에서 value만 뽑아 onValueChange（브리지 공통 계약）로 올린다.
+// 폼 연동 4속성（name·required·tabIndex·ariaHidden — 잔여 RN 갭 감사 후속）은
+// <select>에 그대로 전달한다 — select.tsx의 sr-only 숨김 셀렉트 폼 제출·제약
+// 검증용（ariaHidden → aria-hidden 치환）.
 // ---------------------------------------------------------------------------
-const Select = ({
-  className,
-  value,
-  defaultValue,
-  onValueChange,
-  children,
-  disabled,
-  accessibilityLabel,
-  nativeID,
-  testID,
-}: SelectProps) => (
-  <select
-    className={className}
-    value={value}
-    defaultValue={defaultValue}
-    disabled={disabled}
-    aria-label={accessibilityLabel}
-    id={nativeID}
-    data-testid={testID}
-    onChange={(event) => onValueChange?.(event.target.value)}
-  >
-    {children}
-  </select>
+const Select = forwardRef<BridgeSelectRef, SelectProps>(
+  (
+    {
+      className,
+      value,
+      defaultValue,
+      onValueChange,
+      children,
+      disabled,
+      accessibilityLabel,
+      nativeID,
+      testID,
+      name,
+      required,
+      tabIndex,
+      ariaHidden,
+    },
+    ref,
+  ) => (
+    <select
+      ref={ref as React.Ref<HTMLSelectElement> | undefined}
+      className={className}
+      value={value}
+      defaultValue={defaultValue}
+      disabled={disabled}
+      aria-label={accessibilityLabel}
+      id={nativeID}
+      data-testid={testID}
+      name={name}
+      required={required}
+      tabIndex={tabIndex}
+      aria-hidden={ariaHidden}
+      onChange={(event) => onValueChange?.(event.target.value)}
+    >
+      {children}
+    </select>
+  ),
 );
 
 const SelectOption = ({ value, disabled, children }: SelectOptionProps) => (
@@ -1200,6 +1266,7 @@ export {
   PortalHost,
   ScrollView,
   SectionList,
+  Slot,
   Select,
   SelectOptGroup,
   SelectOption,

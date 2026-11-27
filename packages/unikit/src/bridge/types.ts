@@ -21,6 +21,12 @@
  * PressableProps onHoverIn/onHoverOut/onFocus/onBlur, ViewProps
  * onLayout（BridgeLayout）/onKeyDown/onHoverIn/onHoverOut, BridgePressableRef
  * 선택적 focus().
+ *
+ * 잔여 RN 갭 감사 후속 확장: TextInputProps autoComplete（양측 동일 prop명 —
+ * 값은 HTML/RN 자동완성 토큰 문자열）, BridgeStyle 퍼센트 차원 계약 명문화
+ * （width·height 등 "N%" 문자열은 양 구현이 변환 없이 통과）, SelectProps
+ * name·required·tabIndex·ariaHidden（웹 <select> 폼 제출·제약 검증 연동 —
+ * 네이티브는 HTML 폼 계약 부재로 폐기）, SlotProps（radix Slot/asChild 상당）.
  */
 import type { ComponentType, ReactElement, ReactNode } from "react";
 
@@ -33,6 +39,15 @@ export type BridgeColorScheme = "light" | "dark";
  * 값은 문자열·숫자）. 범용 변환 단축키(`translateX`, `translateY`, `scale`,
  * `rotate`)는 web.tsx가 CSS `transform` 문자열로, native.tsx가 RN `transform`
  * 배열로 변환한다. 정적 스타일은 여전히 className이 원칙이고, 여기는 동적 값 전용이다.
+ *
+ * 퍼센트 차원 계약（잔여 RN 갭 감사 후속 명문화）: `width`·`height` 등에
+ * "50%" 형태 문자열을 넣으면 양 구현 모두 값을 변환·제거하지 않고 그대로
+ * 전달한다 — 웹은 DOM CSS 백분율, 네이티브는 RN DimensionValue 백분율
+ * （resolveWebStyle·resolveNativeStyle 모두 transform 단축키 전개와
+ * position:"fixed" 치환 외에 키를 건드리지 않는다 — progress·slider가 이미
+ * 이 경로로 % 문자열을 양측에서 쓴다）. 상대 기준은 양측 모두 부모 박스이므로
+ * 뷰포트 비례 차원이 필요한 소비처（chart 높이 등）는 부모에 정의된 높이를
+ * 전제로 한다. vh·vw 등 다른 상대 단위 문자열은 RN이 이해하지 못해 교집합 밖이다.
  */
 export type BridgeStyle = Record<string, string | number | undefined>;
 
@@ -186,6 +201,10 @@ export type PressableProps = {
   children?: ReactNode;
   onPress?: () => void;
   disabled?: boolean;
+  /** 포인터 이벤트 통과 제어 — 네이티브는 RN View 계약을 상속해 그대로
+   *  흐르고, 웹은 View와 동일하게 CSS pointer-events로 치환한다(리뷰 후속 —
+   *  ViewProps 확장 prop을 Pressable에도 노출해 미확인 DOM 속성 누출 방지). */
+  pointerEvents?: "auto" | "none" | "box-only" | "box-none";
   accessibilityLabel?: string;
   accessibilityRole?: BridgeRole;
   /** RN 0.7x+ 관용 — 웹 DOM에서도 동일 속성으로 전달된다 */
@@ -248,6 +267,31 @@ export type PressableProps = {
   testID?: string;
 };
 
+// ---------------------------------------------------------------------------
+// Slot — radix Slot(asChild) 상당의 prop 병합 프리미티브 계약.
+// 구현은 bridge/slot.ts 한 벌(플랫폼 API 무사용 — web.tsx·native.tsx가 그대로
+// 재노출한다. motion-registry 공유 모듈 패턴과 동일한 배치다).
+// 병합 규칙은 원본 radix mergeProps(@radix-ui/react-slot) 기준:
+// - className: cn(clsx + tailwind-merge) 병합 — 충돌 토큰은 자식 클래스가
+//   이긴다(원본 join도 slot 클래스를 먼저 놓아 같은 방향이다).
+// - style: 1depth 병합(같은 키는 자식 값 우선) — RN 스타일 배열은 평탄화 후
+//   병합한다(원본 radix는 웹 객체만 다루지만 브리지는 RN 스타일을 받는다).
+// - on[A-Z]* 핸들러(onPress·onLongPress·onHoverIn·onHoverOut·onFocus·onBlur·
+//   onKeyDown·onContextMenu 등): 양쪽 모두 있으면 자식 핸들러 먼저 실행 후
+//   slot 핸들러 실행(반환값은 자식 것). 한쪽만 있으면 그 값이 그대로 간다.
+// - aria-describedby: 양쪽 id 목록을 병합한다(툴팁 카드 연결 + 자체 설명 공존).
+// - 그 외 prop(disabled·nativeID·accessibilityLabel·aria-* 등): 자식이 키를
+//   가지면 자식 값이 이기고, 없으면 slot 값이 자식에게 전달된다.
+// - ref: slot에 온 ref와 자식 요소의 기존 ref를 모두 최종 노드에 연결한다.
+// 제약: children은 정확히 하나의 React 요소여야 하고(문자열·복수 요소는
+// radix 관례대로 에러), 브리지 관용 prop을 이해하는 컴포넌트(브리지
+// 프리미티브 소비자)여야 치환이 일어난다. radix Slottable(복수 children
+// 배열 재배치)은 미지원 — 본 라이브러리 소비처는 단일 요소 children뿐이다.
+// ---------------------------------------------------------------------------
+export type SlotProps = {
+  children?: ReactNode;
+} & Record<string, unknown>;
+
 export type ImageProps = {
   className?: string;
   /** 동적 값 전용 인라인 스타일（정적 스타일은 className 원칙） */
@@ -284,6 +328,10 @@ export type TextInputProps = {
   autoFocus?: boolean;
   secureTextEntry?: boolean;
   inputMode?: "text" | "tel" | "url" | "email" | "numeric" | "decimal" | "search";
+  /** 자동완성 힌트 — 웹 input/textarea autoComplete 속성 그대로（HTML 토큰）,
+   *  네이티브 RN TextInput autoComplete（RN 관용 토큰）. "one-time-code"（SMS
+   *  OTP）·"email"·"username"·"current-password" 등 양측 공통 값을 권장한다. */
+  autoComplete?: string;
   /** 여러 줄 입력 — 네이티브 RN multiline, 웹은 <input> 대신 <textarea>로 렌더 */
   multiline?: boolean;
   /** 최대 글자 수（input-otp 셀 등） — 양측 표준 속성 */
@@ -411,6 +459,11 @@ export interface BridgeScrollViewRef {
   scrollTo(options: { x?: number; y?: number; animated?: boolean }): void;
 }
 
+/** 기본 셀렉트 ref — 웹은 <select> DOM 요소(폼 리셋 수신 등 폼 연동),
+ *  네이티브는 부착 대상이 없어 무시한다(리뷰 후속 — select.tsx 숨김 셀렉트의
+ *  form.reset 역동기화용). */
+export interface BridgeSelectRef {}
+
 /** 기본 셀렉트 — 웹 <select>/<option>, 네이티브 Pressable 트리거+Modal 목록 폴백.
  *  커스텀 셀렉트（select 컴포넌트）는 이 프리미티브 대신 popover 기반 자체 구현. */
 export type SelectProps = {
@@ -424,6 +477,18 @@ export type SelectProps = {
   accessibilityLabel?: string;
   nativeID?: string;
   testID?: string;
+  /** HTML 폼 제출 필드명（잔여 RN 갭 감사 후속） — 웹 <select name> 전달.
+   *  소비처: select.tsx가 radix 방식 sr-only 숨김 네이티브 셀렉트로 폼 제출에
+   *  쓴다. 네이티브는 HTML 폼 계약이 없어 폐기 */
+  name?: string;
+  /** 필수 필드 — 웹 <select required>（브라우저 제약 검증 연동）. 네이티브 폐기 */
+  required?: boolean;
+  /** 탭 순서 — 웹 <select tabIndex>. 소비처는 sr-only 숨김 셀렉트에 -1을
+   *  줘 커스텀 트리거와 탭 경쟁을 피한다. 네이티브 폐기 */
+  tabIndex?: number;
+  /** 보조 기기 숨김 — 웹 aria-hidden. display:none은 제약 검증까지 막아
+   *  （HTML 표준） sr-only 시각 숨김과 함께 쓴다. 네이티브 폐기 */
+  ariaHidden?: boolean;
 };
 
 export type SelectOptionProps = {

@@ -5,23 +5,33 @@
 // 담당한다（dialog.tsxsheet.tsx 형제 포팅）.
 //
 // 포팅 판단（원본 대비 차이）:
-// - vaul 제거 — 드래그로 닫기（디자인 계획 §3）만 useDrag로 최소 재현: 바텀
-//   방향 핸들에서 아래로 80px 이상 끌면 닫는다. 핸들에서만 드래그를 받아 카드
-//   안 버튼스크롤과 충돌하지 않게 했다. vaul의 나머지 기능（콘텐츠 스크롤과
-//   제스처 통합스냅 루버 밴드드래그 중 카드 추적 이동키패드 대응）은 미지원
-//   — 로드맵. topleftright 방향 드래그 닫기도 미지원.
+// - vaul 제거 — 드래그로 닫기（디자인 계획 §3）만 useDrag로 최소 재현: 핸들에서
+//   닫힘 방향으로 80px 이상 끌면 닫는다（또는 속도 > 0.5px/ms이며 24px 이상 —
+//   방향 공용 임계값, shouldDismissDrawer）. 4방향 전부 지원한다: bottom은 아래로,
+//   top은 위로, left는 왼쪽으로, right는 오른쪽으로 끌면 닫힌다. 드래그 중 카드는
+//   닫힘 축으로 1:1 추적 이동하고（translateX/Y — BridgeStyle 변환 단축키）, 반대
+//   방향 당김은 0.18x 루버 밴드로 저항하며, 미달 종료 시 200ms 스탭백한다. 핸들은
+//   방향별 위치（bottom=카드 상단, top=하단, left/right=안쪽 가장자리 스트립）에서만
+//   드래그를 받아 카드 안 버튼·스크롤과 충돌하지 않게 했다. vaul의 나머지 기능
+//   （콘텐츠 스크롤과 제스처 통합·스냅 포인트·키패드 대응）은 미지원 — 로드맵.
 // - direction은 원본 vaul 기본값 "bottom" 유지, 브리프 지정 방향 leftright를
 //   포함해 4방향 전부 지원한다（시트와 구분: drawer는 핸들+드래그 닫기+높이 제한）.
 // - 원본 data-［vaul-drawer-direction=］ 그룹 셀렉터 → cva direction 변형 +
 //   React context 전파（헤더 정렬용 — alert.tsx 관행）. 핸들 표시 여부도 원본
-//   group-data 셀렉터 대신 direction === "bottom" 조건부 렌더로 전개.
+//   group-data 셀렉터 대신 방향별 조건부 렌더로 전개한다（4방향 핸들 — 위 항목）.
 // - 임의값 클래스 금지에 따라 w-［100px］ → w-24, max-h-［80vh］ → max-h-96（24rem
-//   고정 근사 — 뷰포트 비례 높이는 로드맵: BridgeStyle 퍼센트 또는 사용처
-//   className 오버라이드）. mt-24/mb-24（드래그 여유 공간）rounded-t/b-lg
-//   sm:max-w-sm 토큰은 유지.
-// - 등장/퇴장 애니메이션（fade）은 data-［state］ 의존이라 소실 — 마운트/언마운트
-//   즉시 전환（로드맵）. 원본은 닫기 버튼이 없어（드래그백드롭 닫기） 포팅도
-//   동일하다（웹 ESC백드롭 눌림은 ModalOverlay가 담당）.
+//   고정 근사）. 뷰포트 비례 높이는 style prop 퍼센트로 소비한다 — BridgeStyle
+//   퍼센트 차원 계약으로 "85%" 문자열이 양 플랫폼 모두 부모 박스（fixed
+//   inset-0 오버레이 래퍼 = 웹 뷰포트/RN Modal 창） 기준으로 그대로 흐른다
+//   （DrawerContent의 style은 드래그 translate와 병합해 그대로 전달된다）.
+//   max-h-96 상한까지 적용받으므로 상한을 넘으려면 style의 maxHeight까지 함께
+//   지정한다（웹 인라인 style·네이티브 style prop이 className보다 우선 — uniwind은
+//   [className 스타일, props.style] 순으로 병합）. vh·vw는 RN 교집합 밖.
+//   mt-24/mb-24（드래그 여유 공간）·rounded-t/b-lg·sm:max-w-sm 토큰은 유지.
+// - 등장/퇴장 애니메이션（fade）: 웹은 unikit-sheet-in-* keyframes, 네이티브은
+//   PortalHost RN Animated로 구동된다（이전 주석의 "소실" 기술은 드리프트였다）.
+//   원본은 닫기 버튼이 없어（드래그백드롭 닫기） 포팅도 동일하다（웹 ESC백드롭
+//   눌림은 ModalOverlay가 담당）.
 // - 트리거닫기는 asChild 대신 Pressable 직렬화（문자열 children → 내부 Text）.
 // - 접근성 연결（dialog 포팅과 동일）: role="dialog"aria-modal은 ModalOverlay,
 //   트리거 aria-expandedaria-controls ↔ 카드 nativeID（useId 토대）, 카드

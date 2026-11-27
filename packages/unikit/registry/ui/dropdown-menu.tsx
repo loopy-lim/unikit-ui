@@ -14,10 +14,12 @@
 //   이탈은 300ms 포인터 grace 뒤 닫힘을 예약한다（카드 진입이 닫힘을 취소해
 //   트리거→카드 이동을 유지）. 원본의 다항형 진행 의도（pointer grace intent）
 //   판정은 재현하지 않아 형제 항목 hover로의 전환은 grace 만료 뒤 닫힌다（근사）.
-//   눌림 토글도 유지되고 터치에서는 그것이 담당한다. Sub 열림 상태는 Sub 내부
-//   state（비제어）로만 관리（원본의 open/onOpenChange 제어 변형 미지원）.
-//   ESC는 서브루트가 동시에 닫힌다（useDismiss가 document 단위라 개별 소멸 불가 —
-//   근사）.
+//   눌림 토글도 유지되고 터치에서는 그것이 담당한다. Sub 열림은 radix Sub API의
+//   제어 변형（open/defaultOpen/onOpenChange — dialog.tsx stateRef 패턴）을 지원
+//   하고 미지정 시 내부 state 비제어로 동작한다. 제어 open을 외부에서 직접
+//   전환하면 진입 경로 미지정으로 keyboard 모드 취급을 받는다（개방 시 첫 항목
+//   포커스 — 근사）. ESC는 서브루트가 동시에 닫힌다（useDismiss가 document 단위라
+//   개별 소멸 불가 — 근사）.
 // - 아이콘: CheckIcon·ChevronRightIcon — 브리지 lucide 아이콘 프리미티브
 //   （checkbox/radio-group 관행, lucide — primitives 경유）. CircleIcon은 점 View
 //   （size-2 rounded-full）로 근사.
@@ -29,8 +31,10 @@
 // - 키보드 탐색（사이클 90 해소 — 웹 전용）: 트리거 닫힘 상태의 ArrowDown/Up으로
 //   열리고, 카드 안에서 ArrowDown/Up（양 끝 루프）Home/End로 항목 DOM 포커스를
 //   옮기며, ArrowRight는 SubTrigger 서브를 열고 ArrowLeft는 서브를 닫아 트리거로
-//   돌아간다 — lib/menu-nav 공유 골격. 항목은 웹 <button>이라 엔터 선택·포커스
-//   스크롤 따라가기는 브라우저 기본 동작. 네이티브 View는 onKeyDown을 폐기한다
+//   돌아간다 — lib/menu-nav 공유 골격. 수정자 없는 1글자 입력은 타입어헤드 점프
+//   （radix Menu getNextMatch 이식 — 사이클 90 후속）로 이어진다. 항목은 웹
+//   <button>이라 엔터 선택·포커스 스크롤 따라가기는 브라우저 기본 동작. 네이티브
+//   View는 onKeyDown을 폐기한다
 //   （브리지 계약 한계）.
 // - 포커스 정책（사이클 90, radix Menu 정합）: 항목 pointerenter 시 해당 항목으로
 //   포커스를 옮긴다（radix pointerenter 포커스 — hover 하이라이트와 DOM 포커스가
@@ -39,7 +43,12 @@
 //   （keyboard）만 첫 항목으로 옮긴다（radix 포인터 모드 정합）. 루트 메뉴 개방은
 //   클릭·키보드 모두 첫 항목 포커스（radix는 콘텐츠 컨테이너 포커스 근사 — 항목
 //   포커스가 곧 하이라이트인 이식 구조상 첫 항목 포커스가 같은 역할을 한다）.
-// - 미지원（로드맵）: 등장/퇴장 애니메이션（animate-inorigin 변형）, 타입어헤드,
+// - 카드 모션: 등장은 카드의 unikit-popover-in 클래스로 웹 animations CSS
+//   （registry style "animations" — zoom+fade 160ms）가, 네이티브는 브리지
+//   OverlayMotionPreset（RN Animated — 진입 160ms·퇴장 120ms, reduced-motion
+//   시 즉시 전환）이 담당한다. 미지원（로드맵）: 웹 퇴장 애니메이션（즉시
+//   언마운트）, side별 원점 변형（radix data-[side]:slide-in-from-* 2px —
+//   popover 프리셋은 방향 무관 위쪽 원점 고정 근사）,
 //   alignOffsetavoidCollisions 등 포퍼 세부 옵션.
 //   （바깥 포인터 눌림 닫기는 AnchoredOverlay 투명 백드롭이 제공한다 —
 //   G3 리뷰 주석 정합 갱신）
@@ -704,18 +713,32 @@ const DropdownMenuShortcut = forwardRef<
 ));
 DropdownMenuShortcut.displayName = "DropdownMenuShortcut";
 
-export type DropdownMenuSubProps = { children?: ReactNode };
+export type DropdownMenuSubProps = {
+  /** 제어형 서브 열림 — 지정 시 내부 상태를 대신한다（radix Sub API） */
+  open?: boolean;
+  defaultOpen?: boolean;
+  onOpenChange?: (open: boolean) => void;
+  children?: ReactNode;
+};
 
 // radix Menu 원본값（packages/react/menu/src/menu.tsx） — SubTrigger onPointerMove의
 // 지연 열림 setTimeout 100ms, 포인터 grace 타이머 300ms.
 const SUB_OPEN_DELAY = 100;
 const SUB_CLOSE_GRACE = 300;
 
-function DropdownMenuSub({ children }: DropdownMenuSubProps) {
-  // 서브 열림은 비제어 — 눌림 토글·hover로만 조작（원본 open/onOpenChange 제어 미지원）.
-  const [open, setOpenState] = useState(false);
-  const openRef = useRef(open);
-  openRef.current = open;
+function DropdownMenuSub({
+  open,
+  defaultOpen = false,
+  onOpenChange,
+  children,
+}: DropdownMenuSubProps) {
+  // 제어/비제어 통합 — dialog.tsx stateRef 패턴（open 지정 시 내부 상태 무시）.
+  const [internalOpen, setInternalOpen] = useState(defaultOpen);
+  const isOpen = open ?? internalOpen;
+  const stateRef = useRef({ open, isOpen, onOpenChange });
+  stateRef.current = { open, isOpen, onOpenChange };
+  const openRef = useRef(isOpen);
+  openRef.current = isOpen;
   const triggerRef = useRef<BridgePressableRef | null>(null);
   const baseId = useId();
 
@@ -744,15 +767,29 @@ function DropdownMenuSub({ children }: DropdownMenuSubProps) {
     },
     [clearOpenTimer, clearCloseTimer],
   );
+  // 외부(제어 open) 전환 시에도 보류 타이머를 청소하고 진입 경로를 되돌린다
+  // (setOpen을 거치지 않는 변경 — 리뷰 후속: 닫힘 뒤 미발화 타이머 방지·
+  // 닫힘→재개방 사이 keyboard 진입 경로 잔존 방지).
+  useEffect(() => {
+    clearOpenTimer();
+    clearCloseTimer();
+    if (!isOpen) setEntry(null);
+  }, [isOpen, clearOpenTimer, clearCloseTimer]);
+  // 열림 확정 — 비제어면 내부 상태를 반영하고, 확정값 대비 변경 시 통보한다.
+  const commitOpen = useCallback((next: boolean) => {
+    const state = stateRef.current;
+    if (state.open === undefined) setInternalOpen(next);
+    if (next !== state.isOpen) state.onOpenChange?.(next);
+  }, []);
   // 즉시 전환（눌림 토글·바깥 닫힘）은 보류 타이머를 청소하고 반영한다.
   const setOpen = useCallback(
     (next: boolean) => {
       clearOpenTimer();
       clearCloseTimer();
-      setOpenState(next);
       if (!next) setEntry(null);
+      commitOpen(next);
     },
-    [clearOpenTimer, clearCloseTimer],
+    [clearOpenTimer, clearCloseTimer, commitOpen],
   );
   const scheduleOpen = useCallback(
     (source?: "pointer" | "keyboard") => {
@@ -762,18 +799,18 @@ function DropdownMenuSub({ children }: DropdownMenuSubProps) {
       openTimerRef.current = setTimeout(() => {
         openTimerRef.current = null;
         setEntry(source ?? "pointer");
-        setOpenState(true);
+        commitOpen(true);
       }, SUB_OPEN_DELAY);
     },
-    [clearCloseTimer, clearOpenTimer],
+    [clearCloseTimer, clearOpenTimer, commitOpen],
   );
   // 눌림 개방 — 지연 없이 즉시, 진입은 pointer로 표시（F-13）.
   const openViaPointer = useCallback(() => {
     clearOpenTimer();
     clearCloseTimer();
     setEntry("pointer");
-    setOpenState(true);
-  }, [clearOpenTimer, clearCloseTimer]);
+    commitOpen(true);
+  }, [clearOpenTimer, clearCloseTimer, commitOpen]);
   const scheduleClose = useCallback(() => {
     clearOpenTimer();
     if (!openRef.current) return;
@@ -781,14 +818,14 @@ function DropdownMenuSub({ children }: DropdownMenuSubProps) {
     closeTimerRef.current = setTimeout(() => {
       closeTimerRef.current = null;
       setEntry(null);
-      setOpenState(false);
+      commitOpen(false);
     }, SUB_CLOSE_GRACE);
-  }, [clearOpenTimer, clearCloseTimer]);
+  }, [clearOpenTimer, clearCloseTimer, commitOpen]);
   const cancelClose = clearCloseTimer;
 
   const contextValue = useMemo(
     () => ({
-      open,
+      open: isOpen,
       setOpen,
       openViaPointer,
       scheduleOpen,
@@ -799,7 +836,7 @@ function DropdownMenuSub({ children }: DropdownMenuSubProps) {
       baseId,
     }),
     [
-      open,
+      isOpen,
       setOpen,
       openViaPointer,
       scheduleOpen,

@@ -10,9 +10,13 @@
 //   focus-visible:border-ring）을 web: 접두로 준수한다（사이클 72）.
 // - 항목 구분선의 마지막 항목 제외（last 변형）는 위치 셀렉터라 네이티브 재현 불가
 //   — 제거. 마지막 항목 하단선 제거는 사용처 className 오버라이드로 한다.
-// - 콘텐츠 전이 애니메이션 미지원 — value 일치 시에만 마운트（즉시 전환）.
-//   원본의 이중 뷰（애니메이션용 바깥쪽 + 패딩 안쪽）는 애니메이션 상실로 한 벌로
-//   통합하고 사용처 className은 같은 패딩 토큰 위에 병합된다.
+// - 콘텐츠 높이 접힘 전이（사이클 30 로드맵 해소）: 웹은 브리지 onLayout 계약
+//   （ResizeObserver contentRect）으로 측정한 콘텐츠 높이를 래퍼 style height로
+//   0 ↔ px 전이（web:transition-all）하고 언마운트를 전이 완료까지 유예한다.
+//   원본의 이중 뷰（애니메이션용 바깥쪽 + 패딩 안쪽）를 3단（전이 래퍼 > 무패딩 측정
+//   뷰 > 패딩 본문）으로 재현하고 사용처 className은 같은 패딩 토큰 위에 병합된다.
+//   네이티브는 토글 시점의 animateLayout()（LayoutAnimation）이 전이를 담당하므로
+//   즉시 마운트/언마운트를 유지한다（플랫폼 분기는 select·menubar 관행）.
 // - single 모드의 collapsible은 기본 true（shadcn 관용 — 원본 radix 기본값은 false）.
 // - aria-controls ↔ 콘텐츠 nativeID를 루트 useId 토대로 결정적으로 연결한다.
 import {
@@ -21,6 +25,7 @@ import {
   forwardRef,
   useCallback,
   useContext,
+  useEffect,
   useId,
   useMemo,
   useRef,
@@ -30,9 +35,11 @@ import {
 import {
   animateLayout,
   ChevronDownIcon,
+  Platform,
   Pressable,
   Text,
   View,
+  type BridgeLayout,
   type BridgePressableRef,
   type BridgeViewRef,
   type PressableProps,
@@ -66,6 +73,106 @@ type AccordionItemContextValue = {
   toggle: () => void;
   contentId: string;
 };
+
+// 높이 접힘 전이 결과 — 웹 presence 렌더에 필요한 최소 계약.
+type CollapseTransition = {
+  /** 렌더 지속 여부（웹 닫힘 전이 중에도 true） */
+  shouldRender: boolean;
+  /** 전이 래퍼의 인라인 높이 — 동적 px는 임의값 클래스 대신 style 계약으로.
+   *  undefined는 자연 높이(초기 오픈·전이 완료 후 해제) */
+  heightStyle: { height: number } | undefined;
+  /** 측정 전용 뷰의 onLayout（웹 전용 — 네이티브는 측정하지 않는다） */
+  onLayout: ((layout: BridgeLayout) => void) | undefined;
+};
+
+// 높이 접힘 전이 지속시간 — web:duration-200 토큰과 같은 값（언마운트 유예 기준）.
+const COLLAPSE_TRANSITION_MS = 200;
+
+/**
+ * 높이 접힘 전이 훅 — 웹은 측정 높이 0 ↔ px 전이 + 언마운트 유예, 그 외 플랫폼은
+ * 즉시 마운트/언마운트（네이티브 animateLayout()가 LayoutAnimation으로 전이）.
+ * 웹 prefers-reduced-motion은 마운트 후 판정해 애니메이션 경로를 완전히 우회
+ * 한다（SSR 하이드레이션 불일치 방지 — 초기 렌더는 애니메이션 전제와 동일）.
+ */
+function useCollapseTransition(open: boolean): CollapseTransition {
+  const [mounted, setMounted] = useState(open);
+  // undefined = 자연 높이(정착 오픈 — SSR 첫 페인트·내용 성장·flex 잔여 반영),
+  // 숫자 = 전이 목표 px, 0 = 접힘. 초기 오픈은 애니메이션 없이 자연 높이로
+  // 시작한다(하이드레이션 플래시·0px SSR 방지 — 리뷰 후속).
+  const [height, setHeight] = useState<number | undefined>(undefined);
+  const [reducedMotion, setReducedMotion] = useState(false);
+  const measuredRef = useRef<number | null>(null);
+  const prevOpenRef = useRef(open);
+
+  useEffect(() => {
+    if (Platform.OS !== "web") return;
+    if (typeof window.matchMedia !== "function") return;
+    setReducedMotion(
+      window.matchMedia("(prefers-reduced-motion: reduce)").matches,
+    );
+  }, []);
+
+  useEffect(() => {
+    if (Platform.OS !== "web" || reducedMotion) return;
+    const wasOpen = prevOpenRef.current;
+    prevOpenRef.current = open;
+    if (wasOpen === open) return;
+    // 빠른 토글 재진입 시 이전 전이의 프레임·타이머를 정리한다(cleanup).
+    let raf1 = 0;
+    let raf2 = 0;
+    let settleTimer: ReturnType<typeof setTimeout> | undefined;
+    let unmountTimer: ReturnType<typeof setTimeout> | undefined;
+    if (open) {
+      setMounted(true);
+      setHeight(0);
+      // 0이 커밋·페인트된 뒤(이중 rAF) 측정 px로 — 전이 발동.
+      raf1 = requestAnimationFrame(() => {
+        raf2 = requestAnimationFrame(() => {
+          const measured = measuredRef.current;
+          if (measured == null) {
+            // 측정 전 폴백 — 자연 높이로 즉시 정착(무애니메이션).
+            setHeight(undefined);
+            return;
+          }
+          setHeight(measured);
+          // 전이 완료 뒤 자연 높이로 해제 — 이후 내용 성장·flex를 추종.
+          settleTimer = setTimeout(
+            () => setHeight(undefined),
+            COLLAPSE_TRANSITION_MS,
+          );
+        });
+      });
+    } else {
+      // 현재 높이를 px로 고정해 전이 기점을 만들고 다음 페인트 뒤 0으로.
+      setHeight(measuredRef.current ?? 0);
+      raf1 = requestAnimationFrame(() => {
+        raf2 = requestAnimationFrame(() => setHeight(0));
+      });
+      // 0 전이가 끝나면 언마운트(presence).
+      unmountTimer = setTimeout(
+        () => setMounted(false),
+        COLLAPSE_TRANSITION_MS,
+      );
+    }
+    return () => {
+      if (raf1) cancelAnimationFrame(raf1);
+      if (raf2) cancelAnimationFrame(raf2);
+      if (settleTimer !== undefined) clearTimeout(settleTimer);
+      if (unmountTimer !== undefined) clearTimeout(unmountTimer);
+    };
+  }, [open, reducedMotion]);
+
+  if (Platform.OS !== "web" || reducedMotion) {
+    return { shouldRender: open, heightStyle: undefined, onLayout: undefined };
+  }
+  return {
+    shouldRender: mounted,
+    heightStyle: height === undefined ? undefined : { height },
+    onLayout: (layout) => {
+      measuredRef.current = layout.height;
+    },
+  };
+}
 
 const AccordionItemContext = createContext<AccordionItemContextValue | null>(
   null,
@@ -245,18 +352,30 @@ AccordionTrigger.displayName = "AccordionTrigger";
 export type AccordionContentProps = ViewProps;
 
 const AccordionContent = forwardRef<BridgeViewRef, AccordionContentProps>(
-  ({ className, children, nativeID, ...props }, ref) => {
+  ({ className, children, nativeID, onLayout, ...props }, ref) => {
     const item = useAccordionItemContext("AccordionContent");
-    // 펼침 항목만 렌더 — 마운트/언마운트 방식（애니메이션 없음）.
-    if (!item.open) return null;
+    const collapse = useCollapseTransition(item.open);
+    if (!collapse.shouldRender) return null;
     return (
+      // 3단 구조: 전이 래퍼（측정 높이·overflow 숨김 — 원본이 애니메이션용 바깥
+      // 뷰에 주던 overflow-hidden을 승계） > 무패딩 측정 뷰（contentRect가 패딩까지
+      // 포함한 본문 전체 높이） > 패딩 본문（사용처 className 병합 지점）.
+      // 네이티브는 web: 전이 클래스가 떨어져 자연 높이 중첩 뷰로 동작한다.
       <View
-        ref={ref}
-        nativeID={nativeID ?? item.contentId}
-        className={cn("overflow-hidden pb-4 pt-0", className)}
-        {...props}
+        className="overflow-hidden web:transition-all web:duration-200"
+        style={collapse.heightStyle}
       >
-        {children}
+        <View onLayout={collapse.onLayout}>
+          <View
+            ref={ref}
+            nativeID={nativeID ?? item.contentId}
+            className={cn("pb-4 pt-0", className)}
+            onLayout={onLayout}
+            {...props}
+          >
+            {children}
+          </View>
+        </View>
       </View>
     );
   },

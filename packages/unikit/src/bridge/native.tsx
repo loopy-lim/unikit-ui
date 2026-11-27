@@ -27,6 +27,16 @@
  * （터치 기기에서는 hover가 발화하지 않는다）. View onLayout은 RN 관용
  * 시그니처({nativeEvent:{layout}})를 {width,height}로 좁혀 전달.
  *
+ * 잔여 RN 갭 감사 후속: TextInput autoComplete은 RN 관용 프로퍼티와 동일명 —
+ * 브리지 string 계약을 RN 토큰 유니언으로 좁혀 전달한다. BridgeStyle 퍼센트
+ * 차원（"N%" 문자열）은 resolveNativeStyle이 position:"fixed" 치환과 transform
+ * 단축키 전개 외에 키를 건드리지 않아 RN DimensionValue %로 그대로 흐른다
+ * （상대 기준 부모 박스 — 계약 상세는 bridge/types.ts BridgeStyle 주석）.
+ *
+ * Slot（잔여 RN 갭 감사 후속）: radix Slot(asChild) 상당 — bridge/slot.ts 공유
+ * 구현을 그대로 재노출한다. cloneElement만 쓰는 순수 React라 네이티브에서
+ * 별도 구현이 필요 없다（web.tsx도 같은 구현 — motion-registry 공유 패턴）.
+ *
  * 웹 전용 계약의 네이티브 한계（컴포넌트 머리 주석에 기록됨）:
  *   aria-currentaria-invalidaria-describedby → RN 계약 없음, 폐기
  *   View/Pressable onKeyDown → Android는 RN 0.88 코어 W3C 규격 View onKeyDown에
@@ -35,7 +45,12 @@
  *   View onHoverIn/onHoverOut → 폐기（RN View 계약 — Pressable만 hover 보유）
  *   TextInput onKeyDown → RN onKeyPress（{key}）로 래핑（preventDefault는 no-op,
  *   shiftKey는 시프트된 글자 대문자에서 유도 — 근사 한계는 bridge/types.ts）
- *   useReposition → no-op（모달이 창 좌표에 고정, 재배치 불필요불가）
+ *   Select name·required·tabIndex·ariaHidden → RN에 HTML 폼 계약이 없어 폐기
+ *     （select.tsx의 sr-only 숨김 네이티브 셀렉트 폼 제출·제약 검증 연동 전용 —
+ *     web.tsx만 전달）
+ *   useReposition → 모달이 창 좌표에 고정이라 위치 재계산은 없고, 화면 회전·
+ *     폴딩 대비 Dimensions 변경 구독만 재노출한다(하단 구현 — 이전 주석의
+ *     "no-op" 기술은 드리프트였다)
  */
 import {
   Children,
@@ -82,6 +97,7 @@ import {
   type TextInstance,
   type TextStyle,
   type TextInputInstance,
+  type TextInputProps as RNTextInputProps,
   type ViewInstance,
   type ViewStyle,
 } from "react-native";
@@ -123,6 +139,7 @@ import {
 } from "lucide-react-native";
 
 import { cn } from "../lib/utils";
+import { Slot } from "./slot";
 import {
   detectOverlayMotionPreset,
   detectTailwindAnimatePreset,
@@ -147,6 +164,7 @@ import type {
   BridgeScrollEvent,
   BridgeScrollViewRef,
   BridgeStyle,
+  BridgeSelectRef,
   BridgeTextRef,
   BridgeTextInputRef,
   IconProps,
@@ -1060,6 +1078,8 @@ Pressable.displayName = "Pressable";
 // preventDefault는 no-op（RN이 입력을 사전 차단하지 않는 한계）. shiftKey는
 // 시프트된 글자 대문자에서 유도(이슈 #13 — 근사 한계는 bridge/types.ts).
 // aria-invalidaria-describedby는 RN 계약 없음（폐기）.
+// autoComplete（잔여 RN 갭 감사 후속）— RN 관용 프로퍼티와 동일명: 브리지
+// 계약은 HTML 토큰까지 수용하는 string이라 RN 토큰 유니언으로 좁혀 전달한다.
 // ---------------------------------------------------------------------------
 const TextInput = forwardRef<BridgeTextInputRef, TextInputProps>(
   (
@@ -1078,6 +1098,7 @@ const TextInput = forwardRef<BridgeTextInputRef, TextInputProps>(
       autoFocus,
       secureTextEntry,
       inputMode,
+      autoComplete,
       multiline,
       maxLength,
       onKeyDown,
@@ -1105,6 +1126,9 @@ const TextInput = forwardRef<BridgeTextInputRef, TextInputProps>(
       autoFocus={autoFocus}
       secureTextEntry={secureTextEntry}
       inputMode={inputMode}
+      // 브리지 계약은 string（HTML 토큰 수용） — RN 타입은 관용 토큰 유니언이라
+      // 좁힘 캐스트로 전달（무효 토큰의 런타임 거동은 RN이 담당）.
+      autoComplete={autoComplete as RNTextInputProps["autoComplete"]}
       multiline={multiline}
       maxLength={maxLength}
       onFocus={onFocus ? () => onFocus() : undefined}
@@ -1494,6 +1518,8 @@ const KeyboardAvoidingView =
 
 // ---------------------------------------------------------------------------
 // Select/SelectOption/SelectOptGroup — 네이티브 <select> 폴백.
+// 폼 연동 4속성（name·required·tabIndex·ariaHidden — 잔여 RN 갭 감사 후속）은
+// 받아 두고 폐기한다 — RN에는 HTML 폼 계약이 없다（한계）.
 // ---------------------------------------------------------------------------
 const SelectOptGroup = (_props: SelectOptGroupProps) => null;
 
@@ -1541,7 +1567,7 @@ function collectSelectEntries(
   return result;
 }
 
-function Select({
+const Select = forwardRef<BridgeSelectRef, SelectProps>(function Select({
   className,
   value,
   defaultValue,
@@ -1551,7 +1577,13 @@ function Select({
   accessibilityLabel,
   nativeID,
   testID,
-}: SelectProps) {
+  // 웹 전용 폼 연동（잔여 RN 갭 감사 후속） — RN에 HTML 폼 계약이 없어 폐기
+  name: _name,
+  required: _required,
+  tabIndex: _tabIndex,
+  ariaHidden: _ariaHidden,
+}: SelectProps, _ref) {
+  // ref는 웹 전용 계약 — 네이티브 부착 대상이 없어 무시한다(BridgeSelectRef).
   const [open, setOpen] = useState(false);
   // 비제어 값 — value 미지정 시 내부 선택을 트리거 라벨에도 반영한다
   // （G3 F-10: 웹 <select>와 플랫폼 동작 정합）.
@@ -1636,7 +1668,7 @@ function Select({
       </RNModal>
     </>
   );
-}
+});
 
 /** 옵션 자체는 네이티브에서 렌더하지 않는다 — Select가 children에서 추출해 목록을 그린다. */
 const SelectOption = (_props: SelectOptionProps) => null;
@@ -2050,6 +2082,7 @@ export {
   PortalHost,
   ScrollView,
   SectionList,
+  Slot,
   Select,
   SelectOptGroup,
   SelectOption,

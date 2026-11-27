@@ -1,8 +1,20 @@
 // Button — shadcn/ui new-york-v4 button을 UniKit UI 유니버설로 이식（사이클 71 원본값 정비）.
 // 이중 지정 원칙（§0.5）: 배경·테두리는 Pressable, 전경색·밑줄은 내부 Text에 명시.
 // （DOM 브리지에서도 span은 부모 상속이 막히므로 전경색 명시가 양쪽에 필요）
-// 미지원（로드맵）: aria-invalid:*（invalid 상태 없음）·has-［>svg］:*·［&_svg］:*（자식
-// 셀렉터 — 아이콘은 글리프 Text）·dark:*（다크는 토큰 값 전환 아키텍처로 처리）.
+// 미지원（로드맵）: aria-invalid:*（invalid 상태 없음）·has-［>svg］:px-*·
+// ［&_svg:not（［class*='size-］）］:size-3（자식 아이콘 감지 필요）·dark:*（다크는
+// 토큰 값 전환 아키텍처로 처리）.
+// has-［>svg］/［&_svg］ 근사 유지（잔여 갭 감사 — 주석 정정）: 아이콘은 요소 자식으로
+// 그대로 통과한다（문자열·숫자만 내부 Text로 감싼다 — 글리프 Text가 아니다）.
+// 자동 감지는 불가능하다 — 브리지 아이콘은 플랫폼별 팩토리（web.tsx wrapWebLucide ·
+// native.tsx wrapNativeLucide）가 만든 익명 함수라 식별 레지스트리가 없고,
+// select.tsx·chart.tsx의 자식 타입 동일 감지 관행은 동일 파일 컴포넌트에만 성립한다.
+// 아이콘 전체 세트 import 비교는 소비자 래퍼·커스텀 SVG를 놓치는 취약 추측이라
+// 채택하지 않는다. 대신 브리지 아이콘 자체 기본 크기가 size-4（원본
+// ［&_svg］:size-4 기본값과 동일）라 기본 크기 패리티는 이미 성립하고, xs·icon-xs의
+// size-3·아이콘 단독 타이트 패딩은 소비자가 아이콘에 className="size-3"
+// 지정으로 맞춘다（브리지가 cn 병합해 덮어쓴다 — 네이티브는 글리프만 줄고
+// 16px 래퍼 박스는 유지되는 근사 차이）.
 // focus 링은 원본 규격을 준수한다（사이클 72）: ring-3（비대괄호 계단）·ring-ring/50
 // ·무오프셋·focus-visible:border-ring — destructive는 ring-destructive/20.
 // link 변형의 밑줄은 원본대로 hover에서만 — 네이티브는 hover가 없어 밑줄이 없다
@@ -41,7 +53,8 @@ const buttonVariants = cva(
         link: "text-primary underline-offset-4 web:hover:underline",
       },
       // 원본 사이즈 값 그대로（default h-9 / xs h-6 / sm h-8 / lg h-10 / icon size-9）.
-      // 원본의 has-［>svg］:px-*·svg 크기 기본값（size-3/4）은 자식 셀렉터라 미지원.
+      // 원본의 has-［>svg］:px-*·svg 크기 오버라이드는 자식 아이콘 감지 불가로 미지원
+      // （머리 주석의 근사 유지 사유와 소비자 탈출구 참조）.
       size: {
         default: "h-9 px-4 py-2",
         xs: "h-6 gap-1 rounded-md px-2 text-xs",

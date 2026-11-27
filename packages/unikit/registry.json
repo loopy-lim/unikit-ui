@@ -17,32 +17,6 @@
       ]
     },
     {
-      "name": "overlay",
-      "type": "registry:lib",
-      "title": "Overlay 공통 골격",
-      "description": "ModalOverlay(중앙시트형 모달)·AnchoredOverlay(앵커 팝업) 공통 골격. dialog·sheet·popover·dropdown-menu·tooltip·select 등 오버레이 계열 컴포넌트의 로컬 의존성.",
-      "files": [
-        {
-          "path": "registry/lib/overlay.tsx",
-          "type": "registry:lib",
-          "target": "lib/overlay.tsx"
-        }
-      ]
-    },
-    {
-      "name": "menu-nav",
-      "type": "registry:lib",
-      "title": "메뉴 카드 키보드 탐색 골격",
-      "description": "select·dropdown-menu·context-menu 공용 키보드 탐색(방향키 루빙·Home/End·타입어헤드) 공유 골격. 웹 전용(네이티브 View onKeyDown 계약 한계).",
-      "files": [
-        {
-          "path": "registry/lib/menu-nav.tsx",
-          "type": "registry:lib",
-          "target": "lib/menu-nav.tsx"
-        }
-      ]
-    },
-    {
       "name": "theme",
       "type": "registry:theme",
       "title": "UniKit UI 디자인 토큰 (라이트/다크)",
@@ -249,6 +223,32 @@
           "--radius": "0.5rem"
         }
       }
+    },
+    {
+      "name": "overlay",
+      "type": "registry:lib",
+      "title": "Overlay 공통 골격",
+      "description": "ModalOverlay(중앙시트형 모달)·AnchoredOverlay(앵커 팝업) 공통 골격. dialog·sheet·popover·dropdown-menu·tooltip·select 등 오버레이 계열 컴포넌트의 로컬 의존성.",
+      "files": [
+        {
+          "path": "registry/lib/overlay.tsx",
+          "type": "registry:lib",
+          "target": "lib/overlay.tsx"
+        }
+      ]
+    },
+    {
+      "name": "menu-nav",
+      "type": "registry:lib",
+      "title": "메뉴 카드 키보드 탐색 골격",
+      "description": "select·dropdown-menu·context-menu 공용 키보드 탐색(방향키 루빙·Home/End·타입어헤드) 공유 골격. 웹 전용(네이티브 View onKeyDown 계약 한계).",
+      "files": [
+        {
+          "path": "registry/lib/menu-nav.tsx",
+          "type": "registry:lib",
+          "target": "lib/menu-nav.tsx"
+        }
+      ]
     },
     {
       "name": "animations",
@@ -1097,7 +1097,8 @@
         }
       ],
       "registryDependencies": [
-        "utils"
+        "utils",
+        "direction"
       ],
       "dependencies": [
         "@unikit-bridge/ui"
@@ -1126,7 +1127,7 @@
       "name": "chart",
       "type": "registry:ui",
       "title": "Chart",
-      "description": "선언형 차트 컴포넌트(ChartContainer·BarSeries·LineSeries·AreaSeries·Grid·Axis·Tooltip·Legend). recharts를 제거하고 스케일·틱 계산을 내장하며 형상은 웹 SVG·네이티브 react-native-svg(선택 peer 의존 — react-native-svg)로 그린다. 색은 fill-chart-1..5 토큰 클래스(소비자 앱이 --chart-1..5 정의).",
+      "description": "선언형 차트 컴포넌트(ChartContainer·Bar/Line/Area/Pie/Radial Series·Grid·Axis·ReferenceLine·Tooltip·Legend·Brush·Zoom). recharts를 제거하고 스케일·틱 계산을 내장하며 형상은 웹 SVG·네이티브 react-native-svg(선택 peer 의존 — react-native-svg)로 그린다. 막대 스택(stackId)·다중 y축(yAxisId·orientation)·파이/도넛(innerRadius)·레이더·브러시/줌(useDrag)·참조선을 지원한다. 색은 fill-chart-1..5 토큰 클래스(소비자 앱이 --chart-1..5 정의).",
       "files": [
         {
           "path": "registry/ui/chart.tsx",

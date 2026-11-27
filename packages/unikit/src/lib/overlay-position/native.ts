@@ -15,8 +15,10 @@
 //   쓰기)는 observer 훅으로 React 상태에 반영해요. rect는 개방 시 고유 측정
 //   크기를 유지합니다(--available-* 로 줄어든 시각 크기를 되먹이면 available이
 //   0으로 붕괴 — §7 P3 실측 함정).
-// - 스크롤 추종: RN에는 전역 스크롤 이벤트가 없어(기존 useReposition도
-//   네이티브 no-op) followIntervalMs 주기로 앵커를 다시 측정해 rect 캐시를
+// - 스크롤 추종: RN에는 전역 스크롤 이벤트가 없다(브리지 useReposition의 네이티브
+//   구현은 Dimensions 변화만 구독. AnchoredOverlay 계열은 개방 중 RN Modal이 창을
+//   덮어 하부 스크롤 자체가 불가 — 폴링은 회전 외 레이아웃 이동 보완용) —
+//   followIntervalMs 주기로 앵커를 다시 측정해 rect 캐시를
 //   제자리 갱신(updateRect)한다 — rAF 루프가 나머지를 따라간다. 매 프레임
 //   measureInWindow(브리지 왕복)는 비용이 커 폴링으로 근사했어요. 기본 200ms는
 //   설계값(기기 실측 아님 — 증거 문서 참조), 0 이하로 끌 수 있어요.

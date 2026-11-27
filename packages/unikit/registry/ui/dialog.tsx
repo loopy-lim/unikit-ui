@@ -11,8 +11,13 @@
 //   position="center"（flex 중앙 정렬）로 대체. 임의값 max-w-［calc（100%-2rem）］ 금지에
 //   따라 래퍼에 p-4（좌우 1rem씩 = 100%-2rem 상당）를 줘 카드가 화면 가장자리에
 //   닿지 않게 한다. grid gap-4 → 브리지 View 기본 flex-col + gap-4로 동등 재현.
-// - data-［state］ 기반 등장/퇴장 애니메이션（fadezoomduration）은 data 속성이 없어
-//   재현 불가 — 마운트/언마운트 즉시 전환（로드맵: 웹 전용 애니메이션 클래스）.
+// - 등장/퇴장 모션: 카드의 unikit-dialog-in 클래스로 웹은 animations CSS
+//   （registry style "animations" — zoom+fade 200ms）가, 네이티브는 브리지
+//   OverlayMotionPreset（RN Animated — 진입 200ms scale 0.95→1·퇴장 150ms,
+//   reduced-motion 시 즉시 전환）이 담당한다（백드롭 unikit-backdrop-in fade도
+//   동일 구조 — lib/overlay）. data-[state] 셀렉터는 쓰지 않는다（조건부 클래스
+//   원칙）. 미지원（로드맵）: 웹 퇴장 애니메이션（즉시 언마운트 — radix
+//   animate-out 계열）과 duration 세부 조절.
 // - XIcon — 브리지 lucide 아이콘 프리미티브（primitives 경유）. sr-only "Close"는
 //   accessibilityLabel로 대체（유니버설 sr-only 유틸 부재 — 디자인 계획 §3）.
 // - 트리거닫기는 radix asChild 대신 Pressable 직렬화 — 문자열 children은 내부

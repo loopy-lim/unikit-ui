@@ -19,8 +19,14 @@
 //   전개한다. 원본은 트리거 바깥 음수 오프셋에 바를 뒀지만 포팅은 트리거
 //   하단에 붙인다（네이티브 안전 근사）.
 // - dark: 변형 토큰은 기존 5종 관행（미사용）에 맞춰 제거.
-// - 콘텐츠 전환 애니메이션（높이 전이）·웹 화살표키 탐색은 radix 전용 기능이라
-//   미지원 — 로드맵 항목. 콘텐츠는 마운트/언마운트로 즉시 전환한다.
+// - 콘텐츠 전환 높이 전이（사이클 30 로드맵 해소）: 웹은 브리지 onLayout 계약
+//   （ResizeObserver contentRect）으로 측정한 패널 높이를 래퍼 style height로
+//   0 ↔ px 전이하고 언마운트를 전이 완료까지 유예한다（accordion·collapsible와
+//   같은 useCollapseTransition 구조）. 네이티브는 setValue 시점의 animateLayout()
+//   （LayoutAnimation）이 전이를 담당하므로 즉시 전환을 유지한다. 초기 오픈과
+//   전이 완료 후에는 래퍼 높이를 자연 높이로 해제한다(리뷰 후속 — 0px SSR·
+//   px 고정 방지). 잔여 높이 채움(flex-1)은 래퍼 구조상 근사로 자연 높이 기준.
+//   웹 화살표키 탐색은 트리거 onKeyDown으로 직접 구현했다（radix 로빙 인덱스 근사）.
 import {
   createContext,
   forwardRef,
@@ -36,10 +42,12 @@ import {
 } from "react";
 import {
   animateLayout,
+  Platform,
   Pressable,
   Text,
   View,
   type BridgeKeyEvent,
+  type BridgeLayout,
   type BridgePressableRef,
   type BridgeViewRef,
   type PressableProps,
@@ -95,6 +103,106 @@ function composeRefs(
 // 트리거（말록）와 콘텐츠（패널）를 잇는 ID — value의 공백은 ID에 쓸 수 없어 치환.
 function contentIdOf(baseId: string, value: string) {
   return `${baseId}-tabs-content-${value.replace(/\s+/g, "-")}`;
+}
+
+// 높이 접힘 전이 결과 — 웹 presence 렌더에 필요한 최소 계약.
+type CollapseTransition = {
+  /** 렌더 지속 여부（웹 닫힘 전이 중에도 true） */
+  shouldRender: boolean;
+  /** 전이 래퍼의 인라인 높이 — 동적 px는 임의값 클래스 대신 style 계약으로.
+   *  undefined는 자연 높이(초기 오픈·전이 완료 후 해제) */
+  heightStyle: { height: number } | undefined;
+  /** 측정 전용 뷰의 onLayout（웹 전용 — 네이티브는 측정하지 않는다） */
+  onLayout: ((layout: BridgeLayout) => void) | undefined;
+};
+
+// 높이 접힘 전이 지속시간 — web:duration-200 토큰과 같은 값（언마운트 유예 기준）.
+const COLLAPSE_TRANSITION_MS = 200;
+
+/**
+ * 높이 접힘 전이 훅 — 웹은 측정 높이 0 ↔ px 전이 + 언마운트 유예, 그 외 플랫폼은
+ * 즉시 마운트/언마운트（네이티브 animateLayout()가 LayoutAnimation으로 전이）.
+ * 웹 prefers-reduced-motion은 마운트 후 판정해 애니메이션 경로를 완전히 우회
+ * 한다（SSR 하이드레이션 불일치 방지 — 초기 렌더는 애니메이션 전제와 동일）.
+ */
+function useCollapseTransition(open: boolean): CollapseTransition {
+  const [mounted, setMounted] = useState(open);
+  // undefined = 자연 높이(정착 오픈 — SSR 첫 페인트·내용 성장·flex 잔여 반영),
+  // 숫자 = 전이 목표 px, 0 = 접힘. 초기 오픈은 애니메이션 없이 자연 높이로
+  // 시작한다(하이드레이션 플래시·0px SSR 방지 — 리뷰 후속).
+  const [height, setHeight] = useState<number | undefined>(undefined);
+  const [reducedMotion, setReducedMotion] = useState(false);
+  const measuredRef = useRef<number | null>(null);
+  const prevOpenRef = useRef(open);
+
+  useEffect(() => {
+    if (Platform.OS !== "web") return;
+    if (typeof window.matchMedia !== "function") return;
+    setReducedMotion(
+      window.matchMedia("(prefers-reduced-motion: reduce)").matches,
+    );
+  }, []);
+
+  useEffect(() => {
+    if (Platform.OS !== "web" || reducedMotion) return;
+    const wasOpen = prevOpenRef.current;
+    prevOpenRef.current = open;
+    if (wasOpen === open) return;
+    // 빠른 토글 재진입 시 이전 전이의 프레임·타이머를 정리한다(cleanup).
+    let raf1 = 0;
+    let raf2 = 0;
+    let settleTimer: ReturnType<typeof setTimeout> | undefined;
+    let unmountTimer: ReturnType<typeof setTimeout> | undefined;
+    if (open) {
+      setMounted(true);
+      setHeight(0);
+      // 0이 커밋·페인트된 뒤(이중 rAF) 측정 px로 — 전이 발동.
+      raf1 = requestAnimationFrame(() => {
+        raf2 = requestAnimationFrame(() => {
+          const measured = measuredRef.current;
+          if (measured == null) {
+            // 측정 전 폴백 — 자연 높이로 즉시 정착(무애니메이션).
+            setHeight(undefined);
+            return;
+          }
+          setHeight(measured);
+          // 전이 완료 뒤 자연 높이로 해제 — 이후 내용 성장·flex를 추종.
+          settleTimer = setTimeout(
+            () => setHeight(undefined),
+            COLLAPSE_TRANSITION_MS,
+          );
+        });
+      });
+    } else {
+      // 현재 높이를 px로 고정해 전이 기점을 만들고 다음 페인트 뒤 0으로.
+      setHeight(measuredRef.current ?? 0);
+      raf1 = requestAnimationFrame(() => {
+        raf2 = requestAnimationFrame(() => setHeight(0));
+      });
+      // 0 전이가 끝나면 언마운트(presence).
+      unmountTimer = setTimeout(
+        () => setMounted(false),
+        COLLAPSE_TRANSITION_MS,
+      );
+    }
+    return () => {
+      if (raf1) cancelAnimationFrame(raf1);
+      if (raf2) cancelAnimationFrame(raf2);
+      if (settleTimer !== undefined) clearTimeout(settleTimer);
+      if (unmountTimer !== undefined) clearTimeout(unmountTimer);
+    };
+  }, [open, reducedMotion]);
+
+  if (Platform.OS !== "web" || reducedMotion) {
+    return { shouldRender: open, heightStyle: undefined, onLayout: undefined };
+  }
+  return {
+    shouldRender: mounted,
+    heightStyle: height === undefined ? undefined : { height },
+    onLayout: (layout) => {
+      measuredRef.current = layout.height;
+    },
+  };
 }
 
 // 리스트 변형 — line 인디케이터 렌더 여부를 트리거가 알 수 있게 전달（원본은
@@ -315,19 +423,30 @@ export type TabsContentProps = ViewProps & {
 };
 
 const TabsContent = forwardRef<BridgeViewRef, TabsContentProps>(
-  ({ value, className, children, nativeID, ...props }, ref) => {
+  ({ value, className, children, nativeID, onLayout, ...props }, ref) => {
     const tabs = useTabsContext("TabsContent");
-    // 마운트/언마운트 방식 전환 — 높이 애니메이션은 불가하므로 즉시 전환.
-    if (tabs.value !== value) return null;
+    const collapse = useCollapseTransition(tabs.value === value);
+    if (!collapse.shouldRender) return null;
     return (
+      // 3단 구조: 전이 래퍼（측정 높이·웹 전이 클래스） > 무패딩 측정 뷰
+      // （contentRect가 패널 전체 높이） > 패널 본문（role·className 병합 지점）.
+      // 네이티브는 web: 전이 클래스가 떨어져 자연 높이 중첩 뷰로 동작한다.
       <View
-        ref={ref}
-        accessibilityRole="tabpanel"
-        nativeID={nativeID ?? contentIdOf(tabs.baseId, value)}
-        className={cn("flex-1 web:outline-none", className)}
-        {...props}
+        className="web:overflow-hidden web:transition-all web:duration-200"
+        style={collapse.heightStyle}
       >
-        {children}
+        <View onLayout={collapse.onLayout}>
+          <View
+            ref={ref}
+            accessibilityRole="tabpanel"
+            nativeID={nativeID ?? contentIdOf(tabs.baseId, value)}
+            className={cn("flex-1 web:outline-none", className)}
+            onLayout={onLayout}
+            {...props}
+          >
+            {children}
+          </View>
+        </View>
       </View>
     );
   },

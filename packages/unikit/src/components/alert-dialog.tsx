@@ -10,9 +10,14 @@
 //  alert-dialog-content:）는 data 속성이 없어 cva size 변형 + React context로
 //  전파한다（alert.tsx variant context 관행）. 헤더푸터가 콘텐츠의 size를 읽는다.
 // - 헤더의 gridgrid-rows-［auto_1fr］has-data-［slot=alert-dialog-media］ 2열 배치
-//  （sm 기본 크기에서 미디어 아이콘 좌측텍스트 우측）는 임의값그룹 셀렉터라 재현
-//  불가 — flex-col 근사: 미디어 아이콘은 항상 텍스트 위 중앙（모바일 배치）에 둔다
-//  （로드맵）. Title의 col-start-2Media의 row-span-2도 같은 이유로 소실.
+//  （sm 기본 크기에서 미디어 아이콘 좌측·텍스트 우측）은 임의값·그룹 셀렉터라 직접
+//  재현 불가 — 타입 동일 자식 감지（select.tsx 관행 — 같은 파일 컴포넌트라 성립）
+//  ＋조건부 클래스 전개로 치환한다（잔여 갭 해소）: 기본 크기 헤더가
+//  AlertDialogMedia 자식을 감지하면 sm부터 flex-row sm:items-start sm:gap-6
+//  （원본 gap-x-6）으로 전환해 미디어를 좌측（원본 row-span-2 — 상단 고정）·텍스트
+//  블록（제목·설명）을 우측 flex-col 그룹（원본 Title col-start-2 배치）에 둔다.
+//  base（모바일）와 sm 크기는 원본과 동일한 중앙 세로 스택을 유지한다. map 등
+//  간접 배치는 감지되지 않아 세로 스택으로 동작한다（한계）.
 // - 푸터 sm 크기의 grid grid-cols-2（취소확인 2분할） 토큰은 유지하되, 네이티브
 //  Yoga에 grid가 없어 flex-col로 강등된다（웹만 2분할 — 한계）.
 // - AlertDialogActionCancel은 원본 Button asChild 래핑 대신 Button을 직접 렌더
@@ -29,8 +34,10 @@
 //  nativeID（useId 토대）, 카드 aria-describedby ↔ 설명 nativeID, 오버레이
 //  aria-labelledby ↔ 제목 nativeID（스크린리더가 제목을 대화상자 이름으로 읽는다）.
 import {
+  Children,
   createContext,
   forwardRef,
+  isValidElement,
   useCallback,
   useContext,
   useId,
@@ -263,14 +270,42 @@ AlertDialogContent.displayName = "AlertDialogContent";
 export type AlertDialogHeaderProps = ViewProps;
 
 const AlertDialogHeader = forwardRef<BridgeViewRef, AlertDialogHeaderProps>(
-  ({ className, ...props }, ref) => {
+  ({ className, children, ...props }, ref) => {
     const size = useContext(AlertDialogSizeContext);
+    // AlertDialogMedia 자식 타입 동일 감지（select.tsx 관행 — 같은 파일 컴포넌트）.
+    const isMedia = (child: ReactNode) =>
+      isValidElement(child) && child.type === AlertDialogMedia;
+    const items = Children.toArray(children);
+    const medias = items.filter(isMedia);
+    const content = items.filter((child) => !isMedia(child));
+    // 기본 크기＋미디어 있을 때만 2열 전환（원본 sm: group-data 전개와 동일 조건）.
+    // sm 크기는 원본처럼 중앙 세로 스택을 유지한다.
+    const sideBySide = medias.length > 0 && size === "default";
     return (
       <View
         ref={ref}
-        className={cn(alertDialogHeaderVariants({ size }), className)}
+        className={cn(
+          alertDialogHeaderVariants({ size }),
+          // 원본 has-data-［media］ 2열 grid（gap-x-6）의 flex 등가물 — 미디어
+          // 좌측·텍스트 그룹 우측（머리 주석）.
+          sideBySide &&
+            "sm:flex-row sm:items-start sm:gap-6",
+          className,
+        )}
         {...props}
-      />
+      >
+        {sideBySide ? (
+          <>
+            {medias}
+            {/* 텍스트 블록（제목·설명） — 원본 Title col-start-2의 등가물 그룹 */}
+            <View className="flex flex-col items-center gap-1.5 sm:items-start">
+              {content}
+            </View>
+          </>
+        ) : (
+          children
+        )}
+      </View>
     );
   },
 );
@@ -301,8 +336,8 @@ const AlertDialogTitle = forwardRef<BridgeTextRef, AlertDialogTitleProps>(
       <Text
         ref={ref}
         nativeID={nativeID ?? dialog.titleId}
-        // 이중 지정: 전경색은 Text에（네이티브는 색 상속 불가）. 원본의
-        // col-start-2（미디어 2열 배치）는 grid 소실로 제거.
+        // 이중 지정: 전경색은 Text에（네이티브는 색 상속 불가）. 원본
+        // col-start-2（미디어 2열 배치）는 헤더 flex 그룹 배치로 치환됐다（머리 주석）.
         className={cn(
           "font-sans text-lg font-semibold text-foreground",
           className,
@@ -335,18 +370,25 @@ AlertDialogDescription.displayName = "AlertDialogDescription";
 export type AlertDialogMediaProps = ViewProps;
 
 const AlertDialogMedia = forwardRef<BridgeViewRef, AlertDialogMediaProps>(
-  ({ className, ...props }, ref) => (
-    // self-center — 원본 inline-flex의 콘텐츠 폭 수축을 교차축 정렬로 근사.
-    // 원본 ［*:［svg］］:size-8 아이콘 규격은 글리프/아이콘 사용처 className으로.
-    <View
-      ref={ref}
-      className={cn(
-        "mb-2 flex size-16 items-center justify-center self-center rounded-md bg-muted",
-        className,
-      )}
-      {...props}
-    />
-  ),
+  ({ className, ...props }, ref) => {
+    const size = useContext(AlertDialogSizeContext);
+    return (
+      // self-center — 원본 inline-flex의 콘텐츠 폭 수축을 교차축 정렬로 근사.
+      // 기본 크기 2열 배치에서는 sm부터 상단 고정（원본 row-span-2 + place-items-start）
+      // 과 수축 방지（원본 고정 size-16）를 전개한다（머리 주석）. 원본
+      // ［*:［svg］］:size-8 아이콘 규격은 자식 감지 불가로 계속 미지원 — 사용처
+      // className으로 지정한다（badge·button 머리 주석의 근사 사유와 동일）.
+      <View
+        ref={ref}
+        className={cn(
+          "mb-2 flex size-16 items-center justify-center self-center rounded-md bg-muted",
+          size === "default" && "sm:self-start sm:shrink-0",
+          className,
+        )}
+        {...props}
+      />
+    );
+  },
 );
 AlertDialogMedia.displayName = "AlertDialogMedia";
 

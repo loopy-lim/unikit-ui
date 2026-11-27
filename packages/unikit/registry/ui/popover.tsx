@@ -7,9 +7,15 @@
 //   PopoverTrigger（Pressable 토글）PopoverContent（AnchoredOverlay + 카드 View）
 //   PopoverAnchor（앵커 오버라이드 View）로 재구성. Portal은 AnchoredOverlay가
 //   내부적으로 소비하므로 별도 파트가 없다（7종 export는 원본 그대로 유지）.
-// - 충돌 감지（collision paddingavoidCollisionssticky）는 미지원 —
-//   AnchoredOverlay의 뷰포트 클램프（여백 8px）로 근사된다. 원본과 달리 열리는
-//   방향（side）을 역방향으로 자동 전환하지는 않는다.
+// - 충돌 감지（avoidCollisions 근사 — AnchoredOverlay 내장 배치 계산 담당）:
+//   선호 방향(side)에 콘텐츠가 못 들어가고 반대편이 더 넓으면 방향을 역방향으로
+//   자동 전환한다. 정렬 축 시프트·잔여 넘침은 뷰포트 클램프(여백 8px)로 폴백.
+//   원본 collision padding 사용자 지정은 미지원(8px 고정).
+// - sticky(스크롤 추종): 웹은 열림 중 scroll·resize마다 앵커를 재측정해 카드가
+//   앵커를 따라간다(브리지 useReposition, rAF 스로틀). 네이티브는 개방 중 RN
+//   Modal이 창 전체를 덮어 하부 스크롤이 불가하므로 추종이 구조적으로 무의미
+//   하다(가짜 폴링으로 근사하지 않는다). 원본 sticky 프로퍼티(partial/always)는
+//   미지원 — 클램프 추종 단일 동작.
 // - 원본 Content의 sidesideOffset 프로퍼티명을 유지하되 내부적으로 AnchoredOverlay
 //   의 placementoffset로 매핑한다（기본 side "bottom"sideOffset 4align "center"
 //   은 원본 기본값 그대로）.
@@ -19,7 +25,11 @@
 //   눌림 닫기는 AnchoredOverlay의 투명 백드롭이 잡아준다（onBackdropPress
 //   연결 — G3 리뷰 주석 정합 갱신）. ESC（브리지 useDismiss, 웹）와 트리거
 //   재토글도 닫는다.
-// - asChild 미지원 — 트리거는 항상 브리지 Pressable（웹 <button>）로 렌더된다.
+// - asChild 지원（잔여 RN 갭 감사 후속） — 브리지 Slot（bridge/slot.ts — radix
+//   Slot 상당）이 children 단일 요소에 트리거 동작（토글·aria 연결·ref）을 병합해
+//   렌더한다. 병합 규칙은 radix 기준（핸들러 자식 먼저·className cn 병합·일반 prop
+//   자식 우선）. 미지원: Slottable 복수 children 구성(style 배열은 평탄화 병합 지원).
+//   미지정 시 기존 Pressable（웹 <button>）고정 렌더와 동일하다.
 // - 카드 className에 pointer-events-auto 기본 포함（웹 box-none 상속 회피）.
 // - 접근성: 트리거 aria-expandedaria-controls（useId 기반 nativeID）, 카드
 //   role="dialog"（원본 radix Content와 동일）. RN은 dialog rolearia-describedby
@@ -42,6 +52,7 @@ import {
 } from "react";
 import {
   Pressable,
+  Slot,
   Text,
   View,
   type BridgePressableRef,
@@ -124,23 +135,33 @@ const Popover = forwardRef<BridgeViewRef, PopoverProps>(
 );
 Popover.displayName = "Popover";
 
-export type PopoverTriggerProps = PressableProps;
+export type PopoverTriggerProps = PressableProps & {
+  /** true면 children（정확히 하나의 요소）에 트리거 동작을 병합해 렌더 —
+   *  radix asChild 상당（브리지 Slot）. 병합 규칙은 bridge/types.ts SlotProps */
+  asChild?: boolean;
+};
 
 const PopoverTrigger = forwardRef<BridgePressableRef, PopoverTriggerProps>(
-  ({ onPress, ...props }, ref) => {
+  ({ asChild = false, onPress, ...props }, ref) => {
     const popover = usePopoverContext("PopoverTrigger");
+    // 행동 prop 묶음 — asChild(Slot)·기본(Pressable) 양 경로가 같은 순서로 전개해
+    // 기본 경로 렌더 결과를 기존과 동일하게 유지한다.
+    const behavioral = {
+      accessibilityRole: "button" as const,
+      "aria-expanded": popover.open,
+      "aria-controls": `${popover.baseId}-popover-content`,
+      onPress: () => {
+        popover.setOpen(!popover.open);
+        onPress?.();
+      },
+    };
+    if (asChild) {
+      return (
+        <Slot ref={composeRefs(popover.triggerRef, ref)} {...behavioral} {...props} />
+      );
+    }
     return (
-      <Pressable
-        ref={composeRefs(popover.triggerRef, ref)}
-        accessibilityRole="button"
-        aria-expanded={popover.open}
-        aria-controls={`${popover.baseId}-popover-content`}
-        onPress={() => {
-          popover.setOpen(!popover.open);
-          onPress?.();
-        }}
-        {...props}
-      />
+      <Pressable ref={composeRefs(popover.triggerRef, ref)} {...behavioral} {...props} />
     );
   },
 );

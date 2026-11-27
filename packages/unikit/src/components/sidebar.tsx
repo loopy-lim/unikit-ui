@@ -29,8 +29,13 @@
 //   icon 접힘（size-8! p-2! 등 important 토큰）은 cn 병합 순서로 대체.
 // - 키보드 단축키（Ctrl/Cmd+B）는 window keydown 리스너（typeof window 가드）로
 //   유지 — 웹 전용, 네이티브는 no-op.
-// - radix Slot（asChild） 미지원 — GroupLabelMenuButtonMenuActionSubButton은
-//   Pressable/View 렌더 고정（문자열 children은 내부 Text로 감싼다）.
+// - radix Slot（asChild） 지원（잔여 RN 갭 감사 후속） — GroupLabel·GroupAction
+//   MenuButton·MenuAction·SubButton이 asChild 시 브리지 Slot으로 children 단일
+//   요소에 클래스·동작 prop을 병합해 렌더한다（병합 규칙은 bridge/types.ts
+//   SlotProps — radix 기준）. 미지정 렌더는 기존 고정（Pressable/View+내부 Text）
+//   과 동일하며, asChild 경로는 문자열 children 자동 Text 래핑이 없다（단일
+//   요소만 받는다）. MenuButton의 tooltip 조합은 원본과 동일한 중첩 구조
+//   （TooltipTrigger asChild로 버튼 요소를 감싸 Slot끼리 합성）로 재현했다.
 // - 툴팁 연동: 기존 "./tooltip"을 소비. 원본은 항상 Tooltip으로 감싸고
 //   hidden 제어하지만, 우리 툴팁은 press-to-toggle 방식이라 "아이콘 접힘
 //   상태에서만" TooltipTrigger로 전환한다（expanded에선 라벨이 이미 보이므로
@@ -52,6 +57,7 @@ import {
   PanelLeftIcon,
   Pressable,
   ScrollView,
+  Slot,
   Text,
   View,
   type BridgePressableRef,
@@ -537,23 +543,41 @@ const SidebarGroup = React.forwardRef<BridgeViewRef, SidebarGroupProps>(
 );
 SidebarGroup.displayName = "SidebarGroup";
 
-export type SidebarGroupLabelProps = TextProps;
+export type SidebarGroupLabelProps = TextProps & {
+  /** true면 children（정확히 하나의 요소）에 라벨 클래스·prop을 병합해 렌더 */
+  asChild?: boolean;
+};
 
 const SidebarGroupLabel = React.forwardRef<
   BridgeTextRef,
   SidebarGroupLabelProps
->(({ className, children, ...props }, ref) => {
+>(({ asChild = false, className, children, ...props }, ref) => {
   const { state, collapsible } = useSidebar();
   const iconCollapsed = state === "collapsed" && collapsible === "icon";
+  const layoutClasses = cn(
+    "h-8 shrink-0 flex-row items-center rounded-md px-2",
+    "web:focus-visible:ring-2 web:focus-visible:ring-ring",
+    iconCollapsed && "-mt-8 opacity-0",
+    className,
+  );
+  if (asChild) {
+    // 원본은 단일 <div>에 레이아웃·글자 클래스가 모두 있었다 — asChild도 같게
+    // 한 덩어리로 병합한다（자식 요소가 자기 텍스트 렌더를 담당한다）.
+    return (
+      <Slot
+        ref={ref}
+        className={cn(
+          layoutClasses,
+          "font-sans text-xs font-medium text-foreground/70",
+        )}
+        {...props}
+      >
+        {children}
+      </Slot>
+    );
+  }
   return (
-    <View
-      className={cn(
-        "h-8 shrink-0 flex-row items-center rounded-md px-2",
-        "web:focus-visible:ring-2 web:focus-visible:ring-ring",
-        iconCollapsed && "-mt-8 opacity-0",
-        className,
-      )}
-    >
+    <View className={layoutClasses}>
       <Text
         ref={ref}
         className="font-sans text-xs font-medium text-foreground/70"
@@ -566,27 +590,46 @@ const SidebarGroupLabel = React.forwardRef<
 });
 SidebarGroupLabel.displayName = "SidebarGroupLabel";
 
-export type SidebarGroupActionProps = PressableProps;
+export type SidebarGroupActionProps = PressableProps & {
+  /** true면 children（정확히 하나의 요소）에 동작 prop을 병합해 렌더 */
+  asChild?: boolean;
+};
 
 const SidebarGroupAction = React.forwardRef<
   BridgePressableRef,
   SidebarGroupActionProps
->(({ className, children, onPress, ...props }, ref) => {
+>(({ asChild = false, className, children, onPress, ...props }, ref) => {
   const { state, collapsible } = useSidebar();
   const iconCollapsed = state === "collapsed" && collapsible === "icon";
   // 아이콘 접힘 시 비활성（원본 group-data-［collapsible=icon］:hidden）.
   if (iconCollapsed) return null;
+  const classes = cn(
+    "absolute top-3.5 right-3 aspect-square w-5 items-center justify-center rounded-md p-0",
+    "web:focus-visible:ring-2 web:focus-visible:ring-ring active:bg-accent",
+    className,
+  );
+  if (asChild) {
+    return (
+      <Slot
+        ref={ref}
+        accessibilityRole="button"
+        // after:-inset-2（8px 히트영역 확장）의 근사 — hitSlop.
+        hitSlop={8}
+        className={classes}
+        onPress={onPress}
+        {...props}
+      >
+        {children}
+      </Slot>
+    );
+  }
   return (
     <Pressable
       ref={ref}
       accessibilityRole="button"
       // after:-inset-2（8px 히트영역 확장）의 근사 — hitSlop.
       hitSlop={8}
-      className={cn(
-        "absolute top-3.5 right-3 aspect-square w-5 items-center justify-center rounded-md p-0",
-        "web:focus-visible:ring-2 web:focus-visible:ring-ring active:bg-accent",
-        className,
-      )}
+      className={classes}
       onPress={onPress}
       {...props}
     >
@@ -673,6 +716,8 @@ export type SidebarMenuButtonProps = PressableProps & {
   isActive?: boolean;
   /** 접힘 시 툴팁 문구（TooltipContentProps 전달도 지원） */
   tooltip?: string | React.ComponentProps<typeof TooltipContent>;
+  /** true면 children（정확히 하나의 요소）에 메뉴 버튼 클래스·동작을 병합해 렌더 */
+  asChild?: boolean;
 } & VariantProps<typeof sidebarMenuButtonVariants>;
 
 const SidebarMenuButton = React.forwardRef<
@@ -685,6 +730,7 @@ const SidebarMenuButton = React.forwardRef<
       variant = "default",
       size = "default",
       tooltip,
+      asChild = false,
       className,
       children,
       onPress,
@@ -710,6 +756,36 @@ const SidebarMenuButton = React.forwardRef<
         isActive ? "text-accent-foreground" : "text-foreground",
       ),
     );
+
+    // asChild — 원본 구조 재현: 요소를 만들고 필요 시 TooltipTrigger asChild로
+    // 감싼다（Slot끼리 중첩 합성 — ref·onPress는 요소에만 실어 이중 실행을 막는다）.
+    if (asChild) {
+      const button = (
+        <Slot
+          ref={ref}
+          accessibilityRole="button"
+          className={classes}
+          onPress={onPress}
+          {...props}
+        >
+          {children}
+        </Slot>
+      );
+      // 툴팁 없음 또는 전개 상태（라벨이 보임）모바일이면 일반 버튼.
+      if (!tooltip || !iconCollapsed || isMobile) {
+        return button;
+      }
+      const tooltipOptions =
+        typeof tooltip === "string" ? { children: tooltip } : tooltip;
+      return (
+        <Tooltip>
+          {/* 접힘 상태에서만 툴팁 — 원본처럼 트리거 Slot이 버튼 요소를 감싸
+              합성한다（radix 중첩 Slot과 동일 구조）. */}
+          <TooltipTrigger asChild>{button}</TooltipTrigger>
+          <TooltipContent side="right" align="center" {...tooltipOptions} />
+        </Tooltip>
+      );
+    }
 
     // 툴팁 없음 또는 전개 상태（라벨이 보임）모바일이면 일반 버튼.
     if (!tooltip || !iconCollapsed || isMobile) {
@@ -751,35 +827,57 @@ SidebarMenuButton.displayName = "SidebarMenuButton";
 export type SidebarMenuActionProps = PressableProps & {
   /** 원본 showOnHover 표시 제어는 그룹 셀렉터 의존이라 미지원（항상 표시） */
   showOnHover?: boolean;
+  /** true면 children（정확히 하나의 요소）에 동작 prop을 병합해 렌더 */
+  asChild?: boolean;
 };
 
 const SidebarMenuAction = React.forwardRef<
   BridgePressableRef,
   SidebarMenuActionProps
->(({ className, children, onPress, showOnHover: _showOnHover, ...props }, ref) => {
-  const { state, collapsible } = useSidebar();
-  const iconCollapsed = state === "collapsed" && collapsible === "icon";
-  if (iconCollapsed) return null;
-  return (
-    <Pressable
-      ref={ref}
-      accessibilityRole="button"
-      hitSlop={8}
-      className={cn(
-        "absolute top-1.5 right-1 aspect-square w-5 items-center justify-center rounded-md p-0",
-        "web:focus-visible:ring-2 web:focus-visible:ring-ring active:bg-accent",
-        className,
-      )}
-      onPress={onPress}
-      {...props}
-    >
-      {serializableChildren(
-        children,
-        "font-sans text-sm text-foreground active:text-accent-foreground",
-      )}
-    </Pressable>
-  );
-});
+>(
+  (
+    { className, children, onPress, showOnHover: _showOnHover, asChild = false, ...props },
+    ref,
+  ) => {
+    const { state, collapsible } = useSidebar();
+    const iconCollapsed = state === "collapsed" && collapsible === "icon";
+    if (iconCollapsed) return null;
+    const classes = cn(
+      "absolute top-1.5 right-1 aspect-square w-5 items-center justify-center rounded-md p-0",
+      "web:focus-visible:ring-2 web:focus-visible:ring-ring active:bg-accent",
+      className,
+    );
+    if (asChild) {
+      return (
+        <Slot
+          ref={ref}
+          accessibilityRole="button"
+          hitSlop={8}
+          className={classes}
+          onPress={onPress}
+          {...props}
+        >
+          {children}
+        </Slot>
+      );
+    }
+    return (
+      <Pressable
+        ref={ref}
+        accessibilityRole="button"
+        hitSlop={8}
+        className={classes}
+        onPress={onPress}
+        {...props}
+      >
+        {serializableChildren(
+          children,
+          "font-sans text-sm text-foreground active:text-accent-foreground",
+        )}
+      </Pressable>
+    );
+  },
+);
 SidebarMenuAction.displayName = "SidebarMenuAction";
 
 export type SidebarMenuBadgeProps = ViewProps;
@@ -872,6 +970,8 @@ SidebarMenuSubItem.displayName = "SidebarMenuSubItem";
 export type SidebarMenuSubButtonProps = PressableProps & {
   size?: "sm" | "md";
   isActive?: boolean;
+  /** true면 children（정확히 하나의 요소）에 동작 prop을 병합해 렌더 */
+  asChild?: boolean;
 };
 
 const SidebarMenuSubButton = React.forwardRef<
@@ -879,34 +979,49 @@ const SidebarMenuSubButton = React.forwardRef<
   SidebarMenuSubButtonProps
 >(
   (
-    { size = "md", isActive = false, className, children, onPress, ...props },
+    { size = "md", isActive = false, asChild = false, className, children, onPress, ...props },
     ref,
   ) => {
     const { state, collapsible } = useSidebar();
     const iconCollapsed = state === "collapsed" && collapsible === "icon";
     if (iconCollapsed) return null;
+    const classes = cn(
+      // 원본 hover·active 피드백 복원（전경색은 내부 Text 이중 지정）.
+      "h-7 min-w-0 w-full flex-row items-center gap-2 overflow-hidden rounded-md px-2 web:hover:bg-accent active:bg-accent web:hover:text-accent-foreground active:text-accent-foreground",
+      isActive && "bg-accent",
+      className,
+    );
+    const textClasses = cn(
+      "font-sans truncate web:hover:text-accent-foreground active:text-accent-foreground",
+      size === "sm" ? "text-xs" : "text-sm",
+      isActive ? "text-accent-foreground" : "text-foreground",
+    );
+    if (asChild) {
+      // 원본은 단일 <a>에 레이아웃·글자 클래스가 모두 있었다 — 같게 병합한다
+      //（전경색 상속은 웹만 — 네이티브는 자식이 자기 Text에 지정한다）.
+      return (
+        <Slot
+          ref={ref}
+          // 원본이 <a> 기반이라 링크 역할로 근사（href 계약은 부재）.
+          accessibilityRole="link"
+          className={cn(classes, textClasses)}
+          onPress={onPress}
+          {...props}
+        >
+          {children}
+        </Slot>
+      );
+    }
     return (
       <Pressable
         ref={ref}
         // 원본이 <a> 기반이라 링크 역할로 근사（href 계약은 부재）.
         accessibilityRole="link"
-        className={cn(
-          // 원본 hover·active 피드백 복원（전경색은 내부 Text 이중 지정）.
-          "h-7 min-w-0 w-full flex-row items-center gap-2 overflow-hidden rounded-md px-2 web:hover:bg-accent active:bg-accent web:hover:text-accent-foreground active:text-accent-foreground",
-          isActive && "bg-accent",
-          className,
-        )}
+        className={classes}
         onPress={onPress}
         {...props}
       >
-        {serializableChildren(
-          children,
-          cn(
-            "font-sans truncate web:hover:text-accent-foreground active:text-accent-foreground",
-            size === "sm" ? "text-xs" : "text-sm",
-            isActive ? "text-accent-foreground" : "text-foreground",
-          ),
-        )}
+        {serializableChildren(children, textClasses)}
       </Pressable>
     );
   },

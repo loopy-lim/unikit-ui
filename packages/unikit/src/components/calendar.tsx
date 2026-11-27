@@ -4,11 +4,19 @@
 //
 // 포팅 판단（원본 대비 차이이유）:
 // - react-day-picker 의존 제거 — 월 표시 상태（기본 오늘, selected 우선）와
-//   6행 7열（42칸） 날짜 격자를 직접 렌더한다. mode="single"만 지원하며
-//   다중 선택범위 선택（range_*）은 미지원 — 로드맵 기록. 원본의 matcher 기반
-//   disabled（matchers 체계）는 판정 함수 disabled?（date） 하나로 단순화했다.
+//   6행 7열（42칸） 날짜 격자를 직접 렌더한다. mode="single" | "multiple" |
+//   "range"를 지원하고 disabled는 CalendarDateMatcher（Date[]·{ from, to }·
+//   { before, after }·{ dayOfWeek }·술어）로 받는다（본체 구현 확인 — 이전
+//   주석의 "single만 지원·판정 함수 하나로 단순화" 기술은 부실 기록이었다）.
 // - 로케일은 한국어 고정（요일 "일월화수목금토", 캡션 "2026년 11월"） — i18n
-//   prop은 로드맵. 원본의 RTL 화살표 회전 규칙（rtl:）은 제거（SVG 아이콘 고정）.
+//   prop은 로드맵. 원본의 RTL 화살표 회전 규칙（rtl:）은 useDirection（direction.tsx
+//   컨텍스트 — 원본 radix Direction과 동일 시맨틱）으로 재현했다: rtl에서 이전/다음
+//   화살표에 rotate-180을 전개한다.
+// - 선택 전환 애니메이션（사이클 40 로드맵 해소）: 선택 셀 배경을 별도 장식 레이어
+//   （absolute, aria-hidden）가 담당하며 스케일 0.75→1 · 투명도 0→1 로 팝 전이한다.
+//   웹은 transition-all 클래스의 CSS 전이, 네이티브는 같은 클래스가 MotionView
+//   （RN Animated）로 구동한다 — 원본의 active:bg-primary/90 프레스 피드백은 이
+//   팝 전이로 대체됐다. 웹 prefers-reduced-motion은 전이 클래스를 뺀다.
 // - 접근성: 루트 role="grid", 요일 헤더 role="columnheader", 주 role="row",
 //   날짜 칸 role="gridcell" — 전부 bridge role 계약（types.ts）에 포함돼 있다.
 //   날짜의 aria-selectedaria-current="date"는 원본과 같이 gridcell이 아니라
@@ -27,15 +35,16 @@
 //   합성이 불가하다.
 // - 원본 showOutsideDays 기본값（true） 유지 — 42칸에 앞뒤 달 날짜가 함께
 //   렌더되고（muted）, 누르면 그 달로 이동하며 선택한다（원본 동작）.
-// - 키보드 방향키 탐색captionLayout 드롭다운주 번호（showWeekNumber）
-//   선택 애니메이션은 미지원 — 로드맵.
+// - 키보드 방향키 탐색captionLayout 드롭다운주 번호（showWeekNumber）은
+//   미지원 — 로드맵. 선택 전환 애니메이션은 해소（아래 선택 팝 레이어 판단）.
 // - RN 한계: gridrowgridcell 등 role은 RN이 무시한다（웹 스크린리더만
 //   이득 — types.ts 계약 주석）, aria-current도 웹 전용 계약이다. 오늘/선택
 //   강조는 시각（bg-accentbg-primary）으로도 표현된다.
-import { forwardRef, useId, useMemo, useState } from "react";
+import { forwardRef, useEffect, useId, useMemo, useState } from "react";
 import {
   ChevronLeftIcon,
   ChevronRightIcon,
+  Platform,
   Pressable,
   Text,
   View,
@@ -46,6 +55,7 @@ import {
 
 import { cn } from "../lib/utils";
 import { Button } from "./button";
+import { useDirection } from "./direction";
 
 // 요일 라벨 — 일요일 시작（한국어 고정）
 const WEEKDAY_LABELS = ["일", "월", "화", "수", "목", "금", "토"] as const;
@@ -192,6 +202,18 @@ const Calendar = forwardRef<BridgeViewRef, CalendarProps>(
     const currentMonth = month !== undefined ? startOfMonth(month) : internalMonth;
     const baseId = useId();
     const captionId = `${baseId}-calendar-caption`;
+    // 원본 rtl: 회전 규칙의 재현 근거 — direction.tsx 컨텍스트（radix 시맨틱）.
+    const dir = useDirection();
+    // 웹 prefers-reduced-motion — 마운트 후 판정（SSR 하이드레이션 불일치 방지）.
+    // 네이티브는 MotionView가 AccessibilityInfo.isReduceMotionEnabled으로 준수한다.
+    const [reducedMotion, setReducedMotion] = useState(false);
+    useEffect(() => {
+      if (Platform.OS !== "web") return;
+      if (typeof window.matchMedia !== "function") return;
+      setReducedMotion(
+        window.matchMedia("(prefers-reduced-motion: reduce)").matches,
+      );
+    }, []);
     // 오늘 판정 기준 — 마운트 시점 하루로 고정（불필요한 리렌더 판정 방지 관행）
     const today = useMemo(() => new Date(), []);
     const weeks = useMemo(() => buildMonthWeeks(currentMonth), [currentMonth]);
@@ -256,7 +278,10 @@ const Calendar = forwardRef<BridgeViewRef, CalendarProps>(
             accessibilityLabel="이전 달"
             onPress={() => goToMonth(addMonths(currentMonth, -1))}
           >
-            <ChevronLeftIcon className="size-4" />
+            {/* rtl에서 회전 — 원본 rtl:**:[.rdp-button_previous>svg]:rotate-180 전개 */}
+            <ChevronLeftIcon
+              className={cn("size-4", dir === "rtl" && "rotate-180")}
+            />
           </Button>
           <Text
             nativeID={captionId}
@@ -270,7 +295,10 @@ const Calendar = forwardRef<BridgeViewRef, CalendarProps>(
             accessibilityLabel="다음 달"
             onPress={() => goToMonth(addMonths(currentMonth, 1))}
           >
-            <ChevronRightIcon className="size-4" />
+            {/* rtl에서 회전 — 원본 rtl:**:[.rdp-button_next>svg]:rotate-180 전개 */}
+            <ChevronRightIcon
+              className={cn("size-4", dir === "rtl" && "rotate-180")}
+            />
           </Button>
         </View>
 
@@ -356,20 +384,38 @@ const Calendar = forwardRef<BridgeViewRef, CalendarProps>(
                         // 원본 day 셀은 aspect-square·day_button size-8 — 셀을
                         // size-8로 고정해 격자 높이가 콘텐츠로 수축하지 않게 한다.
                         // focus 링은 button 원본 규격（ring-3 무오프셋, 사이클 72）.
-                        "size-8 flex-row items-center justify-center rounded-md active:bg-accent web:select-none web:focus-visible:border-ring web:focus-visible:ring-3 web:focus-visible:ring-ring/50",
-                        isSelected
-                          ? "bg-primary web:hover:bg-primary/90 active:bg-primary/90"
-                          : isInRange
-                            ? "bg-accent"
-                            : "web:hover:bg-accent",
+                        // relative는 선택 팝 레이어（absolute）의 위치 기준이고,
+                        // 선택 배경은 레이어가 담당해 Pressable 배경에서는 뺀다.
+                        "relative size-8 flex-row items-center justify-center rounded-md active:bg-accent web:select-none web:focus-visible:border-ring web:focus-visible:ring-3 web:focus-visible:ring-ring/50",
+                        isInRange ? "bg-accent" : "web:hover:bg-accent",
                         !isSelected && !isInRange && isToday && "bg-accent",
                         isDisabled && "opacity-50",
                       )}
                     >
-                      {/* 이중 지정: 전경색은 상태별로 내부 Text에 */}
+                      {/* 선택 전환 팝 레이어（장식 — aria-hidden）: 선택 배경을 스케일
+                          ·투명도 전이로 전개. 웹은 CSS 전이（transition-all）,
+                          네이티브는 MotionView（RN Animated）가 style 스케일·투명도를
+                          구동한다. 웹 축소 모션은 전이 클래스를 뺀다. */}
+                      <View
+                        aria-hidden
+                        pointerEvents="none"
+                        className={cn(
+                          "absolute inset-0 rounded-md bg-primary",
+                          isSelected && "web:hover:bg-primary/90",
+                          !reducedMotion && "transition-all duration-150",
+                        )}
+                        style={{
+                          scale: isSelected ? 1 : 0.75,
+                          opacity: isSelected ? 1 : 0,
+                        }}
+                      />
+                      {/* 이중 지정: 전경색은 상태별로 내부 Text에. relative는 웹
+                          페인팅 순서용 — 정적 Text는 position:absolute 장식 레이어
+                          밑에 묻히므로 위치 요소로 승격해 DOM 순서대로 위에 그린다
+                          （네이티브는 후행 형제 우선이라 불필요하지만 무해）. */}
                       <Text
                         className={cn(
-                          "font-sans text-sm leading-none",
+                          "relative font-sans text-sm leading-none",
                           isSelected
                             ? "text-primary-foreground"
                             : isInRange

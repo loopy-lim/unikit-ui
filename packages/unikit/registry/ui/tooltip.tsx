@@ -42,7 +42,11 @@
 //   무시한다（브리지 계약 문서화된 한계 — 웹 스크린리더만 이득）.
 // - text-balance는 웹 전용 속성이라 web: 접두로만 지정, 카드 글자색（text-background）
 //   은 네이티브 색 상속 불가로 내부 Text에 이중 지정한다.
-// - asChild 미지원 — 트리거는 항상 브리지 Pressable（웹 <button>）로 렌더된다.
+// - asChild 지원（잔여 RN 갭 감사 후속） — 브리지 Slot（bridge/slot.ts — radix
+//   Slot 상당）이 children 단일 요소에 진입/이탈·press 폴백 핸들러와
+//   aria-describedby 연결을 병합해 렌더한다（자체 describedby와는 id 목록이
+//   병합된다）. 병합 규칙은 radix 기준（핸들러 자식 먼저·className cn 병합·일반
+//   prop 자식 우선）. 미지정 시 기존 Pressable（웹 <button>）고정 렌더와 동일하다.
 import {
   createContext,
   forwardRef,
@@ -59,6 +63,7 @@ import {
 } from "react";
 import {
   Pressable,
+  Slot,
   Text,
   View,
   type BridgePressableRef,
@@ -286,55 +291,65 @@ Tooltip.displayName = "Tooltip";
 // TriggerContent
 // ---------------------------------------------------------------------------
 
-export type TooltipTriggerProps = PressableProps;
+export type TooltipTriggerProps = PressableProps & {
+  /** true면 children（정확히 하나의 요소）에 트리거 동작을 병합해 렌더 —
+   *  radix asChild 상당（브리지 Slot）. 병합 규칙은 bridge/types.ts SlotProps */
+  asChild?: boolean;
+};
 // children에 문자열을 쓸 때는 Text로 감싸주세요 — 트리거는 내부 Text 래핑이
 // 없어서 네이티브에서 문자열 children이 런타임 에러를 낸다(2026-11-10 실증).
 
 const TooltipTrigger = forwardRef<BridgePressableRef, TooltipTriggerProps>(
   (
-    { onPress, onLongPress, onHoverIn, onHoverOut, onFocus, onBlur, ...props },
+    { asChild = false, onPress, onLongPress, onHoverIn, onHoverOut, onFocus, onBlur, ...props },
     ref,
   ) => {
     const tooltip = useTooltipContext("TooltipTrigger");
+    // 행동 prop 묶음 — asChild(Slot)·기본(Pressable) 양 경로가 같은 순서로 전개해
+    // 기본 경로 렌더 결과를 기존과 동일하게 유지한다.
+    const behavioral = {
+      // 원본 관행대로 트리거의 보조 설명을 카드와 연결 — 열림 중에만（닫힘 카드는
+      // 언마운트되므로 끊어진 참조를 만들지 않는다）.
+      "aria-describedby": tooltip.open ? tooltip.contentId : undefined,
+      // hover/focus 진입（사이클 90） — 원본 radix 진입 조건 재현. 터치 기기에서는
+      // 발화하지 않아 아래 press 폴백이 담당한다.
+      onHoverIn: () => {
+        tooltip.show("pointer");
+        onHoverIn?.();
+      },
+      onHoverOut: () => {
+        tooltip.hide();
+        onHoverOut?.();
+      },
+      onFocus: () => {
+        tooltip.show("pointer");
+        onFocus?.();
+      },
+      onBlur: () => {
+        tooltip.hide();
+        onBlur?.();
+      },
+      onPress: () => {
+        // pointer 진입 중에는 클릭으로 끄지 않는다（원본 정합 — 토글은 hover
+        // 계열이 없는 터치 환경 폴백）.
+        if (tooltip.entry !== "pointer") {
+          if (tooltip.open) tooltip.hide();
+          else tooltip.show();
+        }
+        onPress?.();
+      },
+      onLongPress: () => {
+        tooltip.show();
+        onLongPress?.();
+      },
+    };
+    if (asChild) {
+      return (
+        <Slot ref={composeRefs(tooltip.triggerRef, ref)} {...behavioral} {...props} />
+      );
+    }
     return (
-      <Pressable
-        ref={composeRefs(tooltip.triggerRef, ref)}
-        // 원본 관행대로 트리거의 보조 설명을 카드와 연결 — 열림 중에만（닫힘 카드는
-        // 언마운트되므로 끊어진 참조를 만들지 않는다）.
-        aria-describedby={tooltip.open ? tooltip.contentId : undefined}
-        // hover/focus 진입（사이클 90） — 원본 radix 진입 조건 재현. 터치 기기에서는
-        // 발화하지 않아 아래 press 폴백이 담당한다.
-        onHoverIn={() => {
-          tooltip.show("pointer");
-          onHoverIn?.();
-        }}
-        onHoverOut={() => {
-          tooltip.hide();
-          onHoverOut?.();
-        }}
-        onFocus={() => {
-          tooltip.show("pointer");
-          onFocus?.();
-        }}
-        onBlur={() => {
-          tooltip.hide();
-          onBlur?.();
-        }}
-        onPress={() => {
-          // pointer 진입 중에는 클릭으로 끄지 않는다（원본 정합 — 토글은 hover
-          // 계열이 없는 터치 환경 폴백）.
-          if (tooltip.entry !== "pointer") {
-            if (tooltip.open) tooltip.hide();
-            else tooltip.show();
-          }
-          onPress?.();
-        }}
-        onLongPress={() => {
-          tooltip.show();
-          onLongPress?.();
-        }}
-        {...props}
-      />
+      <Pressable ref={composeRefs(tooltip.triggerRef, ref)} {...behavioral} {...props} />
     );
   },
 );

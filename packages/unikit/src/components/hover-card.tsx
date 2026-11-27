@@ -25,7 +25,11 @@
 //   align "center"는 원본 기본값 그대로）.
 // - 애니메이션（animate-in/outfadezoomdata-［side］ 슬라이드）과 origin 변형은
 //   즉시 전환으로 근사 — 토큰 전부 제거.
-// - asChild 미지원 — 트리거는 항상 브리지 Pressable（웹 <button>）로 렌더된다.
+// - asChild 지원（잔여 RN 갭 감사 후속） — 브리지 Slot（bridge/slot.ts — radix
+//   Slot 상당）이 children 단일 요소에 지연 열림/닫힘 핸들러와 aria 연결을
+//   병합해 렌더한다. 병합 규칙은 radix 기준（핸들러 자식 먼저·className cn
+//   병합·일반 prop 자식 우선）. 미지정 시 기존 Pressable（웹 <button>）고정
+//   렌더와 동일하다.
 // - 카드 className에 pointer-events-auto 기본 포함（웹 box-none 상속 회피）.
 // - 접근성: 트리거 aria-expandedaria-controls（useId 기반 nativeID）. 원본 radix
 //   HoverCard Content는 별도 role을 노출하지 않아 이식도 카드에 role을 부여하지
@@ -47,6 +51,7 @@ import {
 } from "react";
 import {
   Pressable,
+  Slot,
   View,
   type BridgePressableRef,
   type BridgeViewRef,
@@ -198,43 +203,53 @@ const HoverCard = forwardRef<BridgeViewRef, HoverCardProps>(
 );
 HoverCard.displayName = "HoverCard";
 
-export type HoverCardTriggerProps = PressableProps;
+export type HoverCardTriggerProps = PressableProps & {
+  /** true면 children（정확히 하나의 요소）에 트리거 동작을 병합해 렌더 —
+   *  radix asChild 상당（브리지 Slot）. 병합 규칙은 bridge/types.ts SlotProps */
+  asChild?: boolean;
+};
 
 const HoverCardTrigger = forwardRef<BridgePressableRef, HoverCardTriggerProps>(
   (
-    { onPress, onLongPress, onHoverIn, onHoverOut, ...props },
+    { asChild = false, onPress, onLongPress, onHoverIn, onHoverOut, ...props },
     ref,
   ) => {
     const hoverCard = useHoverCardContext("HoverCardTrigger");
+    // 행동 prop 묶음 — asChild(Slot)·기본(Pressable) 양 경로가 같은 순서로 전개해
+    // 기본 경로 렌더 결과를 기존과 동일하게 유지한다.
+    const behavioral = {
+      accessibilityRole: "button" as const,
+      "aria-expanded": hoverCard.open,
+      "aria-controls": `${hoverCard.baseId}-hover-card-content`,
+      // 포인터 진입/이탈（사이클 90） — 지연 열림·닫힘 예약. 터치에서는 발화하지
+      // 않아 아래 press 폴백이 담당한다.
+      onHoverIn: () => {
+        hoverCard.scheduleOpen();
+        onHoverIn?.();
+      },
+      onHoverOut: () => {
+        hoverCard.scheduleClose();
+        onHoverOut?.();
+      },
+      onPress: () => {
+        // hover 진입 중에는 클릭으로 끄지 않는다（원본 정합 — 토글은 터치 폴백）.
+        if (hoverCard.entry !== "pointer") {
+          hoverCard.setOpen(!hoverCard.open);
+        }
+        onPress?.();
+      },
+      onLongPress: () => {
+        hoverCard.setOpen(true);
+        onLongPress?.();
+      },
+    };
+    if (asChild) {
+      return (
+        <Slot ref={composeRefs(hoverCard.triggerRef, ref)} {...behavioral} {...props} />
+      );
+    }
     return (
-      <Pressable
-        ref={composeRefs(hoverCard.triggerRef, ref)}
-        accessibilityRole="button"
-        aria-expanded={hoverCard.open}
-        aria-controls={`${hoverCard.baseId}-hover-card-content`}
-        // 포인터 진입/이탈（사이클 90） — 지연 열림·닫힘 예약. 터치에서는 발화하지
-        // 않아 아래 press 폴백이 담당한다.
-        onHoverIn={() => {
-          hoverCard.scheduleOpen();
-          onHoverIn?.();
-        }}
-        onHoverOut={() => {
-          hoverCard.scheduleClose();
-          onHoverOut?.();
-        }}
-        onPress={() => {
-          // hover 진입 중에는 클릭으로 끄지 않는다（원본 정합 — 토글은 터치 폴백）.
-          if (hoverCard.entry !== "pointer") {
-            hoverCard.setOpen(!hoverCard.open);
-          }
-          onPress?.();
-        }}
-        onLongPress={() => {
-          hoverCard.setOpen(true);
-          onLongPress?.();
-        }}
-        {...props}
-      />
+      <Pressable ref={composeRefs(hoverCard.triggerRef, ref)} {...behavioral} {...props} />
     );
   },
 );

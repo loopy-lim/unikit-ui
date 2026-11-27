@@ -12,7 +12,10 @@
 // - 웹에서 콘텐츠 카드는 pointer-events-auto 클래스를 기본 포함해야 한다
 //   （래퍼가 pointerEvents="box-none" → CSS none 치환 상속 때문）. 네이티브는
 //   box-none이 자동으로 자식 수신을 허용한다.
-// - 네이티브 useReposition은 no-op — 스크롤 중 앵커 팝업 재배치는 웹 전용.
+// - 스크롤 추종 재배치는 웹 전용 — 브리지 useReposition(웹)이 scroll(캡처)·
+//   resize를 rAF 스로틀로 재측정한다. 네이티브는 개방 중 RN Modal이 창 전체를
+//   덮어 하부 스크롤이 원천 불가하다(추종할 사건 자체가 없다) — useReposition
+//   (네이티브)은 Dimensions 변화(회전·리사이즈)만 구독한다.
 //
 // 배치 엔진 게이트(이슈 #15, docs/sdd/100 §7 후속): AnchoredOverlay의 배치는
 // 기본적으로 아래 내장 computeOverlayPositionWithPlacement 경로를 써요.
@@ -199,7 +202,9 @@ function measureRef(ref: unknown, callback: Parameters<typeof measureInWindow>[1
   if (el) measureInWindow(el, callback);
 }
 
-/** 앵커·콘텐츠 측정값 → 뷰포트 좌표(left/top) 및 충돌 플립이 적용된 최종 배치 방향. */
+/** 앵커·콘텐츠 측정값 → 뷰포트 좌표(left/top) 및 충돌 플립이 적용된 최종 배치 방향
+ *  (radix avoidCollisions 근사 — 선호 방향에 콘텐츠가 못 들어가고 반대편이 더
+ *  넓으면 방향을 전환. 정렬 축 시프트·잔여 넘침은 8px 클램프로 폴백). */
 export function computeOverlayPositionWithPlacement(
   anchor: Rect | null,
   content: { w: number; h: number } | null,

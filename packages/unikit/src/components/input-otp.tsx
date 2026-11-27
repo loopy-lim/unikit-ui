@@ -12,9 +12,9 @@
 //   눌러도 입력이 포커스된다.
 // - 원본 OTPInputContext（{ slots: ［{ char, hasFakeCaret, isActive }］ }）와 동일한
 //   context를 제공해 InputOTPSlot 구조를 원본에 최대한 맞췄다.
-// - 활성 셀/가짜 캐럿: 브리지 TextInputProps에 onFocus/onBlur 계약이 없어 포커스
-//   이벤트를 알 수 없다. 대신 "삽입 위치 모델"로 근사 — 첫 빈 셀（모두 찼으면 마지막
-//   셀）을 활성으로 표시한다. 미포커스 상태에도 캐럿이 보일 수 있다（한계）.
+// - 활성 셀/가짜 캐럿: 숨김 TextInput의 onFocus/onBlur 추적으로 포커스 시에만
+//   활성 슬롯·캐럿을 표시한다（브리지 TextInput 계약 — 이전 주석의 "포커스 이벤트를
+//   알 수 없다" 기술은 드리프트였다）. 미포커스에서는 빈 셀 모델로 정적 표기.
 // - 캐럿 깜빡임（animate-caret-blink）: 웹은 keyframes가 하드 온오프로 깜빡이고
 //   네이티브는 브리지 LoopPulse（RN Animated）로 부드러운 맥동 근사（주기 1.25s
 //   준용 — 네이티브 근사 차이）.
@@ -25,8 +25,9 @@
 //   받아 context 전파 + 조건부 클래스로 치환. ring-［3px］→ring-3（비대괄호 계단 —
 //   사이클 72 원본 규격 정렬）, dark: 제거.
 // - 구분선 아이콘은 브리지 SVG MinusIcon 프리미티브를 그대로 쓴다.
-//   autoComplete="one-time-code"（SMS 자동입력 힌트）는
-//   브리지 계약에 없어 미지원（로드맵）.
+//   autoComplete（SMS OTP 자동입력 힌트 — 소비처가 "one-time-code" 등 지정）은
+//   브리지 TextInputProps 계약（string — HTML 토큰 수용）으로 숨은 입력에 그대로
+//   전달한다（잔여 갭 해소 — 계약 랜딩 후 이식）.
 // - 데이터 규칙: 입력 문자를 걸러내지 않는다（원본 기본 동일）, value는
 //   maxLength로 절단된 문자열을 유지한다.
 import { createContext, forwardRef, useContext, useState } from "react";
@@ -70,6 +71,9 @@ export type InputOTPProps = ViewProps & {
   disabled?: boolean;
   autoFocus?: boolean;
   inputMode?: TextInputProps["inputMode"];
+  /** 자동완성 힌트 — SMS OTP 소비처는 "one-time-code"（브리지 계약 · 웹 input
+   *  autoComplete · 네이티브 RN TextInput autoComplete — HTML/RN 관용 토큰） */
+  autoComplete?: string;
   /** 숨은 입력 ↔ Label 연결（웹 aria-labelledby — bridge/types.ts 계약） */
   accessibilityLabelledBy?: string;
   /** 오류 상태（원본 aria-invalid:* 치환） — 셀 테두리링 */
@@ -92,6 +96,7 @@ const InputOTP = forwardRef<BridgeTextInputRef, InputOTPProps>(
       disabled,
       autoFocus,
       inputMode,
+      autoComplete,
       invalid,
       nativeID,
       testID,
@@ -153,6 +158,7 @@ const InputOTP = forwardRef<BridgeTextInputRef, InputOTPProps>(
             disabled={disabled}
             autoFocus={autoFocus}
             inputMode={inputMode}
+            autoComplete={autoComplete}
             nativeID={nativeID}
             testID={testID}
             accessibilityLabelledBy={accessibilityLabelledBy}
