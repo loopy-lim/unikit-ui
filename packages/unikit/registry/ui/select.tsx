@@ -29,12 +29,28 @@
 //   transition-［］→web:transition-all. dark: 제거.
 // - 카드 키보드 탐색（사이클 90 해소 — 웹 전용）: 트리거 ArrowDown/Up 열림에
 //   이어 카드 안에서 ArrowDown/Up（양 끝 루프）Home/End로 항목 DOM 포커스를
-//   옮긴다 — lib/menu-nav 공유 골격. 항목은 웹 <button>이라 엔터 선택은 브라우저
-//   기본 동작. 항목 pointerenter 포커스 이동도 골격이 제공한다（radix 정합）.
-//   개방 시 포커스는 첫 항목으로 간다（근사 — radix는 선택된 항목을 우선
-//   포커스한다）. 네이티브 View는 onKeyDown을 폐기한다（브리지 계약 한계）.
-// - 미지원（로드맵）: 타입어헤드, 등장/퇴장 애니메이션, name/required
-//   폼 제출용 숨은 input, 항목 textValue 프로퍼티, SelectValue 함수형 children.
+//   옮긴다 — lib/menu-nav 공유 골격. 수정자 없는 1글자 입력은 타입어헤드 점프
+//   （radix getNextMatch 이식 — 사이클 90 후속）로 이어진다. 항목은 웹 <button>
+//   이라 엔터 선택은 브라우저 기본 동작. 항목 pointerenter 포커스 이동도 골격이
+//   제공한다（radix 정합）. 개방 시 포커스는 첫 항목으로 간다（근사 — radix는
+//   선택된 항목을 우선 포커스한다）. 네이티브 View는 onKeyDown을 폐기한다
+//   （브리지 계약 한계）.
+// - 폼 제출（name/required — radix 패리티）: name을 주면 웹에서만 시각 숨김
+//   （sr-only） 네이티브 <select>를 렌더해 HTML 폼 제출·required 제약 검증에
+//   기여한다（브리지 Select 프리미티브 — tabIndex -1·aria-hidden·disabled 연동.
+//   옵션 미러링은 라벨 2단 조회 결과를 재사용（추출 불가 라벨은 value 폴백 —
+//   동적 목록 한계도 동일）. 렌더
+//   분기는 Platform（menubar 관행）으로 잡아 SSR/하이드레이션 일관성을 유지한다.
+//   네이티브에는 HTML 폼 계약이 없다 — name/required는 실질 동작 없이 context에
+//   노출되므로 커스텀 폼 연동이 참조할 수 있다（제출·검증은 소비자 폼 라이브러리
+//   +onValueChange 조합이 담당）.
+// - 카드 모션: 등장은 SelectContent가 상속하는 PopoverContent의
+//   unikit-popover-in 클래스로 웹 animations CSS（registry style "animations" —
+//   zoom+fade 160ms）가, 네이티브는 브리지 OverlayMotionPreset（RN Animated —
+//   진입 160ms·퇴장 120ms, reduced-motion 시 즉시 전환）이 담당한다.
+// - 미지원（로드맵）: 웹 퇴장 애니메이션（즉시 언마운트）, side별 원점 변형
+//   （radix data-[side]:slide-in-from-* 2px — popover 프리셋은 방향 무관 위쪽
+//   원점 고정 근사）, 항목 textValue 프로퍼티, SelectValue 함수형 children.
 // - 접근성: 트리거 combobox role + popover가 부여하는 aria-expandedaria-controls
 //   （↔ 콘텐츠 nativeID）, 콘텐츠 listbox role, 항목 option + aria-selected.
 //   RN은 combobox를 accessibilityState.expanded로 일부 반영하며 listbox/option
@@ -56,13 +72,17 @@ import {
   CheckIcon,
   ChevronDownIcon,
   ChevronUpIcon,
+  Platform,
   Pressable,
   ScrollView,
+  Select as BridgeSelect,
+  SelectOption,
   Text,
   View,
   type BridgeKeyEvent,
   type BridgePressableRef,
   type BridgeTextRef,
+  type BridgeSelectRef,
   type BridgeViewRef,
   type PressableProps,
   type TextProps,
@@ -128,7 +148,9 @@ function collectItemLabels(
     if (child.type === SelectItem) {
       if (typeof props.value === "string") {
         const label = textOfChildren(props.children);
-        if (label !== undefined) labels[props.value] = label;
+        // 라벨 추출 실패 시 value 폴백 — labelOf 결과와 동일하게 유지하면서
+        // 폼 제출용 옵션 미러가 모든 항목 값을 담게 한다（누락 제출 방지）.
+        labels[props.value] = label ?? props.value;
       }
       return;
     }
@@ -150,6 +172,10 @@ type SelectContextValue = {
   setValue: (value: string) => void;
   /** 루트 disabled — 트리거에 전파（radix Root disabled 관행） */
   disabled: boolean;
+  /** 폼 제출용 필드명 — 네이티브 폼 라이브러리 참조용（HTML 폼 계약 부재, 머리 주석） */
+  name?: string;
+  /** 〃 required — 네이티브에서는 실질 동작이 없다 */
+  required?: boolean;
   /** 열린 콘텐츠에서 항목이 자기 라벨을 등록（2단 조회 — 동적 목록 대응） */
   registerLabel: (value: string, label: string) => void;
   /** value → 표시 라벨（등록값 → 정적 수집값 → value 문자열 폴백） */
@@ -179,6 +205,10 @@ export type SelectProps = ViewProps & {
   onOpenChange?: (open: boolean) => void;
   /** 트리거 비활성화（radix Root disabled） */
   disabled?: boolean;
+  /** 폼 제출용 필드명 — 웹은 숨은 네이티브 <select>가 폼 값으로 기여（radix 패리티） */
+  name?: string;
+  /** 폼 제약 검증 — 웹은 숨은 <select>의 required（미선택 제출 차단） */
+  required?: boolean;
 };
 
 const Select = forwardRef<BridgeViewRef, SelectProps>(
@@ -191,6 +221,8 @@ const Select = forwardRef<BridgeViewRef, SelectProps>(
       defaultOpen,
       onOpenChange,
       disabled,
+      name,
+      required,
       children,
       ...props
     },
@@ -219,9 +251,11 @@ const Select = forwardRef<BridgeViewRef, SelectProps>(
     );
 
     // 라벨 2단 조회 상태 — 정적 수집（트리 순회） + 항목 마운트 등록.
+    // 프로토타 없는 맵 — value="__proto__" 아이템이 일반 객체 셋터에 흡수되고
+    // 조회가 Object.prototype을 되돌려 렌더 크래시하는 것을 막는다(리뷰 후속).
     const [runtimeLabels, setRuntimeLabels] = useState<
       Record<string, string>
-    >({});
+    >(() => Object.create(null));
     const registerLabel = useCallback((itemValue: string, label: string) => {
       setRuntimeLabels((prev) =>
         prev[itemValue] === label
@@ -230,7 +264,7 @@ const Select = forwardRef<BridgeViewRef, SelectProps>(
       );
     }, []);
     const staticLabels = useMemo(() => {
-      const labels: Record<string, string> = {};
+      const labels = Object.create(null) as Record<string, string>;
       collectItemLabels(children, labels);
       return labels;
     }, [children]);
@@ -240,6 +274,23 @@ const Select = forwardRef<BridgeViewRef, SelectProps>(
       [runtimeLabels, staticLabels],
     );
 
+    // 폼 리셋 역동기화(리뷰 후속) — form.reset()은 change를 발생시키지 않아
+    // 숨김 select 값만 돌아가고 트리거 표시가 잔존했다. 웹에서만 숨김 select의
+    // form에 reset 리스너를 달고, 브라우저 기본 리셋이 적용된 뒤(마이크로태스크)
+    // 값을 본체로 반영한다.
+    const formSelectRef = useRef<BridgeSelectRef | null>(null);
+    useEffect(() => {
+      if (Platform.OS !== "web" || !name) return;
+      const selectEl = formSelectRef.current as HTMLSelectElement | null;
+      const form = selectEl?.form;
+      if (!selectEl || !form) return;
+      const handleReset = () => {
+        queueMicrotask(() => setValue(selectEl.value));
+      };
+      form.addEventListener("reset", handleReset);
+      return () => form.removeEventListener("reset", handleReset);
+    }, [name, setValue]);
+
     const contextValue = useMemo<SelectContextValue>(
       () => ({
         open: isOpen,
@@ -247,16 +298,60 @@ const Select = forwardRef<BridgeViewRef, SelectProps>(
         value: current,
         setValue,
         disabled: disabled ?? false,
+        name,
+        required,
         registerLabel,
         labelOf,
       }),
-      [isOpen, setOpen, current, setValue, disabled, registerLabel, labelOf],
+      [isOpen, setOpen, current, setValue, disabled, name, required, registerLabel, labelOf],
+    );
+
+    // 폼 제출용 옵션 미러 — 라벨 2단 조회（정적 수집 → 동적 등록 병합） 결과를
+    // 항목 순서로 펼친다（정적 우선, 런타임 추가 항목은 뒤에 붙는다）. 단 값이
+    // 정수형 키(예: "1")면 JS 객체 키 열거 규칙상 앞으로 올라가 순서가 어긋날
+    // 수 있다 — 숨김 미러라 제출값(선택 value)에는 영향이 없다.
+    const mirrorOptions = useMemo(
+      () => ({ ...staticLabels, ...runtimeLabels }),
+      [staticLabels, runtimeLabels],
     );
 
     return (
       <Popover ref={ref} open={isOpen} onOpenChange={setOpen} {...props}>
         <SelectContext.Provider value={contextValue}>
           {children}
+          {/* 폼 제출용 숨은 네이티브 셀렉트（radix bubble select 패리티） —
+              name 지정 + 웹에서만 렌더. sr-only는 클리핑 숨김이라 required
+              제약 검증이 유지된다（display:none은 검증에서 제외）. tabIndex -1·
+              aria-hidden으로 탭 순서와 스크린리더에서 뺀다. Platform 분기는
+              번들 확정이라 SSR/하이드레이션이 일치한다（menubar 관행）. */}
+          {name && Platform.OS === "web" ? (
+            <BridgeSelect
+              ref={formSelectRef}
+              className="sr-only"
+              value={current}
+              name={name}
+              required={required}
+              disabled={disabled}
+              tabIndex={-1}
+              ariaHidden
+              onValueChange={setValue}
+            >
+              {/* 미선택(value "")을 위한 빈 옵션 — 폼 리셋이 빈 값으로 돌아오게
+                  하고 브라우저가 첫 옵션을 자동 선택해 required 검증을 무력화하는
+                  기본 동작을 차단한다(radix BubbleSelect 패리티 — 리뷰 후속).
+                  onValueChange는 직접 상호작용·오토파일 변경을 본체로 역동기화
+                  하고, form.reset()은 change를 발생시키지 않아(chromium 실측)
+                  하단 reset 리스너가 담당한다. */}
+              {mirrorOptions[""] === undefined && (
+                <SelectOption value={""}>{""}</SelectOption>
+              )}
+              {Object.entries(mirrorOptions).map(([itemValue, label]) => (
+                <SelectOption key={itemValue} value={itemValue}>
+                  {label}
+                </SelectOption>
+              ))}
+            </BridgeSelect>
+          ) : null}
         </SelectContext.Provider>
       </Popover>
     );

@@ -13,9 +13,15 @@
 // - 제약: Panel의 defaultSize/minSize/maxSize（%）를 그룹이 children에서 읽어
 //   클램프에 반영한다. 기본 minSize 10（원본 라이브러리 기본）maxSize 90
 //   （마지막 패널 최소 폭 확보 근사）.
-// - 핸들은 Pressable이 아닌 View에 dragHandlers를 펼친다（드래그 전용 — 클릭
-//   시맨틱 없음）. role="separator"만 부여하고, 원본의 focus-visible 링키보드
-//   리사이즈（화살표）는 포커서블 계약（tabIndex）이 없어 미지원 — 로드맵 항목.
+// - 핸들 배치 한계: 마지막 패널 뒤에 핸들을 두면 그 패널이 잔여(flex-1)에서
+//   고정 basis로 전환돼 양쪽이 모두 고정된다 — 핸들은 패널 사이에 두는 것이
+//   관례(원본 react-resizable-panels와 같은 제약, 리뷰 후속 기록).
+// - 핸들은 View에 dragHandlers를 펼친다（클릭 시맨틱 없음）. role="separator"와
+//   focusable（웹 tabIndex 0/-1 치환·Android focusable）을 부여하고 화살표 키로
+//   리사이즈한다 — 수평 Left/Right·수직 Up/Down, 스텝 2%（Shift 10% — 실용값,
+//   원본 라이브러리의 정확한 증분은 미이식）. focus-visible 링은 웹 전용 클래스.
+//   iOS는 View 키 계약 부재로 키보드 리사이즈 불가（slider 썸과 같은 한계）,
+//   Android 하드웨어 키는 RN 0.88 enableKeyEvents 플래그（기본 off） 뒤에서만 발화.
 // - 원본 핸들의 after: 가상요소 히트 영역（웹 전용） 대신 핸들 자체를 w-1（수직
 //   h-1）로 잡고 시각 바（w-px）를 내부 View로 분리해 양 플랫폼 동일 히트 영역.
 // - GripVerticalIcon은 브리지 primitives 경유（lucide）. 수직 방향（horizontal
@@ -41,6 +47,7 @@ import {
   measureInWindow,
   useDrag,
   type BridgeDragEvent,
+  type BridgeKeyEvent,
   type BridgeViewRef,
   type ViewProps,
 } from "@unikit-bridge/ui/primitives";
@@ -55,8 +62,12 @@ type ResizableContextValue = {
   direction: "horizontal" | "vertical";
   /** 각 패널의 flex-basis %（마지막 패널은 자동 분배를 뜻하는 null） */
   sizes: (number | null)[];
+  /** 각 패널 제약（%） — 핸들 aria-valuemin/max 노출용（리뷰 후속） */
+  constraints: { minSize: number; maxSize: number }[];
   beginResize: (index: number) => void;
   moveResize: (index: number, event: BridgeDragEvent) => void;
+  /** 키보드 리사이즈 — 현재 basis에서 deltaPercent(%)만큼 조정（제약 클램프）. */
+  keyResize: (index: number, deltaPercent: number) => void;
 };
 
 const ResizableContext = createContext<ResizableContextValue | null>(null);
@@ -150,7 +161,7 @@ const ResizablePanelGroup = forwardRef<BridgeViewRef, ResizablePanelGroupProps>(
     const moveResize = useCallback(
       (index: number, event: BridgeDragEvent) => {
         const axis = axisRef.current;
-        if (index < 0 || axis <= 0) return;
+        if (index < 0 || index >= constraints.length || axis <= 0) return;
         const delta = direction === "horizontal" ? event.dx : event.dy;
         const { minSize, maxSize } = constraints[index]!;
         const next = Math.min(
@@ -158,10 +169,29 @@ const ResizablePanelGroup = forwardRef<BridgeViewRef, ResizablePanelGroupProps>(
           Math.max(minSize, startRef.current + (delta / axis) * 100),
         );
         setSizes((prev) =>
-          prev.map((size, i) => (i === index ? next : size)),
+          // 잔여 폭 패널(마지막=null)이 조작 대상이면 무시한다 — null을 수치로
+          // 바꾸면 flex-1이 고정 basis로 뒤집힌다(잘못된 후행 핸들 배치 방어).
+          prev[index] == null ? prev : prev.map((size, i) => (i === index ? next : size)),
         );
       },
       [direction, constraints],
+    );
+    const keyResize = useCallback(
+      (index: number, deltaPercent: number) => {
+        if (index < 0 || index >= constraints.length) return;
+        const { minSize, maxSize } = constraints[index]!;
+        setSizes((prev) =>
+          // 위와 같은 null-패널 가드 — 키보드 리사이즈도 잔여 폭 패널을 못 바꾼다.
+          prev[index] == null
+            ? prev
+            : prev.map((size, i) =>
+                i === index
+                  ? Math.min(maxSize, Math.max(minSize, (size ?? 0) + deltaPercent))
+                  : size,
+              ),
+        );
+      },
+      [constraints],
     );
 
     // 사용측 ref와 내부 측정 ref 병합 — 하나의 DOM/RN 요소를 공유한다.
@@ -175,8 +205,15 @@ const ResizablePanelGroup = forwardRef<BridgeViewRef, ResizablePanelGroupProps>(
     );
 
     const contextValue = useMemo(
-      () => ({ direction, sizes, beginResize, moveResize }),
-      [direction, sizes, beginResize, moveResize],
+      () => ({
+        direction,
+        sizes,
+        constraints,
+        beginResize,
+        moveResize,
+        keyResize,
+      }),
+      [direction, sizes, constraints, beginResize, moveResize, keyResize],
     );
 
     return (
@@ -252,20 +289,43 @@ export type ResizableHandleProps = ViewProps & {
 };
 
 const ResizableHandle = forwardRef<BridgeViewRef, ResizableHandleProps>(
-  ({ withHandle, index = -1, className, ...props }, ref) => {
+  ({ withHandle, index = -1, className, onKeyDown, ...props }, ref) => {
     const ctx = useResizableContext("ResizableHandle");
     const { dragHandlers } = useDrag({
       onBegin: () => ctx.beginResize(index),
       onMove: (event) => ctx.moveResize(index, event),
     });
     const horizontal = ctx.direction === "horizontal";
+    const handleKeyDown = (event: BridgeKeyEvent) => {
+      onKeyDown?.(event);
+      // 소비자 핸들러가 preventDefault로 선점했으면 기본 리사이즈를 하지 않는다
+      // (웹 KeyboardEvent — 네이티브 브리지 키 계약에는 defaultPrevented가 없어
+      // 항상 false로 흐른다 — bridge/types.ts 근사 한계 주석 참조).
+      if ((event as { defaultPrevented?: boolean }).defaultPrevented) return;
+      const step = event.shiftKey ? 10 : 2;
+      if (horizontal && event.key === "ArrowLeft")
+        ctx.keyResize(index, -step);
+      else if (horizontal && event.key === "ArrowRight")
+        ctx.keyResize(index, step);
+      else if (!horizontal && event.key === "ArrowUp")
+        ctx.keyResize(index, -step);
+      else if (!horizontal && event.key === "ArrowDown")
+        ctx.keyResize(index, step);
+      else return;
+      event.preventDefault();
+    };
     return (
       <View
         ref={ref}
         accessibilityRole="separator"
+        focusable
+        aria-valuenow={ctx.sizes[index] ?? undefined}
+        aria-valuemin={ctx.constraints[index]?.minSize}
+        aria-valuemax={ctx.constraints[index]?.maxSize}
+        onKeyDown={handleKeyDown}
         {...dragHandlers}
         className={cn(
-          "relative flex touch-none items-center justify-center select-none",
+          "relative flex touch-none items-center justify-center select-none web:outline-none web:focus-visible:ring-1 web:focus-visible:ring-ring web:focus-visible:ring-offset-1",
           horizontal
             ? "w-1 web:cursor-col-resize"
             : "h-1 web:cursor-row-resize",
