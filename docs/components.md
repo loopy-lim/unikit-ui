@@ -429,7 +429,7 @@ shadcn 카탈로그 잔여 33종을 전량 이식해 UniKit UI는 61종 전부�
 
 | 이름 | 컴포넌트 | 요점 |
 |---|---|---|
-| `chart` | `ChartContainer` 외 12종 | 선언형 차트(막대·선·영역 시리즈 + 축·그리드·툴팁·범례). recharts 제거, 렌더러는 `@unikit-bridge/ui/chart` 진입점, 시리즈 색은 `--chart-1..5` 토큰(소비자 소유) |
+| `chart` | `ChartContainer` 외 17종 | 선언형 차트(막대·선·영역·파이/도넛·레이더 시리즈 + 축·그리드·참조선·툴팁·범례·브러시·줌; 막대 스택 `stackId`·다중 y축 `yAxisId` 지원). recharts 제거, 렌더러는 `@unikit-bridge/ui/chart` 진입점, 시리즈 색은 `--chart-1..5` 토큰(소비자 소유) |
 | `carousel` | `Carousel` 외 4종 | 캐러셀. 네이티브 ScrollView paging / 웹 scroll-snap, ArrowLeft/Right 아이콘 버튼 |
 | `sidebar` | `Sidebar` 외 22종 | 사이드바 블록. sheet+collapsible 조립, 원본의 쿠키·컨테이너 쿼리는 제거 |
 | `sonner` | `Toaster`·`toast()` | 토스트. 모듈 저장소 큐 + 전역 `toast()` 함수, Portal + role=status 라이브 영역 |
