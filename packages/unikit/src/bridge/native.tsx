@@ -49,39 +49,90 @@ import {
 } from "react-native";
 import { Uniwind, useResolveClassNames } from "uniwind";
 import {
-  AlertCircleIcon as LucideAlertCircleIcon,
-  ArrowDownIcon as LucideArrowDownIcon,
-  ArrowLeftIcon as LucideArrowLeftIcon,
-  ArrowRightIcon as LucideArrowRightIcon,
-  ArrowUpIcon as LucideArrowUpIcon,
-  BoldIcon as LucideBoldIcon,
-  CheckCircle2Icon as LucideCheckCircle2Icon,
-  CheckIcon as LucideCheckIcon,
-  ChevronDownIcon as LucideChevronDownIcon,
-  ChevronLeftIcon as LucideChevronLeftIcon,
-  ChevronRightIcon as LucideChevronRightIcon,
-  ChevronUpIcon as LucideChevronUpIcon,
-  CircleIcon as LucideCircleIcon,
-  CodeIcon as LucideCodeIcon,
-  GripVerticalIcon as LucideGripVerticalIcon,
-  Heading1Icon as LucideHeading1Icon,
-  Heading2Icon as LucideHeading2Icon,
-  InfoIcon as LucideInfoIcon,
-  ItalicIcon as LucideItalicIcon,
-  ListIcon as LucideListIcon,
-  ListOrderedIcon as LucideListOrderedIcon,
-  Loader2Icon as LucideLoader2Icon,
-  MinusIcon as LucideMinusIcon,
-  MoreHorizontalIcon as LucideMoreHorizontalIcon,
-  PanelLeftIcon as LucidePanelLeftIcon,
-  Redo2Icon as LucideRedo2Icon,
-  SearchIcon as LucideSearchIcon,
-  StrikethroughIcon as LucideStrikethroughIcon,
-  TextQuoteIcon as LucideTextQuoteIcon,
-  Undo2Icon as LucideUndo2Icon,
-  XCircleIcon as LucideXCircleIcon,
-  XIcon as LucideXIcon,
-  type LucideIcon,
+AlertCircleIcon as LucideAlertCircleIcon,
+ArrowDownIcon as LucideArrowDownIcon,
+ArrowLeftIcon as LucideArrowLeftIcon,
+ArrowRightIcon as LucideArrowRightIcon,
+ArrowUpIcon as LucideArrowUpIcon,
+  BellIcon as LucideBellIcon,
+  BellOffIcon as LucideBellOffIcon,
+BoldIcon as LucideBoldIcon,
+  CalendarIcon as LucideCalendarIcon,
+  CalendarClockIcon as LucideCalendarClockIcon,
+  CameraIcon as LucideCameraIcon,
+CheckCircle2Icon as LucideCheckCircle2Icon,
+CheckIcon as LucideCheckIcon,
+ChevronDownIcon as LucideChevronDownIcon,
+ChevronLeftIcon as LucideChevronLeftIcon,
+ChevronRightIcon as LucideChevronRightIcon,
+ChevronUpIcon as LucideChevronUpIcon,
+  CircleHelpIcon as LucideCircleHelpIcon,
+CircleIcon as LucideCircleIcon,
+  CircleUserIcon as LucideCircleUserIcon,
+CodeIcon as LucideCodeIcon,
+  CreditCardIcon as LucideCreditCardIcon,
+  DownloadIcon as LucideDownloadIcon,
+  EllipsisVerticalIcon as LucideEllipsisVerticalIcon,
+  EyeIcon as LucideEyeIcon,
+  EyeOffIcon as LucideEyeOffIcon,
+  FastForwardIcon as LucideFastForwardIcon,
+  FolderIcon as LucideFolderIcon,
+GripVerticalIcon as LucideGripVerticalIcon,
+Heading1Icon as LucideHeading1Icon,
+Heading2Icon as LucideHeading2Icon,
+  HeartIcon as LucideHeartIcon,
+  HeartOffIcon as LucideHeartOffIcon,
+  HomeIcon as LucideHomeIcon,
+InfoIcon as LucideInfoIcon,
+ItalicIcon as LucideItalicIcon,
+ListIcon as LucideListIcon,
+ListOrderedIcon as LucideListOrderedIcon,
+Loader2Icon as LucideLoader2Icon,
+  LockIcon as LucideLockIcon,
+  LockOpenIcon as LucideLockOpenIcon,
+  MailIcon as LucideMailIcon,
+  MapPinIcon as LucideMapPinIcon,
+  ImageIcon as LucideMediaImageIcon,
+  MenuIcon as LucideMenuIcon,
+MinusIcon as LucideMinusIcon,
+MoreHorizontalIcon as LucideMoreHorizontalIcon,
+PanelLeftIcon as LucidePanelLeftIcon,
+  PaperclipIcon as LucidePaperclipIcon,
+  PauseIcon as LucidePauseIcon,
+  PencilIcon as LucidePencilIcon,
+  PhoneIcon as LucidePhoneIcon,
+  PhoneCallIcon as LucidePhoneCallIcon,
+  PlayIcon as LucidePlayIcon,
+  PlusIcon as LucidePlusIcon,
+  PrinterIcon as LucidePrinterIcon,
+Redo2Icon as LucideRedo2Icon,
+  RefreshCwIcon as LucideRefreshCwIcon,
+  RewindIcon as LucideRewindIcon,
+SearchIcon as LucideSearchIcon,
+  SendIcon as LucideSendIcon,
+  SettingsIcon as LucideSettingsIcon,
+  Share2Icon as LucideShare2Icon,
+  ShoppingCartIcon as LucideShoppingCartIcon,
+  SkipBackIcon as LucideSkipBackIcon,
+  SkipForwardIcon as LucideSkipForwardIcon,
+  SquareIcon as LucideSquareIcon,
+  StarIcon as LucideStarIcon,
+  StarHalfIcon as LucideStarHalfIcon,
+  StarOffIcon as LucideStarOffIcon,
+StrikethroughIcon as LucideStrikethroughIcon,
+TextQuoteIcon as LucideTextQuoteIcon,
+  Trash2Icon as LucideTrash2Icon,
+  TriangleAlertIcon as LucideTriangleAlertIcon,
+Undo2Icon as LucideUndo2Icon,
+  UploadIcon as LucideUploadIcon,
+  UserIcon as LucideUserIcon,
+  Volume1Icon as LucideVolume1Icon,
+  Volume2Icon as LucideVolume2Icon,
+  VolumeOffIcon as LucideVolumeOffIcon,
+  VolumeXIcon as LucideVolumeXIcon,
+XCircleIcon as LucideXCircleIcon,
+XIcon as LucideXIcon,
+type LucideIcon,
 } from "lucide-react-native";
 
 import { cn } from "../lib/utils";
@@ -1873,6 +1924,57 @@ const TextQuoteIcon = wrapNativeLucide(LucideTextQuoteIcon);
 const CodeIcon = wrapNativeLucide(LucideCodeIcon);
 const Undo2Icon = wrapNativeLucide(LucideUndo2Icon);
 const Redo2Icon = wrapNativeLucide(LucideRedo2Icon);
+const BellIcon = wrapNativeLucide(LucideBellIcon);
+const BellOffIcon = wrapNativeLucide(LucideBellOffIcon);
+const CalendarIcon = wrapNativeLucide(LucideCalendarIcon);
+const CalendarClockIcon = wrapNativeLucide(LucideCalendarClockIcon);
+const CameraIcon = wrapNativeLucide(LucideCameraIcon);
+const CircleHelpIcon = wrapNativeLucide(LucideCircleHelpIcon);
+const CircleUserIcon = wrapNativeLucide(LucideCircleUserIcon);
+const CreditCardIcon = wrapNativeLucide(LucideCreditCardIcon);
+const DownloadIcon = wrapNativeLucide(LucideDownloadIcon);
+const EllipsisVerticalIcon = wrapNativeLucide(LucideEllipsisVerticalIcon);
+const EyeIcon = wrapNativeLucide(LucideEyeIcon);
+const EyeOffIcon = wrapNativeLucide(LucideEyeOffIcon);
+const FastForwardIcon = wrapNativeLucide(LucideFastForwardIcon);
+const FolderIcon = wrapNativeLucide(LucideFolderIcon);
+const HeartIcon = wrapNativeLucide(LucideHeartIcon);
+const HeartOffIcon = wrapNativeLucide(LucideHeartOffIcon);
+const HomeIcon = wrapNativeLucide(LucideHomeIcon);
+const LockIcon = wrapNativeLucide(LucideLockIcon);
+const LockOpenIcon = wrapNativeLucide(LucideLockOpenIcon);
+const MailIcon = wrapNativeLucide(LucideMailIcon);
+const MapPinIcon = wrapNativeLucide(LucideMapPinIcon);
+const MediaImageIcon = wrapNativeLucide(LucideMediaImageIcon);
+const MenuIcon = wrapNativeLucide(LucideMenuIcon);
+const PaperclipIcon = wrapNativeLucide(LucidePaperclipIcon);
+const PauseIcon = wrapNativeLucide(LucidePauseIcon);
+const PencilIcon = wrapNativeLucide(LucidePencilIcon);
+const PhoneIcon = wrapNativeLucide(LucidePhoneIcon);
+const PhoneCallIcon = wrapNativeLucide(LucidePhoneCallIcon);
+const PlayIcon = wrapNativeLucide(LucidePlayIcon);
+const PlusIcon = wrapNativeLucide(LucidePlusIcon);
+const PrinterIcon = wrapNativeLucide(LucidePrinterIcon);
+const RefreshCwIcon = wrapNativeLucide(LucideRefreshCwIcon);
+const RewindIcon = wrapNativeLucide(LucideRewindIcon);
+const SendIcon = wrapNativeLucide(LucideSendIcon);
+const SettingsIcon = wrapNativeLucide(LucideSettingsIcon);
+const Share2Icon = wrapNativeLucide(LucideShare2Icon);
+const ShoppingCartIcon = wrapNativeLucide(LucideShoppingCartIcon);
+const SkipBackIcon = wrapNativeLucide(LucideSkipBackIcon);
+const SkipForwardIcon = wrapNativeLucide(LucideSkipForwardIcon);
+const SquareIcon = wrapNativeLucide(LucideSquareIcon);
+const StarIcon = wrapNativeLucide(LucideStarIcon);
+const StarHalfIcon = wrapNativeLucide(LucideStarHalfIcon);
+const StarOffIcon = wrapNativeLucide(LucideStarOffIcon);
+const Trash2Icon = wrapNativeLucide(LucideTrash2Icon);
+const TriangleAlertIcon = wrapNativeLucide(LucideTriangleAlertIcon);
+const UploadIcon = wrapNativeLucide(LucideUploadIcon);
+const UserIcon = wrapNativeLucide(LucideUserIcon);
+const Volume1Icon = wrapNativeLucide(LucideVolume1Icon);
+const Volume2Icon = wrapNativeLucide(LucideVolume2Icon);
+const VolumeOffIcon = wrapNativeLucide(LucideVolumeOffIcon);
+const VolumeXIcon = wrapNativeLucide(LucideVolumeXIcon);
 
 export {
   View,
@@ -1936,4 +2038,55 @@ export {
   CodeIcon,
   Undo2Icon,
   Redo2Icon,
+  BellIcon,
+  BellOffIcon,
+  CalendarIcon,
+  CalendarClockIcon,
+  CameraIcon,
+  CircleHelpIcon,
+  CircleUserIcon,
+  CreditCardIcon,
+  DownloadIcon,
+  EllipsisVerticalIcon,
+  EyeIcon,
+  EyeOffIcon,
+  FastForwardIcon,
+  FolderIcon,
+  HeartIcon,
+  HeartOffIcon,
+  HomeIcon,
+  LockIcon,
+  LockOpenIcon,
+  MailIcon,
+  MapPinIcon,
+  MediaImageIcon,
+  MenuIcon,
+  PaperclipIcon,
+  PauseIcon,
+  PencilIcon,
+  PhoneIcon,
+  PhoneCallIcon,
+  PlayIcon,
+  PlusIcon,
+  PrinterIcon,
+  RefreshCwIcon,
+  RewindIcon,
+  SendIcon,
+  SettingsIcon,
+  Share2Icon,
+  ShoppingCartIcon,
+  SkipBackIcon,
+  SkipForwardIcon,
+  SquareIcon,
+  StarIcon,
+  StarHalfIcon,
+  StarOffIcon,
+  Trash2Icon,
+  TriangleAlertIcon,
+  UploadIcon,
+  UserIcon,
+  Volume1Icon,
+  Volume2Icon,
+  VolumeOffIcon,
+  VolumeXIcon,
 };
