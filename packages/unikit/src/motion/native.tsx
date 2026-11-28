@@ -1,17 +1,3 @@
-/**
- * @unikit-bridge/ui/motion (네이티브 — package.json exports `react-native` 조건).
- *
- * `react-native-reanimated` 4.7+(MIT)의 W3C CSS Animations(`css.keyframes`) 및
- * CSS Transitions(`transitionProperty`·`transitionDuration`·`transitionDelay`·
- * `transitionTimingFunction`) 엔진을 브리지 모션 드라이버 레지스트리에 등록해,
- * 오버레이 등장/퇴장과 표준 Tailwind 유틸리티(`transition-*`·`duration-*`·
- * `delay-*`·`ease-*`·`animate-*`)를 Reanimated UI 스레드(C++ CSS 엔진)로 구동한다.
- *
- * 무료 OSS `uniwind@1.13.2`(MIT)의 `useResolveClassNames`가 방출하는 불완전한
- * `transition*`·`animation*` 필드는 상용 Uniwind Pro 코드 없이 전면 제거하고,
- * 자체 MIT 유틸리티 파서(`parseNativeTransitionSpec`)가 Reanimated 4 공개 CSS API로
- * 직접 매핑한다.
- */
 import { useMemo } from "react";
 import { StyleSheet, type ViewStyle } from "react-native";
 import Animated, {
@@ -190,7 +176,7 @@ function resolvePresetAnimation(
   hasUserTransform: boolean,
 ): CSSStyle | undefined {
   if (!preset || reducedMotion) return undefined;
-  // 드래그 추적 중에는 사용자의 live transform과 입장 keyframe이 충돌하지 않도록 끈다.
+
   if (hasUserTransform && phase === "enter") return undefined;
 
   const isEnter = phase === "enter";
@@ -414,10 +400,6 @@ const REANIMATED_MOTION_DRIVER: NativeMotionDriver = {
   LoopPulse: ReanimatedLoopPulse,
 };
 
-/**
- * Reanimated 4 CSS Animations / Transitions 모션 드라이버를 활성화한다(앱 부트 1회).
- * 되돌리기는 `uninstallReanimatedMotion()`.
- */
 export function installReanimatedMotion(): void {
   setMotionDriver(REANIMATED_MOTION_DRIVER);
 }

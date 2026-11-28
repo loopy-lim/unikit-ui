@@ -1,18 +1,3 @@
-// @ui-sdk/core 카탈로그 — «다 go» 로드맵 M3 산출물(이슈 #42).
-// 53종 프리미티브의 단일 출처: RN 구동 근거·UniKit 62종과의 동일 기능
-// 대응(이중 유지)·커널 패밀리 의존. 검증은 probe:ui-sdk (14)가 맡아요 —
-//
-//   - 팩토리가 @ui-sdk/core/<sdk> export에 여전히 존재(버전 고정 0.1.0-beta.6
-//     승급 시 이 카탈로그와 프로브가 계약)
-//   - families가 dist 소스의 «이행적 foundation 의존» 재스캔과 정확히 일치
-//     (빈 스캔 = ["press"] — 벽 없음 상태기계)
-//   - unikit 대응은 packages/unikit/src/components/<이름>.tsx + 배럴 재수출 존재
-//
-// 패밀리 7종 — press(벽 없음 상태기계)·popup(createPopup)·form(ElementInternals
-// 등가)·roving(가상 포커스)·gesture(문서 포인터 드래그)·modality(레이어·창
-// 리스너)·motion(등장/퇴장 — RN은 즉시 전환, 수명 계약은 modality에서 검증).
-// rn 근거 — screen: 에뮬레이터 기기 화면 실증(apps/expo/app/uisdk-*.tsx)·
-// family: 커널 패밀리 전부가 프로브로 검증됨(개별 화면은 미구성).
 export type SdkFamily =
   | "press"
   | "popup"
@@ -25,15 +10,15 @@ export type SdkFamily =
 export type SdkRnStatus = "screen" | "family";
 
 export type SdkCatalogEntry = {
-  /** @ui-sdk/core 서브경로 export 이름(kebab) */
+
   sdk: string;
-  /** 팩토리 함수 export 식별자 */
+
   factory: string;
-  /** UniKit 62종 중 동일 기능 컴포넌트(이중 유지 대상), 없으면 null */
+
   unikit: string | null;
-  /** 이행적 커널 패밀리 의존 — 프로브 (14) 재스캔과 일치 검증 */
+
   families: SdkFamily[];
-  /** RN 구동 근거 — screen(기기 화면) / family(패밀리 커널 검증) */
+
   rn: SdkRnStatus;
   note?: string;
 };
@@ -413,8 +398,6 @@ export const SDK_CATALOG: readonly SdkCatalogEntry[] = [
 
 export const SDK_CATALOG_COUNT = SDK_CATALOG.length;
 
-/** UniKit과 동일 기능인 이중 유지 대상 목록(에픽 #35 M3 — 이중 유지 검증). */
 export const SDK_OVERLAP = SDK_CATALOG.filter((e) => e.unikit !== null);
 
-/** 기기 화면까지 실증된 프리미티브 */
 export const SDK_SCREEN_VERIFIED = SDK_CATALOG.filter((e) => e.rn === "screen");

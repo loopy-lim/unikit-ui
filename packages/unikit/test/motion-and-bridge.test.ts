@@ -117,9 +117,6 @@ describe("bridge motion-registry helpers", () => {
     expect(onlyTransform.restStyle).toBeUndefined();
   });
 
-  // BridgeStyle 퍼센트 차원 계약(잔여 RN 갭 감사 후속) — % 문자열은 양 브리지
-  // 스타일 해석기(resolveWebStyle·resolveNativeStyle)가 공유하는 이 추출기를
-  // 거치며, 나머지 키는 건드리지 않는다. 웹 DOM 반영은 아래 WebView 렌더로 검증.
   test("extractUniversalTransform keeps percent dimension strings untouched in restStyle", () => {
     const extracted = extractUniversalTransform({
       height: "50%",
@@ -160,8 +157,7 @@ describe("bridge motion-registry helpers", () => {
 });
 
 describe("bridge Slot — radix asChild 상당(bridge/slot.ts 공유 구현)", () => {
-  // 병합 결과 탐침 — forwardRef라 props·ref 전달이 React 18·19 양쪽에서 확실하다
-  //（렌더 시점에 캡처해, 합성된 핸들러·ref는 테스트 본문에서 직접 호출한다）.
+
   let capturedProps: Record<string, unknown> = {};
   let capturedRef: unknown = null;
   const SlotProbe = forwardRef<unknown, Record<string, unknown>>(
@@ -236,7 +232,7 @@ describe("bridge Slot — radix asChild 상당(bridge/slot.ts 공유 구현)", (
     for (const name of handlerNames) {
       const merged = capturedProps[name] as (...args: unknown[]) => unknown;
       const result = merged("evt");
-      // 반환값은 자식 것 — radix mergeProps 규칙 그대로.
+
       expect(result).toBe(`child-result:${name}`);
       expected.push(`child:${name}:evt`, `slot:${name}`);
     }
@@ -289,8 +285,7 @@ describe("bridge Slot — radix asChild 상당(bridge/slot.ts 공유 구현)", (
   });
 
   test("nested Slot elements keep merge rules down to the innermost child", () => {
-    // SidebarMenuButton asChild + tooltip 조합과 동일 구조 — 외부 Slot(트리거)이
-    // 내부 Slot(메뉴 버튼) 요소를 cloneElement로 병합해도 규칙이 유지된다.
+
     const markup = renderToStaticMarkup(
       createElement(
         WebSlot,
@@ -330,10 +325,7 @@ describe("bridge Slot — radix asChild 상당(bridge/slot.ts 공유 구현)", (
 });
 
 describe("web bridge contract mappings (잔여 RN 갭 감사 후속)", () => {
-  // 참고: 이 환경의 renderToStaticMarkup은 알려진 camelCase 속성을 그대로
-  // 내보내므로(autoComplete·inputMode 실측) 대소문자 무시로 단언한다 — 브리지의
-  // 책임은 prop을 DOM 요소에 전달하는 것까지고, 속성 직렬화 대소문자는
-  // React DOM 렌더러가 소유한다.
+
   test("TextInput maps autoComplete onto the DOM input attribute", () => {
     const html = renderToStaticMarkup(
       createElement(WebTextInput, { autoComplete: "one-time-code" }),
@@ -360,8 +352,6 @@ describe("web bridge contract mappings (잔여 RN 갭 감사 후속)", () => {
     expect(html).toContain("width:100%");
   });
 
-  // SelectProps 폼 연동（잔여 RN 갭 감사 후속） — 웹 <select> 전달 검증.
-  // 속성 직렬화 대소문자는 위 autoComplete 경우와 같은 이유로 무시 단언.
   test("web Select forwards form-integration props onto the <select> element", () => {
     const html = renderToStaticMarkup(
       createElement(WebSelect, {

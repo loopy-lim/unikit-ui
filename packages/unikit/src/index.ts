@@ -1,4 +1,3 @@
-// @unikit-bridge/ui 공개 API （T-6 완성）
 export { cn } from "./lib/utils";
 
 export {
@@ -42,8 +41,6 @@ export {
   badgeTextVariants,
   type BadgeProps,
 } from "./components/badge";
-
-// ── shadcn 카탈로그 1차 배치 23종（사이클 30, T-4 통합） ──────────────────────
 
 export { Checkbox, type CheckboxProps } from "./components/checkbox";
 
@@ -331,12 +328,6 @@ export {
   type ButtonGroupSeparatorProps,
 } from "./components/button-group";
 
-// ── shadcn 카탈로그 2차 배치 32종（사이클 40, T-4 통합） ─────────────────────
-// chart는 @unikit-bridge/ui/chart 단독 진입점（§0.1 — Metro 오염 방지）이므로
-// 여기에 포함하지 않는다.
-
-// ── 오버레이 — 모달시트 ──
-
 export {
   Dialog,
   DialogClose,
@@ -421,8 +412,6 @@ export {
   type DrawerTitleProps,
   type DrawerDescriptionProps,
 } from "./components/drawer";
-
-// ── 오버레이 — 앵커 팝업메뉴 ──
 
 export {
   Popover,
@@ -533,8 +522,6 @@ export {
   type ContextMenuSubTriggerProps,
   type ContextMenuSubContentProps,
 } from "./components/context-menu";
-
-// ── 탐색선택 ──
 
 export {
   Command,
@@ -678,8 +665,6 @@ export {
   type NativeSelectOptGroupProps,
 } from "./components/native-select";
 
-// ── 폼 입력 ──
-
 export {
   InputOTP,
   InputOTPGroup,
@@ -734,8 +719,6 @@ export {
   type DateRange,
   type CalendarDateMatcher,
 } from "./components/calendar";
-
-// ── 레이아웃스크롤 ──
 
 export {
   ScrollArea,
@@ -817,8 +800,6 @@ export {
   type SidebarMenuSubButtonProps,
 } from "./components/sidebar";
 
-// ── 피드백 ──
-
 export {
   toast,
   Toaster,
@@ -832,8 +813,6 @@ export {
   spinnerVariants,
   type SpinnerProps,
 } from "./components/spinner";
-
-// ── 메시지 UI ──
 
 export {
   MessageGroup,
@@ -917,8 +896,6 @@ export {
   type MessageScrollerButtonProps,
 } from "./components/message-scroller";
 
-// ── 유틸 ──
-
 export {
   DirectionProvider,
   useDirection,
@@ -926,11 +903,8 @@ export {
   type DirectionProviderProps,
 } from "./components/direction";
 
-// 테마（T-5가 packages/unikit/src/theme/ 을 병렬 생성） — 디렉터리 존재 여부와
-// 무관하게 이 라인은 항상 유지한다（T-6 지시）.
 export * from "./theme";
 
-// ── 유니버설 벡터 아이콘 ──
 export {
   CheckIcon,
   ChevronDownIcon,
@@ -954,4 +928,3 @@ export {
   type IconProps,
   type IconComponent,
 } from "@unikit-bridge/ui/primitives";
-

@@ -1,17 +1,3 @@
-/**
- * 네이티브 모션 드라이버 레지스트리 + 클래스·변환 순수 유틸.
- *
- * 설계 원칙(overlay-position과 동일 단방향 주입):
- * - 기본 경로(`bridge/native.tsx`)는 의존성 0으로 RN 0.88 코어 Animated
- *   (`useNativeDriver: true`)를 사용해 오버레이 등장/퇴장, 전환, 루프 애니메이션을
- *   UI 스레드에서 구동한다.
- * - 선택적 진입점 `@unikit-bridge/ui/motion`(react-native 조건 → `motion/native.tsx`)은
- *   앱 부트에서 `installReanimatedMotion()`을 호출해 Reanimated 4의
- *   CSS Keyframe Animations(`css.keyframes`) + CSS Transitions(`transitionProperty`)
- *   + `withUniwind(Animated.View)` 드라이버를 이 레지스트리에 등록한다.
- * - `bridge/native.tsx`는 `react-native-reanimated`를 정적 import하지 않으므로
- *   Reanimated를 설치하지 않은 소비자의 Metro 번들에 어떤 영향도 주지 않는다.
- */
 import type { ComponentType, ReactNode } from "react";
 import type { BridgeStyle, LoopPulseProps, LoopRotateProps } from "./types";
 
@@ -115,7 +101,6 @@ const DURATION_TOKEN_RE = /^duration-(\d+)$/;
 const DELAY_TOKEN_RE = /^delay-(\d+)$/;
 const ROTATE_TOKEN_RE = /^(-?)rotate-(\d+)$/;
 
-/** `className`에서 `unikit-*` 오버레이 모션 프리셋을 추출한다(`web:` 변형 제외). */
 export function detectOverlayMotionPreset(
   className?: string,
 ): OverlayMotionPreset | null {
@@ -129,10 +114,6 @@ export function detectOverlayMotionPreset(
   return found;
 }
 
-/**
- * 표준 Tailwind `transition-*`·`duration-*`·`delay-*`·`ease-*` 토큰을
- * 네이티브 CSS Transition 명세로 파싱한다(`web:` 등 접두 변형 제외).
- */
 export function parseNativeTransitionSpec(
   className?: string,
 ): NativeTransitionSpec | null {
@@ -173,12 +154,10 @@ export function parseNativeTransitionSpec(
   return { properties, durationMs, delayMs, timing };
 }
 
-/** `className`에 네이티브에서 구동할 공용 `transition*` 클래스가 있는지 확인한다(`web:` 제외). */
 export function hasNativeTransitionClass(className?: string): boolean {
   return parseNativeTransitionSpec(className) !== null;
 }
 
-/** `className`에서 표준 Tailwind `animate-*` 루프 프리셋을 추출한다(`web:` 제외, 나중 토큰 우선). */
 export function detectTailwindAnimatePreset(
   className?: string,
 ): TailwindAnimatePreset | null {
@@ -193,7 +172,6 @@ export function detectTailwindAnimatePreset(
   return found;
 }
 
-/** `duration-<ms>` 토큰에서 ms를 추출한다(`web:` 변형 제외). 없으면 `fallback`. */
 export function parseDurationMs(className?: string, fallback = 200): number {
   if (!className) return fallback;
   let result = fallback;
@@ -205,7 +183,6 @@ export function parseDurationMs(className?: string, fallback = 200): number {
   return result;
 }
 
-/** `rotate-<deg>` / `-rotate-<deg>` 토큰에서 각도를 추출한다(`web:` 변형 제외). */
 export function parseRotateDeg(className?: string): number | null {
   if (!className) return null;
   let deg: number | null = null;
@@ -229,10 +206,6 @@ export type ExtractedUniversalTransform = {
   hasTransformShorthand: boolean;
 };
 
-/**
- * `BridgeStyle`에서 범용 변환 단축키(`translateX`, `translateY`, `scale`, `rotate`)를
- * 분리해 웹(CSS transform)·네이티브(RN transform 배열) 양측이 일관되게 해석하도록 돕는다.
- */
 export function extractUniversalTransform(
   style?: BridgeStyle,
 ): ExtractedUniversalTransform {

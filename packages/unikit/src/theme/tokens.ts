@@ -1,21 +1,5 @@
-/**
- * UniKit UI 디자인 토큰 — 라이트/다크 단일 출처（single source of truth）.
- *
- * 값의 원천: docs/sdd/02-design.md §2.1（색 19종, HSL 채널값）·§2.1a（차트 5종）·§2.2（반경）.
- * 값 형식은 TW3 `hsl（var（--token））` 매핑과 호환하는 HSL 채널 문자열（"H S% L%"）이며,
- * `vars（）` 주입（웹·네이티브 공통）과 apps/web/app/globals.css의 변수 블록이
- * 이 객체를 그대로 복사한 값이다（완료 기준: 값 1:1 대조）.
- *
- * 주의: 값을 임의로 변경하면 안 된다 — 수정이 필요하면 설계 문서（02-design）를 먼저 고친다.
- * `--destructive`（라이트）는 shadcn 기본값이 아닌 red-600 계（02-design §2.1 주석, WCAG AA 확보）.
- * `--destructive`（다크）도 shadcn 원본 대비 red-400 계로 조정（사이클 30 G4 — 원본 값은
- * 다크 배경 대비 1.99:1로 텍스트가 사실상 안 읽힘. 조정값 6.1:1）.
- * `--radius`는 스킴과 무관한 공통값（§2.2）이며 두 객체에 동일하게 포함한다.
- */
-
 export type UnikitColorScheme = "light" | "dark";
 
-/** 라이트 스킴 토큰（기본값 — 02-design §1.4） */
 export const lightTokens = {
   "--background": "0 0% 100%",
   "--foreground": "240 10% 3.9%",
@@ -37,9 +21,7 @@ export const lightTokens = {
   "--input": "240 5.9% 90%",
   "--ring": "240 5.9% 10%",
   "--radius": "0.5rem",
-  // 차트 팔레트(02-design §2.1a — «토큰으로서 동작» 확장, 2026-11-28): 5색 범주
-  // 체계(스틸 블루 앵커·청록·황·보라·장미). 채움색이라 텍스트 4.5:1 대상이 아니며
-  // 배경 대비 ≥3:1(WCAG 1.4.11 비텍스트)을 전 값 실측 통과(최소 3.28).
+
   "--chart-1": "221 70% 42%",
   "--chart-2": "160 62% 30%",
   "--chart-3": "32 88% 42%",
@@ -47,7 +29,6 @@ export const lightTokens = {
   "--chart-5": "346 62% 42%",
 } as const;
 
-/** 다크 스킴 토큰 — satisfies로 라이트와 키 집합이 동일함을 컴파일 타임에 강제 */
 export const darkTokens = {
   "--background": "240 10% 3.9%",
   "--foreground": "0 0% 98%",
@@ -69,7 +50,7 @@ export const darkTokens = {
   "--input": "240 3.7% 15.9%",
   "--ring": "240 4.9% 83.9%",
   "--radius": "0.5rem",
-  // 차트 팔레트(§2.1a) — 다크 채움은 L 47–72%로 밝힌다(#09090b 배경 대비 ≥3:1).
+
   "--chart-1": "217 82% 66%",
   "--chart-2": "160 55% 52%",
   "--chart-3": "38 88% 60%",
@@ -77,13 +58,10 @@ export const darkTokens = {
   "--chart-5": "347 70% 66%",
 } as const satisfies Record<keyof typeof lightTokens, string>;
 
-/** 토큰 CSS 변수 이름（--background 등 시맨틱 색 19종 + 차트 5종 + --radius） */
 export type UnikitThemeTokenName = keyof typeof lightTokens;
 
-/** CSS 변수 이름 → 값（"H S% L%" 문자열） 매핑. vars（） 주입·globals.css 복사 양쪽에 쓴다. */
 export type UnikitThemeTokens = Record<UnikitThemeTokenName, string>;
 
-/** 스킴에 해당하는 토큰 객체를 반환한다 */
 export function getThemeTokens(colorScheme: UnikitColorScheme): UnikitThemeTokens {
   return colorScheme === "dark" ? darkTokens : lightTokens;
 }

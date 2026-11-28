@@ -1,22 +1,3 @@
-// Table — shadcn/ui new-york-v4 table 포팅（shadcn-ref/ui/table.tsx）. 8종 export.
-// 포팅 판단:
-// - 원본은 <table>/<thead>/<tr>/<th> 등 표 요소 + 자손 셀렉터（［&_tr］:border-b,
-//   ［&_tr:last-child］:border-0, has-aria-expanded:）로 스타일링한다. 브리지에는
-//   표 요소가 없으므로 전부 View（div）로 이식하되 시각 토큰（테두리·배경·여백·높이）은
-//   유지하고, 행/셀 배치는 flex（행=flex-row, 셀=flex-1 균등 폭）로 재구성했다.
-//   셀 폭 균등（flex-1）은 원본 table 자동 배치와 다르다 — 사용처에서 셀 className으로
-//   조절한다.
-// - role은 사이클 40 브리지 확장（§2.1）으로 소급 지정한다 — Table=table,
-//   Header/Body/Footer=rowgroup, TableRow=row, TableHead=columnheader,
-//   TableCell=cell. 네이티브 RN이 모르는 role은 무시되고（브리지 문서화된
-//   방침） 웹 스크린리더가 표 의미를 전달받는다.
-// - 셀（TableHead·TableCell）의 children은 문자열을 권장한다 — 내부 Text가 색·
-//   타이포를 담당한다（이중 지정）. 사용자 정의 콘텐츠는 직접 Text를 넣어야 한다.
-// - 자손 셀렉터 미지원으로 소실되는 원본 토큰: TableHeader의 ［&_tr］:border-b는
-//   TableRow 자체 border-b로 흡수, TableBody의 마지막 행 보더 제거（:last-child）와
-//   TableRow의 data-state=selected·has-aria-expanded 배경은 미지원.
-//   whitespace-nowrap·overflow-x-auto·transition·hover는 web: 접두.
-//   caption-bottom은 flex-col DOM 순서 배치로 대체（캡션을 마지막에 넣으면 하단）.
 import { createContext, forwardRef, useContext } from "react";
 import {
   Text,
@@ -28,14 +9,10 @@ import { cva } from "class-variance-authority";
 
 import { cn } from "../lib/utils";
 
-// 가로 스크롤 컨테이너（원본 table-container div）
-// 표 구역 context — 푸터 여부를 셀 Text로 전달한다（alert.tsx의 variant context
-// 와 동일 패턴）. 컨테이너 font-medium은 웹에서만 텍스트로 상속되고 네이티브에서는
-// 무시되는 비대칭이라 이중 지정 원칙대로 내부 Text에 내린다（사소 4）.
 const TableSectionContext = createContext<"body" | "footer">("body");
 
 const tableContainerVariants = cva("relative w-full web:overflow-x-auto");
-// 표 본체 — 행이 쌓이는 열（원본 <table>의 w-full）
+
 const tableVariants = cva("w-full flex-col");
 const tableHeaderVariants = cva("flex-col");
 const tableBodyVariants = cva("flex-col");
@@ -43,8 +20,7 @@ const tableFooterVariants = cva("flex-col border-t bg-muted/50");
 const tableRowVariants = cva(
   "flex-row border-b web:transition-colors web:hover:bg-muted/50",
 );
-// 셀 세로 중앙（원본 align-middle）은 flex-col 셀에서 justify-center로 표현 —
-// items-center는 브리지 flex-col 기본과 만나 가로 중앙 정렬로 해석되어 결함.
+
 const tableHeadVariants = cva("h-10 flex-1 justify-center px-2 text-left");
 const tableHeadTextVariants = cva(
   "font-sans text-sm font-medium text-foreground web:whitespace-nowrap",
@@ -65,7 +41,6 @@ export type TableHeadProps = ViewProps;
 export type TableCellProps = ViewProps;
 export type TableCaptionProps = ViewProps;
 
-// 원본과 같이 ref·className·props는 컨테이너가 아니라 표 본체（원본 <table>）에.
 const Table = forwardRef<BridgeViewRef, TableProps>(
   ({ className, ...props }, ref) => (
     <View className={cn(tableContainerVariants())}>
@@ -148,7 +123,7 @@ TableHead.displayName = "TableHead";
 
 const TableCell = forwardRef<BridgeViewRef, TableCellProps>(
   ({ className, children, ...props }, ref) => {
-    // 푸터 안 셀은 굵게 — 원본 font-medium 상속을 이중 지정으로 재현（사소 4）.
+
     const inFooter = useContext(TableSectionContext) === "footer";
     return (
       <View

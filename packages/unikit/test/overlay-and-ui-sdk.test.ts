@@ -30,7 +30,7 @@ describe("overlay positioning and ui-sdk snapshot subscription", () => {
     );
     expect(nearBottom.placement).toBe("top");
     expect(nearBottom.top).toBe(760 - 8 - 120);
-    // Clamped to viewportWidth(390) - contentWidth(180) - padding(8) = 202
+
     expect(nearBottom.left).toBe(202);
 
     const normalTop = computeOverlayPositionWithPlacement(
@@ -54,7 +54,7 @@ describe("overlay positioning and ui-sdk snapshot subscription", () => {
       { w: 200, h: 180 },
       { placement: "top", align: "center", offset: 8 },
     );
-    // spaceAbove(4) < spaceBelow(768) → 전환. center 정렬 left(-10)는 패딩 8로 클램프.
+
     expect(nearTop.placement).toBe("bottom");
     expect(nearTop.top).toBe(20 + 40 + 8);
     expect(nearTop.left).toBe(8);
@@ -71,7 +71,7 @@ describe("overlay positioning and ui-sdk snapshot subscription", () => {
       { w: 150, h: 80 },
       { placement: "right", align: "start", offset: 8 },
     );
-    // spaceRight(-6) < spaceLeft(324) → 전환
+
     expect(rightNearEdge.placement).toBe("left");
     expect(rightNearEdge.left).toBe(340 - 150 - 8);
     expect(rightNearEdge.top).toBe(300);
@@ -81,7 +81,7 @@ describe("overlay positioning and ui-sdk snapshot subscription", () => {
       { w: 150, h: 80 },
       { placement: "left", align: "start", offset: 8 },
     );
-    // spaceLeft(-6) < spaceRight(324) → 전환
+
     expect(leftNearEdge.placement).toBe("right");
     expect(leftNearEdge.left).toBe(10 + 40 + 8);
     expect(leftNearEdge.top).toBe(300);
@@ -93,7 +93,6 @@ describe("overlay positioning and ui-sdk snapshot subscription", () => {
       innerHeight: 844,
     };
 
-    // 오른쪽 여유 충분(spaceRight 234 ≥ 150) — 전환 없음
     const fitsRight = computeOverlayPositionWithPlacement(
       { x: 100, y: 300, w: 40, h: 36 },
       { w: 120, h: 80 },
@@ -103,8 +102,6 @@ describe("overlay positioning and ui-sdk snapshot subscription", () => {
     expect(fitsRight.left).toBe(100 + 40 + 8);
     expect(fitsRight.top).toBe(300 + (36 - 80) / 2);
 
-    // 어느 쪽도 못 들어가고 반대편(spaceAbove 284)이 더 좁음 — 전환 없이
-    // 메인 축 클램프 폴백: top 348 → 844-600-8 = 236
     const bothOverflow = computeOverlayPositionWithPlacement(
       { x: 45, y: 300, w: 100, h: 40 },
       { w: 200, h: 600 },

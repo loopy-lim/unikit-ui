@@ -1,31 +1,3 @@
-// InputGroup — shadcn/ui（new-york-v4） input-group.tsx 유니버설 포팅 （사이클 40, T-2a）.
-// 원본: shadcn-ref/ui/input-group.tsx — InputButtonTextarea（기존 컴포넌트,
-// 수정 금지）가 내부에 조립되는 래퍼 구조를 그대로 유지한다.
-//
-// 포팅 판단（원본 대비 차이）:
-// - 원본의 has-*  group-data-*  ［&>］ 셀렉터 스타일은 네이티브에 data 속성
-//   DOM 셀렉터가 없어 context + 조건부 클래스로 근사한다. 원본 셀렉터
-//   （has-［>［data-align=］］has-［>textarea］）가 직계 자식만 보므로, 루트가
-//   children을 1단 순회해 정렬textareaaria-invalid를 정적으로 수집해
-//   context로 내려준다 — 첫 렌더（SSR 포함）부터 반영되고 매 렌더 재수집된다.
-//   임의 래퍼로 감싼 자식은 원본 셀렉터와 동일하게 감지되지 않는다（한계）.
-// - 포커스 링: 원본은 컨트롤 포커스 시 그룹에 링을 옮기지만（:focus-within）
-//   TextInput onFocus/onBlur 계약으로 컨트롤이 그룹에 포커스를 보고하고
-//   그룹이 ring-1 ring-ring을 가져와요(웹·네이티브 동일 경로 — 컨트롤 자체
-//   슬림 링 근사는 제거).
-// - Addon 눌림 → input 포커스 이동（원본 DOM querySelector）은 이식 불가 —
-//   View에는 onPress 계약이 없고 Pressable（button）로 바꾸면 내부
-//   InputGroupButton과 웹에서 버튼 중첩이 된다. 폐기（한계）.
-// - 원본 role="group"은 브리지 BridgeRole에 "group"을 추가（완료 보고 제기
-//   반영）해 지정한다 — 네이티브는 RN이 모르는 role을 무시한다（한계）.
-// - 임의값 근사: addon의 ml/mr-［-0.45rem］［-0.35rem］은 버튼/kbd 포함 감지
-//   （has-［>button］）와 함께 재현 불가해 제거 — 버튼이 애던 패딩에 붙는다.
-//   rounded-［calc（var（--radius）-5px）］ → rounded-sm（표준 계단）. block-start/end의
-//   group-has-［>input］ 패딩 미세조정（pt-2.5/pb-2.5）은 pt-3/pb-3으로 통일.
-//   ［&>svg］［&>kbd］ 셀렉터 계열은 svg 미지원 포팅이라 제거.
-// - InputGroupButton의 type="button"은 브리지 Pressable이 웹에서 항상
-//   type="button"으로 렌더해 생략（동등）. data-size 속성은 cva size로 전개.
-// - dark: 제거, 웹 전용 토큰（cursorselect-noneshadowtransition）은 web: 접두.
 import {
   Children,
   createContext,
@@ -51,10 +23,6 @@ import { Input, type InputProps } from "./input";
 import { Textarea, type TextareaProps } from "./textarea";
 import { cn } from "../lib/utils";
 
-// ---------------------------------------------------------------------------
-// 그룹 파생 상태 — 직계 자식 정적 수집（머리 주석）
-// ---------------------------------------------------------------------------
-
 type InputGroupAlign = "inline-start" | "inline-end" | "block-start" | "block-end";
 
 type InputGroupAligns = {
@@ -64,7 +32,6 @@ type InputGroupAligns = {
   blockEnd: boolean;
 };
 
-/** align 문자열 → 파생 상태 키（케밥→캐멀） */
 const ALIGN_STATE_KEYS: Record<InputGroupAlign, keyof InputGroupAligns> = {
   "inline-start": "inlineStart",
   "inline-end": "inlineEnd",
@@ -77,10 +44,6 @@ type InputGroupDerived = InputGroupAligns & {
   hasInvalid: boolean;
 };
 
-/**
- * 직계 자식에서 그룹 상태를 정적으로 수집한다 — 원본 has-［>］ 직계 셀렉터와
- * 동일 범위. align（InputGroupAddon）textareaaria-invalid（Input/Textarea）.
- */
 function collectGroupChildren(children: ReactNode): InputGroupDerived {
   const derived: InputGroupDerived = {
     inlineStart: false,
@@ -110,17 +73,12 @@ function collectGroupChildren(children: ReactNode): InputGroupDerived {
 }
 
 type InputGroupContextValue = InputGroupDerived & {
-  /** 컨트롤 포커스 보고 — TextInput onFocus/onBlur 계약(#19 §3 계열)으로
-   *  사이클 72 G3 F-1 한계를 해소: 그룹이 포커스를 알고 링을 가져와요. */
+
   setFocused: (focused: boolean) => void;
 };
 
 const InputGroupContext = createContext<InputGroupContextValue | null>(null);
 
-/**
- * 자식 중 문자열/숫자를 내부 Text로 감싼다 — 네이티브는 Text 없이 문자열을
- * 렌더할 수 없고 색 상속도 되지 않는다（이중 지정）. 요소 자식은 그대로 둔다.
- */
 function wrapTextChildren(children: ReactNode, textClassName: string) {
   return Children.map(children, (child) =>
     typeof child === "string" || typeof child === "number" ? (
@@ -131,18 +89,14 @@ function wrapTextChildren(children: ReactNode, textClassName: string) {
   );
 }
 
-// ---------------------------------------------------------------------------
-// 컴포넌트
-// ---------------------------------------------------------------------------
-
 export type InputGroupProps = ViewProps;
 
 const InputGroup = forwardRef<BridgeViewRef, InputGroupProps>(
   ({ className, children, ...props }, ref) => {
-    // 매 렌더 재수집 — 조건부 렌더링제어 prop（aria-invalid） 변화를 즉시 반영.
+
     const derived = collectGroupChildren(children);
     const column = derived.blockStart || derived.blockEnd;
-    // 그룹 포커스 링 — 원본 :focus-within을 상태로 옮긴다(웹·네이티브 동일 경로).
+
     const [focused, setFocused] = useState(false);
     const contextValue = useMemo<InputGroupContextValue>(
       () => ({ ...derived, setFocused }),
@@ -156,12 +110,11 @@ const InputGroup = forwardRef<BridgeViewRef, InputGroupProps>(
           className={cn(
             "relative w-full min-w-0 rounded-md border border-input web:transition-all web:outline-none",
             column ? "flex-col" : "flex-row items-center",
-            // 원본 h-9 → has-［>textarea］/block 정렬 시 h-auto. min-h-9로 바닥 유지.
+
             column || derived.hasTextarea ? "min-h-9" : "h-9",
-            // 원본 aria-invalid: border-destructive + ring-destructive/20.
+
             derived.hasInvalid && "border-destructive web:ring-destructive/20",
-            // 원본 focus-within:ring-1 focus-within:ring-ring — 컨트롤 포커스를
-            // 그룹이 보고받아 링을 가져와요(컨트롤 자체 링은 제거 — 아래).
+
             focused && "ring-1 ring-ring",
             className,
           )}
@@ -211,7 +164,6 @@ const InputGroupAddon = forwardRef<BridgeViewRef, InputGroupAddonProps>(
 );
 InputGroupAddon.displayName = "InputGroupAddon";
 
-// 원본 size 4종 — rounded-［calc（var（--radius）-5px）］ → rounded-sm 근사（머리 주석）.
 const inputGroupButtonVariants = cva("flex-row items-center gap-2", {
   variants: {
     size: {
@@ -231,7 +183,7 @@ export type InputGroupButtonProps = Omit<ButtonProps, "size"> &
 
 const InputGroupButton = forwardRef<BridgePressableRef, InputGroupButtonProps>(
   ({ className, variant = "ghost", size = "xs", ...props }, ref) => (
-    // Button 기본 size（default） 토큰（h-10 px-4）은 cn/twMerge가 이 값으로 대체한다.
+
     <Button
       ref={ref}
       variant={variant}
@@ -251,7 +203,7 @@ const InputGroupText = forwardRef<BridgeViewRef, InputGroupTextProps>(
       className={cn("flex-row items-center gap-2", className)}
       {...props}
     >
-      {/* 이중 지정: 문자열만 내부 Text로 감싼다（아이콘·커스텀 요소는 직접 자식 유지） */}
+
       {wrapTextChildren(children, "font-sans text-sm text-muted-foreground")}
     </View>
   ),
@@ -277,7 +229,7 @@ const InputGroupInput = forwardRef<BridgeTextInputRef, InputGroupInputProps>(
         }}
         className={cn(
           "h-full min-w-0 flex-1 rounded-none border-0 bg-transparent px-3 web:shadow-none",
-          // 애던 정렬에 따른 패딩 보정（원본 ［&>input］:pl-2 등 치환）.
+
           group?.inlineStart && "pl-2",
           group?.inlineEnd && "pr-2",
           group?.blockStart && "pb-3",

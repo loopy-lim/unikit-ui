@@ -1,52 +1,3 @@
-// NavigationMenu — shadcn/ui（new-york-v4） navigation-menu.tsx 유니버설 포팅
-// （사이클 40, T-1e）. 원본: shadcn-ref/ui/navigation-menu.tsx — radix
-// NavigationMenu 엔진 제거.
-//
-// 포팅 판단（원본 대비 차이이유）:
-// - 재구성: 상단 바（List） + 각 아이템 트리거에 앵커링된 AnchoredOverlay
-//   （placement="bottom"） 콘텐츠로 구성한다. 활성 아이템은 원본 Root의 value/
-//   onValueChange 계약 그대로 관리한다（제어/비제어 통합 — 콘텐츠가 있는
-//   아이템의 Trigger 토글로 value가 해당 아이템으로 바뀌고 Content가 뜬다）.
-//   viewport 없이도（항상） 각 아이템 AnchoredOverlay가 자체 동작한다.
-// - NavigationMenuViewport: 원본은 활성 콘텐츠를 루트 하단 공용 카드에 모아
-//   --radix--viewport-width/height CSS 변수로 크기 전환 애니메이션을 준다.
-//   콘텐츠가 각자 포털（AnchoredOverlay）로 뜨는 구조라 이 배치 트릭을 재현할
-//   수 없어 API 호환용 no-op（렌더하지 않음）로 두고 viewport prop은 장식으로
-//   유지된다 — 콘텐츠는 항상 트리거 바로 아래 카드로 뜬다.
-// - NavigationMenuIndicator: 활성 트리거 아래 화살표를 indicator x 이동
-//   트릭으로 배치하는데 트리거 위치 측정 계약이 없어 재현 불가 — 생략（no-op）.
-// - Trigger hover 개방（사이클 90 해소 — 브리지 onHoverIn 계약 추가）: 포인터
-//   진입 시 200ms（radix NavigationMenu delayDuration 기본값） 후 열리고, 다른
-//   메뉴가 열려 있으면 즉시 전환되며 닫힌 뒤 300ms（skipDelayDuration 기본값）
-//   창 안의 재진입은 즉시 열린다（radix 공식 문서 값 그대로）. 이탈 닫힘도
-//   delayDuration 200ms 지연으로 예약되고 트리거↔카드 반대편 진입이 취소해
-//   포인터 이동을 유지한다（원본 루트 영역 감지의 포탈 카드 근사）. 눌림 토글도
-//   유지되고 터치 기기에서는 hover가 발화하지 않아 눌림 토글이 담당한다.
-//   ChevronDownIcon（브리지 lucide 아이콘 프리미티브）는
-//   개방 시 web:rotate-180 회전 근사（원본 300ms 전이 유지, 원본 top-［1px］ 임의값과
-//   size-3은 text-xs로 근사）.
-// - navigationMenuTriggerStyle: 원본 cva 문자열을 유지하되 data-［state=open］
-//   토큰은 상태를 모르는 cva에 넣을 수 없어 Trigger에서 조건부 전개한다.
-//   transition-［color,box-shadow］→web:transition-colorsring-［3px］→ring-3
-//   （비대괄호 계단）outline-hidden→web:outline-none, 원본 focus-visible:outline-1은
-//   outline-ring 없이 근사（G1 F-1）. 임의값 금지.
-// - Link: radix Link의 <a href>는 브리지 프리미티브 계약 밖이라 Pressable
-//   role="link" + onPress로 근사한다（라우팅은 사용처 onPress 담당）. active
-//   prop（data-［active=true］）은 유지한다. 원본 focus:text-accent-foreground
-//   등 글자색 토큰은 이중 지정 원칙상 내부 Text가 대신한다（색 전환 생략）.
-// - Content: 원본의 motion/viewport 그룹 셀렉터 토큰（data-［motion=］,
-//   group-data-［viewport=false］/）은 네이티브 data 속성 부재그룹 셀렉터
-//   불가로 전부 제거하고, viewport=false 모드 카드 토큰（borderbg-popover
-//   p-2 pr-2.5shadow）을 기본으로 쓴다（위치크기 전환은 AnchoredOverlay가
-//   담당）. slide-in-from-right-52 등 방향 애니메이션도 미지원.
-// - 미지원: 화살표키 트리거 순회트리거 폭 추종 콘텐츠
-//   （w-full 토큰 제거 — 카드 폭은 내용 결정, 사용처 className으로 조정）.
-// - 아이템 value: radix는 자동 생성한다 — 포팅도 useId로 자동 생성하되
-//   value prop 명시를 허용해 Root value/onValueChange 제어와 연결하게 했다.
-// - 접근성: 트리거 aria-expandedaria-controls（useId 토대로 Content nativeID와
-//   결정적 연결）, Link role="link". 원본 ul/list 스타일（list-none）은 View
-//   구조에서 무의미해 제거, role list/listitem 계약도 생략했다（웹 div 기반
-//   근사 — 필요시 사용처 지정）.
 import {
   Children,
   createContext,
@@ -76,13 +27,8 @@ import { cva } from "class-variance-authority";
 import { AnchoredOverlay } from "@/lib/overlay";
 import { cn } from "@/lib/utils";
 
-// ---------------------------------------------------------------------------
-// 내부 유틸
-// ---------------------------------------------------------------------------
-
 type PressableRefObject = { current: BridgePressableRef | null };
 
-/** 외부 forwardRef와 앵커 측정용 내부 ref를 한 콜백으로 합성한다（dropdown 관행） */
 function composeRefs(
   ...refs: Array<ForwardedRef<BridgePressableRef> | PressableRefObject>
 ) {
@@ -95,7 +41,6 @@ function composeRefs(
   };
 }
 
-/** 자식 중 문자열/숫자를 내부 Text로 감싼다 — 네이티브 색 상속 불가 대응 */
 function wrapTextChildren(children: ReactNode, textClassName: string) {
   return Children.map(children, (child) =>
     typeof child === "string" || typeof child === "number" ? (
@@ -106,18 +51,14 @@ function wrapTextChildren(children: ReactNode, textClassName: string) {
   );
 }
 
-// ---------------------------------------------------------------------------
-// 상태 context — 루트（활성 아이템）아이템（값트리거 ref）
-// ---------------------------------------------------------------------------
-
 type NavigationMenuContextValue = {
   value: string | null;
   setValue: (next: string | null) => void;
-  /** 트리거 포인터 진입 — 지연 로직대로 해당 아이템을 연다（다른 메뉴 열림·skip 창은 즉시 전환） */
+
   hoverOpen: (itemValue: string) => void;
-  /** 카드 포인터 진입 — 예약된 닫힘을 취소한다（트리거↔카드 이동 유지） */
+
   hoverHold: () => void;
-  /** 트리거·카드 포인터 이탈 — 지연 열림을 취소하고 200ms 뒤 닫힘을 예약한다 */
+
   hoverLeave: () => void;
 };
 
@@ -137,9 +78,9 @@ function useNavigationMenuContext(
 
 type NavigationMenuItemContextValue = {
   itemValue: string;
-  /** Trigger 요소 ref — Content（AnchoredOverlay）의 앵커포커스 복귀 공용 */
+
   triggerRef: PressableRefObject;
-  /** 트리거 aria-controls ↔ 콘텐츠 nativeID 연결 */
+
   contentId: string;
 };
 
@@ -158,20 +99,15 @@ function useNavigationMenuItemContext(
   return ctx;
 }
 
-// ---------------------------------------------------------------------------
-// 루트리스트아이템
-// ---------------------------------------------------------------------------
-
-// radix NavigationMenu 기본값（공식 문서） — hover 지연 열림·재진입 즉시 열림 창.
 const NAV_HOVER_DELAY = 200;
 const NAV_SKIP_DELAY = 300;
 
 export type NavigationMenuProps = ViewProps & {
-  /** 활성（콘텐츠 전개） 아이템 value（제어） — null이면 전부 닫힘 */
+
   value?: string | null;
   defaultValue?: string | null;
   onValueChange?: (value: string | null) => void;
-  /** API 호환용 — 포팅에서는 무시（콘텐츠가 각자 앵커링, 머리 주석 참조） */
+
   viewport?: boolean;
 };
 
@@ -188,7 +124,7 @@ const NavigationMenu = forwardRef<BridgeViewRef, NavigationMenuProps>(
     },
     ref,
   ) => {
-    // 비제어 상태 — 제어（value 지정）면 무시된다.
+
     const [internalValue, setInternalValue] = useState(defaultValue);
     const current = value !== undefined ? value : internalValue;
     const stateRef = useRef({ value, current, onValueChange });
@@ -199,11 +135,6 @@ const NavigationMenu = forwardRef<BridgeViewRef, NavigationMenuProps>(
       if (next !== state.current) state.onValueChange?.(next);
     }, []);
 
-    // hover 지연 개방·닫힘（사이클 90） — radix delayDuration(200)·skipDelayDuration(300)
-    // 기본값 재현. delayDuration은 열림·닫힘 지연에 모두 적용된다: 트리거/카드 이탈은
-    // 200ms 뒤 닫힘을 예약하고 반대편 진입이 예약을 취소해 트리거↔카드 포인터 이동을
-    // 유지한다. 메뉴가 닫히는 순간 skipUntil 창을 열어 300ms 안의 재진입은 지연 없이
-    // 즉시 열린다.
     const prevValueRef = useRef<string | null>(current);
     const skipUntilRef = useRef(0);
     useEffect(() => {
@@ -238,27 +169,27 @@ const NavigationMenu = forwardRef<BridgeViewRef, NavigationMenuProps>(
         clearCloseTimer();
         clearOpenTimer();
         const active = stateRef.current.current;
-        // 이미 그 아이템이 열려 있으면 유지, 다른 메뉴가 열려 있으면 즉시 전환（radix 정합）.
+
         if (active !== null) {
           if (active !== itemValue) setValue(itemValue);
           return;
         }
-        // skip 창 안의 재진입은 지연 없이 즉시 열림.
+
         if (Date.now() < skipUntilRef.current) {
           setValue(itemValue);
           return;
         }
         openTimerRef.current = setTimeout(() => {
           openTimerRef.current = null;
-          // 지연 도중 다른 경로（눌림 등）로 열렸으면 덮어쓰지 않는다.
+
           if (stateRef.current.current === null) setValue(itemValue);
         }, NAV_HOVER_DELAY);
       },
       [clearCloseTimer, clearOpenTimer, setValue],
     );
-    /** 카드 진입 — 이탈이 예약한 닫힘을 취소한다 */
+
     const hoverHold = clearCloseTimer;
-    /** 트리거·카드 이탈 — 지연 열림을 취소하고 200ms 뒤 닫힘을 예약한다 */
+
     const hoverLeave = useCallback(() => {
       clearOpenTimer();
       clearCloseTimer();
@@ -274,7 +205,7 @@ const NavigationMenu = forwardRef<BridgeViewRef, NavigationMenuProps>(
     );
     return (
       <NavigationMenuContext.Provider value={contextValue}>
-        {/* 원본 group/navigation-menu 그룹 셀렉터는 미사용 — 조건부 클래스로 대체 */}
+
         <View
           ref={ref}
           className={cn(
@@ -309,7 +240,7 @@ const NavigationMenuList = forwardRef<BridgeViewRef, NavigationMenuListProps>(
 NavigationMenuList.displayName = "NavigationMenuList";
 
 export type NavigationMenuItemProps = ViewProps & {
-  /** 아이템 식별자 — Root value 제어와 연결（미지정 시 자동 생성） */
+
   value?: string;
 };
 
@@ -337,11 +268,6 @@ const NavigationMenuItem = forwardRef<BridgeViewRef, NavigationMenuItemProps>(
 );
 NavigationMenuItem.displayName = "NavigationMenuItem";
 
-// ---------------------------------------------------------------------------
-// 트리거콘텐츠링크
-// ---------------------------------------------------------------------------
-
-/** 원본 cva 재현 — data-［state=open］transition 임의값은 Trigger 측 근사（머리 주석） */
 const navigationMenuTriggerStyle = cva(
   "flex h-9 w-max flex-row items-center justify-center rounded-md bg-background px-4 py-2 active:bg-accent web:hover:bg-accent web:focus-visible:bg-accent web:focus-visible:outline-1 web:focus-visible:ring-3 web:focus-visible:ring-ring/50 web:outline-none web:transition-colors",
 );
@@ -366,8 +292,7 @@ const NavigationMenuTrigger = forwardRef<
         aria-expanded={isOpen}
         aria-controls={item.contentId}
         disabled={disabled}
-        // hover 개방（사이클 90） — 200ms 지연 열림·즉시 전환은 루트가 담당한다.
-        // 터치 기기에서는 발화하지 않아 눌림 토글이 담당한다.
+
         onHoverIn={() => {
           nav.hoverOpen(item.itemValue);
           onHoverIn?.();
@@ -382,7 +307,7 @@ const NavigationMenuTrigger = forwardRef<
         }}
         className={cn(
           navigationMenuTriggerStyle(),
-          // 원본 data-［state=open］:bg-accent → 조건부 클래스
+
           isOpen && "bg-accent/50",
           disabled && "web:pointer-events-none opacity-50",
           className,
@@ -412,8 +337,7 @@ const NavigationMenuContent = forwardRef<
   const item = useNavigationMenuItemContext("NavigationMenuContent");
   const isOpen = nav.value === item.itemValue;
   return (
-    // 각 아이템 앵커링 팝업 — 원본 viewport=false 카드 토큰을 기본으로 사용.
-    // ESC바깥 눌림 닫기포커스 이동/복귀는 AnchoredOverlay 골격이 제공한다.
+
     <AnchoredOverlay
       visible={isOpen}
       onClose={() => nav.setValue(null)}
@@ -422,15 +346,14 @@ const NavigationMenuContent = forwardRef<
       align="start"
       offset={6}
       triggerRef={item.triggerRef}
-      // hover 개방 계열은 열림에 포커스를 뺏지 않는다(원본 정합 — F-5).
+
       focusOnOpen={false}
       className="z-50"
     >
       <View
         ref={ref}
         nativeID={nativeID ?? item.contentId}
-        // 카드 진입은 닫힘 예약을 취소, 이탈은 재예약（사이클 90 — 트리거↔카드
-        // 포인터 이동 유지, 닫힘도 delayDuration 200ms 지연）.
+
         onHoverIn={() => nav.hoverHold()}
         onHoverOut={() => nav.hoverLeave()}
         className={cn(
@@ -447,7 +370,7 @@ const NavigationMenuContent = forwardRef<
 NavigationMenuContent.displayName = "NavigationMenuContent";
 
 export type NavigationMenuLinkProps = PressableProps & {
-  /** 현재 위치 표시（원본 data-［active=true］） */
+
   active?: boolean;
 };
 
@@ -462,7 +385,7 @@ const NavigationMenuLink = forwardRef<
       accessibilityRole="link"
       disabled={disabled}
       onPress={() => {
-        // 이동 선택 시 메뉴（콘텐츠 팝업）를 닫는다
+
         nav.setValue(null);
         onPress?.();
       }}
@@ -480,10 +403,6 @@ const NavigationMenuLink = forwardRef<
   );
 });
 NavigationMenuLink.displayName = "NavigationMenuLink";
-
-// ---------------------------------------------------------------------------
-// IndicatorViewport — 원본 배치 트릭 재현 불가로 no-op（머리 주석 참조）
-// ---------------------------------------------------------------------------
 
 export type NavigationMenuIndicatorProps = ViewProps;
 

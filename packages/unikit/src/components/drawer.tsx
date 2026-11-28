@@ -1,43 +1,3 @@
-// Drawer — shadcn/ui（new-york-v4） drawer.tsx 유니버설 포팅 （사이클 40, T-1a）.
-// 원본: shadcn-ref/ui/drawer.tsx — vaul（드래그 바텀시트 엔진）을 제거하고 열림
-// 상태는 React state + context로 직접 관리한다. 포털백드롭포커스 관리ESC
-// 닫기스크롤 잠금은 lib/overlay의 ModalOverlay가, 드래그는 브리지 useDrag가
-// 담당한다（dialog.tsxsheet.tsx 형제 포팅）.
-//
-// 포팅 판단（원본 대비 차이）:
-// - vaul 제거 — 드래그로 닫기（디자인 계획 §3）만 useDrag로 최소 재현: 핸들에서
-//   닫힘 방향으로 80px 이상 끌면 닫는다（또는 속도 > 0.5px/ms이며 24px 이상 —
-//   방향 공용 임계값, shouldDismissDrawer）. 4방향 전부 지원한다: bottom은 아래로,
-//   top은 위로, left는 왼쪽으로, right는 오른쪽으로 끌면 닫힌다. 드래그 중 카드는
-//   닫힘 축으로 1:1 추적 이동하고（translateX/Y — BridgeStyle 변환 단축키）, 반대
-//   방향 당김은 0.18x 루버 밴드로 저항하며, 미달 종료 시 200ms 스탭백한다. 핸들은
-//   방향별 위치（bottom=카드 상단, top=하단, left/right=안쪽 가장자리 스트립）에서만
-//   드래그를 받아 카드 안 버튼·스크롤과 충돌하지 않게 했다. vaul의 나머지 기능
-//   （콘텐츠 스크롤과 제스처 통합·스냅 포인트·키패드 대응）은 미지원 — 로드맵.
-// - direction은 원본 vaul 기본값 "bottom" 유지, 브리프 지정 방향 leftright를
-//   포함해 4방향 전부 지원한다（시트와 구분: drawer는 핸들+드래그 닫기+높이 제한）.
-// - 원본 data-［vaul-drawer-direction=］ 그룹 셀렉터 → cva direction 변형 +
-//   React context 전파（헤더 정렬용 — alert.tsx 관행）. 핸들 표시 여부도 원본
-//   group-data 셀렉터 대신 방향별 조건부 렌더로 전개한다（4방향 핸들 — 위 항목）.
-// - 임의값 클래스 금지에 따라 w-［100px］ → w-24, max-h-［80vh］ → max-h-96（24rem
-//   고정 근사）. 뷰포트 비례 높이는 style prop 퍼센트로 소비한다 — BridgeStyle
-//   퍼센트 차원 계약으로 "85%" 문자열이 양 플랫폼 모두 부모 박스（fixed
-//   inset-0 오버레이 래퍼 = 웹 뷰포트/RN Modal 창） 기준으로 그대로 흐른다
-//   （DrawerContent의 style은 드래그 translate와 병합해 그대로 전달된다）.
-//   max-h-96 상한까지 적용받으므로 상한을 넘으려면 style의 maxHeight까지 함께
-//   지정한다（웹 인라인 style·네이티브 style prop이 className보다 우선 — uniwind은
-//   [className 스타일, props.style] 순으로 병합）. vh·vw는 RN 교집합 밖.
-//   mt-24/mb-24（드래그 여유 공간）·rounded-t/b-lg·sm:max-w-sm 토큰은 유지.
-// - 등장/퇴장 애니메이션（fade）: 웹은 unikit-sheet-in-* keyframes, 네이티브은
-//   PortalHost RN Animated로 구동된다（이전 주석의 "소실" 기술은 드리프트였다）.
-//   원본은 닫기 버튼이 없어（드래그백드롭 닫기） 포팅도 동일하다（웹 ESC백드롭
-//   눌림은 ModalOverlay가 담당）.
-// - 트리거닫기는 asChild 대신 Pressable 직렬화（문자열 children → 내부 Text）.
-// - 접근성 연결（dialog 포팅과 동일）: role="dialog"aria-modal은 ModalOverlay,
-//   트리거 aria-expandedaria-controls ↔ 카드 nativeID（useId 토대）, 카드
-//   aria-describedby ↔ 설명 nativeID, aria-labelledby ↔ 제목 nativeID
-//   （ModalOverlay prop으로 전달 — G3 리뷰 제기 반영）.
-// - DrawerOverlayDrawerPortal export 제거 — ModalOverlay로 통합.
 import {
   createContext,
   forwardRef,
@@ -71,13 +31,13 @@ import { cn } from "../lib/utils";
 type DrawerContextValue = {
   open: boolean;
   setOpen: (open: boolean) => void;
-  /** 트리거 aria-controls ↔ 카드 nativeID 연결 */
+
   contentId: string;
-  /** 제목 nativeID — 라벨 연결（aria-labelledby） 대기 토대 */
+
   titleId: string;
-  /** 설명 nativeID — 카드 aria-describedby가 참조 */
+
   descriptionId: string;
-  /** 트리거 요소 저장소 — ModalOverlay triggerRef（닫힘 후 포커스 복귀）로 전달 */
+
   triggerRef: RefObject<unknown>;
   setTriggerElement: (element: unknown) => void;
 };
@@ -92,13 +52,10 @@ function useDrawerContext(component: string): DrawerContextValue {
   return ctx;
 }
 
-// 방향 context — 원본 group-data-［vaul-drawer-direction］ 셀렉터 대체（헤더 정렬）.
 const DrawerDirectionContext = createContext<"top" | "right" | "bottom" | "left">(
   "bottom",
 );
 
-// 카드 변형 — 남는 축 토큰 유지（가장자리 고정은 ModalOverlay position이 담당）.
-// bottom/top의 mt-24/mb-24는 드래그 여유 공간（vaul 관행）이자 높이 상한의 역할.
 const drawerContentVariants = cva(
   "pointer-events-auto relative flex-col bg-background",
   {
@@ -124,7 +81,7 @@ export type DrawerProps = ViewProps & {
 
 const Drawer = forwardRef<BridgeViewRef, DrawerProps>(
   ({ open, defaultOpen = false, onOpenChange, children, ...props }, ref) => {
-    // 비제어 상태 — 제어（open 지정）면 무시된다（tabsaccordion 관행）.
+
     const [internalOpen, setInternalOpen] = useState(defaultOpen);
     const isOpen = open ?? internalOpen;
     const stateRef = useRef({ open, isOpen, onOpenChange });
@@ -163,14 +120,14 @@ const Drawer = forwardRef<BridgeViewRef, DrawerProps>(
 Drawer.displayName = "Drawer";
 
 export type DrawerTriggerProps = PressableProps & {
-  // asChild 미지원 — 문자열 children은 내부 Text로 감싸고, ReactNode는 그대로.
+
   children?: ReactNode;
 };
 
 const DrawerTrigger = forwardRef<BridgePressableRef, DrawerTriggerProps>(
   ({ className, children, disabled, onPress, ...props }, forwardedRef) => {
     const drawer = useDrawerContext("DrawerTrigger");
-    // 콜백 ref — 외부 ref 병합 + 트리거 요소를 컨텍스트에 등록（포커스 복귀 대상）.
+
     const setRef = (element: BridgePressableRef | null) => {
       drawer.setTriggerElement(element);
       if (typeof forwardedRef === "function") forwardedRef(element);
@@ -204,7 +161,7 @@ const DrawerTrigger = forwardRef<BridgePressableRef, DrawerTriggerProps>(
 DrawerTrigger.displayName = "DrawerTrigger";
 
 export type DrawerCloseProps = PressableProps & {
-  // DrawerTrigger와 동일 — 문자열 children은 내부 Text로 감싼다.
+
   children?: ReactNode;
 };
 
@@ -238,7 +195,6 @@ DrawerClose.displayName = "DrawerClose";
 
 export type DrawerDirection = "top" | "right" | "bottom" | "left";
 
-/** 4방향 실시간 드래그 오프셋 계산(닫힘 축 1:1 추적, 반대 축 0.18x 루버 밴드). */
 export function computeDrawerDragOffset(
   direction: DrawerDirection,
   dx: number,
@@ -256,7 +212,6 @@ export function computeDrawerDragOffset(
   }
 }
 
-/** 4방향 드로어 닫힘 판정(거리 > 80px 또는 속도 > 0.5px/ms + 거리 > 24px). */
 export function shouldDismissDrawer(
   direction: DrawerDirection,
   dx: number,
@@ -300,7 +255,6 @@ const DrawerContent = forwardRef<BridgeViewRef, DrawerContentProps>(
       if (!drawer.open) setDragOffset(0);
     }, [drawer.open]);
 
-    // 4방향 실시간 손가락 추적 + 속도/거리 임계값 닫힘 · 미달 시 0 복귀(스냅백).
     const { dragHandlers, dragging } = useDrag({
       onMove: (event) => {
         setDragOffset(computeDrawerDragOffset(direction, event.dx, event.dy));
@@ -332,7 +286,7 @@ const DrawerContent = forwardRef<BridgeViewRef, DrawerContentProps>(
         visible={drawer.open}
         onClose={() => drawer.setOpen(false)}
         position={direction as ModalOverlayPosition}
-        // z-50는 오버레이 중첩 규칙 토큰（§2.3）. 드로어는 가장자리에 붙는다.
+
         className="z-50"
         backdropClassName="z-50"
         triggerRef={drawer.triggerRef}
@@ -400,8 +354,7 @@ const DrawerHeader = forwardRef<BridgeViewRef, DrawerHeaderProps>(
       <View
         ref={ref}
         className={cn(
-          // 바텀탭 드로어는 중앙 정렬（원본 group-data 셀렉터）, md부터는 원본대로
-          // 좌측 정렬로 전환（md: 토큰이 나중에 이긴다 — 원본 캐스케이드 동일）.
+
           "gap-0.5 p-4",
           (direction === "bottom" || direction === "top") && "text-center",
           "md:gap-1.5 md:text-left",

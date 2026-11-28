@@ -1,7 +1,3 @@
-// chart-logic.test.ts — chart 컴포넌트의 순수 계산 함수 계약(스택 누적·극좌표
-// 지오메트리·도메인 매핑·참조선 위치·줌/브러시 사각형)을 검증한다.
-// 렌더러·브리지 의존이 없는 순수 함수만 대상(컴포넌트 렌더는
-// components-logic.test.ts 관행과 분리 — 이 파일은 chart 전용).
 import { describe, expect, test } from "bun:test";
 import { createElement } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
@@ -39,7 +35,6 @@ const chartData: ChartDatum[] = [
   { month: "3월", desktop: 300, mobile: 20, server: -10 },
 ];
 
-// 기본 플롯 박스(320×200, 패딩 좌48 우8 상8 하24) — 계산 근거 공유
 const PLOT = { left: 48, top: 8, width: 264, height: 168, bottom: 176, right: 312 };
 
 describe("buildChartScale — 옵션 확장(우측 축 패딩·y 도메인 줌·실효 범위)", () => {
@@ -48,7 +43,7 @@ describe("buildChartScale — 옵션 확장(우측 축 패딩·y 도메인 줌·
     expect(scale.plotLeft).toBe(PLOT.left);
     expect(scale.plotWidth).toBe(PLOT.width);
     expect(scale.yMin).toBe(0);
-    expect(scale.yMax).toBe(400); // niceStep(300/4)=100 → 4스텝
+    expect(scale.yMax).toBe(400);
     expect(scale.ticksY).toEqual([0, 100, 200, 300, 400]);
   });
 
@@ -72,8 +67,7 @@ describe("buildChartScale — 옵션 확장(우측 축 패딩·y 도메인 줌·
   });
 
   test("yDomain ulp 수준 폭 — 틱이 유계하게 계산된다(무한 루프 회귀, 리뷰 후속)", () => {
-    // 1.6e12 크기의 값에서 폭 1e-7 — step이 ulp보다 작아 value += step이
-    // 정체되던 영역. 인덱스 유계 반복으로 64 이내에 끝나야 한다.
+
     const base = 1.6e12;
     const scale = buildChartScale([{ x: "a", desktop: base }], ["desktop"], 320, 200, {
       yDomain: { min: base, max: base + 1e-7 },
@@ -90,8 +84,7 @@ describe("buildChartScale — 옵션 확장(우측 축 패딩·y 도메인 줌·
   });
 
   test("스팬 오버플로 극단값 — RangeError 없이 폴백 도메인으로 내려간다(리뷰 후속)", () => {
-    // [-1e308, 1e308] 데이터는 max - min이 Infinity가 되어 stepsCount가
-    // Infinity, Array.from가 RangeError를 던지던 경로.
+
     const negative = buildChartScale(
       [
         { x: "a", desktop: -1e308 },
@@ -105,7 +98,6 @@ describe("buildChartScale — 옵션 확장(우측 축 패딩·y 도메인 줌·
     expect(Number.isFinite(negative.yMax)).toBe(true);
     expect(negative.ticksY.every(Number.isFinite)).toBe(true);
 
-    // 양수 극단 — max ≥ 약 8.9e307에서 step*4가 Infinity로 오버플로하던 경로.
     const positive = buildChartScale([{ x: "a", desktop: 9e307 }], ["desktop"], 320, 200);
     expect(Number.isFinite(positive.yMax)).toBe(true);
     expect(positive.ticksY.every(Number.isFinite)).toBe(true);
@@ -114,10 +106,10 @@ describe("buildChartScale — 옵션 확장(우측 축 패딩·y 도메인 줌·
   test("range 오버라이드 — 스택 누적 합계를 실효 최댓값으로 반영한다", () => {
     const plain = buildChartScale(chartData, ["desktop"], 320, 200);
     const stacked = buildChartScale(chartData, ["desktop"], 320, 200, {
-      range: { min: 0, max: 500 }, // desktop+mobile 누적 합계 가정
+      range: { min: 0, max: 500 },
     });
     expect(stacked.yMax).toBeGreaterThan(plain.yMax);
-    expect(stacked.yMax).toBe(800); // niceStep(500/4)=125 → 200 → 4스텝
+    expect(stacked.yMax).toBe(800);
   });
 
   test("yValueAt — yAt의 역매핑(줌 y 도메인 확정용)", () => {
@@ -159,7 +151,7 @@ describe("스택 누적 — groupStacks·computeBarStackOffsets·범위", () => 
       { base: 0, value: 20 },
       null,
     ]);
-    // y의 양수는 x 누적 위에 쌓이고, 음수는 0 아래 별도 누적, 갭 인덱스는 독립
+
     expect(offsets.y).toEqual([
       { base: 10, value: 5 },
       { base: 0, value: -5 },
@@ -180,8 +172,8 @@ describe("스택 누적 — groupStacks·computeBarStackOffsets·범위", () => 
       stackData,
       new Map([["s", ["x", "y"]]]),
     );
-    expect(range.max).toBe(20); // b행: x=20 단독이 a행 누적(15)보다 크다
-    expect(range.min).toBe(-5); // b행: y=-5
+    expect(range.max).toBe(20);
+    expect(range.min).toBe(-5);
   });
 
   test("seriesEffectiveRange — 비스택 원값과 스택 누적 합계를 결합", () => {
@@ -190,8 +182,8 @@ describe("스택 누적 — groupStacks·computeBarStackOffsets·범위", () => 
       { dataKey: "mobile", stackId: "s" },
       { dataKey: "server" },
     ]);
-    expect(range.max).toBe(320); // desktop+mobile 누적 최대(3월 300+20)
-    expect(range.min).toBe(-60); // server 최소
+    expect(range.max).toBe(320);
+    expect(range.min).toBe(-60);
   });
 });
 
@@ -233,7 +225,7 @@ describe("buildReferenceLine — 참조선 위치", () => {
     expect(geometry?.y1).toBe(scale.yAt(200));
     expect(geometry?.x1).toBe(PLOT.left);
     expect(geometry?.x2).toBe(PLOT.right);
-    // 기본 end — 오른쪽 끝, anchor end
+
     expect(geometry?.labelX).toBe(PLOT.right - 4);
     expect(geometry?.labelAnchor).toBe("end");
     expect(geometry?.labelY).toBe(scale.yAt(200) - 6);
@@ -264,7 +256,7 @@ describe("극좌표 — polarToAngle·buildPieArcs·pieIndexAtAngle", () => {
     expect(polarToAngle(100, 100, 100, 110)).toBe(90);
     expect(polarToAngle(100, 100, 90, 100)).toBe(180);
     expect(polarToAngle(100, 100, 100, 90)).toBe(270);
-    // 음수 각도 정규화
+
     expect(polarToAngle(100, 100, 105, 95)).toBe(315);
   });
 
@@ -278,11 +270,11 @@ describe("극좌표 — polarToAngle·buildPieArcs·pieIndexAtAngle", () => {
     for (let i = 1; i < arcs.length; i++) {
       expect(arcs[i].startAngle).toBeCloseTo(arcs[i - 1].endAngle, 9);
     }
-    // 60% 조각은 largeArc=1 경로를 갖는다
+
     expect(arcs[0].d).toContain("A80 80 0 1 1");
-    // 파이(내반경 0)는 중심에서 시작
+
     expect(arcs[0].d.startsWith("M100 100")).toBe(true);
-    // 중심점은 링 중간 반경
+
     const r = 80 / 2;
     const mid = arcs[0];
     const midAngle = ((mid.startAngle + mid.endAngle) / 2) * (Math.PI / 180);
@@ -316,10 +308,10 @@ describe("극좌표 — polarToAngle·buildPieArcs·pieIndexAtAngle", () => {
 
   test("pieIndexAtAngle — 각도로 조각 인덱스(래핑 포함), 무효 입력 null", () => {
     const values = [60, 30, 10];
-    expect(pieIndexAtAngle(270, values)).toBe(0); // 꼭대기
-    expect(pieIndexAtAngle(0, values)).toBe(0); // 오른쪽(90° 진행)
+    expect(pieIndexAtAngle(270, values)).toBe(0);
+    expect(pieIndexAtAngle(0, values)).toBe(0);
     expect(pieIndexAtAngle(200, values)).toBe(1);
-    expect(pieIndexAtAngle(265, values)).toBe(2); // 꼭대기 직전 = 마지막 조각(래핑)
+    expect(pieIndexAtAngle(265, values)).toBe(2);
     expect(pieIndexAtAngle(90, [])).toBeNull();
     expect(pieIndexAtAngle(90, [0, 0])).toBeNull();
   });
@@ -340,12 +332,12 @@ describe("방사형 — buildRadarGeometry·nearestRadarIndex", () => {
     expect(geometry.axes).toHaveLength(4);
     expect(geometry.valueMax).toBe(100);
     expect(geometry.axes[0].x).toBeCloseTo(100, 5);
-    expect(geometry.axes[0].y).toBeCloseTo(40, 5); // cy - radius
+    expect(geometry.axes[0].y).toBeCloseTo(40, 5);
   });
 
   test("격자 폴리곤 levels(기본 4) 단계 + 시리즈 폴리곤 반경 비례", () => {
     expect(geometry.gridD).toHaveLength(4);
-    // 축2(오른쪽, 0°)의 v=50 → 반경 30
+
     const point = geometry.seriesPoints.v[1];
     expect(point.x).toBeCloseTo(130, 5);
     expect(point.y).toBeCloseTo(100, 5);
@@ -360,17 +352,16 @@ describe("방사형 — buildRadarGeometry·nearestRadarIndex", () => {
   });
 
   test("nearestRadarIndex — 가장 가까운 축으로 반올림, count 0은 null", () => {
-    expect(nearestRadarIndex(100, 100, 100, 40, 4)).toBe(0); // 위
-    expect(nearestRadarIndex(100, 100, 160, 100, 4)).toBe(1); // 오른쪽
-    expect(nearestRadarIndex(100, 100, 141.4, 58.6, 4)).toBe(1); // 45° 경계 반올림 → 축2
-    expect(nearestRadarIndex(100, 100, 100, 160, 4)).toBe(2); // 아래
+    expect(nearestRadarIndex(100, 100, 100, 40, 4)).toBe(0);
+    expect(nearestRadarIndex(100, 100, 160, 100, 4)).toBe(1);
+    expect(nearestRadarIndex(100, 100, 141.4, 58.6, 4)).toBe(1);
+    expect(nearestRadarIndex(100, 100, 100, 160, 4)).toBe(2);
     expect(nearestRadarIndex(100, 100, 100, 100, 0)).toBeNull();
   });
 });
 
 describe("제스처 도메인 매핑 — pixelToBandIndex·yPixelsToDomain·buildSelectionRect", () => {
   const scale = buildChartScale(chartData, ["desktop"], 320, 200);
-  // bandWidth = 264/3 = 88
 
   test("pixelToBandIndex — 밴드 중심 인덱스, 플롯 밖 클램프", () => {
     expect(pixelToBandIndex(48 + 44, scale.plotLeft, scale.bandWidth, 3)).toBe(0);
@@ -405,10 +396,6 @@ describe("제스처 도메인 매핑 — pixelToBandIndex·yPixelsToDomain·buil
   });
 });
 
-// ---------------------------------------------------------------------------
-// 컴포지션 스모크 — 웹 렌더러로 정적 마크업을 뽑아 children 분류·축 분리·
-// 극좌표 렌더가 깨지지 않는지만 확인한다(제스처는 정적 마크업에서 불가).
-// ---------------------------------------------------------------------------
 describe("chart 컴포지션 스모크(웹 정적 렌더)", () => {
   const config = {
     month: { label: "월" },
@@ -432,12 +419,12 @@ describe("chart 컴포지션 스모크(웹 정적 렌더)", () => {
         createElement(ChartBarSeries, { dataKey: "mobile", stackId: "s" }),
       ),
     );
-    // 참조선 — 점선 + 라벨
+
     expect(markup).toContain('stroke-dasharray="4 4"');
     expect(markup).toContain("목표");
-    // 스택 막대 6개(시리즈 2 × 3행) — 투명 캡처 Rect 1개 포함
+
     expect((markup.match(/<rect/g) ?? []).length).toBe(7);
-    // 우측 축 라벨은 우측 앵커로 붙는다
+
     expect(markup).toContain('text-anchor="start"');
   });
 
@@ -474,7 +461,7 @@ describe("chart 컴포지션 스모크(웹 정적 렌더)", () => {
         createElement(ChartRadialSeries, { dataKey: "v" }),
       ),
     );
-    // 격자 4 + 시리즈(채움+선) 2 = path 6, 축 line 4
+
     expect((markup.match(/<path/g) ?? []).length).toBe(6);
     expect((markup.match(/<line/g) ?? []).length).toBe(4);
     expect(markup).toContain("축1");
@@ -493,20 +480,15 @@ describe("chart 컴포지션 스모크(웹 정적 렌더)", () => {
         createElement(ChartZoom),
       ),
     );
-    // 램퍼가 제스처를 받는다(touch-none — 정적 마크업은 이벤트 핸들러를 직렬화하지 않아 클래스로 확인)
+
     expect(markup).toContain("touch-none");
     expect(markup).toContain("cursor-crosshair");
     expect(markup).not.toContain('fill="transparent"');
-    // 미확정 상태 — 선택 사각형·초기화 칩은 렌더되지 않는다
+
     expect(markup).not.toContain("초기화");
   });
 });
 
-// ---------------------------------------------------------------------------
-// 리뷰 수정 회귀 — 비스택 음수 막대 지오메트리·극좌표 비정상값 방어·
-// 빈 레이더 경로·파이 히트 판정 오염 방지.
-// ---------------------------------------------------------------------------
-/** 정적 마크업에서 시리즈 막대(rx="4", 캡처 Rect 와 구분) 지오메트리만 뽑는다 */
 function seriesBarRects(markup: string) {
   return [...markup.matchAll(/<rect\b[^>]*>/g)]
     .filter((match) => match[0].includes('rx="4"'))
@@ -537,11 +519,11 @@ describe("리뷰 수정 회귀 — 비스택 음수 막대·비정상값·빈 �
     const bars = seriesBarRects(markup);
     expect(bars).toHaveLength(2);
     const [negative, positive] = bars[0].x < bars[1].x ? bars : [bars[1], bars[0]];
-    // 음수 막대 — 꼭대기가 0 기준선, 도메인 최솟값(-100=플롯 하단)까지 뻗는다
+
     expect(negative.y).toBeCloseTo(zeroY, 6);
     expect(negative.height).toBeCloseTo(plotBottom - zeroY, 6);
     expect(negative.height).toBeGreaterThan(0);
-    // 양수 막대 — 기존 계약 유지(0 기준선까지 내려온다)
+
     expect(positive.y).toBeCloseTo(scale.yAt(50), 6);
     expect(positive.y + positive.height).toBeCloseTo(zeroY, 6);
   });
@@ -606,7 +588,7 @@ describe("리뷰 수정 회귀 — 비스택 음수 막대·비정상값·빈 �
       for (const radius of radii) {
         expect(radius).toBeLessThanOrEqual(40);
       }
-      // 안쪽 링은 outerRadius-1(=39)로 클램프 — 뒤집힌 도넛이 되지 않는다
+
       expect(arc.d).toContain("A39 39 0");
     }
   });
@@ -622,15 +604,15 @@ describe("리뷰 수정 회귀 — 비스택 음수 막대·비정상값·빈 �
   });
 
   test("pieIndexAtAngle — 음수·NaN 항목은 스윕 커서를 오염시키지 않는다", () => {
-    // [60, -30, 10] → 가중치 [60, 0, 10](총 70): 위(270°)는 조각 0, 지나면 조각 2
+
     expect(pieIndexAtAngle(270, [60, -30, 10])).toBe(0);
     expect(pieIndexAtAngle(310, [60, -30, 10])).toBe(0);
     expect(pieIndexAtAngle(230, [60, -30, 10])).toBe(2);
-    // NaN 선행 항목 — 커서가 NaN이 되어 마지막 인덱스로 몰리지 않는다
+
     expect(pieIndexAtAngle(270, [NaN, 60, 10])).toBe(1);
     expect(pieIndexAtAngle(210, [NaN, 60, 10])).toBe(1);
     expect(pieIndexAtAngle(250, [NaN, 60, 10])).toBe(2);
-    // 전부 무효(0·음수·NaN)면 null
+
     expect(pieIndexAtAngle(90, [0, -5, NaN])).toBeNull();
   });
 

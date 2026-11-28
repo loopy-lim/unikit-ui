@@ -1,80 +1,17 @@
-/**
- * 브리지 프리미티브의 공개 타입 — 플랫폼 공통 부분집합.
- *
- * `@unikit-bridge/ui/primitives`는 package.json exports의 조건분기로 해석된다:
- * - 네이티브（Metro, "react-native" 조건） → native.tsx — RN View/Text/Pressable/TextInput
- *   + uniwind（className을 RN 스타일로 컴파일）
- * - 웹（Next/Vite 등, "default" 조건） → web.tsx — div/span/button/input에 className을
- *   그대로 싣고 표준 Tailwind CSS v4가 스타일링한다
- *
- * 두 구현 모두 이 파일의 타입을 충족해야 한다（컴포넌트 소스는 플랫폼 무관하게
- * 한 벌로 컴파일된다）. 프로퍼티는 컴포넌트데모가 실제 쓰는 공통 부분집합이며,
- * 플랫폼 고유 프로퍼티（hitSlop 등）는 웹에서 무시된다.
- *
- * 사이클 40 확장（잔여 shadcn 33종 이식 지원 — 42-design-plan §2.1）: BridgeRole
- * 오버레이표 계열 추가, aria-value/current/modal/describedby/invalid,
- * onContextMenu/onLongPress/onKeyDown, PortalScrollViewSelect 프리미티브,
- * measureInWindowuseDrag오버레이 훈 4종（useOverlayFocususeDismiss
- * useRepositionuseScrollLock）.
- *
- * 사이클 90 확장（로드맵 미지원 해소 — docs/sdd/92-design-plan §2）:
- * PressableProps onHoverIn/onHoverOut/onFocus/onBlur, ViewProps
- * onLayout（BridgeLayout）/onKeyDown/onHoverIn/onHoverOut, BridgePressableRef
- * 선택적 focus().
- *
- * 잔여 RN 갭 감사 후속 확장: TextInputProps autoComplete（양측 동일 prop명 —
- * 값은 HTML/RN 자동완성 토큰 문자열）, BridgeStyle 퍼센트 차원 계약 명문화
- * （width·height 등 "N%" 문자열은 양 구현이 변환 없이 통과）, SelectProps
- * name·required·tabIndex·ariaHidden（웹 <select> 폼 제출·제약 검증 연동 —
- * 네이티브는 HTML 폼 계약 부재로 폐기）, SlotProps（radix Slot/asChild 상당）.
- */
 import type { ComponentType, ReactElement, ReactNode } from "react";
 
 export type BridgeColorScheme = "light" | "dark";
 
-/**
- * 플랫폼 공통 인라인 스타일 최소 계약 — className 문자열로 표현할 수 없는
- * 동적 값（진행률 폭 %, 가로세로 비율, 범용 transform 단축키 등）용.
- * RN 스타일 객체와 DOM CSSProperties의 실용 교집합（프로퍼티 이름은 camelCase,
- * 값은 문자열·숫자）. 범용 변환 단축키(`translateX`, `translateY`, `scale`,
- * `rotate`)는 web.tsx가 CSS `transform` 문자열로, native.tsx가 RN `transform`
- * 배열로 변환한다. 정적 스타일은 여전히 className이 원칙이고, 여기는 동적 값 전용이다.
- *
- * 퍼센트 차원 계약（잔여 RN 갭 감사 후속 명문화）: `width`·`height` 등에
- * "50%" 형태 문자열을 넣으면 양 구현 모두 값을 변환·제거하지 않고 그대로
- * 전달한다 — 웹은 DOM CSS 백분율, 네이티브는 RN DimensionValue 백분율
- * （resolveWebStyle·resolveNativeStyle 모두 transform 단축키 전개와
- * position:"fixed" 치환 외에 키를 건드리지 않는다 — progress·slider가 이미
- * 이 경로로 % 문자열을 양측에서 쓴다）. 상대 기준은 양측 모두 부모 박스이므로
- * 뷰포트 비례 차원이 필요한 소비처（chart 높이 등）는 부모에 정의된 높이를
- * 전제로 한다. vh·vw 등 다른 상대 단위 문자열은 RN이 이해하지 못해 교집합 밖이다.
- */
 export type BridgeStyle = Record<string, string | number | undefined>;
 
-/**
- * 스크롤 이벤트 최소 계약 — ScrollView `onScroll`이 양 플랫폼에서 동일
- * 형태로 전달한다. 웹 div `scroll*` / `client*`, RN `nativeEvent`를 정규화한다.
- */
 export type BridgeScrollEvent = {
   contentOffset: { x: number; y: number };
   contentSize: { width: number; height: number };
   layoutMeasurement: { width: number; height: number };
 };
 
-/**
- * onLayout 측정값（사이클 90） — 웹 ResizeObserver contentRect / 네이티브 RN
- * View onLayout layout에서 폭·높이만 좁힌 공통 최소 형태.
- */
 export type BridgeLayout = { width: number; height: number };
 
-/**
- * 플랫폼 공통 접근성 역할 — ARIA role과 RN accessibilityRole의 교집합 +
- * 카탈로그 확장에 필요한 역할. 웹에서는 그대로 role 속성이 되고,
- * RN이 모르는 role（tabpanel·dialog 등）은 Android 런타임에서 무시되지 않고
- * 크래시하므로(2026-11-10 실증) native 브리지가 근접 RN 역할로 매핑한다
- * （매핑표는 native.tsx의 RN_ROLE_FALLBACK — 웹 스크린리더만 이득을 얻는
- * 역할은 none으로 낮아지는 한계를 컴포넌트 머리 주석에 기록）.
- */
 export type BridgeRole =
   | "button"
   | "link"
@@ -98,7 +35,7 @@ export type BridgeRole =
   | "alert"
   | "status"
   | "combobox"
-  // ── 사이클 40 확장（오버레이표달력 계열） ──
+
   | "dialog"
   | "alertdialog"
   | "menu"
@@ -115,70 +52,53 @@ export type BridgeRole =
   | "slider"
   | "toolbar"
   | "tree"
-  // ── 사이클 40 후속 보강（완료 보고 제기） ──
+
   | "group"
   | "region";
 
-// ---------------------------------------------------------------------------
-// Props
-// ---------------------------------------------------------------------------
-
 export type ViewProps = {
   className?: string;
-  /** 동적 값 전용 인라인 스타일（정적 스타일은 className 원칙） */
+
   style?: BridgeStyle;
   children?: ReactNode;
-  /**
-   * 레이아웃 크기 변화（사이클 90） — 웹 ResizeObserver / 네이티브 RN View
-   * onLayout을 {width,height}로 좁힌 공통 계약. 마운트 시 1회 + 크기 변화마다
-   * 발화한다. 소비처: chart fluid 폭 등（컨테이너 폭 추종）.
-   */
+
   onLayout?: (layout: BridgeLayout) => void;
-  /** 키 입력（메뉴 카드 키보드 탐색） — 웹 onKeyDown. Android는 RN 0.88 코어의
-   *  W3C 규격 View onKeyDown에 연결한다(이슈 #19): 하드웨어 키보드·DPAD가
-   *  ReactRootView → JSKeyDispatcher를 거쳐 「포커스된 focusable 뷰」 대상으로
-   *  발화한다 — 카드(조상) onKeyDown은 버블링으로 자손 포커스 시 수신.
-   *  iOS는 RN 코어에 일반 View 키 계약이 없어 폐기（한계 — 이슈 #19） */
+
   onKeyDown?: (event: BridgeKeyEvent) => void;
-  /** 하드웨어 키 입력 포커스 가능 — Android View focusable(키 이벤트 수신
-   *  조건 — 이슈 #19), 웹 tabIndex 0/−1 치환. iOS는 RN 계약이 없어 무시（한계） */
+
   focusable?: boolean;
-  /** 포인터 진입（hover-card 카드 이탈 닫힘） — 웹 mouseenter. 네이티브 폐기
-   *  （RN View에는 hover 계약 없음 — Pressable만 onHoverIn 보유） */
+
   onHoverIn?: () => void;
-  /** 포인터 이탈 — 웹 mouseleave. 네이티브 폐기（〃） */
+
   onHoverOut?: () => void;
-  /** 네이티브 nativeID — 웹에서는 id로 전달된다 */
+
   nativeID?: string;
   testID?: string;
   accessibilityRole?: BridgeRole;
   accessibilityLabel?: string;
-  /** 장식용 요소 표시 — 웹 aria-hidden, 네이티브 accessibilityElementsHidden */
+
   "aria-hidden"?: boolean;
-  /** 모달성 선언（dialogalert-dialogsheetdrawer） — 웹 aria-modal,
-   *  네이티브 accessibilityViewIsModal */
+
   "aria-modal"?: boolean;
-  /** 보조 설명 연결（nativeID） — 웹 aria-describedby. 네이티브 미지원（한계） */
+
   "aria-describedby"?: string;
-  /** 범위형 컨트롤（progressbar 등） 현재값 — 네이티브 accessibilityValue로 */
+
   "aria-valuenow"?: number;
   "aria-valuemin"?: number;
   "aria-valuemax"?: number;
-  /** 전개 상태（combobox 루트 등 View에 부여） — 네이티브 미지원（폐기） */
+
   "aria-expanded"?: boolean;
-  /** 제어 대상 연결（nativeID） — 웹 전용. 네이티브 미지원（폐기） */
+
   "aria-controls"?: string;
-  /** 라벨 연결（nativeID） — 웹 전용. 네이티브 미지원（폐기） */
+
   "aria-labelledby"?: string;
-  /** 포인터 이벤트 통과 제어 — 네이티브 RN pointerEvents prop 그대로,
-   *  웹은 CSS pointer-events로 치환（box-none→none: 자체는 통과, 자식은
-   *  pointer-events-auto 클래스로 수신 — 오버레이 래퍼가 소비）. */
+
   pointerEvents?: "auto" | "none" | "box-only" | "box-none";
 };
 
 export type TextProps = {
   className?: string;
-  /** 동적 값 전용 인라인 스타일（정적 스타일은 className 원칙） */
+
   style?: BridgeStyle;
   children?: ReactNode;
   nativeID?: string;
@@ -186,44 +106,40 @@ export type TextProps = {
   onPress?: () => void;
   accessibilityRole?: BridgeRole;
   accessibilityLabel?: string;
-  /** 장식용 글리프 등 읽지 않을 텍스트 표시 — 웹 aria-hidden, 네이티브
-   *  accessibilityElementsHidden（T-2a 제기 — dropdown 글리프 등이 스크린리더에
-   *  읽히는 것을 방지） */
+
   "aria-hidden"?: boolean;
-  /** 줄 바꿈 제한(초과 줄 말줄임) — 웹 -webkit-line-clamp / 네이티브 RN 관용 */
+
   numberOfLines?: number;
 };
 
 export type PressableProps = {
   className?: string;
-  /** 동적 값 전용 인라인 스타일（정적 스타일은 className 원칙） */
+
   style?: BridgeStyle;
   children?: ReactNode;
   onPress?: () => void;
   disabled?: boolean;
-  /** 포인터 이벤트 통과 제어 — 네이티브는 RN View 계약을 상속해 그대로
-   *  흐르고, 웹은 View와 동일하게 CSS pointer-events로 치환한다(리뷰 후속 —
-   *  ViewProps 확장 prop을 Pressable에도 노출해 미확인 DOM 속성 누출 방지). */
+
   pointerEvents?: "auto" | "none" | "box-only" | "box-none";
   accessibilityLabel?: string;
   accessibilityRole?: BridgeRole;
-  /** RN 0.7x+ 관용 — 웹 DOM에서도 동일 속성으로 전달된다 */
+
   "aria-disabled"?: boolean;
-  /** 눌림 유지형 컨트롤（toggle） 상태 — 웹 DOM 그대로, 네이티브는 시각 상태로만 반영 */
+
   "aria-pressed"?: boolean;
-  /** 체크형 컨트롤（checkbox/radio/switch） 상태 — 네이티브 accessibilityState.checked로 */
+
   "aria-checked"?: boolean | "mixed";
-  /** 탭·옵션 등 선택 상태 — 네이티브 accessibilityState.selected로 */
+
   "aria-selected"?: boolean;
-  /** 아코디언·콤보박스 등 전개 상태 — 네이티브 accessibilityState.expanded로 */
+
   "aria-expanded"?: boolean;
   "aria-controls"?: string;
   "aria-labelledby"?: string;
-  /** 범위형 컨트롤（progressslider） 현재값 — 네이티브 accessibilityValue로 */
+
   "aria-valuenow"?: number;
   "aria-valuemin"?: number;
   "aria-valuemax"?: number;
-  /** 현재 위치 표시（pagination 등） — 웹 전용（RN 계약 없음, 시각 강조만） */
+
   "aria-current"?:
     | "page"
     | "step"
@@ -231,76 +147,47 @@ export type PressableProps = {
     | "date"
     | "time"
     | (boolean & {});
-  /** 보조 설명 연결（nativeID） — 웹 aria-describedby. 네이티브 미지원（한계） */
+
   "aria-describedby"?: string;
-  /** 오류 상태（form） — 웹 aria-invalid. RN 미지원（한계） */
+
   "aria-invalid"?: boolean;
-  /** 우클릭 메뉴（context-menu） — 웹 onContextMenu, 네이티브 onLongPress로 매핑 */
+
   onContextMenu?: () => void;
-  /** 길게 누르기 — 네이티브 onLongPress. 웹은 미지원（폐기） */
+
   onLongPress?: () => void;
-  /** 키 입력（웹 키보드 탐색조정） — 웹 onKeyDown. Android는 RN 0.88 코어의
-   *  W3C 규격 View onKeyDown에 연결한다(이슈 #19 — 하드웨어 키보드·DPAD,
-   *  focusable·포커스 필요, 수정자 4종은 네이티브 실측값). iOS는 폐기（한계） */
+
   onKeyDown?: (event: BridgeKeyEvent) => void;
-  /** 하드웨어 키 입력 포커스 가능 — Android Pressable focusable(이슈 #19),
-   *  웹 tabIndex 0/−1 치환(button은 기본 포커스 가능 — false로 탭 순서 제외) */
+
   focusable?: boolean;
-  /**
-   * 포인터（마우스·스타일러스） 진입（사이클 90） — 웹 onMouseEnter,
-   * 네이티브 RN Pressable onHoverIn（터치 기기에서는 발화하지 않는다）.
-   * 소비처: tooltip·hover-card·navigation-menu hover 진입, 서브메뉴 hover 개방.
-   */
+
   onHoverIn?: () => void;
-  /** 포인터 이탈 — 웹 onMouseLeave, 네이티브 RN Pressable onHoverOut */
+
   onHoverOut?: () => void;
-  /** 포커스 진입（무인자） — 웹 focus, 네이티브 RN Pressable onFocus.
-   *  소비처: tooltip 키보드 진입, 메뉴 키보드 탐색 항목 추적. */
+
   onFocus?: () => void;
-  /** 포커스 이탈（무인자） — 웹 blur, 네이티브 RN Pressable onBlur */
+
   onBlur?: () => void;
-  /** 크기 변화 통지（combobox 앵커 폭 등） — 웹 ResizeObserver, 네이티브 RN Pressable onLayout */
+
   onLayout?: (layout: BridgeLayout) => void;
-  /** RN 전용 터치 타깃 확장（px） — 웹에서는 무시 */
+
   hitSlop?: number | { top: number; bottom: number; left: number; right: number };
   nativeID?: string;
   testID?: string;
 };
 
-// ---------------------------------------------------------------------------
-// Slot — radix Slot(asChild) 상당의 prop 병합 프리미티브 계약.
-// 구현은 bridge/slot.ts 한 벌(플랫폼 API 무사용 — web.tsx·native.tsx가 그대로
-// 재노출한다. motion-registry 공유 모듈 패턴과 동일한 배치다).
-// 병합 규칙은 원본 radix mergeProps(@radix-ui/react-slot) 기준:
-// - className: cn(clsx + tailwind-merge) 병합 — 충돌 토큰은 자식 클래스가
-//   이긴다(원본 join도 slot 클래스를 먼저 놓아 같은 방향이다).
-// - style: 1depth 병합(같은 키는 자식 값 우선) — RN 스타일 배열은 평탄화 후
-//   병합한다(원본 radix는 웹 객체만 다루지만 브리지는 RN 스타일을 받는다).
-// - on[A-Z]* 핸들러(onPress·onLongPress·onHoverIn·onHoverOut·onFocus·onBlur·
-//   onKeyDown·onContextMenu 등): 양쪽 모두 있으면 자식 핸들러 먼저 실행 후
-//   slot 핸들러 실행(반환값은 자식 것). 한쪽만 있으면 그 값이 그대로 간다.
-// - aria-describedby: 양쪽 id 목록을 병합한다(툴팁 카드 연결 + 자체 설명 공존).
-// - 그 외 prop(disabled·nativeID·accessibilityLabel·aria-* 등): 자식이 키를
-//   가지면 자식 값이 이기고, 없으면 slot 값이 자식에게 전달된다.
-// - ref: slot에 온 ref와 자식 요소의 기존 ref를 모두 최종 노드에 연결한다.
-// 제약: children은 정확히 하나의 React 요소여야 하고(문자열·복수 요소는
-// radix 관례대로 에러), 브리지 관용 prop을 이해하는 컴포넌트(브리지
-// 프리미티브 소비자)여야 치환이 일어난다. radix Slottable(복수 children
-// 배열 재배치)은 미지원 — 본 라이브러리 소비처는 단일 요소 children뿐이다.
-// ---------------------------------------------------------------------------
 export type SlotProps = {
   children?: ReactNode;
 } & Record<string, unknown>;
 
 export type ImageProps = {
   className?: string;
-  /** 동적 값 전용 인라인 스타일（정적 스타일은 className 원칙） */
+
   style?: BridgeStyle;
-  /** 원격 이미지 — 네이티브 RN source, 웹 img src. require（） 정적 소스는 네이티브 전용 */
+
   source: { uri: string };
-  /** 웹 img alt — 네이티브에서는 accessibilityLabel로 전달된다 */
+
   alt?: string;
-  /** 로드 실패 콜백（무인자） — Avatar 등의 폴백 전환용 */
+
   onError?: () => void;
   accessibilityLabel?: string;
   nativeID?: string;
@@ -309,61 +196,48 @@ export type ImageProps = {
 
 export type TextInputProps = {
   className?: string;
-  /** 동적 값 전용 인라인 스타일（정적 스타일은 className 원칙） */
+
   style?: BridgeStyle;
   value?: string;
   defaultValue?: string;
   placeholder?: string;
-  /** RN 관용 — 웹에서는 readOnly로 치환 */
+
   editable?: boolean;
-  /** 웹 관용 disabled — 네이티브에서는 editable={false}로 치환된다（Input이 처리） */
+
   disabled?: boolean;
   onChangeText?: (text: string) => void;
   nativeID?: string;
   testID?: string;
-  /** 웹 DOM에서 aria-labelledby로 전달 — 입력창↔라벨 연결 */
+
   accessibilityLabelledBy?: string;
-  /** RN 0.7x+ 관용 — 웹 DOM에서도 동일 속성으로 전달된다 */
+
   "aria-disabled"?: boolean;
   autoFocus?: boolean;
   secureTextEntry?: boolean;
   inputMode?: "text" | "tel" | "url" | "email" | "numeric" | "decimal" | "search";
-  /** 자동완성 힌트 — 웹 input/textarea autoComplete 속성 그대로（HTML 토큰）,
-   *  네이티브 RN TextInput autoComplete（RN 관용 토큰）. "one-time-code"（SMS
-   *  OTP）·"email"·"username"·"current-password" 등 양측 공통 값을 권장한다. */
+
   autoComplete?: string;
-  /** 여러 줄 입력 — 네이티브 RN multiline, 웹은 <input> 대신 <textarea>로 렌더 */
+
   multiline?: boolean;
-  /** 최대 글자 수（input-otp 셀 등） — 양측 표준 속성 */
+
   maxLength?: number;
-  /** 키 입력（command 방향키엔터 등） — 웹 onKeyDown,
-   *  네이티브 onKeyPress（{key}）를 이 시그니처로 래핑（변환 불가 키는 미발화） */
+
   onKeyDown?: (event: BridgeKeyEvent) => void;
-  /** 오류 상태（form 연결） — 웹 aria-invalid. 네이티브 미지원（한계） */
+
   "aria-invalid"?: boolean;
-  /** 보조 설명 연결（오류 메시지 등, nativeID） — 웹 aria-describedby. 네이티브 미지원（한계） */
+
   "aria-describedby"?: string;
-  /** 입력 라벨 — 웹 input aria-label, 네이티브 TextInput accessibilityLabel
-   *  （T-2a 제기 — form 라벨 연결OTP 등） */
+
   accessibilityLabel?: string;
-  /** 포커스 진입（무인자） — input-otp 활성 셀input-group 포커스 링 등 */
+
   onFocus?: () => void;
-  /** 포커스 이탈（무인자） */
+
   onBlur?: () => void;
 };
 
-// ---------------------------------------------------------------------------
-// Refs — 컴포넌트가 실제로 호출하는 메서드만 계약으로 선언（구조적 타이핑）.
-// 네이티브 인스턴스（RN）와 DOM 요소（웹） 모두 이 인터페이스를 충족한다.
-// ---------------------------------------------------------------------------
-
 export interface BridgeViewRef {}
 export interface BridgeTextRef {}
-/**
- * 웹 DOM 요소는 focus()를 노출한다 — 메뉴 키보드 탐색（사이클 90）이 등록된
- * 항목으로 포커스를 옮기는 데 쓴다. 네이티브 RN 인스턴스는 이 메서드가
- * 없어（선택적 계약） 호출 가드로 no-op가 된다.
- */
+
 export interface BridgePressableRef {
   focus?(): void;
 }
@@ -373,85 +247,52 @@ export interface BridgeTextInputRef {
   blur(): void;
 }
 
-// ---------------------------------------------------------------------------
-// 사이클 40 신규 계약 — PortalScrollViewSelectmeasure드래그오버레이 훈
-// ---------------------------------------------------------------------------
-
-/** 웹 KeyboardEvent·Android View onKeyDown(RN 0.88 W3C 규격 — 이슈 #19)·
- *  RN TextInput onKeyPress의 공통 최소 형태（구조적 타이핑） */
 export type BridgeKeyEvent = {
   key: string;
   preventDefault: () => void;
-  /** 전파 중단（메뉴 카드 중첩 2중 처리 방지） — 웹 DOM KeyboardEvent와
-   *  Android View 경로(이슈 #19 — 항상 제공)가 주고, RN TextInput 래핑은
-   *  이 신호가 없어 생략된다(소비자는 호출 가드로 대응). */
+
   stopPropagation?: () => void;
-  /** 수정자 키 눌림（사이클 90 후속 — 메뉴 타입어헤드가 일반 글자만
-   *  받아들이게 하는 게이트용） — 웹은 DOM KeyboardEvent가 구조적으로
-   *  제공하고, Android View 경로(이슈 #19)는 네이티브 실측값을 주며,
-   *  RN TextInput 래핑은 key만 받아 생략한다(없으면 false 취급). */
+
   ctrlKey?: boolean;
   altKey?: boolean;
   metaKey?: boolean;
-  /** 시프트 눌림（사이클 101 후속 — ui-sdk 범위 선택 등 시프트 조합 전달,
-   *  이슈 #13）. 웹은 DOM KeyboardEvent가 구조적으로 제공하고, Android View
-   *  경로(이슈 #19)는 실측값을 준다. RN TextInput 래핑은 RN onKeyPress가
-   *  key만 주는 관계로 시프트된 글자 대문자에서 유도한다(CapsLock·자동
-   *  대문화 오탐, 이름키·기호 미탐의 근사 — ctrl·alt·meta는 이 신호조차
-   *  없어 생략과 다른 취급). */
+
   shiftKey?: boolean;
 };
 
-/** 포털 — 부모 레이아웃을 벗어난 최상위 렌더（dialogpopovertoast 등）.
- *  웹 createPortal（document.body） / 네이티브 RN Modal（transparent）. */
 export type PortalProps = {
   children?: ReactNode;
   visible: boolean;
-  /** 백드롭（배경） 눌림 — 웹 백드롭 onPointerDown, 네이티브 Modal 배경 Pressable.
-   *  기본 백드롭은 투명한 클릭 포착층（배경색은 backdropClassName으로） */
+
   onBackdropPress?: () => void;
-  /** 닫기 요청 — 네이티브 Modal onRequestClose（안드로이드 뒤로가기）, 웹은 사용측이 ESC와 연결 */
+
   onRequestClose?: () => void;
-  /** 백드롭 추가 클래스（z-index배경색 — 예: "z-40 bg-background/80"） */
+
   backdropClassName?: string;
-  /** 웹에서 바깥 눌림 포착을 투명 커버층 대신 문서 수준 pointerdown 리스너로
-   *  한다（기본 false — 커버층）. hover 진입 오버레이（tooltip·hover-card）용:
-   *  전체 화면 커버층이 열리는 순간 트리거의 hover를 가로채 mouseleave를
-   *  일으켜 카드가 스스로 닫히는 사이클 90 결함(F-4)의 대응이며, radix
-   *  DismissableLayer（문서 리스너） 방식의 근사다. 네이티브는 문서 리스너
-   *  계약이 없어 이 값을 무시하고 RN Modal 배경 Pressable(cover)로 동작한다. */
+
   dismissViaDocument?: boolean;
-  /** 문서 리스너의 바깥 판정에서 제외할 요소(앵커·트리거) ref — dismissViaDocument
-   *  전용. 이 요소 위의 pointerdown은 바깥 닫힘을 일으키지 않아 트리거 자신의
-   *  눌림 토글로 이어진다(열린 메뉴의 트리거 재클릭 = 닫힘 — 사이클 90 F-10).
-   *  ref 객체 또는 요소. 웹 전용(네이티브는 RN Modal이 담당). */
+
   dismissIgnoreRef?: unknown;
-  /** 모달성（기본 true） — 네이티브에서만 유효. true면 RN Modal（배경 조작 차단
-   *  OS 뒤로가기 연결）, false면 PortalHost(있으면 루트 오버레이 층, 없으면
-   *  절대 배치 View)로 렌더해 배경 조작을 막지 않는다（토스트 등 비모달 오버레이）.
-   *  웹 포털은 원래 비모달이라 무시된다. */
+
   modal?: boolean;
 };
 
-/** 루트 비모달 포털 호스트 — `Portal modal={false}`가 화면 최상위에 그려지도록
- *  `UnikitThemeProvider`가 자동으로 감싸며, 웹에서는 투명 래퍼다. */
 export type PortalHostProps = {
   children?: ReactNode;
 };
 
-/** 스크롤 영역 — 웹 overflow div / 네이티브 RN ScrollView. ref로 scrollTo. */
 export type ScrollViewProps = ViewProps & {
-  /** 스크롤 콘텐츠 컨테이너 클래스（패딩간격 등） */
+
   contentContainerClassName?: string;
-  /** 가로 축 스크롤（carousel 등） */
+
   horizontal?: boolean;
-  /** 페이지 단위 스냅（carousel） — 웹 scroll-snap, RN pagingEnabled */
+
   pagingEnabled?: boolean;
-  /** 스크롤 이벤트（오프셋·콘텐츠·뷰포트 크기 전달 — 무인자 핸들러도 호환） */
+
   onScroll?: (event: BridgeScrollEvent) => void;
-  /** RN 관용 — 웹 구현은 받아 두고 폐기（웹은 표준 키보드-스크롤 상호작용） */
+
   keyboardShouldPersistTaps?: "always" | "never" | "handled";
-  /** 〃 */
+
   keyboardDismissMode?: "none" | "on-drag" | "interactive";
 };
 
@@ -459,13 +300,8 @@ export interface BridgeScrollViewRef {
   scrollTo(options: { x?: number; y?: number; animated?: boolean }): void;
 }
 
-/** 기본 셀렉트 ref — 웹은 <select> DOM 요소(폼 리셋 수신 등 폼 연동),
- *  네이티브는 부착 대상이 없어 무시한다(리뷰 후속 — select.tsx 숨김 셀렉트의
- *  form.reset 역동기화용). */
 export interface BridgeSelectRef {}
 
-/** 기본 셀렉트 — 웹 <select>/<option>, 네이티브 Pressable 트리거+Modal 목록 폴백.
- *  커스텀 셀렉트（select 컴포넌트）는 이 프리미티브 대신 popover 기반 자체 구현. */
 export type SelectProps = {
   className?: string;
   value?: string;
@@ -473,21 +309,17 @@ export type SelectProps = {
   onValueChange?: (value: string) => void;
   children?: ReactNode;
   disabled?: boolean;
-  /** 웹 select aria-label / 네이티브 트리거 accessibilityLabel */
+
   accessibilityLabel?: string;
   nativeID?: string;
   testID?: string;
-  /** HTML 폼 제출 필드명（잔여 RN 갭 감사 후속） — 웹 <select name> 전달.
-   *  소비처: select.tsx가 radix 방식 sr-only 숨김 네이티브 셀렉트로 폼 제출에
-   *  쓴다. 네이티브는 HTML 폼 계약이 없어 폐기 */
+
   name?: string;
-  /** 필수 필드 — 웹 <select required>（브라우저 제약 검증 연동）. 네이티브 폐기 */
+
   required?: boolean;
-  /** 탭 순서 — 웹 <select tabIndex>. 소비처는 sr-only 숨김 셀렉트에 -1을
-   *  줘 커스텀 트리거와 탭 경쟁을 피한다. 네이티브 폐기 */
+
   tabIndex?: number;
-  /** 보조 기기 숨김 — 웹 aria-hidden. display:none은 제약 검증까지 막아
-   *  （HTML 표준） sr-only 시각 숨김과 함께 쓴다. 네이티브 폐기 */
+
   ariaHidden?: boolean;
 };
 
@@ -503,9 +335,6 @@ export type SelectOptGroupProps = {
   children?: ReactNode;
 };
 
-/** measure 콜백 — 뷰포트（창） 기준 좌표로 양측 동일 시맨틱.
- *  웹 getBoundingClientRect（이미 뷰포트 좌표） / RN ref.measure（pageX/pageY 창 기준）.
- *  오버레이 위치 계산（lib/overlay）이 소비한다 — fixed 배치와 정합（§2.1）. */
 export type MeasureCallback = (
   x: number,
   y: number,
@@ -515,23 +344,21 @@ export type MeasureCallback = (
   pageY: number,
 ) => void;
 
-/** ref를 측정하는 공통 함수 계약（웹네이티브 구현이 각각 export） */
 export type MeasureInWindow = (
   ref: unknown,
   callback: MeasureCallback,
 ) => void;
 
-/** 드래그 이동 이벤트 — 웹 PointerEventRN 제스처의 공통 형태 */
 export type BridgeDragEvent = {
-  /** 이동 중 절대（뷰포트） 좌표 */
+
   x: number;
   y: number;
-  /** 제스처 시작점 기준 누적 이동 */
+
   dx: number;
   dy: number;
-  /** 순시 X 속도（px/ms, 선택 — 웹/네이티브 제스처 속도 기반 닫기 판정용） */
+
   vx?: number;
-  /** 순시 Y 속도（px/ms, 선택） */
+
   vy?: number;
 };
 
@@ -542,78 +369,40 @@ export type UseDragOptions = {
 };
 
 export type UseDragResult = {
-  /** 뷰에 펼쳐 넣는 핸들러 세트（웹 포인터 이벤트 / RN PanResponder） */
+
   dragHandlers: Record<string, unknown>;
   dragging: boolean;
 };
 
-// ---------------------------------------------------------------------------
-// 오버레이 공통 훈 계약 — 웹은 DOM 구현, 네이티브는 no-op（RN Modal이 OS 수준으로
-// 처리: 포커스 이동화면 고정）. lib/overlay가 소비해 한 벌 소스를 유지한다.
-// ---------------------------------------------------------------------------
-
-/**
- * 오버레이 포커스 관리（42-design-plan §2.1）. active=true가 되면 target 내 첫
- * 포커서블로 포커스를 옮기고 Tab 순환을 target 안에 가두며, false에서
- * returnTo（트리거）로 포커스를 되돌린다. 웹 전용 구현.
- */
 export type UseOverlayFocus = (
   target: unknown,
   active: boolean,
   returnTo?: unknown,
 ) => void;
 
-/** ESC 닫기（웹 document keydown）. 네이티브는 no-op — Modal onRequestClose가 담당 */
 export type UseDismiss = (onDismiss: () => void, active: boolean) => void;
 
-/** 열림 중 재배치 신호（웹 scrollresize → listener 재호출）.
- *  네이티브는 no-op — Modal이 창 좌표 고정（한계 기록） */
 export type UseReposition = (listener: () => void, active: boolean) => void;
 
-/** 배경 스크롤 잠금（웹 body overflow hidden）. 네이티브는 no-op — Modal이 차단 */
 export type UseScrollLock = (active: boolean) => void;
 
-/** 뷰포트（창） 크기 — 웹 window.innerWidth/innerHeight, 네이티브
- *  Dimensions.get（"window"）. 오버레이 위치 클램프（lib/overlay）가 소비.
- *  SSR 등 창을 알 수 없으면 0을 반환한다（클램프 건너뜀）. */
 export type GetViewport = () => { width: number; height: number };
 
-// ---------------------------------------------------------------------------
-// 루프 애니메이션 래퍼 — 단일 소스 컴포넌트가 양쪽에서 같은 시각 효과를 갖게
-// 하는 계약. 컴포넌트는 (1) 웹용 web:animate-* 클래스와 (2) 이 래퍼를 함께
-// 쓴다 — 웹은 CSS keyframes가 효과를 담당해 래퍼가 투명(프래그먼트)하고,
-// 네이티브는 uniwind가 keyframes를 구동 못 해 래퍼의 RN Animated가 같은
-// 효과를 UI 스레드(useNativeDriver)로 구동한다. durationMs는 CSS 표준값과
-// 동일하게 맞춘다.
-// ---------------------------------------------------------------------------
-
-/** 무한 회전 래퍼 — 웹 animate-spin(1s linear) 대응. spinner·sonner loading. */
 export type LoopRotateProps = {
   children?: ReactNode;
-  /** 1회전 시간(ms) — CSS animate-spin 기본값 1000 */
+
   durationMs?: number;
 };
 
-/** 투명도 맥동 래퍼 — 웹 animate-pulse(2s, 50% opacity .5) 대응. skeleton·캐럿. */
 export type LoopPulseProps = {
   children?: ReactNode;
-  /** 1맥동 주기(ms) — CSS animate-pulse 기본값 2000 */
+
   durationMs?: number;
 };
 
-/**
- * 색 스킴을 스타일링 엔진에 반영한다（UnikitThemeProvider가 호출）.
- * - native.tsx → uniwind `Uniwind.setTheme（）`（native 표준 다이얼로그까지 동기）
- * - web.tsx → document.documentElement의 `.dark` 클래스 토글（표준 Tailwind dark 변형）
- */
 export type ApplyColorScheme = (colorScheme: BridgeColorScheme) => void;
 
-/** 현재 활성 색 스킴을 구독한다（UnikitThemeProvider 밖에서도 안전하게 동작）. */
 export type UseColorScheme = () => BridgeColorScheme;
-
-// ---------------------------------------------------------------------------
-// 유니버설 벡터 아이콘 타입 — lucide（웹 lucide-react / 네이티브 lucide-react-native）
-// ---------------------------------------------------------------------------
 
 export type IconProps = {
   className?: string;
@@ -626,46 +415,31 @@ export type IconProps = {
 
 export type IconComponent = (props: IconProps) => ReactElement | null;
 
-/**
- * 레이아웃 전이 애니메이션 함수 — 네이티브는 LayoutAnimation을 구동해
- * 토글/확장/탭 변경 시 부드러운 전이를 제공하고, 웹은 CSS transition이 처리해 no-op.
- */
 export type AnimateLayoutFn = () => void;
 
-// ---------------------------------------------------------------------------
-// 단일 import 원칙(AC-1) 확장 — 소비 화면 코드가 react-native를 직접 import하지
-// 않고 그룹 목록·앱 API를 쓰게 하는 계약. SectionList는 렌더 프리미티브
-// （웹 DOM 구현 / 네이티브 RN 재노출）, Platform·Dimensions·Share·
-// KeyboardAvoidingView는 앱 API（웹 폴백 / 네이티브 RN 재노출）.
-// ---------------------------------------------------------------------------
-
-/** SectionList 섹션 — 최소 계약. 항목 key는 keyExtractor, 섹션 key는 title 폴백. */
 export type SectionListSection<T = unknown> = {
   title?: string;
   data: readonly T[];
 };
 
-/** renderItem 정보 — RN SectionList 하위 집합. index는 섹션 내 위치. */
 export type SectionListRenderItemInfo<T> = {
   item: T;
   index: number;
   section: SectionListSection<T>;
 };
 
-/** List 계열 슬롯 — 요소 또는 프로퍼티 없는 컴포넌트(RN 관용의 실용 부분집합). */
 export type SectionListNode = ReactElement | ComponentType<Record<string, never>> | null;
 
-/** 그룹 목록 — 웹은 overflow div + 섹션 순회 렌더 / 네이티브 RN SectionList 재노출. */
 export type SectionListProps<T = unknown> = Omit<
   ScrollViewProps,
   "children" | "horizontal" | "pagingEnabled" | "onScroll"
 > & {
   sections: ReadonlyArray<SectionListSection<T>>;
   renderItem: (info: SectionListRenderItemInfo<T>) => ReactNode;
-  /** 항목 key — 미지정 시 index 폴백 */
+
   keyExtractor?: (item: T, index: number) => string;
   renderSectionHeader?: (info: { section: SectionListSection<T> }) => ReactNode;
-  /** 섹션 헤더 고정(기본 true) — 웹 position:sticky / RN 관용 그대로 */
+
   stickySectionHeadersEnabled?: boolean;
   ListHeaderComponent?: SectionListNode;
   ListEmptyComponent?: SectionListNode;
@@ -676,7 +450,6 @@ export type SectionListComponent = <T>(
   props: SectionListProps<T>,
 ) => ReactElement | null;
 
-/** Platform — 웹 {OS:"web"} / 네이티브 RN Platform 재노출. select는 OS 키 → default 순. */
 export type BridgePlatformOS = "ios" | "android" | "macos" | "windows" | "web";
 export type BridgePlatformSelectSpec<T> = Partial<
   Record<BridgePlatformOS | "native" | "default", T>
@@ -686,7 +459,6 @@ export type BridgePlatformStatic = {
   select<T>(spec: BridgePlatformSelectSpec<T>): T | undefined;
 };
 
-/** Dimensions — 웹 window/screen 치수 + resize 구독 / 네이티브 RN Dimensions 재노출. */
 export type BridgeDimensionsSnapshot = {
   width: number;
   height: number;
@@ -704,7 +476,6 @@ export type BridgeDimensions = {
   ): { remove(): void };
 };
 
-/** Share — 웹 navigator.share(미지원 환경은 dismissed로 해소) / 네이티브 RN Share 재노출. */
 export type BridgeShare = {
   share(
     content: { message?: string; url?: string; title?: string },
@@ -712,8 +483,6 @@ export type BridgeShare = {
   ): Promise<{ action: "shared" | "dismissed" }>;
 };
 
-/** 키보드 회피 — 웹은 투명 View(브라우저 가상 키보드-뷰포트가 회피를 담당) /
- *  네이티브 RN KeyboardAvoidingView 재노출. */
 export type KeyboardAvoidingViewProps = ViewProps & {
   behavior?: "height" | "position" | "padding";
   keyboardVerticalOffset?: number;
@@ -721,4 +490,3 @@ export type KeyboardAvoidingViewProps = ViewProps & {
 export type KeyboardAvoidingViewComponent = (
   props: KeyboardAvoidingViewProps,
 ) => ReactElement | null;
-
