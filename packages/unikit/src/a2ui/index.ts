@@ -13,9 +13,12 @@ export {
 } from "./functions";
 export {
   A2uiNodeView,
+  A2uiTextForeground,
+  A2uiTextForegroundContext,
   UnikitA2uiSurface,
   useA2uiSignal,
   useA2uiSurfaces,
+  useA2uiTextForeground,
 } from "./renderer";
 export {
   createA2uiProcessor,

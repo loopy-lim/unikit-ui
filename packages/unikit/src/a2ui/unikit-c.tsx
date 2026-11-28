@@ -48,7 +48,8 @@ import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from "../compone
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTrigger } from "../components/sheet";
 import { Sidebar, SidebarContent, SidebarInset, SidebarProvider, SidebarTrigger } from "../components/sidebar";
 import { Toaster, toast } from "../components/sonner";
-import { Tooltip, TooltipContent, TooltipTrigger } from "../components/tooltip";
+import { Tooltip, TooltipContent, TooltipTrigger, tooltipContentTextVariants } from "../components/tooltip";
+import { cn } from "../lib/utils";
 import {
   ActionSchema,
   ChildListSchema,
@@ -201,7 +202,9 @@ export function createUnikitTierCComponents(): UnikitA2uiComponent[] {
                   variant={item.destructive ? "destructive" : "default"}
                   onSelect={() => fire(context)}
                 >
-                  <Text className="text-sm text-foreground">{item.label}</Text>
+                  <Text className={cn("text-sm", item.destructive ? "text-destructive" : "text-foreground")}>
+                    {item.label}
+                  </Text>
                 </ContextMenuItem>
               ))}
             </ContextMenuContent>
@@ -298,7 +301,9 @@ export function createUnikitTierCComponents(): UnikitA2uiComponent[] {
                   variant={item.destructive ? "destructive" : "default"}
                   onSelect={() => fire(context)}
                 >
-                  <Text className="text-sm text-foreground">{item.label}</Text>
+                  <Text className={cn("text-sm", item.destructive ? "text-destructive" : "text-foreground")}>
+                    {item.label}
+                  </Text>
                 </DropdownMenuItem>
               ))}
             </DropdownMenuContent>
@@ -422,7 +427,9 @@ export function createUnikitTierCComponents(): UnikitA2uiComponent[] {
                       variant={item.destructive ? "destructive" : "default"}
                       onSelect={() => fire(context)}
                     >
-                      <Text className="text-sm text-foreground">{item.label}</Text>
+                      <Text className={cn("text-sm", item.destructive ? "text-destructive" : "text-foreground")}>
+                        {item.label}
+                      </Text>
                     </MenubarItem>
                   ))}
                 </MenubarContent>
@@ -714,7 +721,7 @@ export function createUnikitTierCComponents(): UnikitA2uiComponent[] {
         <Tooltip>
           <TooltipTrigger>{context.child("trigger")}</TooltipTrigger>
           <TooltipContent style={context.weightStyle()}>
-            <Text className="text-sm text-popover-foreground">{context.text("label")}</Text>
+            <Text className={tooltipContentTextVariants()}>{context.text("label")}</Text>
           </TooltipContent>
         </Tooltip>
       ),

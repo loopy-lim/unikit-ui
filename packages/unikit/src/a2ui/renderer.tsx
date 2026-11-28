@@ -1,4 +1,14 @@
-import { Component, type ReactNode, useCallback, useEffect, useMemo, useState, useSyncExternalStore } from "react";
+import {
+  Component,
+  createContext,
+  type ReactNode,
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useState,
+  useSyncExternalStore,
+} from "react";
 import {
   NodeResolver,
   ResolvedBinding,
@@ -16,6 +26,18 @@ import { Text, View } from "@unikit-bridge/ui/primitives";
 import { Skeleton } from "../components/skeleton";
 import type { A2uiProcessor } from "./runtime";
 import type { A2uiCheckState, A2uiViewContext, UnikitA2uiComponent } from "./types";
+
+export const A2uiTextForegroundContext = createContext<string | undefined>(undefined);
+
+export function A2uiTextForeground({ value, children }: { value: string; children: ReactNode }) {
+  return (
+    <A2uiTextForegroundContext.Provider value={value}>{children}</A2uiTextForegroundContext.Provider>
+  );
+}
+
+export function useA2uiTextForeground(): string | undefined {
+  return useContext(A2uiTextForegroundContext);
+}
 
 export function useA2uiSignal<T>(source: Signal<T>): T {
   const subscribe = useCallback(
@@ -92,6 +114,15 @@ function createViewContext(
     },
     child: (name) => context.render(context.childNode(name)),
     children: (name = "children") => context.childNodes(name).map((child) => context.render(child)),
+    childrenText: (name = "children") =>
+      context
+        .childNodes(name)
+        .map((child) => {
+          const value = unwrapProp((getValue(child.props) as Record<string, unknown> | undefined)?.text);
+          return typeof value === "string" ? value : "";
+        })
+        .filter(Boolean)
+        .join("\n"),
     render: (target) => (target ? <A2uiNodeView key={target.id} node={target} /> : null),
     weightStyle: () => {
       const weightValue = context.number("weight", 0);

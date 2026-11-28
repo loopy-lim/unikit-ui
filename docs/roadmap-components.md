@@ -113,6 +113,17 @@ shadcn/ui(new-york-v4)의 `registry:ui` 61종을 UniKit UI 유니버설(한 벌 
 
 **옵트인 계약** — chart·form 두 종은 `/a2ui/optional` 진입점의 `createUnikitCatalogWithExtras`로만 들어가요(form이 react-hook-form peer를 끌어당기고 chart는 react-native-svg peer라 기본 번들 오염 방지). 실증: 기본 진입점만 번들한 산물에 react-hook-form 심볼 부재, optional 포함 산물에만 존재(2026-11-28 bun build 실측).
 
+**전경색 계약(2026-11-28 수립)** — 유니킷 컴포넌트는 문자열 children만 variant별 전경 클래스로 감싸고 element children을 그대로 통과해요. A2UI 텍스트 노드는 `A2uiMarkdown`(마크다운 뷰)로 렌더되므로 진한 배경 컨테이너에 직접 넣으면 전경이 `text-foreground`로 고정되어 글자가 배경에 묻혔어요(bg-primary 위 text-foreground 실측 대비 1.05:1). 계약:
+
+- 렌더러가 `A2uiTextForegroundContext`·`A2uiTextForeground`·`useA2uiTextForeground`를 내보내고, `A2uiMarkdown`·`MarkdownLine`은 컨텍스트 전경을 우선 적용해요.
+- `Button` 뷰는 `buttonTextVariants({ variant })`(컴포넌트 cva 재사용)를 하위 텍스트에 공급해요.
+- `Tooltip` 뷰는 `tooltipContentTextVariants`(bg-foreground 배경용 text-background)를 써요.
+- `Bubble` 뷰는 `context.childrenText("children")`로 하위 Text 노드를 평문으로 추출해 `BubbleContent`의 variant별 전경을 그대로 받게 해요(BubbleContent 내부 Text에 View를 넣을 수 없는 RN 구조 제약도 함께 해결).
+- ContextMenu·DropdownMenu·Menubar의 destructive 항목은 `item.destructive ? "text-destructive" : "text-foreground"` 조건부 전경을 써요(RN은 CSS 상속이 없어 웹과 색이 갈라지는 불일치 해결).
+- 밝은/투명 배경 컨테이너(Card·Item·Empty·Message·Sheet·Dialog·Popover 등)는 `text-foreground` 짝이 유지돼요.
+- 회귀 방지: `test/a2ui-foreground.test.ts` 9건이 진한 배경 컨테이너(Button·BubbleContent·TooltipContent·AlertDialogAction)의 직접 child 렌더에 전경 공급 동반을 정적으로 검사해요.
+- 실측: 에뮬레이터(RN) + playwright(웹 정적 서빙) 모두 보내기·증감 버튼 17.72:1, 감소 버튼 13.73~14.61:1, 시뮬레이션 버튼 19.90:1로 WCAG AAA 충족.
+
 **축소 계약(미노출 프롭·기능)** — 직렬화가 안 되는 함수형 prop(onValueChange·렌더 프롭 등)은 전부 값 바인딩(`{"@path": ...}`) + action 치환으로 대체했어요. 그 외 계약상 노출하지 않은 것:
 
 - 미디어: Video·AudioPlayer는 콘텐츠 표시만 — 공식 v1.0 스키마가 url·posterUrl·weight뿐이라 자막·재생 제어 프롭 자체가 프로토콜에 없어요(재생 제어는 소비자 앱 계층 과제).
@@ -126,7 +137,7 @@ shadcn/ui(new-york-v4)의 `registry:ui` 61종을 UniKit UI 유니버설(한 벌 
 - sidebar: 접기/펼침은 내부 관리 — side·collapsible 등 레이아웃 변형 미노출.
 - breadcrumb: 이동(navigate) 미연결 — 링크 표시만(경로 이동은 액션으로 조립).
 
-**게이트(2026-11-28 실측)** — 워크스페이스 typecheck ✓ · audit:design 11/11 ✓ · bun test 117건(카탈로그 구성 4 + 런타임 혼합 서피스·Select 바인딩 환류 포함) ✓ · apps/web build(`/a2ui` 라우트) ✓ · expo export android + 소스맵 검증: lit 패키지 0소스·`@a2ui/react` 0소스·web_core는 헤드리스 영역만 ✓.
+**게이트(2026-11-28 실측)** — 워크스페이스 typecheck ✓ · audit:design 11/11 ✓ · bun test 126건(카탈로그 구성 4 + 런타임 혼합 서피스·Select 바인딩 환류 + 전경색 계약 9 포함) ✓ · apps/web build(`/a2ui` 라우트) ✓ · expo export android + 소스맵 검증: lit 패키지 0소스·`@a2ui/react` 0소스·web_core는 헤드리스 영역만 ✓.
 
 **데모** — apps/web `/a2ui`(서피스 재생·에이전트 업데이트 시뮬레이션·액션 로그·카탈로그 62종 rosters), apps/expo `/demo/a2ui`(같은 메시지로 네이티브 렌더).
 

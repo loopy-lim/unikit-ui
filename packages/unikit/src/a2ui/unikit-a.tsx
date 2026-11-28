@@ -230,7 +230,7 @@ export function createUnikitTierAComponents(): UnikitA2uiComponent[] {
             align={context.value("align") === "end" ? "end" : "start"}
             style={context.weightStyle()}
           >
-            <BubbleContent>{context.children("children")}</BubbleContent>
+            <BubbleContent>{context.childrenText("children")}</BubbleContent>
           </Bubble>
         </BubbleGroup>
       ),

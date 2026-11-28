@@ -1,7 +1,7 @@
 import { useMemo, useState } from "react";
 import { Image, Text, View, type ImageProps } from "@unikit-bridge/ui/primitives";
 
-import { Button } from "../components/button";
+import { Button, buttonTextVariants } from "../components/button";
 import { Card } from "../components/card";
 import { Checkbox } from "../components/checkbox";
 import { Input } from "../components/input";
@@ -12,6 +12,8 @@ import { Slider } from "../components/slider";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "../components/tabs";
 import { Textarea } from "../components/textarea";
 import { a2uiIcon } from "./icons";
+import { A2uiTextForeground, useA2uiTextForeground } from "./renderer";
+import { cn } from "../lib/utils";
 import type { ComponentNode } from "@a2ui/web_core";
 import type { UnikitA2uiComponent, UnikitView } from "./types";
 
@@ -78,19 +80,20 @@ function parseMarkdownInline(source: string): MarkdownSpan[] {
 }
 
 function MarkdownLine({ spans }: { spans: MarkdownSpan[] }) {
+  const fg = useA2uiTextForeground();
   return (
-    <Text className="text-sm leading-6 text-foreground">
+    <Text className={cn("text-sm leading-6", fg ?? "text-foreground")}>
       {spans.map((span, index) => (
         <Text
           key={index}
           className={
             span.code
-              ? "font-mono text-xs text-muted-foreground"
+              ? cn("font-mono text-xs", fg ?? "text-muted-foreground")
               : span.bold
-                ? "font-semibold text-foreground"
+                ? cn("font-semibold", fg ?? "text-foreground")
                 : span.italic
-                  ? "italic text-foreground"
-                  : undefined
+                  ? cn("italic", fg ?? "text-foreground")
+                  : fg
           }
         >
           {span.text}
@@ -132,17 +135,23 @@ export const a2uiTextView: UnikitView = (context) => (
   <A2uiMarkdown text={context.text("text")} />
 );
 
-export const a2uiButtonView: UnikitView = (context) => (
-  <Button
-    variant={BUTTON_VARIANT[context.value("variant") as keyof typeof BUTTON_VARIANT] ?? "secondary"}
-    size="default"
-    disabled={context.checks().valid === false}
-    onPress={() => void context.action("action")?.()}
-    style={context.weightStyle()}
-  >
-    {context.child("child")}
-  </Button>
-);
+export const a2uiButtonView: UnikitView = (context) => {
+  const variant =
+    BUTTON_VARIANT[context.value("variant") as keyof typeof BUTTON_VARIANT] ?? "secondary";
+  return (
+    <Button
+      variant={variant}
+      size="default"
+      disabled={context.checks().valid === false}
+      onPress={() => void context.action("action")?.()}
+      style={context.weightStyle()}
+    >
+      <A2uiTextForeground value={cn(buttonTextVariants({ variant }))}>
+        {context.child("child")}
+      </A2uiTextForeground>
+    </Button>
+  );
+};
 
 export const a2uiRowView: UnikitView = (context) => (
   <View

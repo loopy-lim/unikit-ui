@@ -19,6 +19,7 @@ export type A2uiViewContext = {
   childNodes(name: string): ComponentNode<UnikitA2uiComponent>[];
   child(name: string): ReactNode;
   children(name?: string): ReactNode;
+  childrenText(name?: string): string;
   render(node: ComponentNode<UnikitA2uiComponent> | undefined): ReactNode;
   weightStyle(): { flexGrow: number } | undefined;
   checks(): A2uiCheckState;
