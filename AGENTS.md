@@ -40,6 +40,7 @@ bun install                        # 최초 1회 (패키지 매니저는 bun만 
 bun run typecheck                  # 워크스페이스 전체 tsc --noEmit (루트에서)
 bun run audit:design               # 디자인 일관성 검사 11종(임의값 클래스·registry files 실재·WCAG 대비·브리지 flex 방향·주석 금지 등)
 bun run generate:design            # 토큰 변경 시에만: globals.css·registry theme·tokens.md 재생성
+bun run test:visual                # 시각 회귀 — 컴포넌트 페이지 63종 스크린샷을 CI와 동일한 Playwright 컨테이너에서 비교(도커·빌드 포함). 의도한 화면 변경은 cd apps/web && bun run test:visual:update로 베이스라인 재생성
 ```
 
 - MCP 서버 `@unikit-bridge/mcp`: 이 저장소가 아닌 제품군 포털 저장소(`../unikit`의 `packages/mcp`)에 살아요(scriptca·rustra까지 아우르는 제품군 서버). 이 저장소의 llms.txt·registry.json·컴포넌트 소스를 고치면 포털에서 `bun run sync:data`로 동봉 데이터(src/data.ts 생성물)를 재생성해야 해요.
@@ -49,6 +50,7 @@ bun run generate:design            # 토큰 변경 시에만: globals.css·regis
 - 모바일 에뮬레이터 실행: `cd packages/unikit && bun run build:editor` 후 `cd apps/mobile`의 `cd android && ./gradlew assembleDebug -PreactNativeArchitectures=x86_64` → `adb -s emulator-5554 install -r app/build/outputs/apk/debug/app-debug.apk` → Metro `bun x expo start --dev-client` + `adb -s emulator-5554 reverse tcp:8081 tcp:8081`. 주의: 폰 등 여러 기기가 붙어 있으면 `expo run:android`의 ANDROID_SERIAL 지정이 gradle 설치를 못 막아 실제 기기에 설치될 수 있다(2026-11-14 학습) — 빌드와 설치를 분리해 실행한다.
 
 - `audit:design`은 위반 1건이면 exit 1로 실패해요. 검사 (j)가 `src`·`registry`·`test`의 ts/tsx 주석 0건을 강제해요(생성물 editor-html.ts 제외 — 2026-11-28 주석 전면 소거).
+- 릴리스: 소비자 눈에 보이는 변경은 `packages/unikit/CHANGELOG.md`에 쌓아요(Keep a Changelog·한국어). 게시는 packages/unikit/package.json 버전 올리고 + CHANGELOG `[미게시]` 섹션을 버전·날짜로 확정해 커밋 → GitHub Release 태그(vX.Y.Z) 게시(publish.yml 참조).
 - 웹 데모 빌드 확인: `cd apps/web && bun run build`(prebuild가 `public/r/*.json` 정적 생성 + `output: "export"`). 레지스트리 확인: `bun x next dev -p 3000` 후 `/r/registry.json`. Cloudflare Pages 배포는 `apps/web/DEPLOY.md`.
 
 ## 컴포넌트 이식 규칙 9조 (shadcn → UniKit UI, docs/sdd/42-design-plan.md §3)

@@ -13,6 +13,10 @@ e2e-evidence/
 .next/
 out/
 
+# playwright 산출물(실패 diff·리포트) — 베이스라인 스냅샷은 추적한다
+test-results/
+playwright-report/
+
 # 웹 레지스트리 정적 산출(prebuild/predev 생성) — .gitkeep 만 추적
 apps/web/public/r/*
 !apps/web/public/r/.gitkeep

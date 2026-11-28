@@ -6,6 +6,7 @@
   "scripts": {
     "typecheck": "bun run --filter '*' typecheck",
     "test": "bun run --filter '@unikit-bridge/ui' test",
+    "test:visual": "bun run --filter '@unikit/web' test:visual",
     "generate:design": "bun run --filter '@unikit-bridge/ui' generate:design",
     "audit:design": "bun run --filter '@unikit-bridge/ui' audit:design",
     "expo": "cd apps/expo && bun x expo",

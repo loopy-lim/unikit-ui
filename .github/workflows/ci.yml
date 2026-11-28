@@ -71,3 +71,37 @@ jobs:
       - name: 네이티브 번들 컴파일 (Expo export — iOS/Hermes)
         working-directory: apps/expo
         run: bun x expo export --platform ios
+
+  # 시각 회귀 — 컴포넌트 페이지 63종 스크린샷을 커밋된 베이스라인과 비교한다.
+  # 렌더링 환경을 로컬과 동일하게 유지하려고 공식 Playwright 이미지 컨테이너에서
+  # 돌린다(브라우저 내장·폰트는 정적 export에 자체 호스팅). 베이스라인 갱신은
+  # apps/web의 bun run test:visual:update(같은 이미지로 재생성)만 인정한다.
+  visual:
+    runs-on: ubuntu-latest
+    container:
+      image: mcr.microsoft.com/playwright:v1.65.1-noble
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: oven-sh/setup-bun@v2
+
+      - name: 의존성 설치
+        run: bun install --frozen-lockfile
+
+      - name: 웹 빌드 (정적 export)
+        working-directory: apps/web
+        run: bun run build
+
+      - name: 시각 회귀 (Playwright 스크린샷 비교)
+        working-directory: apps/web
+        run: bun x playwright test
+
+      - name: 실패 시 diff 아티팩트 업로드
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: visual-diff
+          path: apps/web/test-results
+          retention-days: 7

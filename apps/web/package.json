@@ -9,6 +9,8 @@
     "prebuild": "bun run generate:registry",
     "build": "next build",
     "start": "bun x serve out",
+    "test:visual": "bash scripts/visual.sh",
+    "test:visual:update": "bash scripts/visual.sh --update",
     "typecheck": "next typegen && tsc --noEmit",
     "deploy": "bun x wrangler pages deploy out --project-name=unikit-ui --branch=main"
   },
@@ -28,6 +30,7 @@
     "shadcn": "^4.23.0"
   },
   "devDependencies": {
+    "@playwright/test": "1.65.1",
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
