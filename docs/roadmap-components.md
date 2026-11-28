@@ -105,6 +105,31 @@ shadcn/ui(new-york-v4)의 `registry:ui` 61종을 UniKit UI 유니버설(한 벌 
 - **scroll-area** — 커스텀 스크롤바를 웹에서 지원해요(2026-11-27): `BridgeScrollEvent` 백분율로 썸 크기·위치 계산, 원본 룩 트랙+썸, 스크롤 프레임마다 ScrollBar만 재렌더, 브라우저 바는 숨김. 네이티브는 RN ScrollView 인디케이터 API가 show/hide 불리언뿐이라 OS 기본 인디케이터 유지(커스텀 바 없음 — 문서화된 한계). 첫 스크롤 전 콘텐츠 크기 계약 부재로 썸은 첫 스크롤 이후 나타나요.
 - **combobox** — `onValueChange` 입력 시 자동 개방과 트리거/인풋 `onLayout` 폭 측정 기반 `ComboboxContent` `minWidth` 추종을 지원해요.
 
+## A2UI 렌더러 (2026-11-28 — docs/sdd/100-design-plan.md)
+
+에이전트→사용자 UI 프로토콜 [A2UI v1.0](https://a2ui.org) 메시지를 UniKit 62종으로 웹·RN 같은 코드로 렌더하는 계층이에요. `@a2ui/react` 없이 헤드리스 `@a2ui/web_core` 서브패스(processing·resolution·reactivity·catalog 영역)만으로 자체 렌더러를 구성했어요.
+
+**구성** — 진입점 4종(`@unikit-bridge/ui/a2ui`·`/a2ui/catalog-basic`·`/a2ui/optional`·`/a2ui/demo`). 유니킷 카탈로그는 직작 54종(표현 Tier A 18·제어 Tier B 18·오버레이·조합 Tier C 18)과 기본 카탈로그 재사용 6종(Button·Card·CheckBox·Divider·Slider·Tabs), A2UI 프리미티브 12종(Row·Column·Text·Image·Icon·Video·AudioPlayer·List·Modal·TextField·ChoicePicker·DateTimeInput)을 합친 72 엔트리예요. 기본 카탈로그 재선언 18종은 vendored 공식 catalog.json과 byte 패리티 테스트가 지켜요.
+
+**옵트인 계약** — chart·form 두 종은 `/a2ui/optional` 진입점의 `createUnikitCatalogWithExtras`로만 들어가요(form이 react-hook-form peer를 끌어당기고 chart는 react-native-svg peer라 기본 번들 오염 방지). 실증: 기본 진입점만 번들한 산물에 react-hook-form 심볼 부재, optional 포함 산물에만 존재(2026-11-28 bun build 실측).
+
+**축소 계약(미노출 프롭·기능)** — 직렬화가 안 되는 함수형 prop(onValueChange·렌더 프롭 등)은 전부 값 바인딩(`{"@path": ...}`) + action 치환으로 대체했어요. 그 외 계약상 노출하지 않은 것:
+
+- 미디어: Video·AudioPlayer는 콘텐츠 표시만 — 공식 v1.0 스키마가 url·posterUrl·weight뿐이라 자막·재생 제어 프롭 자체가 프로토콜에 없어요(재생 제어는 소비자 앱 계층 과제).
+- chart: line·bars 두 도형만 — 참조선·다중 y축·스택·파이 등 컴포넌트 쪽 고급 기능은 미노출.
+- calendar: 단일 날짜 ISO `YYYY-MM-DD`만 — multiple·range 모드, disabled 매처(DATE 배열·범위·요일), showOutsideDays 미노출.
+- carousel: 스와이프/스크롤 탐색만 — 이전/다음 버튼·페이지 인디케이터 미노출.
+- resizable: 정확히 2패널 고정 — 3패널 이상·중앙 핸들 외 변형 미노출.
+- sonner: title·description·variant·position 토스트만 — promise 로딩→성공/실패 전환, 액션 버튼 미노출.
+- editor-toolbar: formats 식별자 목록 전달 + 단일 onCommand 액션 — 서식 상태 역방향 표시 미지원.
+- command: shouldFilter·loop 등 동작 튜닝 프롭 미노출(자체 필터·탐색 기본값으로 동작).
+- sidebar: 접기/펼침은 내부 관리 — side·collapsible 등 레이아웃 변형 미노출.
+- breadcrumb: 이동(navigate) 미연결 — 링크 표시만(경로 이동은 액션으로 조립).
+
+**게이트(2026-11-28 실측)** — 워크스페이스 typecheck ✓ · audit:design 11/11 ✓ · bun test 117건(카탈로그 구성 4 + 런타임 혼합 서피스·Select 바인딩 환류 포함) ✓ · apps/web build(`/a2ui` 라우트) ✓ · expo export android + 소스맵 검증: lit 패키지 0소스·`@a2ui/react` 0소스·web_core는 헤드리스 영역만 ✓.
+
+**데모** — apps/web `/a2ui`(서피스 재생·에이전트 업데이트 시뮬레이션·액션 로그·카탈로그 62종 rosters), apps/expo `/demo/a2ui`(같은 메시지로 네이티브 렌더).
+
 ## 경쟁 현황 (2026-11-10 실측 — docs/sdd/51-research.md §4)
 
 | 항목 | shadcn/ui | Astryx | react-native-reusables | UniKit UI |

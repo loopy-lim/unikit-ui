@@ -92,6 +92,8 @@ export default function Home() {
 
 > npm `@unikit-bridge/ui` 0.5.0 ships all **62** components (61 barrel + `@unikit-bridge/ui/chart`) plus the `@unikit-bridge/ui/editor` engine entry point (web: tiptap directly, native: bundled WebView) and the `@unikit-bridge/ui/behaviors` interaction-hooks entry point. **Option 2 (registry copy)** still applies when you want to own and edit the component source — the editor entry point is npm-only, since its engine HTML bundle is a build artifact.
 
+**A2UI renderer** — `@unikit-bridge/ui/a2ui` renders [A2UI](https://a2ui.org) v1.0 agent messages with the same 62 components on web and React Native: `createA2uiProcessor` + `createUnikitCatalog` drive the headless `@a2ui/web_core` pipeline, `UnikitA2uiSurface` mounts the resolved tree. `@unikit-bridge/ui/a2ui/optional` opts into the `Chart` and `Form` components (pulls `react-hook-form`; the base entry stays free of it). Demo: `/a2ui` in the web app, `/demo/a2ui` in the Expo app.
+
 **Option 2 — source copy (summary)**
 
 ```bash
@@ -157,4 +159,5 @@ Both demos render the same screens via `@unikit-bridge/ui`.
 
 - **Native on device** — CI covers web / bundle builds. Use [docs/expo-go.md](docs/expo-go.md) for hardware.
 - **Unsupported behaviors** — overlay exit animations (enter animations supported on web), native hover open, chart responsive/dark, etc. See [docs/roadmap-components.md](docs/roadmap-components.md).
+- **A2UI** — media components (`Video` · `AudioPlayer`) render content without captions or transport controls; `Chart` covers `line` · `bars` only; `Calendar` exposes single-date ISO selection. Function-valued props serialize poorly, so catalog contracts replace them with value bindings + actions. Details in [docs/roadmap-components.md](docs/roadmap-components.md) «A2UI 렌더러».
 - **Icon peers** — web `lucide-react`, native `lucide-react-native` (bridged). Components never import Lucide directly.

@@ -16,6 +16,7 @@ unikit-ui/  (bun 워크스페이스: apps/*, packages/*, packages/unikit/editor-
 │   ├── src/chart/              # 차트 렌더러(web.tsx·native.tsx·types.ts) — @unikit-bridge/ui/chart 진입점
 │   ├── src/editor/             # 마크다운 에디터 엔진(web.tsx·native.tsx·types.ts·colors.ts) — @unikit-bridge/ui/editor 진입점(npm 전용, 배럴·registry 미등록)
 │   ├── src/behaviors/          # 행동 훈 재노출(index.ts) + ui-sdk 계열 4종(ui-sdk.ts 순수 헬퍼·ui-sdk-dom.ts position() 어댑터·ui-sdk-renderer.ts 파트 렌더러 코어·ui-sdk-agent.ts 에이전트 브리지 가상 DOM) — @unikit-bridge/ui/behaviors* 진입점(npm 전용, 배럴·registry 미등록)
+│   ├── src/a2ui/               # A2UI v1.0 렌더러(schemas·functions·runtime·renderer·views·unikit-a/b/c·views-optional·catalog·catalog-basic·icons·demo) — @unikit-bridge/ui/a2ui* 진입점 4종(npm 전용, 배럴·registry 미등록). 헤드리스 @a2ui/web_core 서브패스만 사용(lit·DOM 포함 경로 import 금지)
 │   ├── src/lib/overlay.tsx     # 통합 오버레이 훈(포털·백드롭·포커스 관리·앵커 위치 계산)
 │   ├── src/lib/utils.ts        # cn(clsx + tailwind-merge)
 │   ├── src/theme/              # tokens.ts(디자인 토큰 단일 출처)·Provider
