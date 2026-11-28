@@ -115,7 +115,7 @@ bunx shadcn@latest add https://ui.ll3.kr/r/button.json https://ui.ll3.kr/r/card.
 
 > **shadcn CLI 4.23 동작 참고** 세 가지:
 > - `lib/utils.ts`는 CLI가 특수 취급해요. `add`가 `lib/utils.ts`를 "이미 존재한다"며 건너뛰는 출력이 나오는데, init이 만든 표준 cn(`export { cn } from "cn"`)이 그대로 쓰인다는 뜻이에요. UniKit UI 컴포넌트가 쓰는 `cn`과 기능이 같으니 그대로 두면 됩니다.
-> - 복사된 컴포넌트 파일에서 원본 소스의 앞부분 주석은 CLI가 제거해요. 기능에는 영향이 없어요.
+> - 복사되는 컴포넌트 소스에는 주석이 없어요(2026-11-28 전면 소거 — 원본부터 무주석이라 CLI 제거 여부와 무관해요).
 > - 오버레이·메뉴 계열 컴포넌트(dialog·popover·select·dropdown-menu 등)는 lib 의존(`overlay`·`menu-nav`)을 가져요. 컴포넌트 하나를 `add`하면 이 lib 파일들이 자동으로 같이 `lib/`에 복사돼요.
 
 ### 3단계 — 소비자 프로젝트 필수 설정

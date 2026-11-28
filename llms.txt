@@ -22,7 +22,7 @@
 - hover 개방은 웹 전용(터치는 눌림 폴백). select·메뉴 계열은 웹에서 화살표키·Home/End·타입어헤드 지원, Android는 `enableKeyEvents` 활성화 시 `focusable`+`Enter`/`Space` 항목 활성화까지 동작해요(iOS 하드웨어 키보드 탐색은 RN 코어 계약 부재로 미지원). asChild는 브리지 `Slot`으로 popover·tooltip·hover-card 트리거와 sidebar 일부를 지원해요.
 - chart: 유동 폭·높이(상위 박스 기준 `style` 퍼센트), 참조선·다중 y축·스택 막대·파이/도넛·레이더·브러시·드래그 줌을 지원해요(잔여: 시리즈 애니메이션·라인/영역 스택·휠 줌). 시리즈 색은 소비자 앱의 `--chart-1..5` 토큰.
 - editor(MarkdownEditor): 네이티브는 WebView 경유(tiptap이 DOM 전용). 확장 구성 고정(소비자 확장 주입 미지원).
-- 미지원 기능 로드맵: `docs/roadmap-components.md`. 각 컴포넌트 소스 머리 주석에 포팅 판단·한계가 기록돼 있어요.
+- 미지원 기능 로드맵: `docs/roadmap-components.md`(머리 주석 "로드맵"의 집성 — 소스는 2026-11-28 전면 무주석). 포팅 판단·한계는 `docs/roadmap-components.md`와 `docs/sdd/`가 근거예요.
 - @ui-sdk/core 53종 카탈로그(패밀리 의존·이중 유지 35종·기기 실증 12종): `docs/ui-sdk-catalog.md` — 단일 출처는 `/behaviors/ui-sdk-catalog`이고 `bun run probe:ui-sdk`가 매 실행마다 실물 패키지와 대조해요.
 
 ## 소비 방식

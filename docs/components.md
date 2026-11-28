@@ -1,6 +1,6 @@
 # UniKit UI 컴포넌트 사용법
 
-UniKit UI의 컴포넌트 62종(기초 5종 Button·Card·Input·Label·Badge + shadcn 카탈로그 1차 23종 + 2차 33종 + 자작 EditorToolbar)과 테마를 다루는 법을 정리했어요. 모든 내용은 실제 소스(`packages/unikit/src/`)와 쇼케이스(`apps/expo/components/showcase/`) 기준이에요. 기초 5종과 1차 23종은 아래에 상세(Props 표·변형)를 적었고, 2차 33종(2026-11-10 완료)은 계열별 표로 각 1줄 요점만 적어요 — 상세 포팅 판단(원본 대비 차이·미지원 항목)은 각 소스 파일의 머리 주석에 있어요.
+UniKit UI의 컴포넌트 62종(기초 5종 Button·Card·Input·Label·Badge + shadcn 카탈로그 1차 23종 + 2차 33종 + 자작 EditorToolbar)과 테마를 다루는 법을 정리했어요. 모든 내용은 실제 소스(`packages/unikit/src/`)와 쇼케이스(`apps/expo/components/showcase/`) 기준이에요. 기초 5종과 1차 23종은 아래에 상세(Props 표·변형)를 적었고, 2차 33종(2026-11-10 완료)은 계열별 표로 각 1줄 요점만 적어요 — 상세 포팅 판단(원본 대비 차이·미지원 항목)은 [roadmap-components.md](roadmap-components.md)와 docs/sdd, 그리고 각 컴포넌트 도입 커밋에 남아 있어요(2026-11-28 주석 전면 소거 전까지는 소스 머리 주석에 있었어요).
 
 ## import 방법
 
@@ -306,7 +306,7 @@ import { Badge } from "@unikit-bridge/ui";   // 복사본이면 "@/components/un
 
 ## shadcn 카탈로그 1차 — 23종 추가 컴포넌트
 
-shadcn/ui(new-york-v4)의 컴포넌트를 UniKit UI 유니버설(한 벌 소스 → 웹·네이티브 동일 렌더)로 이식한 첫 배치예요. 전부 npm 패키지(`@unikit-bridge/ui`)와 레지스트리(shadcn CLI `add`) 양쪽에서 동일하게 제공돼요. 각 컴포넌트의 상세 포팅 판단은 소스 파일 머리 주석에 적혀 있어요.
+shadcn/ui(new-york-v4)의 컴포넌트를 UniKit UI 유니버설(한 벌 소스 → 웹·네이티브 동일 렌더)로 이식한 첫 배치예요. 전부 npm 패키지(`@unikit-bridge/ui`)와 레지스트리(shadcn CLI `add`) 양쪽에서 동일하게 제공돼요. 각 컴포넌트의 상세 포팅 판단은 [roadmap-components.md](roadmap-components.md)와 docs/sdd에 있어요(소스는 무주석 — 2026-11-28 전면 소거).
 
 공통 사항(아래 표의 컴포넌트 전부):
 
@@ -576,7 +576,7 @@ UniKit 컴포넌트의 상호작용 골격을 조립용으로 재노출하는 **
 | 메뉴 탐색 | `useMenuNav` · `composeMenuNavKeyDown` · `useMenuItemRef` · `composeMenuItemHoverIn` · `composeMenuItemFocus` · `useMenuNavContext` | 방향키·Home/End 탐색, 서브메뉴 개방/복귀, 타입어헤드(radix `getNextMatch` 이식) |
 | 브리지 훅 | `useDrag` · `useOverlayFocus` · `useDismiss` · `useReposition` · `useScrollLock` | 드래그(웹 Pointer Events/RN PanResponder), 포커스 이동·트랩·복귀, 바깥 눌림·ESC 닫기, 스크롤·리사이즈 재계산, 배경 스크롤 잠금 |
 
-한계도 원본과 같아요 — 네이티브 카드 키보드 탐색은 RN View에 키 이벤트가 없어 미지원이에요(웹만). 계약 상세는 `packages/unikit/src/lib/overlay.tsx`·`menu-nav.tsx`·`src/bridge` 머리 주석에 있어요.
+한계도 원본과 같아요 — 네이티브 카드 키보드 탐색은 RN View에 키 이벤트가 없어 미지원이에요(웹만). 계약 상세는 `packages/unikit/src/lib/overlay.tsx`·`menu-nav.tsx`·`src/bridge` 소스와 docs/sdd(100 시리즈), 그리고 도입 커밋 히스토리에 있어요(구 머리 주석 기록 — 2026-11-28 소거).
 
 ---
 

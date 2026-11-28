@@ -38,7 +38,7 @@ unikit-ui/  (bun 워크스페이스: apps/*, packages/*, packages/unikit/editor-
 ```bash
 bun install                        # 최초 1회 (패키지 매니저는 bun만 — pnpm 금지)
 bun run typecheck                  # 워크스페이스 전체 tsc --noEmit (루트에서)
-bun run audit:design               # 디자인 일관성 검사 10종(임의값 클래스·registry files 실재·WCAG 대비·브리지 flex 방향 등)
+bun run audit:design               # 디자인 일관성 검사 11종(임의값 클래스·registry files 실재·WCAG 대비·브리지 flex 방향·주석 금지 등)
 bun run generate:design            # 토큰 변경 시에만: globals.css·registry theme·tokens.md 재생성
 ```
 
@@ -48,7 +48,7 @@ bun run generate:design            # 토큰 변경 시에만: globals.css·regis
 - 에디터 번들 재생성: `packages/unikit`의 `bun run build:editor`(editor-web-view 빌드 → dist/index.html을 src/editor/editor-html.ts로 인라인 — 생성물이므로 직접 편집 금지). apps/mobile의 `build:editor`는 이 명령의 alias예요.
 - 모바일 에뮬레이터 실행: `cd packages/unikit && bun run build:editor` 후 `cd apps/mobile`의 `cd android && ./gradlew assembleDebug -PreactNativeArchitectures=x86_64` → `adb -s emulator-5554 install -r app/build/outputs/apk/debug/app-debug.apk` → Metro `bun x expo start --dev-client` + `adb -s emulator-5554 reverse tcp:8081 tcp:8081`. 주의: 폰 등 여러 기기가 붙어 있으면 `expo run:android`의 ANDROID_SERIAL 지정이 gradle 설치를 못 막아 실제 기기에 설치될 수 있다(2026-11-14 학습) — 빌드와 설치를 분리해 실행한다.
 
-- `audit:design`은 위반 1건이면 exit 1로 실패해요. 머리 주석의 원본 클래스 인용은 주석 라인 제외로 스캔해요(오탐 방지).
+- `audit:design`은 위반 1건이면 exit 1로 실패해요. 검사 (j)가 `src`·`registry`·`test`의 ts/tsx 주석 0건을 강제해요(생성물 editor-html.ts 제외 — 2026-11-28 주석 전면 소거).
 - 웹 데모 빌드 확인: `cd apps/web && bun run build`(prebuild가 `public/r/*.json` 정적 생성 + `output: "export"`). 레지스트리 확인: `bun x next dev -p 3000` 후 `/r/registry.json`. Cloudflare Pages 배포는 `apps/web/DEPLOY.md`.
 
 ## 컴포넌트 이식 규칙 9조 (shadcn → UniKit UI, docs/sdd/42-design-plan.md §3)
@@ -62,12 +62,13 @@ shadcn 컴포넌트를 이식·수정할 때 지키는 공통 규칙이에요. �
 5. **`data-[state=…]`·`group`/`peer` 셀렉터는 조건부 클래스 전개**로 치환해요(네이티브에 data 속성·셀렉터가 없어요).
 6. **전경색은 내부 Text에 이중 지정**해요 — 배경·테두리는 컨테이너(View/Pressable), 글자색은 내부 Text. RN에서는 컨테이너 글자색이 자식으로 상속되지 않아요.
 7. **웹 전용 효과는 `web:` 접두 클래스**로만 넣어요(호버 등). 단, 루프 애니메이션(회전·펄스)은 `web:animate-*` 클래스와 함께 브리지 `LoopRotate`/`LoopPulse` 프리미티브로 감싸 네이티브에서도 RN Animated(UI 스레드)로 구동해요.
-8. **children에 문자열을 권장하는 곳은 주석으로 표기**해요(내부 Text 래핑이 있는 경우).
-9. **파일 머리 주석에 포팅 판단을 기록**해요 — 원본 대비 차이·이유·미지원(로드맵) 항목.
+8. **children에 문자열을 권장하는 곳은 [docs/components.md](docs/components.md) 표에 병기**해요(내부 Text 래핑이 있는 경우 — 신규 이식·변경 시 표에 반영, 표 미기재 항목은 소스 구조가 근거).
+9. **포팅 판단(원본 대비 차이·이유·미지원 로드맵)은 커밋 메시지·[docs/sdd](docs/sdd)·[docs/roadmap-components.md](docs/roadmap-components.md)에 기록**해요 — 소스에는 주석을 남기지 않아요.
 
 보조 규칙(같은 맥락에서 확립):
 
 - **임의값 클래스 금지** — `w-[340px]`·`max-w-[calc(...)]` 등 `[...]` 값은 audit (c) 실패. 동적 값은 `style` prop(동적 style 계약)으로.
+- **주석 금지** — `src`·`registry`·`test`의 ts/tsx에는 어떤 주석도 쓰지 않아요(2026-11-28 전면 소거). 코드의 의미는 이름·타입·구조로 표현하고, 설계 근거는 docs/sdd와 커밋 메시지로 남겨요. audit (j)가 강제해요.
 - **`dark:` 변형 금지** — 다크 모드는 토큰 값 전환으로만(사이클 40 이식분부터 전면 제거 관행).
 - **아이콘은 lucide（브리지 경유）** — 컴포넌트는 `@unikit-bridge/ui/primitives`의 `*Icon`만 써요. 웹은 `lucide-react`, 네이티브는 `lucide-react-native`를 브리지가 감싸요. 컴포넌트·registry에서 lucide를 직접 import하지 않아요.
 - **새 의존·peer는 최소화** — registry `dependencies`는 실제 import하는 것만, 선택 연동은 `peerDependencies`(form→react-hook-form, chart→react-native-svg, 아이콘→lucide-react / lucide-react-native).
@@ -93,5 +94,5 @@ shadcn 컴포넌트를 이식·수정할 때 지키는 공통 규칙이에요. �
 
 - 문서는 한국어가 기본이에요. 예외: 루트 [README.md](README.md)(영어 우선, 한국어는 [README.ko.md](README.ko.md))·[packages/unikit/README.md](packages/unikit/README.md)(영어)·[docs/install.en.md](docs/install.en.md). 한국어 문체는 해요체 설명체를 따라요.
 - 기존 문서를 고칠 때는 내용을 지우지 말고 병합해요(보존 원칙). 수치·날짜는 저장소에서 재검증 후 기입해요.
-- 컴포넌트 수·상태 표기의 기준: `src/components`(62종)·`registry/ui`(62종)·`registry.json`(71 아이템 = UI 62 + lib 3(utils·overlay·menu-nav) + theme 4 + style 2(animations·editor-prose)). 미지원 기능은 각 컴포넌트 머리 주석의 "로드맵" 기록이 근거예요.
+- 컴포넌트 수·상태 표기의 기준: `src/components`(62종)·`registry/ui`(62종)·`registry.json`(71 아이템 = UI 62 + lib 3(utils·overlay·menu-nav) + theme 4 + style 2(animations·editor-prose)). 미지원 기능은 [docs/roadmap-components.md](docs/roadmap-components.md)(구 머리 주석 "로드맵"의 집성)과 docs/sdd가 근거예요(2026-11-28 주석 소거 이전 커밋 히스토리에 원본 기록이 남아 있어요).
 - 사람용 설치·소비 상세는 [docs/install.md](docs/install.md), 루트 [README.md](README.md)(영)·[README.ko.md](README.ko.md)(한)는 빠른 시작·요약만 담아요.

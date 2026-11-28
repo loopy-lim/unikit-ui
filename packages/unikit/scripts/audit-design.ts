@@ -1,7 +1,7 @@
 /**
  * audit:design — 디자인 일관성 자동 감사 (T-14, AC-10·AC-12(f) / 3차 T-18, AC-13·AC-15 확장).
  *
- * 요구 기준 9종 (a)~(i) / 내부 검사 10건((a1)(a2) 분해). 위반 1건 이상이면 exit 1.
+ * 요구 기준 10종 (a)~(j) / 내부 검사 11건((a1)(a2) 분해). 위반 1건 이상이면 exit 1.
  * 생성 기준 포맷터·THEME_ITEMS·VALUE_SOURCES·대비 산수는 generate-design.ts와 공유한다
  * (설계 원칙: 검사는 생성의 역). (a2)는 type 기반으로 theme 항목 전수(기본+프리셋 3)를
  * 값·형식·WCAG 대비(라이트 ≥4.5:1)로 검사한다.
@@ -10,6 +10,7 @@
  */
 import { existsSync, readFileSync, readdirSync, statSync } from "node:fs";
 import path from "node:path";
+import ts from "typescript";
 
 import { lightTokens } from "../src/theme/tokens";
 import {
@@ -57,6 +58,46 @@ const rel = (p: string) => path.relative(REPO, p);
 function lines(p: string) {
   const text = readFileSync(p, "utf8");
   return { text, rows: text.split("\n") };
+}
+
+/** 파서 기반 주석 범위 수집 — 토큰 사이 trivia 갭 전수(문자열·템플릿·JSX 텍스트 내부는 미포함). (j)용. */
+function collectCommentRanges(text: string, isTsx: boolean): Array<[number, number]> {
+  const sf = ts.createSourceFile(
+    "f." + (isTsx ? "tsx" : "ts"),
+    text,
+    ts.ScriptTarget.Latest,
+    true,
+    isTsx ? ts.ScriptKind.TSX : ts.ScriptKind.TS,
+  );
+  const seen = new Set<string>();
+  const ranges: Array<[number, number]> = [];
+  const takeFrom = (offset: number) => {
+    const add = (r: ts.CommentRange) => {
+      const key = `${r.pos}:${r.end}`;
+      if (!seen.has(key) && r.pos < r.end) {
+        seen.add(key);
+        ranges.push([r.pos, r.end]);
+      }
+    };
+    const trail = ts.getTrailingCommentRanges(text, offset) ?? [];
+    trail.forEach(add);
+    const next = trail.length ? trail[trail.length - 1].end : offset;
+    (ts.getLeadingCommentRanges(text, next) ?? []).forEach(add);
+  };
+  const visit = (node: ts.Node) => {
+    takeFrom(node.pos);
+    const children = node.getChildren(sf);
+    let prevEnd = -1;
+    for (const child of children) {
+      if (prevEnd >= 0 && child.pos > prevEnd) takeFrom(prevEnd);
+      prevEnd = child.end;
+      visit(child);
+    }
+    if (prevEnd >= 0 && node.end > prevEnd) takeFrom(prevEnd);
+  };
+  visit(sf);
+  takeFrom(sf.end);
+  return ranges;
 }
 
 function scanPattern(files: string[], pattern: RegExp, label: string): Violation[] {
@@ -413,5 +454,24 @@ function scanPattern(files: string[], pattern: RegExp, label: string): Violation
   }
 }
 
-console.log(failures.length === 0 ? "\naudit:design PASS — 10/10 검사 통과" : `\naudit:design FAIL — 위반: ${failures.join(", ")}`);
+// ── (j) 주석 0건 (src + registry + test ts/tsx — 생성물 editor-html.ts 제외) ──
+{
+  const files = [
+    ...walk(path.join(PKG, "src"), [".ts", ".tsx"]),
+    ...walk(path.join(PKG, "registry"), [".ts", ".tsx"]),
+    ...walk(path.join(PKG, "test"), [".ts", ".tsx"]),
+  ].filter((f) => !f.endsWith("editor-html.ts"));
+  const vs: Violation[] = [];
+  for (const f of files) {
+    const text = readFileSync(f, "utf8");
+    for (const [pos, end] of collectCommentRanges(text, f.endsWith(".tsx"))) {
+      const line = text.slice(0, pos).split("\n").length;
+      const preview = text.slice(pos, Math.min(end, pos + 60)).replace(/\s+/g, " ");
+      vs.push({ file: rel(f), line, detail: `주석: ${preview}` });
+    }
+  }
+  report("j", vs.length === 0, `주석 0건 (대상 ${files.length}파일, 생성물 1 제외)`, vs);
+}
+
+console.log(failures.length === 0 ? "\naudit:design PASS — 11/11 검사 통과" : `\naudit:design FAIL — 위반: ${failures.join(", ")}`);
 process.exit(failures.length === 0 ? 0 : 1);

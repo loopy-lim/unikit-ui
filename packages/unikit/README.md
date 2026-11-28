@@ -118,7 +118,7 @@ The full shadcn/ui catalog (new-york-v4, 61 items) ported to one source that ren
 - **Messaging (5)** — `Message` · `MessageScroller` · `Bubble` · `Attachment` · `Marker`
 - **Navigation & layout (15)** — `Tabs` · `Accordion` · `Collapsible` · `Breadcrumb` · `Pagination` · `Progress` · `Separator` · `AspectRatio` · `Kbd` · `Field` · `Item` · `ButtonGroup` · `ScrollArea` · `Resizable` · `Direction`
 
-All components accept a `className`, forward refs, and forward variant helpers (`buttonVariants`, `cardVariants`, …) for composition. Per-component props, variants and accessibility behavior are documented in [`docs/components.md`](../../docs/components.md) (Korean); porting decisions are recorded in each source file's header comment.
+All components accept a `className`, forward refs, and forward variant helpers (`buttonVariants`, `cardVariants`, …) for composition. Per-component props, variants and accessibility behavior are documented in [`docs/components.md`](../../docs/components.md) (Korean); porting decisions are recorded in [`docs/roadmap-components.md`](../../docs/roadmap-components.md), `docs/sdd/`, and the introducing commits (sources are comment-free since 2026-11-28).
 
 ### Chart — separate entry point
 
