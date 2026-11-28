@@ -133,6 +133,24 @@ export default function DemoHome() {
             </Text>
             <Card className="py-2">
               <ItemGroup>
+                <Link href="/demo/a2ui" asChild>
+                  <Pressable className="active:opacity-70">
+                    <Item>
+                      <ItemMedia className="flex size-9 items-center justify-center rounded-md bg-muted">
+                        <Layers size={16} color={icons.muted} />
+                      </ItemMedia>
+                      <ItemContent>
+                        <ItemTitle>A2UI 렌더러 데모</ItemTitle>
+                        <ItemDescription>
+                          에이전트 메시지를 UniKit 62종으로 렌더링하는 서피스예요.
+                        </ItemDescription>
+                      </ItemContent>
+                      <ItemActions>
+                        <ChevronRight size={15} color={icons.muted} />
+                      </ItemActions>
+                    </Item>
+                  </Pressable>
+                </Link>
                 {DEMO_RECENTS.map((r) => (
                   <Link
                     key={r.title}
