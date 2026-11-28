@@ -2,12 +2,11 @@ import { Catalog, type FunctionImplementation } from "@a2ui/web_core";
 
 import { createA2uiBasicComponents } from "./catalog-basic";
 import { createA2uiBasicFunctions } from "./functions";
-import type { A2uiExtras, UnikitA2uiComponent, UnikitCatalogOptions } from "./types";
+import type { UnikitA2uiComponent, UnikitCatalogOptions } from "./types";
 import { UNIKIT_CATALOG_ID } from "./types";
 import { createUnikitTierAComponents } from "./unikit-a";
 import { createUnikitTierBComponents } from "./unikit-b";
 import { createUnikitTierCComponents } from "./unikit-c";
-import { createUnikitOptionalComponents } from "./views-optional";
 
 const UNIKIT_OVERLAP_SLUGS: Record<string, string> = {
   Button: "button",
@@ -30,30 +29,28 @@ A2UI 기본 프리미티브(Row, Column, Text, Image, Icon, Video, AudioPlayer, 
 
 표·목록 내용은 items 또는 children 배열로 주고, 오버레이는 trigger에 다른 컴포넌트 ID를 지정해요. 사용자 입력이 데이터 모델로 흐르는 컴포넌트(Input·Select·CheckBox 등)는 value에 바인딩을 걸고 변경 시 action을 발화해요.`;
 
-export function createUnikitCatalog(
-  options?: UnikitCatalogOptions,
-): Catalog<UnikitA2uiComponent, FunctionImplementation> {
-  const extras: A2uiExtras = options?.extras ?? [];
-  const optional = createUnikitOptionalComponents().filter((component) => {
-    if (component.unikit === "chart") return extras.includes("chart");
-    if (component.unikit === "form") return extras.includes("form");
-    return true;
-  });
-  const components: UnikitA2uiComponent[] = [
+export function createUnikitCatalogComponents(
+  overlapFromBasic: ReturnType<typeof createA2uiBasicComponents>,
+): UnikitA2uiComponent[] {
+  return [
     ...createUnikitTierAComponents(),
     ...createUnikitTierBComponents(),
     ...createUnikitTierCComponents(),
-    ...createA2uiBasicComponents().map((component) =>
+    ...overlapFromBasic.map((component) =>
       UNIKIT_OVERLAP_SLUGS[component.name]
         ? { ...component, unikit: UNIKIT_OVERLAP_SLUGS[component.name] }
         : component,
     ),
-    ...optional,
   ];
+}
+
+export function createUnikitCatalog(
+  options?: Omit<UnikitCatalogOptions, "extras">,
+): Catalog<UnikitA2uiComponent, FunctionImplementation> {
   return new Catalog(
     UNIKIT_CATALOG_ID,
     "1.0",
-    components,
+    createUnikitCatalogComponents(createA2uiBasicComponents()),
     createA2uiBasicFunctions({ locale: options?.locale, catalogId: UNIKIT_CATALOG_ID }),
     {
       title: "UniKit A2UI Catalog",
@@ -64,5 +61,3 @@ export function createUnikitCatalog(
     },
   );
 }
-
-export type { A2uiExtras };

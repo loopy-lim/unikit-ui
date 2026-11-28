@@ -1,7 +1,13 @@
-import { spec } from "@a2ui/web_core";
+import { Catalog, spec, type FunctionImplementation } from "@a2ui/web_core";
 import { z } from "zod";
 import { useForm } from "react-hook-form";
 import { Text, View } from "@unikit-bridge/ui/primitives";
+
+import { createA2uiBasicComponents } from "./catalog-basic";
+import { createUnikitCatalogComponents, UNIKIT_CATALOG_INSTRUCTIONS } from "./catalog";
+import { createA2uiBasicFunctions } from "./functions";
+import type { A2uiExtras, UnikitA2uiComponent, UnikitCatalogOptions } from "./types";
+import { UNIKIT_CATALOG_ID } from "./types";
 
 import { Button } from "../components/button";
 import { Form } from "../components/form";
@@ -14,7 +20,6 @@ import {
   FunctionCallSchema,
   WeightSchema,
 } from "./schemas";
-import type { UnikitA2uiComponent } from "./types";
 
 const children = (description: string) =>
   ChildListSchema.describe(`REF:#/$defs/ChildList|${description}`);
@@ -150,4 +155,28 @@ export function createUnikitOptionalComponents(): UnikitA2uiComponent[] {
       },
     },
   ];
+}
+
+export function createUnikitCatalogWithExtras(
+  options?: UnikitCatalogOptions,
+): Catalog<UnikitA2uiComponent, FunctionImplementation> {
+  const extras: A2uiExtras = options?.extras ?? ["chart", "form"];
+  const optional = createUnikitOptionalComponents().filter((component) => {
+    if (component.unikit === "chart") return extras.includes("chart");
+    if (component.unikit === "form") return extras.includes("form");
+    return true;
+  });
+  return new Catalog(
+    UNIKIT_CATALOG_ID,
+    "1.0",
+    [...createUnikitCatalogComponents(createA2uiBasicComponents()), ...optional],
+    createA2uiBasicFunctions({ locale: options?.locale, catalogId: UNIKIT_CATALOG_ID }),
+    {
+      title: "UniKit A2UI Catalog",
+      description: "UniKit UI 브리지 프리미티브 62종 전수를 렌더링하는 A2UI 카탈로그예요.",
+      instructions: UNIKIT_CATALOG_INSTRUCTIONS,
+      schemaId: UNIKIT_CATALOG_ID,
+      schemaUri: "https://json-schema.org/draft/2020-12/schema",
+    },
+  );
 }

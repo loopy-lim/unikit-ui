@@ -3,10 +3,7 @@ export {
   createA2uiBasicComponents,
   type A2uiBasicCatalogOptions,
 } from "./catalog-basic";
-export {
-  createUnikitCatalog,
-  UNIKIT_CATALOG_INSTRUCTIONS,
-} from "./catalog";
+export { createUnikitCatalogComponents, createUnikitCatalog, UNIKIT_CATALOG_INSTRUCTIONS } from "./catalog";
 export { A2UI_DEMO_MESSAGES } from "./demo";
 export {
   createA2uiBasicFunctions,
@@ -37,4 +34,3 @@ export { BASIC_CATALOG_ID, UNIKIT_CATALOG_ID } from "./types";
 export { createUnikitTierAComponents } from "./unikit-a";
 export { createUnikitTierBComponents } from "./unikit-b";
 export { createUnikitTierCComponents } from "./unikit-c";
-export { createUnikitOptionalComponents } from "./views-optional";

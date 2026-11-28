@@ -3,13 +3,16 @@ import { getValue, NodeResolver } from "@a2ui/web_core";
 
 import {
   createUnikitCatalog,
-  createUnikitOptionalComponents,
   createUnikitTierAComponents,
   createUnikitTierBComponents,
   createUnikitTierCComponents,
   UNIKIT_CATALOG_ID,
 } from "../src/a2ui/index";
 import { createA2uiProcessor } from "../src/a2ui/runtime";
+import {
+  createUnikitCatalogWithExtras,
+  createUnikitOptionalComponents,
+} from "../src/a2ui/views-optional";
 
 const UNIKIT_SLUGS = [
   "accordion",
@@ -88,7 +91,7 @@ describe("unikit a2ui catalog composition", () => {
   });
 
   test("full catalog maps all 62 unikit components", () => {
-    const catalog = createUnikitCatalog({ extras: ["chart", "form"] });
+    const catalog = createUnikitCatalogWithExtras();
     const bySlug = new Map(
       [...catalog.components.values()].map((component) => [component.unikit, component.name]),
     );
@@ -105,10 +108,15 @@ describe("unikit a2ui catalog composition", () => {
     expect([...base.components.values()].map((component) => component.unikit)).not.toContain("chart");
     expect([...base.components.values()].map((component) => component.unikit)).not.toContain("form");
     expect(createUnikitOptionalComponents()).toHaveLength(2);
+    const chartOnly = createUnikitCatalogWithExtras({ extras: ["chart"] });
+    expect(chartOnly.components.size).toBe(73);
+    expect([...chartOnly.components.values()].some((component) => component.unikit === "form")).toBe(
+      false,
+    );
   });
 
   test("catalog serializes with instructions and identity", () => {
-    const json = createUnikitCatalog({ extras: ["chart"] }).toJson() as {
+    const json = createUnikitCatalogWithExtras({ extras: ["chart"] }).toJson() as {
       components: Record<string, { name: string }>;
       instructions?: string;
     };

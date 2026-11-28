@@ -28,10 +28,13 @@
     "./a2ui": "./src/a2ui/index.ts",
     "./a2ui/catalog-basic": "./src/a2ui/catalog-basic.tsx",
     "./a2ui/demo": "./src/a2ui/demo.ts",
-    "./primitives": {
-      "react-native": "./src/bridge/native.tsx",
-      "default": "./src/bridge/web.tsx"
-    },
+    "./a2ui/optional": "./src/a2ui/views-optional.tsx",
+    "./behaviors": "./src/behaviors/index.ts",
+    "./behaviors/ui-sdk": "./src/behaviors/ui-sdk.ts",
+    "./behaviors/ui-sdk-agent": "./src/behaviors/ui-sdk-agent.ts",
+    "./behaviors/ui-sdk-catalog": "./src/behaviors/ui-sdk-catalog.ts",
+    "./behaviors/ui-sdk-dom": "./src/behaviors/ui-sdk-dom.ts",
+    "./behaviors/ui-sdk-renderer": "./src/behaviors/ui-sdk-renderer.ts",
     "./chart": {
       "react-native": "./src/chart/native.tsx",
       "default": "./src/chart/web.tsx"
@@ -40,21 +43,19 @@
       "react-native": "./src/editor/native.tsx",
       "default": "./src/editor/web.tsx"
     },
-    "./behaviors": "./src/behaviors/index.ts",
-    "./behaviors/ui-sdk": "./src/behaviors/ui-sdk.ts",
-    "./behaviors/ui-sdk-dom": "./src/behaviors/ui-sdk-dom.ts",
-    "./behaviors/ui-sdk-renderer": "./src/behaviors/ui-sdk-renderer.ts",
-    "./behaviors/ui-sdk-agent": "./src/behaviors/ui-sdk-agent.ts",
-    "./behaviors/ui-sdk-catalog": "./src/behaviors/ui-sdk-catalog.ts",
-    "./overlay-position": {
-      "react-native": "./src/lib/overlay-position/native.ts",
-      "default": "./src/lib/overlay-position/web.ts"
-    },
+    "./editor-prose.css": "./src/lib/editor-prose.css",
     "./motion": {
       "react-native": "./src/motion/native.tsx",
       "default": "./src/motion/web.tsx"
     },
-    "./editor-prose.css": "./src/lib/editor-prose.css"
+    "./overlay-position": {
+      "react-native": "./src/lib/overlay-position/native.ts",
+      "default": "./src/lib/overlay-position/web.ts"
+    },
+    "./primitives": {
+      "react-native": "./src/bridge/native.tsx",
+      "default": "./src/bridge/web.tsx"
+    }
   },
   "main": "./src/index.ts",
   "types": "./src/index.ts",
