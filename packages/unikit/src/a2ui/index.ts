@@ -34,3 +34,7 @@ export type {
   UnikitView,
 } from "./types";
 export { BASIC_CATALOG_ID, UNIKIT_CATALOG_ID } from "./types";
+export { createUnikitTierAComponents } from "./unikit-a";
+export { createUnikitTierBComponents } from "./unikit-b";
+export { createUnikitTierCComponents } from "./unikit-c";
+export { createUnikitOptionalComponents } from "./views-optional";
