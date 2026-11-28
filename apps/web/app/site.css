@@ -5,30 +5,14 @@
   --site-grid: rgba(24, 24, 27, 0.05);
   --site-wash: rgba(24, 24, 27, 0.05);
   --site-grid-size: 64px;
-
-  /*
-   * shadcn 차트 표준 팔레트(chart-1..5, oklch) — chart 컴포넌트가
-   * config 색 "var(--chart-N)"으로 소비한다. 값의 소유자는 소비자 앱(차트 컴포넌트
-   * 머리주석 방침)이며 globals.css의 토큰 블록은 generate:design 관리 영역
-   * (수동 수정 금지 마커)이라 여기 마케팅 표면에 정의한다.
-   */
-  --chart-1: oklch(0.646 0.222 41.116);
-  --chart-2: oklch(0.6 0.118 184.704);
-  --chart-3: oklch(0.398 0.07 227.392);
-  --chart-4: oklch(0.828 0.189 84.429);
-  --chart-5: oklch(0.769 0.188 70.08);
+  /* 차트 팔레트(--chart-1..5)는 2026-11-28 토큰 편입 이후 globals.css의
+   * generate:design 블록(zinc 기본)과 프리셋 스위처의 인라인 주입이 소유한다.
+   * 여기 마케팅 표면에는 정의하지 않는다(이중 정의 금지). */
 }
 
 .dark {
   --site-grid: rgba(250, 250, 250, 0.045);
   --site-wash: rgba(250, 250, 250, 0.04);
-
-  /* 차트 다크 팔레트 — shadcn 표준 값(위 라이트 블록 주석 참조) */
-  --chart-1: oklch(0.488 0.243 264.376);
-  --chart-2: oklch(0.696 0.17 162.48);
-  --chart-3: oklch(0.769 0.188 70.08);
-  --chart-4: oklch(0.627 0.265 303.9);
-  --chart-5: oklch(0.645 0.246 16.439);
 }
 
 .site-body {

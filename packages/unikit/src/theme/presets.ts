@@ -59,6 +59,12 @@ export const themePresets = {
       "--input": "214.3 31.8% 91.4%",
       "--ring": "221.2 83.2% 53.3%",
       "--radius": "0.5rem",
+      // 차트 팔레트(22-design-plan §2.3a) — chart-1은 주색(blue) 앵커.
+      "--chart-1": "221 75% 45%",
+      "--chart-2": "190 68% 32%",
+      "--chart-3": "32 88% 42%",
+      "--chart-4": "258 50% 45%",
+      "--chart-5": "346 62% 42%",
     },
     dark: {
       "--background": "228.6 84% 4.9%",
@@ -81,6 +87,11 @@ export const themePresets = {
       "--input": "217.2 32.6% 17.5%",
       "--ring": "217.2 91.2% 59.8%",
       "--radius": "0.5rem",
+      "--chart-1": "213 85% 66%",
+      "--chart-2": "188 65% 50%",
+      "--chart-3": "38 88% 60%",
+      "--chart-4": "255 60% 72%",
+      "--chart-5": "347 70% 66%",
     },
   },
   emerald: {
@@ -108,6 +119,12 @@ export const themePresets = {
       "--input": "240 5.9% 90%",
       "--ring": "162.9 93.5% 24.3%",
       "--radius": "0.5rem",
+      // 차트 팔레트(§2.3a) — chart-1은 주색(emerald) 앵커.
+      "--chart-1": "161 70% 27%",
+      "--chart-2": "221 65% 44%",
+      "--chart-3": "40 85% 40%",
+      "--chart-4": "258 45% 45%",
+      "--chart-5": "346 60% 42%",
     },
     dark: {
       "--background": "240 10% 3.9%",
@@ -130,6 +147,11 @@ export const themePresets = {
       "--input": "240 3.7% 15.9%",
       "--ring": "160.1 84.1% 39.4%",
       "--radius": "0.5rem",
+      "--chart-1": "160 62% 50%",
+      "--chart-2": "213 75% 63%",
+      "--chart-3": "42 88% 58%",
+      "--chart-4": "255 55% 70%",
+      "--chart-5": "347 68% 64%",
     },
   },
   amber: {
@@ -157,6 +179,12 @@ export const themePresets = {
       "--input": "20 5.9% 90%",
       "--ring": "26 90.5% 37.1%",
       "--radius": "0.5rem",
+      // 차트 팔레트(§2.3a) — chart-1은 주색(amber) 앵커.
+      "--chart-1": "33 90% 38%",
+      "--chart-2": "221 65% 44%",
+      "--chart-3": "161 60% 28%",
+      "--chart-4": "258 45% 45%",
+      "--chart-5": "346 60% 42%",
     },
     dark: {
       "--background": "20 14.3% 4.1%",
@@ -179,6 +207,11 @@ export const themePresets = {
       "--input": "12 6.5% 15.1%",
       "--ring": "37.7 92.1% 50.2%",
       "--radius": "0.5rem",
+      "--chart-1": "38 90% 60%",
+      "--chart-2": "213 75% 63%",
+      "--chart-3": "160 60% 47%",
+      "--chart-4": "255 55% 70%",
+      "--chart-5": "347 68% 64%",
     },
   },
 } as const satisfies Record<string, ThemePreset>;

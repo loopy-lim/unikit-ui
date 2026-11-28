@@ -11,18 +11,11 @@
 @source '../../packages/unikit/src';
 
 /*
- * shadcn 차트 표준 팔레트(chart-1..5) — 소비자 앱 소유 값(웹 site.css와 동일
- * 라이트 oklch). chart 컴포넌트가 config 색 미지정 시 fill-chart-N /
- * stroke-chart-N 클래스로 소비한다. 값의 소유자는 소비자 앱(차트 컴포넌트
- * 머리주석 계약)이라 생성 블록 밖에 둔다. 네이티브 데모는 라이트 팔레트 고정.
+ * 차트 팔레트(--color-chart-1..5)는 2026-11-28 토큰 편입 이후 생성 블록이 소유한다
+ * — 아래 @theme inline 매핑(--color-chart-N: hsl(var(--chart-N)))과 @variant 값
+ * 블록이 chart 토큰을 함께 생성한다(예전 앱 소유 @theme 정의는 제거됨 — 이중 정의 금지).
+ * 프리셋 스위치는 웹과 달리 인라인 CSS 변수가 없어 기본(zinc) 팔레트로 동작한다.
  */
-@theme {
-  --color-chart-1: oklch(0.646 0.222 41.116);
-  --color-chart-2: oklch(0.6 0.118 184.704);
-  --color-chart-3: oklch(0.398 0.07 227.392);
-  --color-chart-4: oklch(0.828 0.189 84.429);
-  --color-chart-5: oklch(0.769 0.188 70.08);
-}
 
 /* ⛔ UNIKIT-THEME-MAP:BEGIN — bun run generate:design이 생성. 수동 수정 금지. */
 @theme inline {
@@ -45,6 +38,11 @@
   --color-border: hsl(var(--border));
   --color-input: hsl(var(--input));
   --color-ring: hsl(var(--ring));
+  --color-chart-1: hsl(var(--chart-1));
+  --color-chart-2: hsl(var(--chart-2));
+  --color-chart-3: hsl(var(--chart-3));
+  --color-chart-4: hsl(var(--chart-4));
+  --color-chart-5: hsl(var(--chart-5));
 
   /* --radius(0.5rem) 파생(02-design §2.2). xl은 Tailwind 기본값(0.75rem) 유지. */
   --radius-lg: var(--radius);
@@ -77,6 +75,11 @@
       --input: 240 5.9% 90%;
       --ring: 240 5.9% 10%;
       --radius: 0.5rem;
+      --chart-1: 221 70% 42%;
+      --chart-2: 160 62% 30%;
+      --chart-3: 32 88% 42%;
+      --chart-4: 258 50% 45%;
+      --chart-5: 346 62% 42%;
     }
 
     @variant dark {
@@ -100,6 +103,11 @@
       --input: 240 3.7% 15.9%;
       --ring: 240 4.9% 83.9%;
       --radius: 0.5rem;
+      --chart-1: 217 82% 66%;
+      --chart-2: 160 55% 52%;
+      --chart-3: 38 88% 60%;
+      --chart-4: 255 60% 72%;
+      --chart-5: 347 70% 66%;
     }
   }
 }

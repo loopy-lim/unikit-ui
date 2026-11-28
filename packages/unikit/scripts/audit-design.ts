@@ -122,8 +122,8 @@ function scanPattern(files: string[], pattern: RegExp, label: string): Violation
       schemes++;
       for (const k of keySet)
         if (src[k] !== dst[k]) vs.push({ file: rel(REGISTRY_JSON), detail: `${def.name} ${scheme} ${k}: registry=${dst[k]} / 소스=${src[k]}` });
-      if (Object.keys(dst).length !== 20)
-        vs.push({ file: rel(REGISTRY_JSON), detail: `${def.name} ${scheme}: 키 ${Object.keys(dst).length}종(20 아님)` });
+      if (Object.keys(dst).length !== 25)
+        vs.push({ file: rel(REGISTRY_JSON), detail: `${def.name} ${scheme}: 키 ${Object.keys(dst).length}종(25 아님)` });
       for (const k of keySet)
         if (k !== "--radius" && !HSL.test(dst[k] ?? ""))
           vs.push({ file: rel(REGISTRY_JSON), detail: `${def.name} ${scheme} ${k}: HSL 채널 형식 아님 — ${dst[k]}` });

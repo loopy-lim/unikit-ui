@@ -63,7 +63,7 @@ export const THEME_ITEMS: ThemeItemDef[] = [
     light: { ...lightTokens },
     dark: { ...darkTokens },
     description:
-      "tokens.ts 단일 출처에서 생성된 디자인 토큰 20종(색 19 + radius). add 한 번으로 소비자 CSS에 :root/.dark 변수가 주입됩니다. 재생성은 `bun run generate:design`.",
+      "tokens.ts 단일 출처에서 생성된 디자인 토큰 25종(색 24 = 시맨틱 19 + 차트 5, radius). add 한 번으로 소비자 CSS에 :root/.dark 변수가 주입됩니다. 재생성은 `bun run generate:design`.",
   },
   presetEntry("blue"),
   presetEntry("emerald"),
@@ -144,6 +144,11 @@ const TOKEN_META: Record<string, { role: string; usage: string }> = {
   "--input": { role: "입력창 테두리", usage: "border-input" },
   "--ring": { role: "키보드 포커스 링", usage: "focus-visible:ring-ring" },
   "--radius": { role: "모서리 반경 기준값(스킴 무관 공통)", usage: "rounded-md (scale 파생)" },
+  "--chart-1": { role: "차트 시리즈 색 1 — 앵커(단일 시리즈의 얼굴)", usage: "fill-chart-1 · var(--chart-1)" },
+  "--chart-2": { role: "차트 시리즈 색 2", usage: "fill-chart-2 · var(--chart-2)" },
+  "--chart-3": { role: "차트 시리즈 색 3", usage: "fill-chart-3 · var(--chart-3)" },
+  "--chart-4": { role: "차트 시리즈 색 4", usage: "fill-chart-4 · var(--chart-4)" },
+  "--chart-5": { role: "차트 시리즈 색 5", usage: "fill-chart-5 · var(--chart-5)" },
 };
 
 /** tokens.ts 키 순서를 그대로 보존한 변수 블록 문자열(서식: 변수 행 4sp) */
@@ -219,7 +224,7 @@ export function buildTokensDoc(): string {
 > ⛔ 이 파일은 \`bun run generate:design\`(packages/unikit)이 생성합니다 — 수동 수정 금지.
 > 값의 출처는 [\`src/theme/tokens.ts\`](../src/theme/tokens.ts)(기본)와 [\`src/theme/presets.ts\`](../src/theme/presets.ts)(프리셋 3종)입니다. 값 형식은 CSS \`hsl()\` 함수 인자로 바로 쓰는 HSL 채널 문자열("H S% L%")입니다.
 
-## 토큰 값 표 (20종 = 색 19 + radius)
+## 토큰 값 표 (25종 = 색 24(시맨틱 19 · 차트 5) + radius)
 
 | 토큰 | 라이트 | 다크 | 역할 | 대표 사용 |
 |---|---|---|---|---|
@@ -234,7 +239,7 @@ ${rows}
 ${presetRows}
 
 ¹ 라이트 primary↔primary-foreground(흰 전경)의 WCAG 대비비 — audit:design가 매 실행 재계산(기준 ≥4.5:1).
-프리셋 전체 값(20종×라이트/다크)은 [\`src/theme/presets.ts\`](../src/theme/presets.ts)와 각 \`/r/theme-<이름>.json\`에서 관찰할 수 있습니다.
+프리셋 전체 값(25종×라이트/다크)은 [\`src/theme/presets.ts\`](../src/theme/presets.ts)와 각 \`/r/theme-<이름>.json\`에서 관찰할 수 있습니다.
 
 ## 일관성 규칙 (audit:design가 기계 검사)
 

@@ -5,9 +5,9 @@
  *   bun run check:consumer <소비자 globals.css 경로> <프리셋: zinc|blue|emerald|amber>
  *
  * 동작: 중괄호 깊이 파사(문자 단위 depth 계산)로 `:root`·`.dark` 선언 블록을 추출해
- * UniKit UI 토큰 20종만 대조한다. 소비자 자산(`--sidebar*`, `--chart-*` 등)은 무시하고,
+ * UniKit UI 토큰 25종(시맨틱 19·차트 5·radius)만 대조한다. 소비자 자산(`--sidebar*` 등)은 무시하고,
  * 값은 shadcn CLI가 넣는 `hsl(...)` 함수 래핑 양쪽(래핑/비래핑)을 허용한다(스트립 후 비교).
- * 20키 전부 양 스킴에서 일치하면 exit 0, 아니면 불일치 상세 출력 후 exit 1.
+ * 25키 전부 양 스킴에서 일치하면 exit 0, 아니면 불일치 상세 출력 후 exit 1.
  *
  * 재적용 실증(AC-14)에서 설치·교체·멱등 판정을 이 도구로 기계 관찰한다.
  */

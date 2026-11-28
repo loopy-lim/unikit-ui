@@ -3,7 +3,7 @@
 > ⛔ 이 파일은 `bun run generate:design`(packages/unikit)이 생성합니다 — 수동 수정 금지.
 > 값의 출처는 [`src/theme/tokens.ts`](../src/theme/tokens.ts)(기본)와 [`src/theme/presets.ts`](../src/theme/presets.ts)(프리셋 3종)입니다. 값 형식은 CSS `hsl()` 함수 인자로 바로 쓰는 HSL 채널 문자열("H S% L%")입니다.
 
-## 토큰 값 표 (20종 = 색 19 + radius)
+## 토큰 값 표 (25종 = 색 24(시맨틱 19 · 차트 5) + radius)
 
 | 토큰 | 라이트 | 다크 | 역할 | 대표 사용 |
 |---|---|---|---|---|
@@ -27,6 +27,11 @@
 | `--input` | `240 5.9% 90%` | `240 3.7% 15.9%` | 입력창 테두리 | `border-input` |
 | `--ring` | `240 5.9% 10%` | `240 4.9% 83.9%` | 키보드 포커스 링 | `focus-visible:ring-ring` |
 | `--radius` | `0.5rem` | `0.5rem` | 모서리 반경 기준값(스킴 무관 공통) | `rounded-md (scale 파생)` |
+| `--chart-1` | `221 70% 42%` | `217 82% 66%` | 차트 시리즈 색 1 — 앵커(단일 시리즈의 얼굴) | `fill-chart-1 · var(--chart-1)` |
+| `--chart-2` | `160 62% 30%` | `160 55% 52%` | 차트 시리즈 색 2 | `fill-chart-2 · var(--chart-2)` |
+| `--chart-3` | `32 88% 42%` | `38 88% 60%` | 차트 시리즈 색 3 | `fill-chart-3 · var(--chart-3)` |
+| `--chart-4` | `258 50% 45%` | `255 60% 72%` | 차트 시리즈 색 4 | `fill-chart-4 · var(--chart-4)` |
+| `--chart-5` | `346 62% 42%` | `347 70% 66%` | 차트 시리즈 색 5 | `fill-chart-5 · var(--chart-5)` |
 
 ## 프리셋 테마 (기본 + 3종)
 
@@ -40,7 +45,7 @@
 | `theme-amber` (Amber) | stone | amber-700 | 5.01:1 | `bunx shadcn add <레지스트리>/r/theme-amber.json -y` |
 
 ¹ 라이트 primary↔primary-foreground(흰 전경)의 WCAG 대비비 — audit:design가 매 실행 재계산(기준 ≥4.5:1).
-프리셋 전체 값(20종×라이트/다크)은 [`src/theme/presets.ts`](../src/theme/presets.ts)와 각 `/r/theme-<이름>.json`에서 관찰할 수 있습니다.
+프리셋 전체 값(25종×라이트/다크)은 [`src/theme/presets.ts`](../src/theme/presets.ts)와 각 `/r/theme-<이름>.json`에서 관찰할 수 있습니다.
 
 ## 일관성 규칙 (audit:design가 기계 검사)
 
