@@ -40,4 +40,35 @@ if [ "$metro_ready" != "1" ]; then
   exit 1
 fi
 
-maestro test .maestro/ --debug-output e2e-evidence/maestro
+# 번들 예열 — 차가운 Metro 첫 빌드(40~60초)를 앱이 기다리지 않게 먼저 돌린다.
+# dev client의 번들 요청은 타임아웃이 있어, 빌드 완료 전에 연결이 끊기면
+# loadJSBundleFromAssets 폴백 에러 화면으로 빠진다(실행 46129776499 — 두 플로우
+# 모두 첫 어설션 "UniKit UI"에서 사망, metro.log에는 번들 완료 기록만 남음).
+# 예열 후 앱은 캐시에서 즉시 받으므로 타임아웃 압박이 사라진다.
+# URL은 앱이 실제로 요청하는 엔트리를 그대로 쓴다 — 워크스페이스 호이스팅으로
+# /index.bundle은 루트 ./index를 찾다 404 난다(UnableToResolveError 실증).
+echo "번들 예열 중(차가운 첫 빌드)..."
+if ! curl -sf -o /dev/null --max-time 300 \
+  "http://localhost:8081/node_modules/expo-router/entry.bundle?platform=android&dev=true&hot=false&lazy=true&transform.engine=hermes&transform.routerModule=expo-router%2Fentry&app=com.anonymous.unikitexpo"; then
+  echo "번들 예열 실패 — $metro_log 참고"
+  exit 1
+fi
+echo "번들 예열 완료"
+
+maestro_rc=0
+maestro test .maestro/ --debug-output e2e-evidence/maestro || maestro_rc=$?
+
+# 실패 원인 판독용 증거 보강(실패 시에도 업로드된다):
+#  - maestro가 --debug-output 외에 점 디렉터리 .maestro/tests/<ts>/에 남기는
+#    단계별 스크린샷을 증거 디렉터리로 복사(upload-artifact v4는 점 디렉터리
+#    미탐색 — 실행 46129776499에서 스크린샷이 전부 누락된 원인)
+#  - 최종 화면 스크린샷 + 접근성 트리 + logcat — 앱이 어느 화면에서
+#    멈춰 있었는지 기계적으로 판독한다
+if [ "$maestro_rc" != "0" ]; then
+  cp -r .maestro/tests e2e-evidence/maestro-tests 2>/dev/null || true
+  adb exec-out screencap -p > e2e-evidence/final-screen.png 2>/dev/null || true
+  adb shell uiautomator dump /sdcard/e2e-dump.xml >/dev/null 2>&1 || true
+  adb shell cat /sdcard/e2e-dump.xml > e2e-evidence/final-hierarchy.xml 2>/dev/null || true
+  adb logcat -d > e2e-evidence/logcat.txt 2>/dev/null || true
+fi
+exit "$maestro_rc"
