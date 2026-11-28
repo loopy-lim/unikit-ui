@@ -1,7 +1,8 @@
 # npm 게시 — @unikit-bridge/ui
 # 트리거: GitHub Release 게시, 또는 Actions 탭에서 수동 실행(workflow_dispatch)
 # 인증: 저장소 시크릿 NPM_TOKEN (Classic Automation 토큰 — 2FA 계정도 OTP 없이 게시)
-# 새 버전 절차: packages/unikit/package.json의 version을 올리고 커밋 → Release 태그(vX.Y.Z)로 게시
+# 새 버전 절차: packages/unikit/package.json의 version을 올리고 CHANGELOG.md [미게시] 섹션을
+# 버전·날짜로 확정해 커밋 → Release 태그(vX.Y.Z)로 게시
 name: npm publish
 
 on:

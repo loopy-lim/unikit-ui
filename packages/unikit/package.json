@@ -25,10 +25,16 @@
   ],
   "exports": {
     ".": "./src/index.ts",
-    "./primitives": {
-      "react-native": "./src/bridge/native.tsx",
-      "default": "./src/bridge/web.tsx"
-    },
+    "./a2ui": "./src/a2ui/index.ts",
+    "./a2ui/catalog-basic": "./src/a2ui/catalog-basic.tsx",
+    "./a2ui/demo": "./src/a2ui/demo.ts",
+    "./a2ui/optional": "./src/a2ui/views-optional.tsx",
+    "./behaviors": "./src/behaviors/index.ts",
+    "./behaviors/ui-sdk": "./src/behaviors/ui-sdk.ts",
+    "./behaviors/ui-sdk-agent": "./src/behaviors/ui-sdk-agent.ts",
+    "./behaviors/ui-sdk-catalog": "./src/behaviors/ui-sdk-catalog.ts",
+    "./behaviors/ui-sdk-dom": "./src/behaviors/ui-sdk-dom.ts",
+    "./behaviors/ui-sdk-renderer": "./src/behaviors/ui-sdk-renderer.ts",
     "./chart": {
       "react-native": "./src/chart/native.tsx",
       "default": "./src/chart/web.tsx"
@@ -37,27 +43,26 @@
       "react-native": "./src/editor/native.tsx",
       "default": "./src/editor/web.tsx"
     },
-    "./behaviors": "./src/behaviors/index.ts",
-    "./behaviors/ui-sdk": "./src/behaviors/ui-sdk.ts",
-    "./behaviors/ui-sdk-dom": "./src/behaviors/ui-sdk-dom.ts",
-    "./behaviors/ui-sdk-renderer": "./src/behaviors/ui-sdk-renderer.ts",
-    "./behaviors/ui-sdk-agent": "./src/behaviors/ui-sdk-agent.ts",
-    "./behaviors/ui-sdk-catalog": "./src/behaviors/ui-sdk-catalog.ts",
-    "./overlay-position": {
-      "react-native": "./src/lib/overlay-position/native.ts",
-      "default": "./src/lib/overlay-position/web.ts"
-    },
+    "./editor-prose.css": "./src/lib/editor-prose.css",
     "./motion": {
       "react-native": "./src/motion/native.tsx",
       "default": "./src/motion/web.tsx"
     },
-    "./editor-prose.css": "./src/lib/editor-prose.css"
+    "./overlay-position": {
+      "react-native": "./src/lib/overlay-position/native.ts",
+      "default": "./src/lib/overlay-position/web.ts"
+    },
+    "./primitives": {
+      "react-native": "./src/bridge/native.tsx",
+      "default": "./src/bridge/web.tsx"
+    }
   },
   "main": "./src/index.ts",
   "types": "./src/index.ts",
   "files": [
     "src",
     "docs",
+    "CHANGELOG.md",
     "README.md",
     "LICENSE"
   ],
@@ -86,6 +91,8 @@
     "react-hook-form": "^7.0.0",
     "lucide-react": "^1.71.0",
     "lucide-react-native": "^1.71.0",
+    "@a2ui/web_core": "~0.16.1",
+    "zod": "^3.25.76",
     "@tiptap/extensions": "^3.0.0",
     "@tiptap/markdown": "^3.0.0",
     "@tiptap/pm": "^3.0.0",
@@ -96,6 +103,12 @@
     "@ui-sdk/core": "0.1.0-beta.6"
   },
   "peerDependenciesMeta": {
+    "@a2ui/web_core": {
+      "optional": true
+    },
+    "zod": {
+      "optional": true
+    },
     "react-dom": {
       "optional": true
     },
@@ -143,6 +156,7 @@
     }
   },
   "devDependencies": {
+    "@a2ui/web_core": "~0.16.1",
     "@tiptap/extensions": "^3.0.0",
     "@tiptap/markdown": "^3.0.0",
     "@tiptap/pm": "^3.0.0",
@@ -163,6 +177,7 @@
     "react-native-webview": "14.0.1",
     "tailwind-merge": "~3.7.0",
     "typescript": "~5.9.0",
-    "uniwind": "~1.13.2"
+    "uniwind": "~1.13.2",
+    "zod": "~3.25.76"
   }
 }

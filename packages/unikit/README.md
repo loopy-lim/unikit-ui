@@ -154,11 +154,33 @@ Web mounts tiptap directly (`@tiptap/react`, `@tiptap/starter-kit`, `@tiptap/mar
 - **Menu nav** — `useMenuNav`, `composeMenuNavKeyDown`, `useMenuItemRef`, `composeMenuItemHoverIn`, `composeMenuItemFocus`: arrow/Home/End navigation, submenu open/back, typeahead (radix `getNextMatch` port).
 - **Bridge hooks** — `useDrag` (web Pointer Events / native PanResponder), `useOverlayFocus` (focus move/trap/restore), `useDismiss` (outside press + Escape), `useReposition` (scroll/resize recompute), `useScrollLock`.
 
+### A2UI renderer — separate entry points
+
+[A2UI](https://a2ui.org) v1.0 agent messages rendered by the same 62 components on web and React Native — no `@a2ui/react`, just the headless `@a2ui/web_core` subpaths plus our own renderer:
+
+```tsx
+import { createA2uiProcessor, createUnikitCatalog, UnikitA2uiSurface, useA2uiSurfaces } from "@unikit-bridge/ui/a2ui";
+
+const processor = createA2uiProcessor([createUnikitCatalog()], { onAction: (a) => console.log(a.name) });
+processor.process(messages);
+// in React:
+const [surface] = useA2uiSurfaces(processor);
+return <UnikitA2uiSurface surface={surface} />;
+```
+
+- `@unikit-bridge/ui/a2ui` — processor, renderer hooks, the UniKit catalog (72 entries: 54 authored + 6 shared with the basic catalog + 12 A2UI primitives) and the Korean agent instructions.
+- `@unikit-bridge/ui/a2ui/catalog-basic` — the official A2UI basic catalog redeclared locally; a byte-parity test against the vendored `catalog.json` guards drift.
+- `@unikit-bridge/ui/a2ui/optional` — `createUnikitCatalogWithExtras({ extras: ["chart", "form"] })` opts into the `Chart` (line/bars) and `Form` components; this entry pulls `react-hook-form`, the base entry does not.
+- `@unikit-bridge/ui/a2ui/demo` — demo message fixtures.
+
+Value-driven components bind `value` with `{"@path": ...}` write bindings and fire their `action` on change; function-valued props are replaced by that binding+action contract (see [`docs/roadmap-components.md`](../../docs/roadmap-components.md), «A2UI 렌더러»).
+
 ### Optional peer dependencies
 
 - **Icons (platform)**: web → `lucide-react`, native → `lucide-react-native` (bridged through `/primitives`).
 - **Motion (native CSS Animations/Transitions)** → `react-native-reanimated` (`>=4.0.0`)
 - **Form** → `react-hook-form`
+- **A2UI** → `@a2ui/web_core` + `zod` (runtime peers of `/a2ui*`; `react-hook-form` only with `/a2ui/optional`)
 - **Chart** → `react-native-svg`
 - **Editor (web)** → `@tiptap/react`, `@tiptap/starter-kit`, `@tiptap/markdown`, `@tiptap/extensions`, `@tiptap/pm`
 - **Editor (native)** → `react-native-webview`

@@ -92,6 +92,8 @@ export default function Home() {
 
 > npm `@unikit-bridge/ui` 0.5.0 게시분은 **62종**(배럴 61종 + `@unikit-bridge/ui/chart`)과 에디터 엔진 진입점 `@unikit-bridge/ui/editor`(웹=tiptap 직접, 네이티브=동봉 WebView 번들), 행동 훈 진입점 `@unikit-bridge/ui/behaviors`를 담고 있어요. 컴포넌트 소스를 직접 소유·수정하고 싶을 때는 **방법 2(레지스트리 복사)**를 쓰세요 — 에디터 진입점은 엔진 HTML 번들이 빌드 산출물이라 npm 설치로만 제공돼요.
 
+**A2UI 렌더러** — `@unikit-bridge/ui/a2ui`는 [A2UI](https://a2ui.org) v1.0 에이전트 메시지를 같은 62종 컴포넌트로 웹·React Native 양쪽에 렌더링해요. `createA2uiProcessor` + `createUnikitCatalog`가 헤드리스 `@a2ui/web_core` 파이프라인을 구동하고 `UnikitA2uiSurface`가 해석된 트리를 마운트해요. `@unikit-bridge/ui/a2ui/optional`은 `Chart`·`Form` 두 종을 옵트인해요(react-hook-form 끌어당김 — 기본 진입점은 무관). 데모: 웹 앱 `/a2ui`, Expo 앱 `/demo/a2ui`.
+
 **방법 2 — 소스 복사 (요약)**
 
 ```bash
@@ -158,4 +160,5 @@ unikit-ui/
 
 - **실물 네이티브** — CI는 웹·번들 빌드까지. 기기 화면은 [docs/expo-go.md](docs/expo-go.md)로 확인하세요.
 - **미지원 기능** — 오버레이 퇴장 애니메이션(진입 애니메이션만 웹 지원), 네이티브 hover 개방, chart 반응형·다크 등. 목록은 [docs/roadmap-components.md](docs/roadmap-components.md).
+- **A2UI** — 미디어 컴포넌트(Video·AudioPlayer)는 자막·재생 제어 없이 콘텐츠 표시만, Chart는 line·bars 두 도형만, Calendar는 단일 날짜 ISO 선택만 노출해요. 함수형 prop은 직렬화가 안 돼 카탈로그 계약에서 값 바인딩+액션으로 치환했어요. 상세는 [docs/roadmap-components.md](docs/roadmap-components.md) «A2UI 렌더러» 절.
 - **아이콘 peer** — 웹 `lucide-react`, 네이티브 `lucide-react-native`(브리지가 감쌈). 컴포넌트는 lucide를 직접 import하지 않아요.

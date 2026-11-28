@@ -17,39 +17,90 @@ import {
 } from "react";
 import { createPortal } from "react-dom";
 import {
-  AlertCircleIcon as LucideAlertCircleIcon,
-  ArrowDownIcon as LucideArrowDownIcon,
-  ArrowLeftIcon as LucideArrowLeftIcon,
-  ArrowRightIcon as LucideArrowRightIcon,
-  ArrowUpIcon as LucideArrowUpIcon,
-  BoldIcon as LucideBoldIcon,
-  CheckCircle2Icon as LucideCheckCircle2Icon,
-  CheckIcon as LucideCheckIcon,
-  ChevronDownIcon as LucideChevronDownIcon,
-  ChevronLeftIcon as LucideChevronLeftIcon,
-  ChevronRightIcon as LucideChevronRightIcon,
-  ChevronUpIcon as LucideChevronUpIcon,
-  CircleIcon as LucideCircleIcon,
-  CodeIcon as LucideCodeIcon,
-  GripVerticalIcon as LucideGripVerticalIcon,
-  Heading1Icon as LucideHeading1Icon,
-  Heading2Icon as LucideHeading2Icon,
-  InfoIcon as LucideInfoIcon,
-  ItalicIcon as LucideItalicIcon,
-  ListIcon as LucideListIcon,
-  ListOrderedIcon as LucideListOrderedIcon,
-  Loader2Icon as LucideLoader2Icon,
-  MinusIcon as LucideMinusIcon,
-  MoreHorizontalIcon as LucideMoreHorizontalIcon,
-  PanelLeftIcon as LucidePanelLeftIcon,
-  Redo2Icon as LucideRedo2Icon,
-  SearchIcon as LucideSearchIcon,
-  StrikethroughIcon as LucideStrikethroughIcon,
-  TextQuoteIcon as LucideTextQuoteIcon,
-  Undo2Icon as LucideUndo2Icon,
-  XCircleIcon as LucideXCircleIcon,
-  XIcon as LucideXIcon,
-  type LucideIcon,
+AlertCircleIcon as LucideAlertCircleIcon,
+ArrowDownIcon as LucideArrowDownIcon,
+ArrowLeftIcon as LucideArrowLeftIcon,
+ArrowRightIcon as LucideArrowRightIcon,
+ArrowUpIcon as LucideArrowUpIcon,
+  Bell as LucideBellIcon,
+  BellOff as LucideBellOffIcon,
+BoldIcon as LucideBoldIcon,
+  Calendar as LucideCalendarIcon,
+  CalendarClock as LucideCalendarClockIcon,
+  Camera as LucideCameraIcon,
+CheckCircle2Icon as LucideCheckCircle2Icon,
+CheckIcon as LucideCheckIcon,
+ChevronDownIcon as LucideChevronDownIcon,
+ChevronLeftIcon as LucideChevronLeftIcon,
+ChevronRightIcon as LucideChevronRightIcon,
+ChevronUpIcon as LucideChevronUpIcon,
+  CircleHelp as LucideCircleHelpIcon,
+CircleIcon as LucideCircleIcon,
+  CircleUser as LucideCircleUserIcon,
+CodeIcon as LucideCodeIcon,
+  CreditCard as LucideCreditCardIcon,
+  Download as LucideDownloadIcon,
+  EllipsisVertical as LucideEllipsisVerticalIcon,
+  Eye as LucideEyeIcon,
+  EyeOff as LucideEyeOffIcon,
+  FastForward as LucideFastForwardIcon,
+  Folder as LucideFolderIcon,
+GripVerticalIcon as LucideGripVerticalIcon,
+Heading1Icon as LucideHeading1Icon,
+Heading2Icon as LucideHeading2Icon,
+  Heart as LucideHeartIcon,
+  HeartOff as LucideHeartOffIcon,
+  Home as LucideHomeIcon,
+InfoIcon as LucideInfoIcon,
+ItalicIcon as LucideItalicIcon,
+ListIcon as LucideListIcon,
+ListOrderedIcon as LucideListOrderedIcon,
+Loader2Icon as LucideLoader2Icon,
+  Lock as LucideLockIcon,
+  LockOpen as LucideLockOpenIcon,
+  Mail as LucideMailIcon,
+  MapPin as LucideMapPinIcon,
+  Image as LucideMediaImageIcon,
+  Menu as LucideMenuIcon,
+MinusIcon as LucideMinusIcon,
+MoreHorizontalIcon as LucideMoreHorizontalIcon,
+PanelLeftIcon as LucidePanelLeftIcon,
+  Paperclip as LucidePaperclipIcon,
+  Pause as LucidePauseIcon,
+  Pencil as LucidePencilIcon,
+  Phone as LucidePhoneIcon,
+  PhoneCall as LucidePhoneCallIcon,
+  Play as LucidePlayIcon,
+  Plus as LucidePlusIcon,
+  Printer as LucidePrinterIcon,
+Redo2Icon as LucideRedo2Icon,
+  RefreshCw as LucideRefreshCwIcon,
+  Rewind as LucideRewindIcon,
+SearchIcon as LucideSearchIcon,
+  Send as LucideSendIcon,
+  Settings as LucideSettingsIcon,
+  Share2 as LucideShare2Icon,
+  ShoppingCart as LucideShoppingCartIcon,
+  SkipBack as LucideSkipBackIcon,
+  SkipForward as LucideSkipForwardIcon,
+  Square as LucideSquareIcon,
+  Star as LucideStarIcon,
+  StarHalf as LucideStarHalfIcon,
+  StarOff as LucideStarOffIcon,
+StrikethroughIcon as LucideStrikethroughIcon,
+TextQuoteIcon as LucideTextQuoteIcon,
+  Trash2 as LucideTrash2Icon,
+  TriangleAlert as LucideTriangleAlertIcon,
+Undo2Icon as LucideUndo2Icon,
+  Upload as LucideUploadIcon,
+  User as LucideUserIcon,
+  Volume1 as LucideVolume1Icon,
+  Volume2 as LucideVolume2Icon,
+  VolumeOff as LucideVolumeOffIcon,
+  VolumeX as LucideVolumeXIcon,
+XCircleIcon as LucideXCircleIcon,
+XIcon as LucideXIcon,
+type LucideIcon,
 } from "lucide-react";
 
 import { cn } from "../lib/utils";
@@ -1048,6 +1099,57 @@ const TextQuoteIcon = wrapWebLucide(LucideTextQuoteIcon);
 const CodeIcon = wrapWebLucide(LucideCodeIcon);
 const Undo2Icon = wrapWebLucide(LucideUndo2Icon);
 const Redo2Icon = wrapWebLucide(LucideRedo2Icon);
+const BellIcon = wrapWebLucide(LucideBellIcon);
+const BellOffIcon = wrapWebLucide(LucideBellOffIcon);
+const CalendarIcon = wrapWebLucide(LucideCalendarIcon);
+const CalendarClockIcon = wrapWebLucide(LucideCalendarClockIcon);
+const CameraIcon = wrapWebLucide(LucideCameraIcon);
+const CircleHelpIcon = wrapWebLucide(LucideCircleHelpIcon);
+const CircleUserIcon = wrapWebLucide(LucideCircleUserIcon);
+const CreditCardIcon = wrapWebLucide(LucideCreditCardIcon);
+const DownloadIcon = wrapWebLucide(LucideDownloadIcon);
+const EllipsisVerticalIcon = wrapWebLucide(LucideEllipsisVerticalIcon);
+const EyeIcon = wrapWebLucide(LucideEyeIcon);
+const EyeOffIcon = wrapWebLucide(LucideEyeOffIcon);
+const FastForwardIcon = wrapWebLucide(LucideFastForwardIcon);
+const FolderIcon = wrapWebLucide(LucideFolderIcon);
+const HeartIcon = wrapWebLucide(LucideHeartIcon);
+const HeartOffIcon = wrapWebLucide(LucideHeartOffIcon);
+const HomeIcon = wrapWebLucide(LucideHomeIcon);
+const LockIcon = wrapWebLucide(LucideLockIcon);
+const LockOpenIcon = wrapWebLucide(LucideLockOpenIcon);
+const MailIcon = wrapWebLucide(LucideMailIcon);
+const MapPinIcon = wrapWebLucide(LucideMapPinIcon);
+const MediaImageIcon = wrapWebLucide(LucideMediaImageIcon);
+const MenuIcon = wrapWebLucide(LucideMenuIcon);
+const PaperclipIcon = wrapWebLucide(LucidePaperclipIcon);
+const PauseIcon = wrapWebLucide(LucidePauseIcon);
+const PencilIcon = wrapWebLucide(LucidePencilIcon);
+const PhoneIcon = wrapWebLucide(LucidePhoneIcon);
+const PhoneCallIcon = wrapWebLucide(LucidePhoneCallIcon);
+const PlayIcon = wrapWebLucide(LucidePlayIcon);
+const PlusIcon = wrapWebLucide(LucidePlusIcon);
+const PrinterIcon = wrapWebLucide(LucidePrinterIcon);
+const RefreshCwIcon = wrapWebLucide(LucideRefreshCwIcon);
+const RewindIcon = wrapWebLucide(LucideRewindIcon);
+const SendIcon = wrapWebLucide(LucideSendIcon);
+const SettingsIcon = wrapWebLucide(LucideSettingsIcon);
+const Share2Icon = wrapWebLucide(LucideShare2Icon);
+const ShoppingCartIcon = wrapWebLucide(LucideShoppingCartIcon);
+const SkipBackIcon = wrapWebLucide(LucideSkipBackIcon);
+const SkipForwardIcon = wrapWebLucide(LucideSkipForwardIcon);
+const SquareIcon = wrapWebLucide(LucideSquareIcon);
+const StarIcon = wrapWebLucide(LucideStarIcon);
+const StarHalfIcon = wrapWebLucide(LucideStarHalfIcon);
+const StarOffIcon = wrapWebLucide(LucideStarOffIcon);
+const Trash2Icon = wrapWebLucide(LucideTrash2Icon);
+const TriangleAlertIcon = wrapWebLucide(LucideTriangleAlertIcon);
+const UploadIcon = wrapWebLucide(LucideUploadIcon);
+const UserIcon = wrapWebLucide(LucideUserIcon);
+const Volume1Icon = wrapWebLucide(LucideVolume1Icon);
+const Volume2Icon = wrapWebLucide(LucideVolume2Icon);
+const VolumeOffIcon = wrapWebLucide(LucideVolumeOffIcon);
+const VolumeXIcon = wrapWebLucide(LucideVolumeXIcon);
 
 export {
   View,
@@ -1111,4 +1213,55 @@ export {
   CodeIcon,
   Undo2Icon,
   Redo2Icon,
+  BellIcon,
+  BellOffIcon,
+  CalendarIcon,
+  CalendarClockIcon,
+  CameraIcon,
+  CircleHelpIcon,
+  CircleUserIcon,
+  CreditCardIcon,
+  DownloadIcon,
+  EllipsisVerticalIcon,
+  EyeIcon,
+  EyeOffIcon,
+  FastForwardIcon,
+  FolderIcon,
+  HeartIcon,
+  HeartOffIcon,
+  HomeIcon,
+  LockIcon,
+  LockOpenIcon,
+  MailIcon,
+  MapPinIcon,
+  MediaImageIcon,
+  MenuIcon,
+  PaperclipIcon,
+  PauseIcon,
+  PencilIcon,
+  PhoneIcon,
+  PhoneCallIcon,
+  PlayIcon,
+  PlusIcon,
+  PrinterIcon,
+  RefreshCwIcon,
+  RewindIcon,
+  SendIcon,
+  SettingsIcon,
+  Share2Icon,
+  ShoppingCartIcon,
+  SkipBackIcon,
+  SkipForwardIcon,
+  SquareIcon,
+  StarIcon,
+  StarHalfIcon,
+  StarOffIcon,
+  Trash2Icon,
+  TriangleAlertIcon,
+  UploadIcon,
+  UserIcon,
+  Volume1Icon,
+  Volume2Icon,
+  VolumeOffIcon,
+  VolumeXIcon,
 };
