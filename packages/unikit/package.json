@@ -25,6 +25,9 @@
   ],
   "exports": {
     ".": "./src/index.ts",
+    "./a2ui": "./src/a2ui/index.ts",
+    "./a2ui/catalog-basic": "./src/a2ui/catalog-basic.tsx",
+    "./a2ui/demo": "./src/a2ui/demo.ts",
     "./primitives": {
       "react-native": "./src/bridge/native.tsx",
       "default": "./src/bridge/web.tsx"
@@ -87,6 +90,8 @@
     "react-hook-form": "^7.0.0",
     "lucide-react": "^1.71.0",
     "lucide-react-native": "^1.71.0",
+    "@a2ui/web_core": "~0.16.1",
+    "zod": "^3.25.76",
     "@tiptap/extensions": "^3.0.0",
     "@tiptap/markdown": "^3.0.0",
     "@tiptap/pm": "^3.0.0",
@@ -97,6 +102,12 @@
     "@ui-sdk/core": "0.1.0-beta.6"
   },
   "peerDependenciesMeta": {
+    "@a2ui/web_core": {
+      "optional": true
+    },
+    "zod": {
+      "optional": true
+    },
     "react-dom": {
       "optional": true
     },
@@ -144,6 +155,7 @@
     }
   },
   "devDependencies": {
+    "@a2ui/web_core": "~0.16.1",
     "@tiptap/extensions": "^3.0.0",
     "@tiptap/markdown": "^3.0.0",
     "@tiptap/pm": "^3.0.0",
@@ -164,6 +176,7 @@
     "react-native-webview": "14.0.1",
     "tailwind-merge": "~3.7.0",
     "typescript": "~5.9.0",
-    "uniwind": "~1.13.2"
+    "uniwind": "~1.13.2",
+    "zod": "~3.25.76"
   }
 }
